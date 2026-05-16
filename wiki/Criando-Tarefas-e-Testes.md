@@ -131,6 +131,65 @@ output = '''
 '''
 ```
 
+## Trabalhando com `cases.tio` e pastas
+
+Se preferir trabalhar com os testes em arquivos separados, voce pode descompactar um `cases.tio` para uma pasta com pares de entrada/saida.
+
+Exemplo:
+
+```bash
+mkdir pasta
+tko build pasta cases.tio
+ls pasta
+```
+
+Serao gerados arquivos como `00.in`, `00.sol`, `01.in`, `01.sol`.
+
+Para rodar a partir da pasta descompactada:
+
+```bash
+tko task run Solver.java pasta
+```
+
+## Convertendo entre formatos
+
+Alguns fluxos comuns:
+
+- Gerar `t.vpl` a partir de `testes.tio`:
+
+```bash
+tko build tests t.vpl testes.tio
+```
+
+- Gerar `t.tio` a partir de `README.md` e `extra.tio`:
+
+```bash
+tko build tests t.tio README.md extra.tio
+```
+
+- Extrair os testes para pasta (um arquivo de entrada e um de saida por caso):
+
+```bash
+mkdir pasta
+tko build tests pasta cases.tio
+```
+
+## Padrao de nomes com `-p`
+
+Voce pode definir o padrao de nome dos arquivos gerados com `-p`, usando `@` como wildcard para a numeracao.
+
+Exemplo:
+
+```bash
+tko build tests pasta/ cases.tio -p "in.@ out.@"
+```
+
+Para formatos de maratona, voce pode adaptar para o padrao esperado:
+
+- `-p "@.in @.out"`
+- `-p "in@ out@"`
+- outros padroes equivalentes
+
 ## Boas praticas para professores
 
 - Use chaves curtas e consistentes (`@tres`, `@media`, `@bhaskara`).

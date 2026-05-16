@@ -5,6 +5,10 @@
 
 # TKO
 
+Distribuição de tarefas de programação com Git, desenvolvimento direto na IDE do aluno e feedback contínuo para professores com métricas de progresso.
+
+Plataforma para ensino prático de programação que conecta autoria de questões, execução local de testes e observabilidade pedagógica sem depender de LMS/hosting como Moodle.
+
 [![Tests](https://github.com/senapk/tko/actions/workflows/tests.yml/badge.svg)](https://github.com/senapk/tko/actions/workflows/tests.yml)
 [![PyPI version](https://img.shields.io/pypi/v/tko)](https://pypi.org/project/tko/)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://pypi.org/project/tko/)
@@ -13,7 +17,74 @@
 [![Repo](https://img.shields.io/badge/GitHub-senapk%2Ftko-181717?logo=github)](https://github.com/senapk/tko)
 [![Stars](https://img.shields.io/github/stars/senapk/tko?style=social)](https://github.com/senapk/tko/stargazers)
 
-O tko é um sistema de testes para programação competitiva. Ele é capaz de rodar testes em várias linguagens de programação e em vários formatos de testes. Ele está integrado com os repositórios de atividades das disciplinas de programação da UFC de Quixadá permitindo baixar as atividades e rodar os testes.
+O TKO é um ecossistema de ensino de programação centrado em prática, versionamento e evidências de aprendizagem. Ele distribui atividades via Git, permite desenvolvimento na IDE local e acompanha progresso de turmas com dados reais de evolução.
+
+## Visão Geral
+
+O TKO resolve o problema de acoplar ensino de programação a ambientes artificiais de navegador. Em vez disso, o aluno trabalha no próprio fluxo profissional: editor, terminal, compilador e controle de versão.
+
+Para o professor, o sistema viabiliza distribuição de tarefas personalizadas e acompanhamento de execução com sinais de desenvolvimento, como tempo de resolução, histórico de versões e progresso por atividade.
+
+Fluxo rápido:
+
+1. Professor cria ou publica repositórios de questões.
+2. Aluno baixa a atividade e desenvolve na própria IDE.
+3. Aluno executa os testes localmente e itera com feedback imediato.
+4. Aluno envia para o professor via (Git | Email | Drive Compartilhado)
+4. Professor acompanha evolução, métricas de aprendizado, tentativas e progressos da turma.
+
+## Quick Start
+
+### Linux / WSL
+
+```bash
+pipx install tko
+tko --version
+tko --help
+```
+
+Saída esperada:
+
+- O comando `tko --version` deve mostrar a versão instalada.
+- O comando `tko --help` deve listar os comandos principais (`task`, `build`, `class`, `remote`, ...).
+
+Se `tko` não for encontrado após instalar com `pipx`, rode:
+
+```bash
+pipx ensurepath
+```
+
+Depois reabra o terminal.
+
+### Windows
+
+Use o guia recomendado para setup completo com VS Code e WSL:
+
+- [Windows, Vscode e WSL- Recomendado](wiki/Windows-WSL.md)
+
+## Casos de Uso
+
+- Distribuição de listas e atividades de programação via Git.
+- Desenvolvimento local na IDE do aluno, sem dependência de browser.
+- Correção automática com testes e iteração rápida.
+- Acompanhamento docente com indicadores de progresso e histórico.
+
+## Documentação por Perfil
+
+- Professor da disciplina (distribui e coleta via Git, Classroom, Dropbox, email):
+  [Uso pelos professores](#uso-pelos-professores),
+  [Criando tarefas e testes](wiki/Criando-Tarefas-e-Testes.md)
+- Aluno da disciplina:
+  [Uso do TKO pelos alunos](#uso-do-tko-pelos-alunos),
+  [Fazendo as atividades](wiki/Fazendo-Atividades.md)
+- Aluno em estudo autônomo (fora de disciplina):
+  [Testando sem estar em uma disciplina](wiki/Testando-Sem-Disciplina.md),
+  [repositórios oficiais](#repositórios-de-referência)
+- Instalação e ambiente: [Instalação](#instalação)
+- Desenvolvedores: [Uso pelos desenvolvedores](#uso-pelos-desenvolvedores)
+- Ferramentas auxiliares: [Ferramentas](#ferramentas)
+
+Repositórios de referência:
 
 - [FUP - Fundamentos de Programação](https://github.com/qxcodefup/arcade)
 - [ED - Estrutura de Dados](https://github.com/qxcodeed/arcade)
@@ -63,62 +134,18 @@ Para atualizar o tko para versão mais recente, basta executar o comando:
 pipx upgrade tko          # windows, codespace, arch, ubuntu e wsl
 ```
 
-## Criando os testes
+## Contribuição
 
-### Descompactando os testes
+Contribuições são bem-vindas via pull request.
 
-Se preferir trabalhar com o modelo de testes em arquivos separados, você pode descompactar o arquivo `cases.tio` para uma pasta com os arquivos de entrada e saída. Será gerado um arquivo `.in` e um `.sol` para cada teste.
-
-```bash
-$ mkdir pasta
-$ tko build pasta cases.tio
-$ ls pasta
-00.in 00.sol 01.in 01.sol 02.in 02.sol 03.in 03.sol 04.in 04.sol
-```
-
-Para rodar a partir da pasta com os testes descompactados, basta passar o nome da pasta como parâmetro.
+Fluxo mínimo para validar mudanças localmente:
 
 ```bash
-tko task run Solver.java pasta
+uv run pytest -q
 ```
 
-Se quiser utilizar um nome padrão diferente para leitura ou escrita das pastas, veja a seção de [Convertendo entre formatos](#convertendo-entre-formatos).
+Se possível, mantenha mudanças pequenas, com descrição clara do problema e da solução no PR.
 
-## Convertendo entre formatos
+## Licença
 
-- Gerando um `t.vpl`
-  - `tko build tests t.vpl testes.tio`
-- Gerando um `t.tio` a partir do `README.md`e de um `extra.tio`.
-  - `tko build tests t.tio README.md extra.tio`
-- Para extrair os testes para uma pasta com um arquivo para entrada e outro para saída, crie uma pasta vazia e passe para o primeiro parâmetro do `tko build`.
-
-```bash
-$ ls
-cases.tio  draft.c  README.md
-$ mkdir pasta
-$ tko build tests pasta cases.tio 
-$ ls pasta/
-00.in   02.sol  05.in   07.sol  10.in   12.sol  15.in   17.sol  20.in   22.sol
-00.sol  03.in   05.sol  08.in   10.sol  13.in   15.sol  18.in   20.sol  23.in
-01.in   03.sol  06.in   08.sol  11.in   13.sol  16.in   18.sol  21.in   23.sol
-01.sol  04.in   06.sol  09.in   11.sol  14.in   16.sol  19.in   21.sol
-02.in   04.sol  07.in   09.sol  12.in   14.sol  17.in   19.sol  22.in
-```
-
-- Você pode definir o padrão de nome dos arquivos gerados com `-p "@ @"`, sendo @ o wildcard que representa a numeração dos arquivo.
-  - Vamos refazer o comando acima, mas colocando "-p in.@ out.@"
-
-```bash
-$ tko build tests pasta/ cases.tio -p "in.@ out.@"
-$ ls pasta/
-in.00  in.05  in.10  in.15  in.20   out.01  out.06  out.11  out.16  out.21
-in.01  in.06  in.11  in.16  in.21   out.02  out.07  out.12  out.17  out.22
-in.02  in.07  in.12  in.17  in.22   out.03  out.08  out.13  out.18  out.23
-in.03  in.08  in.13  in.18  in.23   out.04  out.09  out.14  out.19
-in.04  in.09  in.14  in.19  out.00  out.05  out.10  out.15  out.20
-```
-
-- O `pattern` é útil para converter os formatos de Maratona, que vem em múltiplos arquivos para o `.tio`. Basta fazer o `match` do modelo que eles utilizarem.
-  - `-p "@.in @.out"`
-  - `-p "in@ out@"`
-  - entre outros.
+Este projeto está sob a licença MIT. Veja [LICENSE](LICENSE).
