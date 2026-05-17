@@ -5,6 +5,7 @@ from pathlib import Path
 import logging
 import typer
 from tko.config.settings import Settings
+from tko.i18n import MsgKey, t
 
 
 logger = logging.getLogger(__name__)
@@ -22,6 +23,6 @@ class AppContext:
     def load_from_context(ctx: typer.Context) -> AppContext:
         app_ctx: AppContext | None = ctx.obj
         if not isinstance(app_ctx, AppContext):
-            logger.error("Error: App context is not properly set.")
+            logger.error(t(MsgKey.APP_CONTEXT_NOT_SET))
             raise typer.Exit(1)
         return app_ctx

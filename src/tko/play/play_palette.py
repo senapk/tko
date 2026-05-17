@@ -7,6 +7,7 @@ from tko.play.keys import GuiKeys
 from tko.play.play_actions import PlayActions
 from tko.floating.floating_calibrate import FloatingCalibrate
 from tko.floating import Floating
+from tko.i18n import MsgKey, t
 
 class PlayPalette:
     def __init__(self, actions: PlayActions):
@@ -24,7 +25,7 @@ class PlayPalette:
         
         options.append(
             FloatingInputData(
-                lambda: RText.parse(" [] Tarefa: [y][][.] para o repositório", Symbols.action, "Baixar"),
+                lambda: RText.parse(f" [] Tarefa: [y][][.] para o repositório", Symbols.action, t(MsgKey.PLAY_PALETTE_DOWN_TASK)),
                 self.actions.downloader.down_remote_task,
                 GuiKeys.down_task
             ).set_exit_on_action(True)
@@ -33,7 +34,7 @@ class PlayPalette:
         # self evaluate
         options.append(
             FloatingInputData(
-                lambda: RText.parse(" [] Tarefa: Auto [y][][.] método de estudo", Symbols.action, "Avaliar"),
+                lambda: RText.parse(f" [] Tarefa: Auto [y][][.] método de estudo", Symbols.action, t(MsgKey.PLAY_PALETTE_EVALUATE)),
                 self.actions.evaluator.self_evaluate,
                 GuiKeys.self_evaluate
             ).set_exit_on_action(True)
@@ -41,7 +42,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: RText.parse(" [] Tarefa: [y][][.] pasta", Symbols.action, "Apagar"),
+                lambda: RText.parse(f" [] Tarefa: [y][][.] pasta", Symbols.action, t(MsgKey.PLAY_PALETTE_DELETE)),
                 self.actions.delete_folder_ask,
                 GuiKeys.delete_folder
             ).set_exit_on_action(True)
@@ -49,7 +50,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: RText.parse(" [] Mostrar [y][]", Symbols.action, "Ajuda"),
+                lambda: RText.parse(f" [] {t(MsgKey.PLAY_PALETTE_HELP)} [y][][.]", Symbols.action, "Ajuda"),
                 lambda: self.flags.panel.set_help(),
                 GuiKeys.panel_help
             ).set_exit_on_action(True)
@@ -57,7 +58,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: RText.parse(" [] Mostrar [y][]", icon(self.app.use_borders), "Bordas"),
+                lambda: RText.parse(f" [] {t(MsgKey.PLAY_PALETTE_BORDERS)} [y][][.]", icon(self.app.use_borders), "Bordas"),
                 lambda: self.app.toggle(ToggleOption.BORDERS),
                 GuiKeys.borders
             )
@@ -65,7 +66,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: RText.parse(" [] Mostrar [y][]", icon(self.app.use_images), "Imagens"),
+                lambda: RText.parse(f" [] {t(MsgKey.PLAY_PALETTE_IMAGES)} [y][][.]", icon(self.app.use_images), "Imagens"),
                 lambda: self.app.toggle(ToggleOption.IMAGES),
                 GuiKeys.images
             )
@@ -73,7 +74,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: RText.parse(" [] Mostrar [y][][.] decorrido", icon(self.flags.show_time.is_true()), "Tempo"),
+                lambda: RText.parse(f" [] {t(MsgKey.PLAY_PALETTE_TIME)} [y][][.] decorrido", icon(self.flags.show_time.is_true()), "Tempo"),
                 lambda: self.flags.show_time.toggle(),
                 GuiKeys.show_duration
             )
@@ -81,7 +82,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: RText.parse(" [] Mudar [y][][.] de programação", Symbols.action, "Linguagem"),
+                lambda: RText.parse(f" [] {t(MsgKey.PLAY_PALETTE_LANGUAGE)} [y][][.] de programação", Symbols.action, "Línguagem"),
                 self.gui.language.set_language,
                 GuiKeys.set_lang_drafts
             ).set_exit_on_action(True)
@@ -89,7 +90,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: RText.parse(" [] [y][][.] as teclas direcionais", Symbols.action, "Calibrar"),
+                lambda: RText.parse(f" [] {t(MsgKey.PLAY_PALETTE_CALIBRATE)} [y][][.] as teclas direcionais", Symbols.action, "Calibrar"),
                 lambda: self.fman.add_input(FloatingCalibrate(self.actions.settings)),
                 GuiKeys.calibrate
             ).set_exit_on_action(True)
@@ -97,7 +98,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: RText.parse(" [] Criar [y][][.] na pasta local", Symbols.action, "Rascunho"),
+                lambda: RText.parse(f" [] {t(MsgKey.PLAY_PALETTE_DRAFT)} [y][][.] na pasta local", Symbols.action, "Rascunho"),
                 self.actions.draft_creator.create_draft,
                 GuiKeys.create_draft
             ).set_exit_on_action(True)
@@ -105,7 +106,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: RText.parse(" [] [y][][.] pasta de rascunhos", Symbols.action, "Reload"),
+                lambda: RText.parse(f" [] {t(MsgKey.PLAY_PALETTE_RELOAD)} [y][][.] pasta de rascunhos", Symbols.action, "Reload"),
                 self.actions.reload,
                 GuiKeys.reload_game
             ).set_exit_on_action(True)
@@ -113,7 +114,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: RText.parse(" [] Ver [y][][.] da tarefa ", Symbols.action, "versões"),
+                lambda: RText.parse(f" [] {t(MsgKey.PLAY_PALETTE_VERSIONS)} [y][][.] da tarefa ", Symbols.action, "versões"),
                 self.actions.editor.open_versions,
                 GuiKeys.unfold_patch
             ).set_exit_on_action(True)
@@ -121,7 +122,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: RText.parse(" [] [y][][.] painel", Symbols.action, "Aumentar"),
+                lambda: RText.parse(f" [] [y][][.] {t(MsgKey.PLAY_PALETTE_PANEL_SIZE)}", Symbols.action, "Aumentar"),
                 lambda: self.actions.resize_panels(10),
                 GuiKeys.panel_resize_inc
             )
@@ -129,7 +130,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: RText.parse(" [] [y][][.] painel", Symbols.action, "Diminuir"),
+                lambda: RText.parse(f" [] [y][][.] {t(MsgKey.PLAY_PALETTE_PANEL_SIZE)}", Symbols.action, "Diminuir"),
                 lambda: self.actions.resize_panels(-10),
                 GuiKeys.panel_resize_dec
             )

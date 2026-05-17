@@ -1,6 +1,7 @@
 import typer
 
 from tko.app_context import AppContext
+from tko.i18n import MsgKey, t
 
 app = typer.Typer(help="Reset configuration")
 
@@ -11,7 +12,7 @@ def reset_cache(ctx: typer.Context):
     changedir = app_ctx.changedir
     repo, _, _ = load_repo(changedir)
     if repo is None:
-        print("Nenhum repositório TKO encontrado.")
+        print(t(MsgKey.RESET_NO_REPO))
         return
     repo.git_cache.clear_cache()
 

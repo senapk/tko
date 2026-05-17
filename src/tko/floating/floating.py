@@ -1,6 +1,7 @@
 from tko.widget.frame import Frame
 from tko.util.rtext import RText
 from tko.widget.fmt import Fmt
+from tko.i18n import MsgKey, t
 from typing import Callable
 import enum
 import curses
@@ -100,7 +101,7 @@ class Floating(FloatingABC):
         valid = "<>^v"
         for c in self.floating_align:
             if c not in valid:
-                raise ValueError("Invalid align " + c)
+                raise ValueError(t(MsgKey.FLOATING_INVALID_ALIGN, align=c))
 
         lines, cols = Fmt.get_size()
 

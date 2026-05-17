@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Optional
 
 from tko.app_context import AppContext
+from tko.i18n import MsgKey, t
 
 app = typer.Typer(help="Build repository artifacts")
 
@@ -70,7 +71,7 @@ def build_drafts(ctx: typer.Context):
     changedir = app_ctx.changedir
     here = Path(changedir).resolve()
     
-    print(f"Updating drafts in {here}")
+    print(t(MsgKey.CLI_BUILD_UPDATING_DRAFTS, folder=here))
     source_src = CodeFilter.get_default_src_dir(here)
     drafts_dest = CodeFilter.get_source_drafts_dir(here)
     if source_src.is_dir():

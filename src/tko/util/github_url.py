@@ -2,6 +2,7 @@
 import urllib.request
 from tko.feno.github_url_structure import GithubUrlStructure
 from tko.feno.link_rebase import LinkRebase
+from tko.i18n import MsgKey, t
 from tko.util.decoder import Decoder
 
 class GitHubUrl:
@@ -10,14 +11,14 @@ class GitHubUrl:
         self.url_structure: GithubUrlStructure | None = None
 
         if not url.startswith("https://"):
-            raise ValueError("Invalid URL")
+            raise ValueError(t(MsgKey.GITHUB_URL_INVALID_URL))
 
         if url.startswith("https://gist.githubusercontent.com"):
             self.raw_link = url
         else:
             url_structure = GithubUrlStructure()
             if not url_structure.parse(url):
-                raise ValueError("Invalid GitHub URL")
+                raise ValueError(t(MsgKey.GITHUB_URL_INVALID_GITHUB_URL))
             self.url_structure = url_structure
         self.file = ""
 
@@ -33,7 +34,9 @@ class GitHubUrl:
         [tempfile, __content] = urllib.request.urlretrieve(self.fixed_url, filename)
         content = Decoder.load(tempfile)
         if self.url_structure is not None:
-            content = LinkRebase.rebase(content, self.url_structure)
+            rebased = LinkRebase.rebase(content, self.url_structure)
+            if rebased is not None:
+                content = rebased
         Decoder.save(filename, content)
         return
 

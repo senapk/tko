@@ -8,6 +8,7 @@ from tko.game.task import Task
 from tko.repository.remote import Remote
 from tko.util.decoder import Decoder
 from tko.feno.indexer import fix_readme
+from tko.i18n import MsgKey, t
 from icecream import ic  # type: ignore
 
 
@@ -32,7 +33,7 @@ class GameBuilder:
             filename: Path = self.remote.path.index_file
         except ValueError:
             if self.verbose:
-                logger.exception("Erro ao obter o arquivo README da fonte %s", self.remote.data.name)
+                logger.exception(t(MsgKey.GAME_BUILDER_README_FETCH_ERROR, name=self.remote.data.name))
             return self
         self.__ensure_sandbox_readme_fixed(filename)
         content: str = self.load_content(filename)
@@ -48,7 +49,7 @@ class GameBuilder:
         if not filename.exists():
             if not self.remote.is_sandbox:
                 if self.verbose:
-                    logger.warning("Aviso: fonte %s não encontrada no source %s", filename, self.remote.data.name)
+                    logger.warning(t(MsgKey.GAME_BUILDER_SOURCE_NOT_FOUND, filename=filename, name=self.remote.data.name))
         else:
             content = Decoder.load(filename)
         return content
@@ -61,11 +62,7 @@ class GameBuilder:
         if not filename.exists():
             # print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}, criando arquivo")
             if self.verbose:
-                logger.warning(
-                    "Aviso: fonte %s não encontrada no source %s, criando arquivo",
-                    filename,
-                    self.remote.data.name,
-                )
+                logger.warning(t(MsgKey.GAME_BUILDER_SOURCE_NOT_FOUND_CREATING, filename=filename, name=self.remote.data.name))
             filename.parent.mkdir(parents=True, exist_ok=True)
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(f"# {self.remote.data.name}\n\n")
@@ -101,11 +98,13 @@ class GameBuilder:
                 else:
                     if self.verbose:
                         logger.warning(
-                            "Quest\n%s:%s\n%s\nrequer %s que não existe",
-                            filename,
-                            q.source.line_number,
-                            str(q),
-                            r,
+                            t(
+                                MsgKey.GAME_BUILDER_QUEST_REQUIRES_MISSING,
+                                filename=filename,
+                                line=q.source.line_number,
+                                quest=str(q),
+                                required=r,
+                            )
                         )
                     exit(1)
 
@@ -116,7 +115,7 @@ class GameBuilder:
         source_dir_root: Path | None = self.remote.path.source_dir
         if source_dir_root is None:
             if self.verbose:
-                logger.warning("Aviso: fonte %s não possui diretório de origem", alias)
+                logger.warning(t(MsgKey.GAME_BUILDER_SOURCE_NO_ORIGIN_DIR, name=alias))
             return
         git_url: str | None = self.remote.data.git_url
 
@@ -124,7 +123,7 @@ class GameBuilder:
             filename = self.remote.path.index_file
         except ValueError:
             if self.verbose:
-                logger.exception("Erro ao obter o arquivo de índice da fonte %s", alias)
+                logger.exception(t(MsgKey.GAME_BUILDER_INDEX_FETCH_ERROR, name=alias))
             return
         for line_num, line in enumerate(lines):
             quest_parser = QuestParser(alias)
@@ -140,7 +139,7 @@ class GameBuilder:
     def __get_active_quest(self) -> Quest:
         if self.active_quest is None:
             qkey = "_sem_quest"
-            return self.__add_quest(Quest("Sem Quest", qkey))
+            return self.__add_quest(Quest(t(MsgKey.GAME_BUILDER_NO_QUEST_TITLE), qkey))
         return self.active_quest
 
     def __add_quest(self, quest: Quest) -> Quest:

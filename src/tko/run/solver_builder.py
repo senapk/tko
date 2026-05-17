@@ -8,6 +8,7 @@ from tko.util.runner import Runner
 from tko.config.settings import Settings
 from pathlib import Path
 from tko.run_build.ts_macro_preprocessor import TypeScriptMacroPreprocessor
+from tko.i18n import MsgKey, t
 
 class CompileError(Exception):
     def __init__(self, message: str):
@@ -83,8 +84,8 @@ class SolverBuilder:
 
     def check_tool(self, name: str):
         if shutil.which(name) is None:
-            self.__exec.set_compile_error(RText.parse(f"[r]Falha: O comando '{name}' não foi encontrado[.]")) 
-            raise CompileError("fail: comando '" + name + "' não foi encontrado")
+            self.__exec.set_compile_error(RText.parse(f"[r]{t(MsgKey.SOLVER_COMMAND_NOT_FOUND, name=name)}[.]"))
+            raise CompileError(t(MsgKey.SOLVER_COMMAND_NOT_FOUND, name=name))
 
     def not_compiled(self):
         return not self.__exec.compiled()
@@ -159,7 +160,7 @@ class SolverBuilder:
     def prepare_exec_with_lang(self):
         lang = self.settings.get_languages_settings().get_languages().get(self.args_list[0].suffix[1:], None)
         if lang is None:
-            self.__exec.set_compile_error(RText.parse(f"[r]Falha: Extensão de arquivo '{self.args_list[0].suffix}' não reconhecida e sem configuração de linguagem[.]"))
+            self.__exec.set_compile_error(RText.parse(f"[r]{t(MsgKey.SOLVER_EXTENSION_UNRECOGNIZED, suffix=self.args_list[0].suffix)}[.]"))
             return
         self._prepare_exec_with_commands(lang.build_cmd, lang.run_cmd)
 
@@ -202,7 +203,7 @@ class SolverBuilder:
         try:
             lang = self.settings.get_languages_settings().get_languages().get("ts", None)
             if lang is None:
-                self.__exec.set_compile_error(RText.parse("[r]Falha: Configuração da linguagem 'ts' não encontrada[.]"))
+                self.__exec.set_compile_error(RText.parse(f"[r]{t(MsgKey.SOLVER_TS_CONFIG_NOT_FOUND)}[.]"))
                 return
             build_cmd = lang.build_cmd.strip() if lang.build_cmd is not None else ""
             run_cmd = lang.run_cmd.strip() if lang.run_cmd is not None else ""

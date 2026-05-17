@@ -3,12 +3,13 @@ from pathlib import Path
 from tko.repository.git_cache import UpdateMode
 from tko.repository.repository import Repository
 from tko.repository.repository_paths import RepositoryPaths
+from tko.i18n import MsgKey, t
 
 def load_repo(dir_path: Path, show_warnings: bool = True, auto_load: bool = True, global_cache: bool = False, force_update: bool = False, force_offline: bool = False) -> tuple[Repository | None, Path | None, UpdateMode]:
     
     if global_cache:
         RepositoryPaths.use_global_cache_folder = True
-        print(f"Usando cache global em: {RepositoryPaths('').cache_folder}")
+        print(t(MsgKey.CLI_COMMON_GLOBAL_CACHE, cache=RepositoryPaths('').cache_folder))
         
     dir_parent = RepositoryPaths.rec_search_for_repo_parents(dir_path)
     if dir_parent is not None:
@@ -27,5 +28,5 @@ def load_repo(dir_path: Path, show_warnings: bool = True, auto_load: bool = True
         return repo, dir_parent, mode
 
     if show_warnings:
-        print("Nenhum repositório TKO encontrado.")
+        print(t(MsgKey.CLI_COMMON_NO_REPO))
     return None, None, UpdateMode.IF_OLDER

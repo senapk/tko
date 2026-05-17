@@ -5,6 +5,7 @@ from pathlib import Path
 from tko.run.unit import Unit
 from tko.util.decoder import Decoder
 from tko.util.pattern_loader import PatternLoader
+from tko.i18n import MsgKey, t
 
 
 logger = logging.getLogger(__name__)
@@ -31,5 +32,5 @@ class DirParser:
                 unit.set_expected(value + ("" if value.endswith("\n") else "\n"))
                 unit_list.append(unit)
         except FileNotFoundError:
-            logger.exception("Falha ao carregar arquivos da pasta %s", folder)
+            logger.exception(t(MsgKey.LOADER_FAILED_TO_LOAD, folder=folder))
         return unit_list

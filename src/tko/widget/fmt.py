@@ -1,6 +1,7 @@
 import curses
 from tko.util.rtext import RText
 from tko.widget.colors import Colors
+from tko.i18n import MsgKey, t
 
 
 class TextPosition:
@@ -65,7 +66,7 @@ class Fmt:
     @staticmethod
     def stroke(y: int, x: int, fmt: str, text: str):
         if Fmt.__scr is None:
-            raise Exception("Fmt.__scr não foi inicializado")
+            raise Exception(t(MsgKey.FMT_NOT_INITIALIZED))
         stdscr = Fmt.__scr
         italic = False
         underline = False

@@ -6,6 +6,7 @@ from tko.run.solver_builder import SolverBuilder
 from tko.run.wdir_summary_service import WdirSummaryService
 from tko.run.wdir_target_resolver import WdirTargetResolver
 from tko.run.wdir_units_service import WdirUnitsService
+from tko.i18n import MsgKey, t
 from tko.util.rtext import RText
 from pathlib import Path
 from tko.config.settings import Settings
@@ -31,7 +32,7 @@ class Wdir:
 
     def get_solver(self) -> SolverBuilder:
         if self.__solver is None:
-            raise FileNotFoundError("fail: Não foi encontrado arquivo de código")
+            raise FileNotFoundError(t(MsgKey.RUN_NO_SOURCE_FILES))
         return self.__solver
     
     def get_unit_list(self) -> list[Unit]:
@@ -71,11 +72,11 @@ class Wdir:
 
     def autoload(self):
         if self.__config.autoload_folder is None:
-            raise Warning("fail: pasta de autoload não definida")
+            raise Warning(t(MsgKey.RUN_AUTOLOAD_FOLDER_NOT_SET))
         folder: Path = self.__config.autoload_folder
 
         if self.__config.lang == "":
-            print(RText.parse("Você não definiu os arquivos diretamente. Use [y]-l[.] caso queira especificar a linguagem para autoloading."))
+            print(RText.parse(t(MsgKey.RUN_AUTOLOAD_LANG_HINT)))
 
         source_list, solver_list = self.__target_resolver.resolve_autoload(folder, self.__config.lang)
 
@@ -100,7 +101,7 @@ class Wdir:
     def build(self):
         self.__pack_list, loading_failures = self.__units_service.load_packs(self.__source_list)
         if loading_failures > 0 and loading_failures == len(self.__source_list):
-            raise FileNotFoundError("failure: nenhum arquivo de teste encontrado")
+            raise FileNotFoundError(t(MsgKey.RUN_NO_TEST_CASES))
         self.__unit_list = self.__units_service.merge_unique_units(self.__pack_list)
         #self.__number_and_mark_duplicated()
         #self.__remove_duplicated()
@@ -118,7 +119,7 @@ class Wdir:
             if 0 <= index < len(self.__unit_list):
                 self.__unit_list = [self.__unit_list[index]]
             else:
-                raise ValueError("Índice fora dos limites: " + str(index))
+                raise ValueError(t(MsgKey.RUN_FILTER_INDEX_OUT_OF_BOUNDS, index=index))
         return self
 
     def manipulate(self, param: Param.Manip):

@@ -16,6 +16,7 @@ from tko.play_tree.task_tree import TaskTree
 from tko.play_gui.gui import Gui
 from tko.play.play_actions import PlayActions
 from tko.play.flag_functors import FlagFunctor
+from tko.i18n import MsgKey, t
 from icecream import ic # type: ignore
 
 import curses
@@ -161,7 +162,11 @@ class Play:
             return
         if key < 0 or key > 255:
             return
-        self.fman.add_input( Floating().bottom().right().set_error().put_text(f"Tecla char:{chr(key)}, code:{key}, não reconhecida") )
+        self.fman.add_input(
+            Floating().bottom().right().set_error().put_text(
+                t(MsgKey.PLAY_KEY_NOT_RECOGNIZED, char=chr(key), code=key)
+            )
+        )
 
 
     def main(self, scr: curses.window):

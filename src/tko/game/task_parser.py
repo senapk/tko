@@ -5,6 +5,7 @@ from tko.game.task_config import TaskLoss, TaskMain, TaskTest
 from tko.game.task_resource import TaskResource, ResourceType
 from tko.game.task_matcher import TaskMatcher
 from tko.feno.github_url_structure import GithubUrlStructure
+from tko.i18n import MsgKey, t
 from icecream import ic # type: ignore
 from pathlib import Path
 
@@ -110,7 +111,7 @@ class TaskParser:
         # url link tasks
         if tm.task_link.startswith(r"http://") or tm.task_link.startswith(r"https://"):
             if tm.is_view:
-                logger.info("Parsing view task with external url: %s", tm.task_link)
+                logger.info(t(MsgKey.TASK_PARSER_VIEW_EXTERNAL_URL, url=tm.task_link))
                 self.task.resource.external_url = tm.task_link
                 return self.task
             else:
@@ -122,7 +123,7 @@ class TaskParser:
                     task.resource.editable_source = False
                     return task
                 else:
-                    logger.warning("Parsing edit task with external url: %s", tm.task_link)
+                    logger.warning(t(MsgKey.TASK_PARSER_EDIT_EXTERNAL_URL, url=tm.task_link))
                     task.resource.external_url = tm.task_link
                     task.resource.editable_source = False
                     task.resource.resource_type = ResourceType.VIEW

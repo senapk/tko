@@ -6,6 +6,7 @@ from tko.repository.repository_paths import RepositoryPaths
 import shutil
 from tko.config.settings import Settings
 from tko.repository.repository_loader import RepositoryLoader
+from tko.i18n import MsgKey, t
 
 class RepositoryStarter:
     def __init__(self, settings: Settings, folder: Path | None, language: str | None = None):
@@ -30,7 +31,7 @@ class RepositoryStarter:
         cache_folder.mkdir(parents=True, exist_ok=True)
         if self.language is not None:
             repo.data.lang = self.language
-            print(RText.parse(f"A linguagem do repositório foi definida como [y]{self.language}[.]."))
+            print(RText.parse(t(MsgKey.REPO_STARTER_LANGUAGE_SET, language=self.language)))
         else:
             LanguageSetter.check_lang_in_text_mode(self.settings, self.repo)
         
@@ -39,32 +40,32 @@ class RepositoryStarter:
         return True
 
     def print_end_msg(self):
-        print(RText.parse(f"Voce pode acessar o repositório com o comando [g]tko open[.]"))
+        print(RText.parse(t(MsgKey.REPO_STARTER_OPEN_HINT)))
     
     def create_repository(self) -> Repository | None:
         path_parents = RepositoryPaths.rec_search_for_repo_parents(self.folder)
 
         if path_parents is not None and path_parents.resolve() == self.folder.resolve():
-            print(RText.parse(f"Já existe um repositório TKO na pasta [y]{self.folder.resolve()}[.]"))
-            print(RText.parse(f"Deseja resetar o repositório? ([g]s[.]/[r]n[.]): "), end="")
+            print(RText.parse(t(MsgKey.REPO_STARTER_EXISTS, folder=self.folder.resolve())))
+            print(RText.parse(t(MsgKey.REPO_STARTER_RESET_PROMPT)), end="")
             op = input()
             if op == "n":
                 return None
 
         elif path_parents is not None:
             if self.folder != path_parents:
-                print(RText.parse(f"Você está tentando criar um repositório dentro de outro, pois já existe rep em [r]{path_parents}[.]"))
-                print(RText.parse("Você pode apagar o repositório antigo, criar seu repositório em outro lugar ou sobrescrever as configurações."))
+                print(RText.parse(t(MsgKey.REPO_STARTER_INSIDE_OTHER_REPO, parent=path_parents)))
+                print(RText.parse(t(MsgKey.REPO_STARTER_DEEP_REPO_WARN_2)))
             self.folder = path_parents
-            print(RText.parse(f"Deseja sobrescrever as configurações do repositório em [y]{self.folder}[.] ? ([g]s[.]/[r]n[.]): "), end="")
+            print(RText.parse(t(MsgKey.REPO_STARTER_OVERWRITE_PROMPT, folder=self.folder)), end="")
             op = input()
             if op == "n":
                 return None
         else:
             path_subdir_list = RepositoryPaths.rec_search_for_repo_subdir(self.folder)
             if len(path_subdir_list) > 0:
-                print(RText.parse(f"Você está tentando criar um repositório TKO na pasta [y]{self.folder.resolve()}[.]"))
-                print(RText.parse("Porém já existem repositórios TKO abaixo dessa pasta. Mova ou apague-os"))
+                print(RText.parse(t(MsgKey.REPO_STARTER_DEEP_REPO_WARN, folder=self.folder.resolve())))
+                print(RText.parse(t(MsgKey.REPO_STARTER_DEEP_REPO_WARN_2)))
                 for path in path_subdir_list:
                     print(RText.parse(f"- [r]{path}[.]"))
                 return None
@@ -74,5 +75,5 @@ class RepositoryStarter:
     def create_empty_repo(self):
         source = self.repo.create_default_sandbox_source()
         self.repo.data.set_remote(source)
-        print(f"Criando repositório vazio, como pasta para atividades locais")
+        print(t(MsgKey.REPO_STARTER_EMPTY_REPO))
     

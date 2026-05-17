@@ -1,6 +1,7 @@
 from tko.floating.floating import Floating, FloatingABC
 from tko.util.symbols import Symbols
 from tko.util.rtext import RText
+from tko.i18n import MsgKey, t
 
 import curses
 from typing import Callable
@@ -29,7 +30,7 @@ class FloatingInputText(FloatingABC):
         content.clear()
         content.append(self.label)
         is_allowed = RText(Symbols.check, "g") if self.input_text not in self.unallowed_strings else RText(Symbols.failure, "r")
-        content.append(RText("Digite aqui: ") + self.input_text + Symbols.cursor + is_allowed)
+        content.append(RText(t(MsgKey.INPUT_TEXT_PROMPT)) + self.input_text + Symbols.cursor + is_allowed)
         content.append(RText())
         self.floating.draw()
 

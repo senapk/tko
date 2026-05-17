@@ -1,6 +1,7 @@
 import typer
 from pathlib import Path
 from typing import Optional
+from tko.i18n import MsgKey, t
 
 
 def _build_readme_candidates_from_repo_url(repo_url: str) -> list[str]:
@@ -27,7 +28,7 @@ def tool_mdpp(
 
     target_paths = [Path(x) for x in targets] if targets else [Path("README.md")]
     if not targets:
-        print(f"Updating README.md in {Path().name}")
+        print(t(MsgKey.CLI_TOOL_MDPP_UPDATING_README, folder=Path().name))
 
     action = Action.CLEAN if clean else Action.RUN
     for target in target_paths:
@@ -96,9 +97,9 @@ def tool_rebase_links(
                     temp_file: str = str(Path(tmpdir) / "temp.md")
                     remote: GitHubUrl = GitHubUrl(candidate)
                     remote.download_and_rebase(temp_file)
-                    print(f"Arquivo url={candidate} baixado com sucesso")
-                    print("Rebase concluído")
-                    print(f"Arquivo salvo no path: {output_path}")
+                    print(t(MsgKey.CLI_TOOL_REBASE_URL_DOWNLOADED, url=candidate))
+                    print(t(MsgKey.CLI_TOOL_REBASE_DONE))
+                    print(t(MsgKey.CLI_TOOL_REBASE_SAVED_PATH, path=output_path))
                     # Copy from temp to final output
                     import shutil
                     shutil.copy(temp_file, output_path)
@@ -106,16 +107,16 @@ def tool_rebase_links(
             except Exception as exc:
                 last_error = exc
 
-        raise Warning(f"Não foi possível baixar README.md para @{alias}: {last_error}")
+        raise Warning(t(MsgKey.CLI_TOOL_REBASE_ALIAS_README_FAILED, alias=alias, error=last_error))
 
     if target.startswith("https://"):
         with tempfile.TemporaryDirectory() as tmpdir:
             temp_file: str = str(Path(tmpdir) / "temp.md")
             remote: GitHubUrl = GitHubUrl(target)
             remote.download_and_rebase(temp_file)
-            print(f"Arquivo url={target} baixado com sucesso")
-            print("Rebase concluído")
-            print(f"Arquivo salvo no path: {output_path}")
+            print(t(MsgKey.CLI_TOOL_REBASE_URL_DOWNLOADED, url=target))
+            print(t(MsgKey.CLI_TOOL_REBASE_DONE))
+            print(t(MsgKey.CLI_TOOL_REBASE_SAVED_PATH, path=output_path))
             # Copy from temp to final output
             import shutil
             shutil.copy(temp_file, output_path)
@@ -125,8 +126,8 @@ def tool_rebase_links(
         content: str = Decoder.load(source_path)
         content = LinkRebase.change_to_relative_folder(content, relative_folder)
         Decoder.save(output_path, content)
-        print("Rebase concluído")
-        print(f"Arquivo salvo no path: {output_path}")
+        print(t(MsgKey.CLI_TOOL_REBASE_DONE))
+        print(t(MsgKey.CLI_TOOL_REBASE_SAVED_PATH, path=output_path))
 
 
 @app.command("filter", help="Filter code removing answers")
@@ -161,10 +162,10 @@ def tool_html(
     from tko.feno.html import convert_markdown_to_html
 
     if not input_file.endswith('.md'):
-        print("Erro: O arquivo de entrada Markdown deve ter a extensão .md")
+        print(t(MsgKey.CLI_TOOL_HTML_INPUT_MD_REQUIRED))
         raise typer.Exit(1)
     if not output_file.endswith('.html'):
-        print("Erro: O arquivo de saída HTML deve ter a extensão .html")
+        print(t(MsgKey.CLI_TOOL_HTML_OUTPUT_HTML_REQUIRED))
         raise typer.Exit(1)
 
     final_title = title if title != "Problema" else FenoTitle.extract_title(Path(input_file))

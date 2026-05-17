@@ -9,6 +9,7 @@ import hashlib
 from filelock import FileLock
 import shutil
 import enum
+from tko.i18n import MsgKey, t
 
 class UpdateMode(enum.Enum):
     ALWAYS = "always"
@@ -28,7 +29,7 @@ class GitCache:
 
     def clear_cache(self):
         if self.cache_dir.exists():
-            self.logger.info("Clearing git cache at %s...", self.cache_dir)
+            self.logger.info(t(MsgKey.GIT_CACHE_CLEARING, cache_dir=self.cache_dir))
             shutil.rmtree(self.cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
@@ -87,24 +88,24 @@ class GitCache:
         with self._acquire_lock(lock_path):
             if not repo.exists():
                 if verbose:
-                    self.logger.info("Cloning %s into cache...", url)
+                    self.logger.info(t(MsgKey.GIT_CACHE_CLONING, url=url))
                 ok = self._clone(url, repo)
                 if not ok:
                     if verbose:
-                        self.logger.warning("Failed to clone %s. Removing cache directory...", url)
+                        self.logger.warning(t(MsgKey.GIT_CACHE_CLONE_FAILED, url=url))
                     shutil.rmtree(repo, ignore_errors=True)
                     return None
 
             if self._is_expired(repo) or (self.update_mode == UpdateMode.ALWAYS) and not self.updated.get(str(repo), False):
                 try:
                     if verbose:
-                        self.logger.info("Updating cache for %s...", url)
+                        self.logger.info(t(MsgKey.GIT_CACHE_UPDATING, url=url))
                     self._update(repo)
                 except subprocess.CalledProcessError:
                     if self.update_mode == UpdateMode.IF_OLDER:
                         pass
                     if verbose:
-                        self.logger.warning("Failed to update cache for %s. Removing and re-cloning...", url)
+                        self.logger.warning(t(MsgKey.GIT_CACHE_UPDATE_FAILED_RECLONE, url=url))
                     shutil.rmtree(repo, ignore_errors=True)
                     self._clone(url, repo)
         return repo

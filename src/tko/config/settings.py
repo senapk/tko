@@ -6,6 +6,7 @@ from pathlib import Path
 import yaml #type: ignore
 
 from tko.config.languages_settings import LanguagesSettings
+from tko.i18n import MsgKey, t
 from tko.util.rtext import RText
 from tko.widget.colors import Colors
 from tko.util.decoder import Decoder
@@ -77,7 +78,7 @@ class Settings:
     def get_alias_git(self, alias: str) -> str:
         if alias in self.dict_alias_git:
             return self.dict_alias_git[alias]
-        raise Warning(f"Repositório git label {alias} não encontrado")
+        raise Warning(t(MsgKey.SETTINGS_GIT_LABEL_NOT_FOUND, alias=alias))
 
     def has_alias_git(self, alias: str) -> bool:
         return alias in self.dict_alias_git
@@ -90,7 +91,7 @@ class Settings:
             data: Any = yaml.safe_load(content)
 
             if data is None or not isinstance(data, dict):
-                raise FileNotFoundError(f"Arquivo de configuração vazio: {settings_file}")
+                raise FileNotFoundError(t(MsgKey.SETTINGS_EMPTY_CONFIG_FILE, path=settings_file))
             self.data = data
             self.dict_alias_git = data.get(self.__gitrepos, self.Defaults.alias_git) # type: ignore
             if len(self.dict_alias_git.keys()) == 0: # type: ignore
@@ -117,13 +118,13 @@ class Settings:
 
     def __str__(self):
         output: list[str] = []
-        output.append(str(RText.parse("[g]Arquivo global configuração:[.]")))
+        output.append(str(RText.parse(f"[g]{t(MsgKey.RESET_SETTINGS_PATH)}[.]")))
         output.append("    " + self.get_settings_file().resolve().as_posix())
-        output.append(str(RText.parse("[g]Configurações de linguagem:[.]")))
+        output.append(str(RText.parse(f"[g]{t(MsgKey.RESET_LANGUAGES_PATH)}[.]")))
         output.append("    " + self.get_languages_file().resolve().as_posix())
         output.append("")
         
-        output.append(str(RText.parse("[g]Fontes de tarefas remotas cadastradas:[.]")))
+        output.append(str(RText.parse(f"[g]{t(MsgKey.SETTINGS_REMOTE_SOURCES_REGISTERED)}[.]")))
         max_alias = max([len(key) for key in self.dict_alias_git])
         for key in self.dict_alias_git:
             output.append("- @{} : {}".format(key.ljust(max_alias), self.dict_alias_git[key]))

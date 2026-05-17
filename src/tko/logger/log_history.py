@@ -4,6 +4,7 @@ from tko.logger.log_item_self import LogItemSelf
 from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_move import LogItemMove
 from tko.logger.delta import Delta
+from tko.i18n import MsgKey, t
 from tko.repository.repository_paths import RepositoryPaths
 import datetime as dt
 
@@ -67,7 +68,7 @@ class LogHistory:
         if not log_folder.exists():
             return []
         if not log_folder.is_dir():
-            raise ValueError(f"Log folder '{log_folder}' is not a directory.")
+            raise ValueError(t(MsgKey.LOGGER_LOG_FOLDER_NOT_DIR, log_folder=log_folder))
         files = log_folder.iterdir()
 
         files_path = [f for f in files if f.suffix == '.log']

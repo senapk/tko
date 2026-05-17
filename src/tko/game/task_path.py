@@ -5,6 +5,7 @@ from tko.game.task_resource import TaskResource
 from tko.game.task_resource import ResourceType
 from tko.repository.git_cache import GitCache
 from tko.game.tree_item import TreeBasic
+from tko.i18n import MsgKey, t
 
 class TaskPath:
     def __init__(self, git_cache: GitCache, remote_root_dir: Path, loc: TaskResource, basic: TreeBasic):
@@ -17,11 +18,11 @@ class TaskPath:
     def work_dir(self) -> Path | None:
         loc = self.loc
         if loc.resource_type == ResourceType.VIEW:
-            raise ValueError(f"Task {self.basic.full_key} is a view resource, it does not have a work directory")
+            raise ValueError(t(MsgKey.TASK_PATH_VIEW_NO_WORKDIR, task_key=self.basic.full_key))
         if loc.editable_source:
             target = self.__remote_local_path(loc)
             if target is None:
-                raise ValueError(f"Task {self.basic.full_key} does not have a valid local path")
+                raise ValueError(t(MsgKey.TASK_PATH_INVALID_LOCAL_PATH, task_key=self.basic.full_key))
             return target.parent
         return self.remote_root_dir / self.basic.remote_name / self.basic.key
     

@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 import shutil
+from tko.i18n import MsgKey, t
 from tko.util.rtext import RText
 from tko.util.decoder import Decoder
 from typing import Any
@@ -181,7 +182,7 @@ class DeepFilter:
             with open(deny_list) as f:
                 deny = [x.strip() for x in f.read().splitlines()]
                 if filename in deny:
-                    print("(disabled):", destiny)
+                    print(t(MsgKey.FILTER_ACTION_DISABLED_PATH, path=destiny))
                     action_map[destiny] = Action(Action.DISABLED, "")
                     return
 
@@ -237,12 +238,12 @@ class DeepFilter:
         #     return
         for path, action in actions:
             if (run_actions or path.suffix[1:] in DeepFilter.include) and action.name in [Action.FILTERED, Action.COMCLEAN, Action.ORIGINAL] :
-                print(RText.parse(f"action: [g]{action.name}[.], path: {path.resolve()}"))
+                print(RText.parse(t(MsgKey.FILTER_ACTION_PATH, action=f"[g]{action.name}[.]", path=path.resolve())))
                 path.parent.mkdir(parents=True, exist_ok=True)
                 with open(path, "w") as f:
                     f.write(action.content) 
             else:
-                print(RText.parse(f"action: [y]disabled[.], path: {path.resolve()}"))
+                print(RText.parse(t(MsgKey.FILTER_ACTION_DISABLED_PATH, path=path.resolve())))
         
 class CodeFilter:
     @staticmethod
@@ -250,7 +251,7 @@ class CodeFilter:
         if path.is_file():
             file_content = Decoder.load(path)
             return True, file_content
-        logger.warning("Warning: File %s not found", path)
+        logger.warning(t(MsgKey.FILTER_FILE_NOT_FOUND, path=path))
         return False, "" 
 
     @staticmethod
@@ -260,14 +261,14 @@ class CodeFilter:
         if isinstance(destiny_dir, str):
             destiny_dir = Path(destiny_dir)
         if not source_dir.is_dir():
-            logger.error("Error: target must be a folder in recursive mode")
+            logger.error(t(MsgKey.FILTER_TARGET_MUST_BE_FOLDER))
             exit()
         if destiny_dir is None:
-            logger.error("Error: output folder must be specified in recursive mode")
+            logger.error(t(MsgKey.FILTER_OUTPUT_FOLDER_REQUIRED))
             exit()
         if destiny_dir.exists():
             if not force:
-                logger.error("Error: output folder already exists")
+                logger.error(t(MsgKey.FILTER_OUTPUT_FOLDER_EXISTS))
                 exit()
             else:
                 # recursive delete all folder content without deleting the folder itself

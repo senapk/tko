@@ -1,5 +1,6 @@
 import typer
 from tko.app_context import AppContext
+from tko.i18n import MsgKey, t
 
 app = typer.Typer(help="Configure settings")
 
@@ -31,7 +32,7 @@ def config_set(
 def config_list(ctx: typer.Context):
     app_ctx: AppContext = AppContext.load_from_context(ctx)
     settings = app_ctx.settings
-    print(f"SettingsFile\n- {settings.settings_dir}")
+    print(t(MsgKey.CLI_CONFIG_SETTINGS_FILE, settings_dir=settings.settings_dir))
     print(str(settings))
 
 if __name__ == "__main__":

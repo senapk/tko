@@ -1,4 +1,5 @@
 from tko.feno.github_url_structure import GithubUrlStructure
+from tko.i18n import MsgKey, t
 from tko.util.rtext import RText
 
 
@@ -16,7 +17,7 @@ class GithubCfg:
             self.__load_cfg_path(target)
             self.__parse_cfg()
             if self.cfg_path is None:
-                print(RText.parse(f"[r]fail[.]: {self.FILENAME} file not set"))
+                print(RText.parse(f"[r]{t(MsgKey.FENO_GITHUB_CFG_NOT_SET, filename=self.FILENAME)}[.]"))
 
     def cfg_exists(self):
         return self.cfg_path is not None

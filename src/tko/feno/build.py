@@ -7,6 +7,7 @@ from tko.feno.cases import Cases
 from tko.feno.log import Log
 from tko.feno.mdpp import Mdpp
 from tko.feno.filter import DeepFilter
+from tko.i18n import MsgKey, t
 from tko.util.decoder import Decoder
 from pathlib import Path
 import subprocess
@@ -132,11 +133,11 @@ def build_all(targets: list[Path], remote: bool, check: bool, erase: bool, brief
 
     if len(targets) == 0:
         targets = [Path(".")]
-        print("No target specified, using current directory")
+        print(t(MsgKey.FENO_BUILD_NO_TARGET_SPECIFIED))
 
     for target in targets:
         if not os.path.isdir(target):
-            print(f"\n    fail: {target} is not a directory")
+            print(f"\n    {t(MsgKey.FENO_BUILD_TARGET_NOT_DIRECTORY, target=target)}")
             continue
         hook = target.name
         actions = Actions(target).set_use_remote(remote)

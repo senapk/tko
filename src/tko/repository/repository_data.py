@@ -1,4 +1,5 @@
 import logging
+from tko.i18n import MsgKey, t
 from tko.repository.remote import Remote
 
 from typing import Any
@@ -86,7 +87,7 @@ class RepositoryData:
                     raise TypeError("The 'sources' field must be a list.")
 
         except (KeyError, TypeError):
-            logger.exception("Error loading data from dictionary")
+            logger.exception(t(MsgKey.REPOSITORY_DATA_LOAD_ERROR))
 
     def save_to_dict(self) -> dict[str, Any]:
         return {

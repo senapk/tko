@@ -24,6 +24,7 @@ class AppKeys(enum.Enum):
 
 @dataclass
 class AppSettings:
+    ui_language: str = "pt-BR"
     diff_mode: DiffMode = DiffMode.SIDE
     use_images: bool = True
     use_borders: bool = False
@@ -71,7 +72,9 @@ class AppSettings:
         obj = cls()
 
         for key, value in data.items():
-            if key == "diff_mode":
+            if key == "ui_language":
+                obj.ui_language = value
+            elif key == "diff_mode":
                 obj.diff_mode = DiffMode(value)
             elif key == "keys":
                 obj.keys = {AppKeys(k): v for k, v in value.items()}
@@ -84,6 +87,7 @@ class AppSettings:
     def __str__(self) -> str:
         output = [
             str(RText.parse("[g]Configurações globais:[.]")),
+            f"- Language: {self.ui_language}",
             f"- Diff    : {self.diff_mode.value}",
             f"- Editor  : {self.editor}",
             f"- Bordas  : {self.use_borders}",

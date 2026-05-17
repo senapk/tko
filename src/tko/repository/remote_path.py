@@ -1,6 +1,7 @@
 from tko.repository.git_cache import GitCache
 from pathlib import Path
 
+from tko.i18n import MsgKey, t
 from tko.repository.remote_data import RemoteData, SourceType
 
 class RemotePath:
@@ -24,17 +25,17 @@ class RemotePath:
     def index_file(self) -> Path:
         source_dir = self.source_dir
         if source_dir is None:
-            raise ValueError("Source directory does not exist")
+            raise ValueError(t(MsgKey.REMOTE_PATH_SOURCE_DIR_NOT_EXISTS))
         index_path = source_dir / self.data.index
         if index_path.exists():
             return index_path.resolve()
-        raise ValueError("Index file does not exist")
+        raise ValueError(t(MsgKey.REMOTE_PATH_INDEX_FILE_NOT_EXISTS))
     
     @property
     def work_dir(self) -> Path:
         if self.data.is_editable:
             source_dir = self.source_dir
             if source_dir is None:
-                raise ValueError("Source directory does not exist")
+                raise ValueError(t(MsgKey.REMOTE_PATH_SOURCE_DIR_NOT_EXISTS))
             return source_dir
         return (self.repo_root_dir / self.data.name).resolve()

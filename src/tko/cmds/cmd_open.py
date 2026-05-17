@@ -7,6 +7,7 @@ from pathlib import Path
 from tko.repository.git_cache import UpdateMode
 from tko.play_tree.task_formatter import TaskFormatter
 from tko.game.task import Task
+from tko.i18n import MsgKey, t
 
 class CmdOpen:
     def __init__(self, settings: Settings, repo: Repository, update_mode: UpdateMode):
@@ -23,8 +24,8 @@ class CmdOpen:
         self.repo_dir = repo_dir
         self.repo = Repository(repo_dir, self.update_mode)
         if not self.repo.paths.config_file.exists():
-            print(RText.parse("[r]Erro[.]: O comando [g]tko open[.] deve ser executado na pasta onde o repositório foi iniciado."))
-            print(RText.parse("[g]Ação[.]: Navegue ou passe o caminho até a pasta do repositório e tente novamente."))
+            print(RText.parse(t(MsgKey.OPEN_INVALID_REPO)))
+            print(RText.parse(t(MsgKey.OPEN_ACTION_HINT)))
             raise Warning(RText.parse("[r]Erro:[.] [y][][.] não contém um repositório do tko", repo_dir))
         from tko.repository.repository_loader import RepositoryLoader
         from tko.repository.game_coordinator import GameCoordinator

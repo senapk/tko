@@ -5,6 +5,7 @@ import re
 import enum
 import logging
 from tko.feno.filter import Filter
+from tko.i18n import MsgKey, t
 from tko.util.decoder import Decoder
 from pathlib import Path
 from dataclasses import dataclass
@@ -222,7 +223,7 @@ class Load:
                     params.extract = val
                     i += 1 # Consome o valor
                 else:
-                    logger.warning("missing value for --extract")
+                    logger.warning(t(MsgKey.MDPP_MISSING_EXTRACT_VALUE))
             elif token == "--tests":
                 val = Load.__get_value(tokens, i)
                 try:
@@ -232,7 +233,7 @@ class Load:
                     else:
                         raise ValueError
                 except ValueError:
-                    logger.warning("invalid or missing integer for --tests")
+                    logger.warning(t(MsgKey.MDPP_INVALID_TESTS_INTEGER))
 
             elif token == "--rmcom":
                 params.rmcom = True
@@ -241,7 +242,7 @@ class Load:
                 params.filter = True
 
             elif token.startswith("--"):
-                logger.warning("unrecognized tag '%s'", token)
+                logger.warning(t(MsgKey.MDPP_UNRECOGNIZED_TAG, tag=token))
             
             i += 1 # Sempre avança para o próximo token
             
@@ -306,7 +307,7 @@ class Load:
     def _process_file_content(abspath: Path, rel_path: str, params: LoadParams) -> str:
         """Encapsula a lógica de leitura e transformação do conteúdo."""
         if not abspath.is_file():
-            logger.warning("file %s not found", rel_path)
+            logger.warning(t(MsgKey.MDPP_FILE_NOT_FOUND, path=rel_path))
             return ""
 
         data = Decoder.load(abspath)
@@ -366,7 +367,7 @@ class Save:
                 content_old = Decoder.load(path)
             if not exists or content != content_old:
                 Decoder.save(path, content)
-                logger.info("file %s updated", path)
+                logger.info(t(MsgKey.MDPP_FILE_UPDATED, path=path))
 
 class MdppMain:
     @staticmethod
@@ -381,7 +382,7 @@ class MdppMain:
         if path.is_file():
             file_content = Decoder.load(path)
             return True, file_content
-        logger.warning("File %s not found", path)
+        logger.warning(t(MsgKey.MDPP_FILE_NOT_FOUND, path=path))
         return False, "" 
 
 class Mdpp:
@@ -390,10 +391,10 @@ class Mdpp:
         # path = MdppMain.fix_path(target)
         path = target
         if not path.suffix == ".md":
-            logger.warning("File %s is not a markdown file", path)
+            logger.warning(t(MsgKey.MDPP_FILE_NOT_MARKDOWN, path=path))
             return False
         if not path.is_file():
-            logger.warning("File %s not found", path)
+            logger.warning(t(MsgKey.MDPP_FILE_NOT_FOUND, path=path))
             return False
         target_dir = path.parent.resolve()
         found, original = MdppMain.open_file(path)

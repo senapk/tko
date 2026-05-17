@@ -10,6 +10,7 @@ from tko.floating.floating_input_text import FloatingInputText
 from tko.game.task import Task
 from tko.play_gui.gui import Gui
 from tko.util.rtext import RText
+from tko.i18n import MsgKey, t
 
 from tko.play.draft_creator import DraftCreator
 from tko.play.task_download_service import TaskDownloadService
@@ -66,7 +67,7 @@ class PlayActions:
             if obj.basic.key != text:
                 self.fman.add_input(
                     Floating().bottom().right()
-                    .put_text("\nTexto digitado não corresponde ao identificador da tarefa.\n")
+                    .put_text(f"\n{t(MsgKey.TASK_DELETE_NOT_MATCH)}\n")
                     .set_error()
                 )
                 return
@@ -75,13 +76,13 @@ class PlayActions:
                 shutil.rmtree(folder)
                 self.fman.add_input(
                     Floating().bottom().right()
-                    .put_text(f"\nPasta {folder} apagada com sucesso.\n")
+                    .put_text(f"\n{t(MsgKey.TASK_DELETE_SUCCESS, folder=folder)}\n")
                     .set_warning()
                 )
-            except OSError as e:
+            except OSError:
                 self.fman.add_input(
                     Floating().bottom().right()
-                    .put_text(f"\nErro ao apagar a pasta {folder}: {e}\n")
+                    .put_text(f"\n{t(MsgKey.PLAY_ACTION_DELETE_ERROR)}\n")
                     .set_error()
                 )
             self.reload()
@@ -92,17 +93,22 @@ class PlayActions:
             if folder == Path("") or not os.path.exists(folder):
                 self.fman.add_input(
                     Floating().bottom().right()
-                    .put_text("\nEssa tarefa não possui pasta de código local.\n")
+                    .put_text("\n" + t(MsgKey.PLAY_ACTION_TASK_NO_LOCAL_FOLDER) + "\n")
                     .set_error()
                 )
                 return
             if ic.enabled:
                 delete_folder(text=folder.name)
             else:
-                self.fman.add_input(FloatingInputText(RText("Para apagar essa pasta, digite ") + RText(f"{obj.basic.key}", "y"), action=delete_folder))
+                self.fman.add_input(
+                    FloatingInputText(
+                        RText(t(MsgKey.PLAY_ACTION_DELETE_CONFIRM_PREFIX)) + RText(f"{obj.basic.key}", "y"),
+                        action=delete_folder,
+                    )
+                )
         else:
             self.fman.add_input(
                 Floating().bottom().right()
-                .put_text("\nVocê só pode apagar pastas de tarefas.\n")
+                .put_text("\n" + t(MsgKey.PLAY_ACTION_ONLY_TASK_FOLDERS) + "\n")
                 .set_error()
             )

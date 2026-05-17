@@ -10,6 +10,7 @@ from tko.tester.tester_state import TesterState, SeqMode
 from tko.tester import tester_util
 from tko.repository.repository import Repository
 from tko.run.wdir import Wdir
+from tko.i18n import MsgKey, t
 
 
 class TesterNavigator:
@@ -40,7 +41,7 @@ class TesterNavigator:
         if state.locked_index:
             self.fman.add_input(
                 Floating().bottom().right().set_warning()
-                .put_text(f"←\nAtividade travada\nAperte {GuiKeys.lock} para destravar")
+                .put_text(t(MsgKey.TESTER_NAVIGATOR_LOCKED_HINT, arrow="←", lock_key=GuiKeys.lock))
             )
             return
         if not self.wdir.get_solver().has_compile_error():
@@ -57,7 +58,7 @@ class TesterNavigator:
         if state.locked_index:
             self.fman.add_input(
                 Floating().bottom().right().set_warning()
-                .put_text(f"→\nAtividade travada\nAperte {GuiKeys.lock} para destravar")
+                .put_text(t(MsgKey.TESTER_NAVIGATOR_LOCKED_HINT, arrow="→", lock_key=GuiKeys.lock))
             )
             return
         if not self.wdir.get_solver().has_compile_error():
@@ -86,9 +87,9 @@ class TesterNavigator:
         if len(solver_names) == 1:
             self.fman.add_input(
                 Floating().bottom().right().set_warning()
-                .put_text("Seu projeto só tem um arquivo de solução.")
-                .put_text("Essa funcionalidade troca qual dos arquivos")
-                .put_text("de solução será o principal.")
+                .put_text(t(MsgKey.TESTER_NAVIGATOR_SINGLE_SOLVER_1))
+                .put_text(t(MsgKey.TESTER_NAVIGATOR_SINGLE_SOLVER_2))
+                .put_text(t(MsgKey.TESTER_NAVIGATOR_SINGLE_SOLVER_3))
             )
             return
         self.task.main_idx = (self.task.main_idx + 1) % len(solver_names)
@@ -115,7 +116,7 @@ class TesterNavigator:
         if self.rep is None:
             self.fman.add_input(
                 Floating().bottom().right().set_warning()
-                .put_text("Nenhum repositório de logs encontrado.")
+                .put_text(t(MsgKey.TESTER_NAVIGATOR_NO_LOG_REPO))
             )
             return
         logger = self.rep.logger

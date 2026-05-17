@@ -8,6 +8,7 @@ from tko.repository.repository import Repository
 from tko.config.settings import Settings
 from tko.cmds.cmd_down import CmdDown
 from tko.logger.log_item_move import LogItemMove
+from tko.i18n import MsgKey, t
 
 
 class TaskDownloadService:
@@ -24,8 +25,8 @@ class TaskDownloadService:
         if isinstance(obj, Quest):
             self.fman.add_input(
                 Floating().bottom().right()
-                .put_text("\nEssa é uma missão.")
-                .put_text("\nVocê só pode baixar tarefas.\n")
+                .put_text(f"\n{t(MsgKey.TASK_DOWNLOAD_IS_MISSION)}")
+                .put_text(f"\n{t(MsgKey.TASK_DOWNLOAD_ONLY_TASKS)}\n")
                 .set_error()
             )
             return
@@ -36,11 +37,11 @@ class TaskDownloadService:
     def down_task(self, task: Task) -> None:
         if not task.resource.is_import_type:
             self.fman.add_input(
-                Floating().bottom().right().put_text("\nEssa não é uma tarefa de baixável.\n").set_error()
+                Floating().bottom().right().put_text(f"\n{t(MsgKey.TASK_DOWNLOAD_NOT_IMPORTABLE)}\n").set_error()
             )
             return
         down_frame = (
-            Floating().bottom().right().set_warning().set_text_ljust().set_header(" Baixando tarefa ")
+            Floating().bottom().right().set_warning().set_text_ljust().set_header(f" {t(MsgKey.TASK_DOWNLOAD_HEADER)} ")
         )
         self.fman.add_input(down_frame)
 

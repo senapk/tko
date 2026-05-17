@@ -10,6 +10,7 @@ from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.repository.git_cache import GitCache
 from tko.repository.remote import Remote
+from tko.i18n import MsgKey, t
 # from typing import override
 
 
@@ -33,13 +34,13 @@ class Game:
     def get_task(self, key: str) -> Task:
         if key in self.tasks:
             return self.tasks[key]
-        raise Warning(f"fail: tarefa '{key}' não encontrada no curso")
+        raise Warning(t(MsgKey.GAME_TASK_NOT_FOUND_IN_COURSE, task_key=key))
 
     def get_sandbox_remote(self) -> Remote:
         for s in self.remotes:
             if s.is_sandbox:
                 return s
-        raise ValueError("Local sandbox source not found")
+        raise ValueError(t(MsgKey.GAME_SANDBOX_SOURCE_NOT_FOUND))
 
     def set_remotes(self, remotes: list[Remote], language: str):
         self.remotes = remotes
@@ -55,7 +56,7 @@ class Game:
             try:
                 gb.build_from(self.language)
             except ValueError:
-                logger.exception("Falha ao construir jogo para a fonte %s", remote.data.name)
+                logger.exception(t(MsgKey.GAME_BUILD_FAILED_FOR_SOURCE, name=remote.data.name))
                 continue
             for quest_key in gb.ordered_quests:
                 self.ordered_quests.append(remote.data.name + "@" + quest_key)

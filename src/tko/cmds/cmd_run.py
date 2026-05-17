@@ -12,6 +12,7 @@ from tko.run.run_loader import RunLoader
 from tko.run.run_presenter import RunPresenter
 from tko.run.run_executor import RunExecutor
 from tko.tester import Tester
+from tko.i18n import MsgKey, t
 
 class Run:
     def __init__(self, settings: Settings, target_list: list[Path], param: None | Param.Basic, language: str | None = None, repo: Repository | None = None):
@@ -116,7 +117,7 @@ class Run:
             if not self.context.config.eval_mode:
                 executor.free_run()
             else:
-                print(RText("fail: ") + "Nenhum caso de teste encontrado.")
+                print(RText("fail: ") + t(MsgKey.RUN_NO_TEST_CASES))
             return 0
         
         # Normal test mode
@@ -125,6 +126,6 @@ class Run:
     def _missing_target(self) -> bool:
         if not self.context.wdir.has_solver() and not self.context.wdir.has_tests():
             if not self.context.config.curses_mode:
-                print(RText("fail: ") + "Nenhum arquivo de código ou de teste encontrado.")
+                print(RText("fail: ") + t(MsgKey.RUN_NO_SOURCE_OR_TESTS))
             return True
         return False

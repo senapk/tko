@@ -2,6 +2,7 @@
 
 from tko.config.settings import Settings
 from tko.enums.diff_mode import DiffMode
+from tko.i18n import MsgKey, t
 
 class ConfigParams:
     def __init__(self):
@@ -25,20 +26,22 @@ class CmdConfig:
         if param.borders is not None:
             action = True
             settings.app.use_borders = True
-            print("Borders now is: " + str("True" if param.borders == "1" else "False"))
+            status = "True" if param.borders == "1" else "False"
+            print(t(MsgKey.CONFIG_BORDERS_STATUS, status=status))
         if param.images is not None:
             action = True
             settings.app.use_images = param.images == "1"
-            print("Images now is: " + str("True" if param.images == "1" else "False"))
+            status = "True" if param.images == "1" else "False"
+            print(t(MsgKey.CONFIG_IMAGES_STATUS, status=status))
             
         if param.side:
             action = True
             settings.app.diff_mode = DiffMode.SIDE
-            print("Diff mode now is: SIDE_BY_SIDE")
+            print(t(MsgKey.CONFIG_DIFF_MODE_SIDE))
         if param.down:
             action = True
             settings.app.diff_mode = DiffMode.DOWN
-            print("Diff mode now is: UP_DOWN")
+            print(t(MsgKey.CONFIG_DIFF_MODE_DOWN))
         # if param.lang:
         #     action = True
         #     settings.app._lang_default = param.lang
@@ -51,12 +54,12 @@ class CmdConfig:
         if param.editor:
             action = True
             settings.app.editor = param.editor
-            print(f"Novo comando para abrir arquivos de código: {param.editor}")
+            print(t(MsgKey.CONFIG_EDITOR_CHANGED, editor=param.editor))
 
         if param.timeout is not None:
             action = True
             settings.app.timeout = param.timeout
-            print(f"Novo timeout: {param.timeout}")
+            print(t(MsgKey.CONFIG_TIMEOUT_CHANGED, timeout=param.timeout))
 
         if not action:
             print(str(settings))

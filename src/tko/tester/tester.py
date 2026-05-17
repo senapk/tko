@@ -23,6 +23,7 @@ from tko.tester.tester_ui_actions import TesterUiActions
 from tko.repository.repository import Repository
 from tko.run.solver_builder import CompileError
 from tko.run.wdir import Wdir
+from tko.i18n import MsgKey, t
 
 
 logger = logging.getLogger(__name__)
@@ -199,6 +200,6 @@ class Tester:
                                 .set_mode(LogItemExec.Mode.FREE)
                                 .set_fail(LogItemExec.Fail.COMP)
                             )
-                        logger.exception("CompileError during tester run")
-                        input("Pressione enter para continuar")
+                        logger.exception(t(MsgKey.TESTER_COMPILE_ERROR_DURING_RUN))
+                        input(t(MsgKey.TESTER_PRESS_ENTER_TO_CONTINUE))
                         break

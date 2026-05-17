@@ -1,4 +1,5 @@
 from __future__ import annotations
+from tko.i18n import MsgKey, t
 from tko.util.symbols import Symbols
 from tko.util.rtext import RText
 import enum
@@ -23,7 +24,7 @@ class ExecutionResult(enum.Enum):
         elif result == ExecutionResult.EXECUTION_ERROR:
             return RText(Symbols.execution)
         else:
-            raise ValueError("Invalid result type")
+            raise ValueError(t(MsgKey.EXECUTION_RESULT_INVALID_TYPE))
 
     # @override
     def __str__(self):

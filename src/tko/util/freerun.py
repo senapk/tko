@@ -6,6 +6,7 @@ from tko.util.raw_terminal import RawTerminal
 from tko.util.runner import Runner
 from tko.play.images import compilling_image
 from tko.run.solver_builder import SolverBuilder
+from tko.i18n import MsgKey, t
 import subprocess
 import random
 import sys
@@ -84,8 +85,8 @@ class Free:
             while input_available():
                 read_input()
             print(RText().center(RawTerminal.get_terminal_size(), "─"))
-            print(RText.parse("Para [[recompilar e]] reexecutar pressione [y]enter[.]"))
-            print(RText.parse("Para voltar para tela anterior digite [y]q[.] e pressione [y]enter[.]"))
+            print(RText.parse(t(MsgKey.FREERUN_PROMPT_RERUN)))
+            print(RText.parse(t(MsgKey.FREERUN_PROMPT_BACK)))
 
             valor = input()
             if valor != "n" and valor != "q":

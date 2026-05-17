@@ -3,6 +3,7 @@ import tomllib
 from pathlib import Path
 
 from tko.util.decoder import Decoder
+from tko.i18n import MsgKey, t
 
 
 logger = logging.getLogger(__name__)
@@ -176,7 +177,7 @@ class LanguagesSettings:
         try:
             content = Decoder.load(self.path)
             if content.strip() == "":
-                raise Exception("Configurações de linguagem vazias")
+                raise Exception(t(MsgKey.CONFIG_LANG_EMPTY))
             data = tomllib.loads(content)
             for lang, settings in data.items():
                 self.lang_settings[lang] = LangSettings(
@@ -185,10 +186,7 @@ class LanguagesSettings:
                     draft=settings.get("draft", "")
                 )
         except Exception:
-            logger.exception(
-                "Erro ao carregar as configurações de linguagem %s, resetando para as configurações padrão",
-                self.path,
-            )
+            logger.exception(t(MsgKey.CONFIG_LANG_LOAD_FAILED, path=self.path))
             self.reset()
             self.save_file_settings()
         return self

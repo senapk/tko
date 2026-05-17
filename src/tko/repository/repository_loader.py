@@ -3,6 +3,7 @@ import yaml # type: ignore
 from pathlib import Path
 from typing import Any
 from tko.util.decoder import Decoder
+from tko.i18n import MsgKey, t
 from tko.util.rtext import RText
 from tko.util.atomic_write_yaml import atomic_write_yaml
 from tko.repository.repository import Repository
@@ -18,10 +19,7 @@ class RepositoryLoader:
         lines = content.splitlines()
         for line in lines:
             if line.startswith("<<<<<<<") or line.startswith("=======") or line.startswith(">>>>>>>"):
-                raise ConfigMergeConflictError(
-                    f"Git merge conflict detected in {self.repo.paths.config_file}.\n"
-                    "Please resolve the conflict manually before continuing."
-                )
+                raise ConfigMergeConflictError(t(MsgKey.REPOSITORY_LOADER_GIT_CONFLICT, file=self.repo.paths.config_file))
     @staticmethod
     def length(data: Any) -> int:
         if isinstance(data, dict):
@@ -44,16 +42,16 @@ class RepositoryLoader:
                 local_data = yaml.safe_load(backup_content)
                 
             if local_data is None or not isinstance(local_data, dict) or self.length(local_data) == 0:
-                raise FileNotFoundError(f"Arquivo de configuração vazio: {self.repo.paths.config_file}")
+                raise FileNotFoundError(t(MsgKey.REPOSITORY_LOADER_EMPTY_CONFIG_FILE, file=self.repo.paths.config_file))
                 
         except ConfigMergeConflictError:
             raise
         except yaml.YAMLError as e:
-            raise Warning(RText.parse(f"O arquivo de configuração do repositório [y]{self.repo.paths.config_file}[.] contém erros de YAML e está [r]corrompido[.].\nErro: {e}\nAbra e corrija o conteúdo ou crie um novo."))
+            raise Warning(RText.parse(t(MsgKey.REPOSITORY_LOADER_YAML_CORRUPTED, file=self.repo.paths.config_file, error=e)))
         except FileNotFoundError:
-            raise Warning(RText.parse(f"O arquivo de configuração do repositório [y]{self.repo.paths.config_file}[.] está [r]vazio[.].\nAbra e corrija o conteúdo ou crie um novo."))
+            raise Warning(RText.parse(t(MsgKey.REPOSITORY_LOADER_CONFIG_EMPTY, file=self.repo.paths.config_file)))
         except Exception as e:
-            raise Warning(RText.parse(f"O arquivo de configuração do repositório [y]{self.repo.paths.config_file}[.] está [r]corrompido[.].\nErro inesperado: {e}\nAbra e corrija o conteúdo ou crie um novo."))
+            raise Warning(RText.parse(t(MsgKey.REPOSITORY_LOADER_CONFIG_CORRUPTED_UNEXPECTED, file=self.repo.paths.config_file, error=e)))
 
         self.repo.data.load_from_dict(local_data) # type: ignore
         self.repo.flags.from_dict(self.repo.data.flags) # type: ignore

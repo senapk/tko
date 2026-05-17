@@ -13,6 +13,7 @@ from tko.game.task_config import TaskTest
 from tko.feno.filter import CodeFilter
 from pathlib import Path
 from tko.loader.toml_parser import TomlParser
+from tko.i18n import MsgKey, t
 
 class CmdLineDown:
     def __init__(self, settings: Settings, rep: Repository, task_key: str, game: Game | None = None):
@@ -30,8 +31,8 @@ class CmdLineDown:
         
     def execute(self):
         if not self.rep.paths.config_file.exists():
-            print("O parâmetro para o comando tko down deve a pasta onde você iniciou o repositório.")
-            print("Navegue ou passe o caminho até a pasta do repositório e tente novamente.")
+            print(t(MsgKey.DOWN_INVALID_REPO_ARG))
+            print(t(MsgKey.DOWN_INVALID_REPO_ARG_ACTION))
             return False
     
         CmdDown(self.rep, self.task_key, self.settings).execute()
@@ -46,14 +47,14 @@ class CmdDown:
         self.task: Task = self.repo.game.get_task(self.task_key)
         self.resolver = self.task.path
         if self.task.resource.is_view:
-            raise ValueError(f"Atividade {self.task_key} é do tipo link, ela para download")
+            raise ValueError(t(MsgKey.CMD_DOWN_ACTIVITY_LINK_NOT_DOWNLOADABLE, task_key=self.task_key))
         
         origin_target = self.resolver.origin_target
         destiny_folder = self.resolver.work_dir
         if origin_target is None:
-            raise ValueError(f"Atividade {self.task_key} não possui pasta de origem para download")
+            raise ValueError(t(MsgKey.CMD_DOWN_ACTIVITY_NO_ORIGIN_FOLDER, task_key=self.task_key))
         if destiny_folder is None:
-            raise ValueError(f"Atividade {self.task_key} não possui pasta de destino para download") 
+            raise ValueError(t(MsgKey.CMD_DOWN_ACTIVITY_NO_DESTINY_FOLDER, task_key=self.task_key))
 
         self.origin_folder: Path = origin_target.parent        
         self.destiny_folder: Path = destiny_folder
@@ -67,9 +68,9 @@ class CmdDown:
             return self.download_from_external_remote()
         if self.task.resource.is_static_type:
             if not self.copy_drafts():
-                self.actions.send_to_print("Atividade já está no repositório, precisa baixar nenhum arquivo")
+                self.actions.send_to_print(t(MsgKey.DOWN_ACTIVITY_ALREADY_PRESENT))
             return False
-        self.actions.send_to_print("falha: link para atividade não possui link para download")
+        self.actions.send_to_print(t(MsgKey.DOWN_LINK_HAS_NO_DOWNLOAD))
         return False
 
     def set_fnprint(self, fnprint: Callable[[str], None]):
@@ -95,10 +96,10 @@ class CmdDown:
         
         drafts_folder = finder.find_dir_for_drafts_secondary()
         self.actions.send_to_print("")
-        self.actions.send_to_print(f"Criando nova pasta de rascunhos: {drafts_folder.name} ")
-        self.actions.send_to_print(f"")
-        self.actions.send_to_print(f"Se quiser utilizar os novos rascunhos, copie manualmente ")
-        self.actions.send_to_print(f"os novos rascunhos para a pasta {lang} ")
+        self.actions.send_to_print(t(MsgKey.DOWN_CREATING_NEW_DRAFT_FOLDER, folder=drafts_folder.name))
+        self.actions.send_to_print("")
+        self.actions.send_to_print(t(MsgKey.DOWN_COPY_NEW_DRAFTS_MANUALLY))
+        self.actions.send_to_print(t(MsgKey.DOWN_COPY_NEW_DRAFTS_TO_LANG, lang=lang))
         return Path(drafts_folder)
 
     def download_from_external_remote(self) -> bool:
@@ -129,9 +130,9 @@ class CmdDown:
                 self.actions.send_to_print(msg)
             self.actions.cache_msgs.clear()
         else:
-            self.actions.send_to_print(f"Último rascunho em {os.path.basename(last_path)}")
+            self.actions.send_to_print(t(MsgKey.DOWN_LATEST_DRAFT, name=os.path.basename(last_path)))
         self.actions.send_to_print("")
-        self.actions.send_to_print("Atividade baixada com sucesso")
+        self.actions.send_to_print(t(MsgKey.DOWN_ACTIVITY_DOWNLOADED_SUCCESS))
         return True
     
     def copy_readme(self):
@@ -183,7 +184,7 @@ class CmdDown:
                 self.language = language_def
             else:
                 langs = self.settings.get_languages_settings().get_languages_with_drafts()
-                print("Escolha uma extensão para os rascunhos: [{}]: ".format(", ".join(langs.keys())), end="")
+                print(t(MsgKey.DOWN_CHOOSE_DRAFT_EXTENSION, options=", ".join(langs.keys())), end="")
                 self.language = input()
 
 class DownActions:
@@ -210,14 +211,14 @@ class DownActions:
     def compare_and_save_to(self, content: str, path: Path):
         if not os.path.exists(path):
             Decoder.save(path, content)
-            self.send_to_print(self.folder_and_file(path) + " (Novo)")
+            self.send_to_print(t(MsgKey.DOWN_FILE_NEW, path=self.folder_and_file(path)))
         else:
             path_content = Decoder.load(path)
             if path_content != content:
-                self.send_to_print(self.folder_and_file(path) + " (Atualizado)")
+                self.send_to_print(t(MsgKey.DOWN_FILE_UPDATED, path=self.folder_and_file(path)))
                 Decoder.save(path, content)
             else:
-                self.send_to_print(self.folder_and_file(path) + " (Inalterado)")
+                self.send_to_print(t(MsgKey.DOWN_FILE_UNCHANGED, path=self.folder_and_file(path)))
 
     def create_default_draft(self, destiny: Path, language: str):
         filename = "draft."
@@ -230,7 +231,7 @@ class DownActions:
                     f.write(lang_drafts[language])
                 else:
                     f.write("")
-            self.send_to_print(self.folder_and_file(draft_path, 3) + " (Vazio)")
+            self.send_to_print(t(MsgKey.DOWN_FILE_EMPTY, path=self.folder_and_file(draft_path, 3)))
         else:
-            self.send_to_print(self.folder_and_file(draft_path, 3) + " (Não sobrescrito)")
+            self.send_to_print(t(MsgKey.DOWN_FILE_NOT_OVERWRITTEN, path=self.folder_and_file(draft_path, 3)))
         return draft_path
