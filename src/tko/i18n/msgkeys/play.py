@@ -1,0 +1,29 @@
+from __future__ import annotations
+
+from enum import Enum
+
+class PlayMsgKey(str, Enum):
+    DRAFT_CREATOR_CREATED_AT = 'draft_creator.created_at'
+    DRAFT_CREATOR_FOLDER_EXISTS = 'draft_creator.folder_exists'
+    DRAFT_CREATOR_TITLE_PLACEHOLDER = 'draft_creator.title_placeholder'
+    DRAFT_CREATOR_TITLE_PROMPT = 'draft_creator.title_prompt'
+    INPUT_DUPLICATE_KEY = 'input.duplicate_key'
+    PLAY_ACTION_DELETE_CONFIRM_PREFIX = 'play_action.delete_confirm_prefix'
+    PLAY_ACTION_DELETE_ERROR = 'play.action.delete_error'
+    PLAY_ACTION_ONLY_TASK_FOLDERS = 'play_action.only_task_folders'
+    PLAY_ACTION_TASK_NO_LOCAL_FOLDER = 'play_action.task_no_local_folder'
+    PLAY_KEY_NOT_RECOGNIZED = 'play.key_not_recognized'
+    PLAY_PALETTE_BORDERS = 'play.palette.borders'
+    PLAY_PALETTE_CALIBRATE = 'play.palette.calibrate'
+    PLAY_PALETTE_DELETE = 'play.palette.delete'
+    PLAY_PALETTE_DOWN_TASK = 'play.palette.down_task'
+    PLAY_PALETTE_DRAFT = 'play.palette.draft'
+    PLAY_PALETTE_EVALUATE = 'play.palette.evaluate'
+    PLAY_PALETTE_HELP = 'play.palette.help'
+    PLAY_PALETTE_IMAGES = 'play.palette.images'
+    PLAY_PALETTE_LANGUAGE = 'play.palette.language'
+    PLAY_PALETTE_PANEL_SIZE = 'play.palette.panel_size'
+    PLAY_PALETTE_RELOAD = 'play.palette.reload'
+    PLAY_PALETTE_TIME = 'play.palette.time'
+    PLAY_PALETTE_UI_LANGUAGE = 'play.palette.ui_language'
+    PLAY_PALETTE_VERSIONS = 'play.palette.versions'

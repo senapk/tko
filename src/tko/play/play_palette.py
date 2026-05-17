@@ -90,6 +90,14 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
+                lambda: RText.parse(f" [] {t(MsgKey('play.palette.ui_language'))} [y][][.] PT/EN", Symbols.action, "Interface"),
+                self.gui.language.toggle_ui_language,
+                GuiKeys.toggle_ui_language
+            ).set_exit_on_action(True)
+        )
+
+        options.append(
+            FloatingInputData(
                 lambda: RText.parse(f" [] {t(MsgKey.PLAY_PALETTE_CALIBRATE)} [y][][.] as teclas direcionais", Symbols.action, "Calibrar"),
                 lambda: self.fman.add_input(FloatingCalibrate(self.actions.settings)),
                 GuiKeys.calibrate

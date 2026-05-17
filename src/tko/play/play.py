@@ -106,6 +106,7 @@ class Play:
         cman.add_str(GuiKeys.borders, lambda: self.app.toggle(ToggleOption.BORDERS))
         cman.add_str(GuiKeys.images, lambda: self.app.toggle(ToggleOption.IMAGES))
         cman.add_str(GuiKeys.set_lang_drafts, self.gui.language.set_language)
+        cman.add_str(GuiKeys.toggle_ui_language, self.gui.language.toggle_ui_language)
         cman.add_str(GuiKeys.create_draft, self.actions.draft_creator.create_draft)
         cman.add_int(curses.KEY_DC, self.actions.delete_folder_ask)
         cman.add_str(GuiKeys.delete_folder, self.actions.delete_folder_ask)

@@ -6,7 +6,7 @@ from tko.repository.repository_loader import RepositoryLoader
 from tko.util.rtext import RText
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
-from tko.i18n import MsgKey, t
+from tko.i18n import MsgKey, set_language as set_ui_language, t
 
 
 class LanguageSetter:
@@ -50,6 +50,22 @@ class LanguageSetter:
             )
             .set_options(options)
             .set_default_index(keys.index(self.rep.data.lang))
+        )
+
+    def toggle_ui_language(self):
+        current = set_ui_language(self.settings.app.ui_language)
+        next_lang = "en" if current == "pt-BR" else "pt-BR"
+        self.settings.app.ui_language = next_lang
+        set_ui_language(next_lang)
+        self.settings.save_settings()
+        self.fman.add_input(
+            Floating()
+            .bottom()
+            .right()
+            .put_text("")
+            .put_text(t(MsgKey("ui.language_changed"), language=next_lang))
+            .put_text("")
+            .set_warning()
         )
 
 class TextFunctor:
