@@ -30,7 +30,10 @@ class TaskEditorService:
             subprocess.Popen("python3 -m webbrowser -t {}".format(url), stdout=outfile, stderr=outfile, shell=True)
 
     def open_code(self):
-        obj = self.tree.get_selected_throw()
+        try:
+            obj = self.tree.get_selected_throw()
+        except IndexError:
+            return
         if isinstance(obj, Task):
             task: Task = obj
             folder = self.repo.get_task_folder_for_label(task.basic.full_key)
@@ -52,7 +55,10 @@ class TaskEditorService:
             )
 
     def open_link(self):
-        obj = self.tree.get_selected_throw()
+        try:
+            obj = self.tree.get_selected_throw()
+        except IndexError:
+            return
         if isinstance(obj, Task):
             task: Task = obj
             url = task.resource.external_url
@@ -104,5 +110,7 @@ class TaskEditorService:
                         .put_text(msg)
                         .put_text(f"{t(MsgKey.TASK_VERSIONS_OPENING, cmd=fullcmd)}\n")
                     )
+        except IndexError:
+            pass
         except Exception:
             pass

@@ -20,8 +20,11 @@ class TaskDownloadService:
         self.tree = tree
 
     def down_remote_task(self):
-        obj = self.tree.get_selected_throw()
-
+        try:
+            obj = self.tree.get_selected_throw()
+        except IndexError:
+            return
+        
         if isinstance(obj, Quest):
             self.fman.add_input(
                 Floating().bottom().right()

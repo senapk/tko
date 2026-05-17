@@ -30,7 +30,7 @@ class GuiActionResolver:
         try:
             obj = self.tree.get_selected_throw()
         except IndexError:
-            return "R", "Retornar"
+            return "R", TaskAction.NENHUMA
         if isinstance(obj, Quest):
             quest: Quest = obj
             if self.flags.task_view_mode.is_inbox() and not QuestVisibilityService.is_reachable(quest):
@@ -44,4 +44,4 @@ class GuiActionResolver:
             tr = self.tree.game.get_task(obj.basic.full_key)
             color, output = self.get_task_action(tr)
             return color, output
-        return "R", " ERRO"
+        return "R", TaskAction.NENHUMA

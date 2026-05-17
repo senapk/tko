@@ -23,8 +23,8 @@ class GuiBottomBar:
             pass
         act_color, act_text = self.action_resolver.get_activate_label()
         help_fixed: list[RText] = [
-            RText(f" Sair [esc] ", "R"),
-            RText(f" Criar Rascunho [{GuiKeys.create_draft}] ", "C"),
+            RText(f" {GuiActions.leave} ", "R"),
+            RText(f" {GuiActions.create_draft} [{GuiKeys.create_draft}] ", "C"),
             RText(f" {GuiActions.pallete} [{GuiKeys.palette}] ", "C"),
             RText(f" {GuiActions.search} [{GuiKeys.search}] ", "G"),
             RText(f" {act_text} [↲] ", act_color),

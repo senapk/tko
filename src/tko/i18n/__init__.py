@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from typing import Any
 from enum import Enum
 from tko.i18n.msgkeys import MsgKey
@@ -59,7 +60,17 @@ def t(key: Enum | str, **params: Any) -> str:
     language = get_language()
     catalog = _TRANSLATIONS.get(language, _TRANSLATIONS["pt-BR"])
     template = catalog.get(key_value, _TRANSLATIONS["pt-BR"].get(key_value, key_value))
-    return template.format(**params)
+
+    if not params:
+        return template
+
+    def replace(match: re.Match[str]) -> str:
+        name = match.group(1)
+        if name in params:
+            return str(params[name])
+        return match.group(0)
+
+    return re.sub(r"\{([A-Za-z_][A-Za-z0-9_]*)\}", replace, template)
 
 
 __all__ = ["MsgKey", "normalize_language", "get_language", "set_language", "get_catalog_keys", "t"]

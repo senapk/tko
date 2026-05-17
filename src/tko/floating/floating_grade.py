@@ -10,6 +10,28 @@ from typing import Callable
 
 import curses
 
+from tko.i18n.catalogs import TRANSLATIONS
+
+
+_GRADE_LABEL_KEYS = (
+    "grade.auto_mode_label",
+    "grade.manual_mode_label",
+    "grade.study_time_label",
+    "grade.friend_label",
+    "grade.guided_label",
+    "grade.concept_label",
+    "grade.problem_label",
+    "grade.code_label",
+    "grade.debug_label",
+    "grade.refactor_label",
+)
+_GRADE_LABEL_WIDTH = max(
+    len(TRANSLATIONS[language][key])
+    for language in ("pt-BR", "en")
+    for key in _GRADE_LABEL_KEYS
+)
+_GRADE_LINE_PAD = _GRADE_LABEL_WIDTH + 10
+
 
 class InputLine(ABC):
     SELECTED_COLOR = "X"
@@ -83,7 +105,7 @@ class InputSlide(InputLine):
             opt, _ = c
             text += RText(opt, self.CHOOSEN_COLOR if i == self.index else "")
         text = text.ljust(pad)
-        text += " ├" + self.opt_msgs[self.index][1]
+        text += "├" + self.opt_msgs[self.index][1]
         return text
 
 
@@ -118,7 +140,7 @@ class InputText(InputLine):
         return self
 
     def get_text(self, pad: int) -> RText:
-        data = (self.get_opening() + self.prompt.set_style(self.get_selected_color() if self.focus else "")).ljust(pad) + " "
+        data = (self.get_opening() + self.prompt.set_style(self.get_selected_color() if self.focus else "")).ljust(pad)
         data = data + "├ " + RText(self.text, self.CHOOSEN_COLOR) + (Symbols.cursor if self.focus else "")
         return data
 
@@ -238,7 +260,7 @@ class FloatingGrade(FloatingABC):
         content.clear()
         content.append(RText(f"         {t(MsgKey.GRADE_SECTION_TITLE)}         "))
         width = 90
-        pad = 66
+        pad = _GRADE_LINE_PAD
         dummy_task = self._task.clone()
         self.change_task(dummy_task, self.input_dict)
         full_percent = dummy_task.grader.full_percent

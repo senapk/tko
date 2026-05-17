@@ -14,6 +14,7 @@ class GuiMsgKey(str, Enum):
     GUI_ACTION_ACTIVATE = 'gui_action.activate'
     GUI_ACTION_ALL = 'gui_action.all'
     GUI_ACTION_CALIBRATE = 'gui_action.calibrate'
+    GUI_ACTION_CREATE_DRAFT = 'gui_action.create_draft'
     GUI_ACTION_DOWNLOAD = 'gui_action.download'
     GUI_ACTION_DRAFT = 'gui_action.draft'
     GUI_ACTION_EDIT = 'gui_action.edit'

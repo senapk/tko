@@ -25,6 +25,13 @@ PT_BR_TRANSLATIONS: dict[str, str] = {
     'play_action.delete_confirm_prefix': 'Para apagar essa pasta, digite ',
     'play_action.only_task_folders': 'Você só pode apagar pastas de tarefas.',
     'play_action.task_no_local_folder': 'Essa tarefa não possui pasta de código local.',
+    'task_action.baixar':   'Baixar  ',
+    'task_action.bloqueio': 'Travado',
+    'task_action.contrair': 'Contrair',
+    'task_action.executar': 'Escolher',
+    'task_action.expandir': 'Expandir',
+    'task_action.nenhuma':  'Retornar',
+    'task_action.visitar':  'Visitar ',
 }
 
 EN_TRANSLATIONS: dict[str, str] = {
@@ -52,6 +59,13 @@ EN_TRANSLATIONS: dict[str, str] = {
     'play_action.delete_confirm_prefix': 'To delete this folder, type ',
     'play_action.only_task_folders': 'You can only delete task folders.',
     'play_action.task_no_local_folder': 'This task does not have a local code folder.',
+    'task_action.baixar':   'Download',
+    'task_action.bloqueio': 'Locked ',
+    'task_action.contrair': 'Collapse',
+    'task_action.executar': 'Choose  ',
+    'task_action.expandir': 'Expand  ',
+    'task_action.nenhuma':  'Return  ',
+    'task_action.visitar':  'Visit   ',
 }
 
 TRANSLATIONS: dict[str, dict[str, str]] = {

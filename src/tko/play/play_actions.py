@@ -61,7 +61,10 @@ class PlayActions:
 
     def delete_folder_ask(self):
         def delete_folder(text: str):
-            obj = self.tree.get_selected_throw()
+            try:
+                obj = self.tree.get_selected_throw()
+            except IndexError:
+                return
             if not isinstance(obj, Task):
                 return
             if obj.basic.key != text:
@@ -87,7 +90,10 @@ class PlayActions:
                 )
             self.reload()
 
-        obj = self.tree.get_selected_throw()
+        try:
+            obj = self.tree.get_selected_throw()
+        except IndexError:
+            return
         if isinstance(obj, Task):
             folder = self.get_task_folder(obj)
             if folder == Path("") or not os.path.exists(folder):

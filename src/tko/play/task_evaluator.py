@@ -17,7 +17,10 @@ class TaskEvaluator:
         self.repo.logger.store(LogItemSelf().set_task(task))
 
     def self_evaluate_full(self):
-        obj = self.tree.get_selected_throw()
+        try:
+            obj = self.tree.get_selected_throw()
+        except IndexError:
+            return
         if isinstance(obj, Task):
             task: Task = obj
             if not task.info.feedback:
@@ -29,7 +32,10 @@ class TaskEvaluator:
             self.repo.logger.store(LogItemSelf().set_task(task))
 
     def self_evaluate(self):
-        obj = self.tree.get_selected_throw()
+        try:
+            obj = self.tree.get_selected_throw()
+        except IndexError:
+            return
         if isinstance(obj, Task):
             self.fman.add_input(
                 FloatingGrade(obj, lambda task: self.repo.logger.store(LogItemSelf().set_task(task)))

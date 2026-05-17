@@ -96,9 +96,9 @@ class TaskTree:
             inbox_mode=self.repo.flags.task_view_mode.is_inbox() and not force_view_all,
             search_text=self.state.search
         )
-        self.selection.ensure_valid_selection(self.items)
         self.layout.calculate(self.game, self.repo.flags, self.state.expanded)
         self.items = self.builder.build(self.game, self.state, tree_filter)
+        self.selection.ensure_valid_selection(self.items)
 
     def collapse_all(self):
         self.state_service.collapse_all()

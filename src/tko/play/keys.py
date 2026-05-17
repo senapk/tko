@@ -5,6 +5,7 @@ from tko.i18n import MsgKey, t
 
 class _GuiActionsMeta(type):
     _KEY_MAP: dict[str, Enum] = {
+        "create_draft": MsgKey("gui_action.create_draft"),
         "tab": MsgKey("gui_action.tab"),
         "leave": MsgKey("gui_action.leave"),
         "edit": MsgKey("gui_action.edit"),
