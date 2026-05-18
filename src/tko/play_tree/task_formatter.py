@@ -13,13 +13,19 @@ class TaskFormatter:
         self.repo = repo
 
     def is_downloaded(self, task: Task) -> bool:
-        folder = task.path.work_dir
+        try:
+            folder = task.path.work_dir
+        except Exception as _:
+            return False
         if folder is None:
             return False
         return folder.exists()
 
     def is_downloaded_for_lang(self, task: Task):
-        folder = task.path.work_dir
+        try:
+            folder = task.path.work_dir
+        except Exception as _:
+            return False
         if folder is None:
             return False
 
