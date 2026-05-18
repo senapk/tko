@@ -39,7 +39,7 @@ def normalize_language(language: str | None) -> str:
 def get_language() -> str:
     if _current_language is not None:
         return _current_language
-    env_language = os.environ.get("TKO_LANG") or os.environ.get("LANG") or os.environ.get("LC_ALL")
+    env_language = os.environ.get("TKO_LANG")
     return normalize_language(env_language)
 
 

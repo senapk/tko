@@ -35,7 +35,8 @@ class Compare:
     @staticmethod
     def list(capsys: pytest.CaptureFixture[str], file: str, cmd_list: list[str]):
         runner = CliRunner()
-        result = runner.invoke(app, cmd_list)
+        full_cmd = cmd_list if "--lang" in cmd_list else ["--lang", "pt-BR", *cmd_list]
+        result = runner.invoke(app, full_cmd)
         expected, received = Compare.load_and_save(file, result.stdout)
         if expected != received:
             diff = "\n".join(difflib.unified_diff(
@@ -47,5 +48,5 @@ class Compare:
             ))
             raise AssertionError(
                 f"Output mismatch for {file}\n"
-                f"command: {' '.join(cmd_list)}\n{diff}"
+                f"command: {' '.join(full_cmd)}\n{diff}"
             )
