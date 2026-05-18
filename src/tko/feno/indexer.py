@@ -86,7 +86,10 @@ class IndexLine:
         words = [w for w in words if not w.startswith("@") and w != ""]
         tags = [f"{w}" for w in words if w.startswith(":")]
         others = [w for w in words if not w.startswith(":")]
-        return f"`@{self.key:<{key_pad + 1}}{" ".join(tags)}`" + (f" {' '.join(others)} " if len(others) > 0 else "")
+        out = f"`@{self.key:<{key_pad + 1}}{" ".join(tags)}`"
+        if len(others) > 0:
+            out += " " + " ".join(others)
+        return out
 
     @property
     def key(self) -> str:
