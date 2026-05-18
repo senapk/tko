@@ -151,7 +151,7 @@ class GameBuilder:
         try:
             filename = self.remote.path.index_file
         except ValueError:
-            if self.verbose:
+            if self.verbose and not self.remote.is_sandbox:
                 logger.exception(t(_GAME_BUILDER_INDEX_FETCH_ERROR, name=alias))
             return
         for line_num, line in enumerate(lines):
