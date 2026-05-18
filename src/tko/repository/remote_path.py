@@ -37,9 +37,8 @@ class RemotePath:
         if source_dir is None:
             raise ValueError(t(_REMOTE_PATH_SOURCE_DIR_NOT_EXISTS))
         index_path = source_dir / self.data.index
-        if index_path.exists():
-            return index_path.resolve()
-        raise ValueError(t(_REMOTE_PATH_INDEX_FILE_NOT_EXISTS))
+        return index_path.resolve()
+
     
     @property
     def work_dir(self) -> Path:

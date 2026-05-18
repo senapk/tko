@@ -60,9 +60,11 @@ class GameBuilder:
     def build_from(self, language: str):
         try:
             filename: Path = self.remote.path.index_file
-        except ValueError:
-            if self.verbose:
+            if self.verbose and not self.remote.is_sandbox and not filename.exists():
                 logger.exception(t(_GAME_BUILDER_README_FETCH_ERROR, name=self.remote.data.name))
+        except ValueError:
+            if self.verbose and not self.remote.is_sandbox:
+                logger.exception(t(_GAME_BUILDER_SOURCE_NO_ORIGIN_DIR, name=self.remote.data.name))
             return self
         self.__ensure_sandbox_readme_fixed(filename)
         content: str = self.load_content(filename)
