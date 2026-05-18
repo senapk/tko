@@ -21,7 +21,7 @@ authors = [
 ]
 license = "MIT"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "diff-match-patch>=20241021",
     "filelock>=3.25.2",
