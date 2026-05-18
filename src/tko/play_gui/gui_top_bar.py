@@ -4,7 +4,18 @@ from tko.config.flags import Flags
 from tko.play.keys import GuiKeys
 from tko.util.rtext import RText
 from tko.util.visual import Visual
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
+
+
+class _TopBarMsg:
+    RECOMMENDED = Msg(pt="Recomendadas", en="Recommended")
+    ALL = Msg(pt="Todas", en="All")
+    GRAPHS = Msg(pt="Gráficos", en="Graphs")
+    LOGS = Msg(pt="Logs", en="Logs")
+    SKILLS = Msg(pt="Trilhas", en="Skills")
+    HELP = Msg(pt="Ajuda", en="Help")
+    EXEC = Msg(pt="Exec", en="Exec")
+    TIME = Msg(pt="Time", en="Time")
 
 
 class GuiTopBar:
@@ -17,19 +28,19 @@ class GuiTopBar:
         panel_on = self.flags.show_panel.is_true()
         vi = Visual(self.app.use_borders)
         pre = [
-            vi.render_button(f"{t(MsgKey.GUI_TOP_BAR_RECOMMENDED)}[{GuiKeys.inbox}]", self.flags.task_view_mode.is_inbox()),
-            vi.render_button(f"{t(MsgKey.GUI_TOP_BAR_ALL)}[{GuiKeys.all_tasks}]", self.flags.task_view_mode.is_all()),
+            vi.render_button(f"{t(_TopBarMsg.RECOMMENDED)}[{GuiKeys.inbox}]", self.flags.task_view_mode.is_inbox()),
+            vi.render_button(f"{t(_TopBarMsg.ALL)}[{GuiKeys.all_tasks}]", self.flags.task_view_mode.is_all()),
             RText(" "),
         ]
         pos = [
-            vi.render_button(f"{t(MsgKey.GUI_TOP_BAR_GRAPHS)}[{GuiKeys.panel_graph}]", panel_on and self.flags.panel.is_graph()),
-            vi.render_button(f"{t(MsgKey.GUI_TOP_BAR_LOGS)}[{GuiKeys.panel_logs}]", panel_on and self.flags.panel.is_logs()),
-            vi.render_button(f"{t(MsgKey.GUI_TOP_BAR_SKILLS)}[{GuiKeys.panel_skills}]", panel_on and self.flags.panel.is_skills()),
-            vi.render_button(f"{t(MsgKey.GUI_TOP_BAR_HELP)}[{GuiKeys.panel_help}]", panel_on and self.flags.panel.is_help()),
+            vi.render_button(f"{t(_TopBarMsg.GRAPHS)}[{GuiKeys.panel_graph}]", panel_on and self.flags.panel.is_graph()),
+            vi.render_button(f"{t(_TopBarMsg.LOGS)}[{GuiKeys.panel_logs}]", panel_on and self.flags.panel.is_logs()),
+            vi.render_button(f"{t(_TopBarMsg.SKILLS)}[{GuiKeys.panel_skills}]", panel_on and self.flags.panel.is_skills()),
+            vi.render_button(f"{t(_TopBarMsg.HELP)}[{GuiKeys.panel_help}]", panel_on and self.flags.panel.is_help()),
         ]
         last = [
-            vi.render_button(f"{t(MsgKey.GUI_TOP_BAR_EXEC)}[PageUp]", self.flags.task_graph_mode.is_executions()),
-            vi.render_button(f"{t(MsgKey.GUI_TOP_BAR_TIME)}[PgDown]", self.flags.task_graph_mode.is_time_view()),
+            vi.render_button(f"{t(_TopBarMsg.EXEC)}[PageUp]", self.flags.task_graph_mode.is_executions()),
+            vi.render_button(f"{t(_TopBarMsg.TIME)}[PgDown]", self.flags.task_graph_mode.is_time_view()),
         ]
 
         limit = frame.get_dx()

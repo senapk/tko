@@ -10,11 +10,24 @@ from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.repository.git_cache import GitCache
 from tko.repository.remote import Remote
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 # from typing import override
 
 
 logger = logging.getLogger(__name__)
+
+_GAME_TASK_NOT_FOUND_IN_COURSE = Msg(
+    pt="fail: tarefa '{task_key}' não encontrada no curso",
+    en="fail: task '{task_key}' not found in course",
+)
+_GAME_SANDBOX_SOURCE_NOT_FOUND = Msg(
+    pt="Local sandbox source not found",
+    en="Local sandbox source not found",
+)
+_GAME_BUILD_FAILED_FOR_SOURCE = Msg(
+    pt="Falha ao construir jogo para a fonte {name}",
+    en="Failed to build game for source {name}",
+)
 
 def load_html_tags(task: str) -> None | str:
     pattern = r"<!--\s*(.*?)\s*-->"
@@ -34,13 +47,13 @@ class Game:
     def get_task(self, key: str) -> Task:
         if key in self.tasks:
             return self.tasks[key]
-        raise Warning(t(MsgKey.GAME_TASK_NOT_FOUND_IN_COURSE, task_key=key))
+        raise Warning(t(_GAME_TASK_NOT_FOUND_IN_COURSE, task_key=key))
 
     def get_sandbox_remote(self) -> Remote:
         for s in self.remotes:
             if s.is_sandbox:
                 return s
-        raise ValueError(t(MsgKey.GAME_SANDBOX_SOURCE_NOT_FOUND))
+        raise ValueError(t(_GAME_SANDBOX_SOURCE_NOT_FOUND))
 
     def set_remotes(self, remotes: list[Remote], language: str):
         self.remotes = remotes
@@ -56,7 +69,7 @@ class Game:
             try:
                 gb.build_from(self.language)
             except ValueError:
-                logger.exception(t(MsgKey.GAME_BUILD_FAILED_FOR_SOURCE, name=remote.data.name))
+                logger.exception(t(_GAME_BUILD_FAILED_FOR_SOURCE, name=remote.data.name))
                 continue
             for quest_key in gb.ordered_quests:
                 self.ordered_quests.append(remote.data.name + "@" + quest_key)

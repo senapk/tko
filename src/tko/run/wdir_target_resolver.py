@@ -4,8 +4,14 @@ from pathlib import Path
 from tko.cmds.drafts_finder_cached import DraftsFinderCached
 from tko.config.settings import Settings
 from tko.enums.identifier_type import IdentifierType
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 from tko.util.identifier import Identifier
+
+
+_RUN_TARGET_NOT_FOUND = Msg(
+    pt="fail: {target} não encontrado",
+    en="fail: {target} not found",
+)
 
 
 class WdirTargetResolver:
@@ -22,7 +28,7 @@ class WdirTargetResolver:
     def resolve_explicit_targets(target_list: list[Path]) -> tuple[list[Path], list[Path]]:
         for target in target_list:
             if not os.path.exists(target):
-                raise Warning(t(MsgKey.RUN_TARGET_NOT_FOUND, target=target))
+                raise Warning(t(_RUN_TARGET_NOT_FOUND, target=target))
 
         solvers = [target for target in target_list if Identifier.get_type(target.suffix) == IdentifierType.SOLVER]
         sources = [target for target in target_list if Identifier.get_type(target.suffix) != IdentifierType.SOLVER]

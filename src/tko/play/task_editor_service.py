@@ -12,7 +12,22 @@ from tko.repository.repository import Repository
 from tko.config.settings import Settings
 from tko.play.opener import Opener
 from tko.logger.tracker import Tracker
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
+
+
+class _TaskEditorMsg:
+    CODE_NOT_FOUND = Msg(pt="O arquivo de código não foi encontrado.", en="Code file not found.")
+    CODE_ONLY_DOWNLOADED = Msg(pt="Você só pode abrir o código de tarefas baixadas.", en="You can only open code from downloaded tasks.")
+    OPENING_LINK_LOG = Msg(pt="Opening link for task: {task_key}, URL: {url}", en="Opening link for task: {task_key}, URL: {url}")
+    TARGET_LOG = Msg(pt="Target: {target}", en="Target: {target}")
+    OPENING_LINK = Msg(pt="Abrindo link", en="Opening link")
+    IS_MISSION = Msg(pt="Essa é uma missão.", en="This is a mission.")
+    LINK_ONLY_TASKS = Msg(pt="Você só pode abrir o link de tarefas.", en="You can only open the link for tasks.")
+    VERSIONS_DECOMPRESSED = Msg(
+        pt="As versões da tarefa foram descompactadas em uma pasta temporária",
+        en="Task versions have been decompressed to a temporary folder",
+    )
+    VERSIONS_OPENING = Msg(pt="Abrindo com o comando: {cmd}", en="Opening with command: {cmd}")
 
 
 class TaskEditorService:
@@ -44,13 +59,13 @@ class TaskEditorService:
             else:
                 self.fman.add_input(
                     Floating().bottom().right()
-                    .put_text(f"\n{t(MsgKey.TASK_CODE_NOT_FOUND)}\n")
+                    .put_text(f"\n{t(_TaskEditorMsg.CODE_NOT_FOUND)}\n")
                     .set_error()
                 )
         else:
             self.fman.add_input(
                 Floating().bottom().right()
-                .put_text(f"\n{t(MsgKey.TASK_CODE_ONLY_DOWNLOADED)}\n")
+                .put_text(f"\n{t(_TaskEditorMsg.CODE_ONLY_DOWNLOADED)}\n")
                 .set_error()
             )
 
@@ -63,14 +78,14 @@ class TaskEditorService:
             task: Task = obj
             url = task.resource.external_url
             target = task.path.origin_target
-            self.logger.info(t(MsgKey.TASK_EDITOR_OPENING_LINK_LOG, task_key=task.basic.key, url=url))
-            self.logger.info(t(MsgKey.TASK_EDITOR_TARGET_LOG, target=target))
+            self.logger.info(t(_TaskEditorMsg.OPENING_LINK_LOG, task_key=task.basic.key, url=url))
+            self.logger.info(t(_TaskEditorMsg.TARGET_LOG, target=target))
             if url is not None:
                 try:
                     self._open_link_without_stdout_stderr(url)
                     self.fman.add_input(
                         Floating().bottom().right()
-                        .set_header(f" {t(MsgKey.TASK_OPENING_LINK)} ")
+                        .set_header(f" {t(_TaskEditorMsg.OPENING_LINK)} ")
                         .put_text(f"\n {str(url)} \n")
                         .set_warning()
                     )
@@ -84,8 +99,8 @@ class TaskEditorService:
         elif isinstance(obj, Quest):
             self.fman.add_input(
                 Floating().bottom().right()
-                .put_text(f"\n{t(MsgKey.TASK_IS_MISSION)}")
-                .put_text(f"\n{t(MsgKey.TASK_LINK_ONLY_TASKS)}\n")
+                .put_text(f"\n{t(_TaskEditorMsg.IS_MISSION)}")
+                .put_text(f"\n{t(_TaskEditorMsg.LINK_ONLY_TASKS)}\n")
                 .set_error()
             )
 
@@ -106,9 +121,9 @@ class TaskEditorService:
                     subprocess.Popen(fullcmd, stdout=outfile, stderr=outfile, shell=True)
                     self.fman.add_input(
                         Floating().bottom().right()
-                        .put_text(f"\n{t(MsgKey.TASK_VERSIONS_DECOMPRESSED)}")
+                        .put_text(f"\n{t(_TaskEditorMsg.VERSIONS_DECOMPRESSED)}")
                         .put_text(msg)
-                        .put_text(f"{t(MsgKey.TASK_VERSIONS_OPENING, cmd=fullcmd)}\n")
+                        .put_text(f"{t(_TaskEditorMsg.VERSIONS_OPENING, cmd=fullcmd)}\n")
                     )
         except IndexError:
             pass

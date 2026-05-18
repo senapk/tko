@@ -1,8 +1,14 @@
 from __future__ import annotations
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 from tko.util.symbols import Symbols
 from tko.util.rtext import RText
 import enum
+
+
+_EXECUTION_RESULT_INVALID_TYPE = Msg(
+    pt="Invalid result type",
+    en="Invalid result type",
+)
 
 class ExecutionResult(enum.Enum):
     UNTESTED          = "não_verificado_"
@@ -24,7 +30,7 @@ class ExecutionResult(enum.Enum):
         elif result == ExecutionResult.EXECUTION_ERROR:
             return RText(Symbols.execution)
         else:
-            raise ValueError(t(MsgKey.EXECUTION_RESULT_INVALID_TYPE))
+            raise ValueError(t(_EXECUTION_RESULT_INVALID_TYPE))
 
     # @override
     def __str__(self):

@@ -6,7 +6,25 @@ import os
 import configparser
 import argparse
 import tempfile
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
+
+
+_GRADING_README_NOT_FOUND = Msg(
+    pt="Arquivo README '{file}' não existe.",
+    en="README file '{file}' does not exist.",
+)
+_GRADING_NO_PROBLEMS_FOUND = Msg(
+    pt="Nenhum problema encontrado no arquivo de configuração.",
+    en="No problems found in the configuration file.",
+)
+_GRADING_RUNNING_PREFIX = Msg(
+    pt="[TKO RUNNING] ",
+    en="[TKO RUNNING] ",
+)
+_GRADING_GRADING_PREFIX = Msg(
+    pt="[TKO GRADING] ",
+    en="[TKO GRADING] ",
+)
 
 class Const:
     ansi_green = "\033[92m"
@@ -101,7 +119,7 @@ class Grading:
     def load_readme(readme_file: str) -> list[MyTest]:
         problems: list[MyTest] = []
         if not os.path.isfile(readme_file):
-            print(t(MsgKey.GRADING_README_NOT_FOUND, file=readme_file))
+            print(t(_GRADING_README_NOT_FOUND, file=readme_file))
             return problems
         
         with open(readme_file, "r") as f:
@@ -134,7 +152,7 @@ class Grading:
 
 
         if len(problems) == 0:
-            print(t(MsgKey.GRADING_NO_PROBLEMS_FOUND))
+            print(t(_GRADING_NO_PROBLEMS_FOUND))
             return
 
         test_list = Grading()
@@ -147,7 +165,7 @@ class Grading:
                 f.write(str(awarded))
 
 def running_prefix():
-    print(t(MsgKey.GRADING_RUNNING_PREFIX), flush=True, end='')
+    print(t(_GRADING_RUNNING_PREFIX), flush=True, end='')
 
 def grading_prefix():
-    print(t(MsgKey.GRADING_GRADING_PREFIX), flush=True, end='')
+    print(t(_GRADING_GRADING_PREFIX), flush=True, end='')

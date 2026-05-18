@@ -14,8 +14,14 @@ from tko.play.task_download_service import TaskDownloadService
 from tko.play.task_editor_service import TaskEditorService
 from tko.cmds.cmd_run import Run
 from tko.cmds.cmd_down import CmdDown
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 from tko.util.param import Param
+
+
+class _TaskLauncherMsg:
+    FOLDER_NOT_FOUND = Msg(pt="Pasta não encontrada", en="Folder not found")
+    NO_SOURCE_FOR_LANG = Msg(pt="Nenhum arquivo de código na linguagem {lang} encontrado.", en="No source file found for language {lang}.")
+    DRAFT_CREATED = Msg(pt="Um arquivo de rascunho foi criado", en="A draft file was created")
 
 
 class TaskLauncher:
@@ -59,7 +65,7 @@ class TaskLauncher:
     def run_selected_task(self, task: Task) -> None:
         task_folder = task.path.work_dir
         if not task_folder:
-            raise Warning(t(MsgKey.TASK_LAUNCHER_FOLDER_NOT_FOUND))
+            raise Warning(t(_TaskLauncherMsg.FOLDER_NOT_FOUND))
         run = Run(settings=self.settings, target_list=[task_folder], param=Param.Basic())
         run.set_lang(self.repo.data.lang)
         opener = Opener(self.settings).set_language(self.repo.data.lang).add_task_folder_to_open(task_folder)
@@ -73,8 +79,8 @@ class TaskLauncher:
             cmd = CmdDown(self.repo, task.basic.full_key, self.settings)
             cmd.execute()
             msg = Floating().bottom().right().set_warning()
-            msg.put_text("\n" + t(MsgKey.TASK_LAUNCHER_NO_SOURCE_FOR_LANG, lang=self.repo.data.lang))
-            msg.put_text("\n" + t(MsgKey.TASK_LAUNCHER_DRAFT_CREATED) + "\n")
+            msg.put_text("\n" + t(_TaskLauncherMsg.NO_SOURCE_FOR_LANG, lang=self.repo.data.lang))
+            msg.put_text("\n" + t(_TaskLauncherMsg.DRAFT_CREATED) + "\n")
             self.fman.add_input(msg)
         else:
             run.execute()

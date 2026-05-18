@@ -5,8 +5,14 @@ from tko.run.run_config import RunConfig
 from tko.run.wdir import Wdir
 from tko.repository.repository import Repository
 from tko.game.task import Task
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 from tko.play.opener import Opener
+
+
+_RUN_TASK_NOT_DEFINED = Msg(
+    pt="Task não definida",
+    en="Task not defined",
+)
 
 class RunContext:
     def __init__(self, config: RunConfig, settings: Settings, target_list: list[Path], param: Param.Basic | None, language: str | None, repo: Repository | None = None):
@@ -76,5 +82,5 @@ class RunContext:
 
     def get_task(self) -> Task:
         if self.task is None:
-            raise Warning(t(MsgKey.RUN_TASK_NOT_DEFINED))
+            raise Warning(t(_RUN_TASK_NOT_DEFINED))
         return self.task

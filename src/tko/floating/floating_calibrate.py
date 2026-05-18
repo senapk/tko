@@ -1,8 +1,19 @@
 from tko.util.rtext import RText
 from tko.floating.floating import Floating, FloatingABC
 from tko.config.settings import Settings
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 import tko.config.app_settings as app
+
+
+class _CalibrateMsg:
+    LEFT = Msg(pt="Esquerda", en="Left")
+    RIGHT = Msg(pt="Direita", en="Right")
+    UP = Msg(pt="Cima", en="Up")
+    DOWN = Msg(pt="Baixo", en="Down")
+    ESC = Msg(pt="Esc", en="Esc")
+    PAGE_UP = Msg(pt="PgUp", en="PageUp")
+    PAGE_DOWN = Msg(pt="PgDn", en="PageDown")
+    BACKSPACE = Msg(pt="Backspace", en="Backspace")
 
 
 class FloatingCalibrate(FloatingABC):
@@ -41,21 +52,21 @@ class FloatingCalibrate(FloatingABC):
         content = self.floating.content
         content.clear()
         color = "G" if self._index == 0 else ""
-        content.append(RText(t(MsgKey.CALIBRATE_LEFT).ljust(10), color) + RText(format_value(self._options[0]), color))
+        content.append(RText(t(_CalibrateMsg.LEFT).ljust(10), color) + RText(format_value(self._options[0]), color))
         color = "G" if self._index == 1 else ""
-        content.append(RText(t(MsgKey.CALIBRATE_RIGHT).ljust(10), color) + RText(format_value(self._options[1]), color))
+        content.append(RText(t(_CalibrateMsg.RIGHT).ljust(10), color) + RText(format_value(self._options[1]), color))
         color = "G" if self._index == 2 else ""
-        content.append(RText(t(MsgKey.CALIBRATE_UP).ljust(10), color) + RText(format_value(self._options[2]), color))
+        content.append(RText(t(_CalibrateMsg.UP).ljust(10), color) + RText(format_value(self._options[2]), color))
         color = "G" if self._index == 3 else ""
-        content.append(RText(t(MsgKey.CALIBRATE_DOWN).ljust(10), color) + RText(format_value(self._options[3]), color))
+        content.append(RText(t(_CalibrateMsg.DOWN).ljust(10), color) + RText(format_value(self._options[3]), color))
         color = "G" if self._index == 4 else ""
-        content.append(RText(t(MsgKey.CALIBRATE_ESC).ljust(10), color) + RText(format_value(self._options[4]), color))
+        content.append(RText(t(_CalibrateMsg.ESC).ljust(10), color) + RText(format_value(self._options[4]), color))
         color = "G" if self._index == 5 else ""
-        content.append(RText(t(MsgKey.CALIBRATE_PAGE_UP).ljust(10), color) + RText(format_value(self._options[5]), color))
+        content.append(RText(t(_CalibrateMsg.PAGE_UP).ljust(10), color) + RText(format_value(self._options[5]), color))
         color = "G" if self._index == 6 else ""
-        content.append(RText(t(MsgKey.CALIBRATE_PAGE_DOWN).ljust(10), color) + RText(format_value(self._options[6]), color))
+        content.append(RText(t(_CalibrateMsg.PAGE_DOWN).ljust(10), color) + RText(format_value(self._options[6]), color))
         color = "G" if self._index == 7 else ""
-        content.append(RText(t(MsgKey.CALIBRATE_BACKSPACE).ljust(10), color) + RText(format_value(self._options[7]), color))
+        content.append(RText(t(_CalibrateMsg.BACKSPACE).ljust(10), color) + RText(format_value(self._options[7]), color))
 
     def process_input(self, key: int) -> int:
         if key == ord('\n'):

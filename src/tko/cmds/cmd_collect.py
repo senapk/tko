@@ -9,7 +9,7 @@ from tko.logger.task_resume import TaskResume
 from tko.logger.log_sort import LogSort
 from tko.play.daily_graph import DailyGraph
 from tko.mico.collected import Collected, Game
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 from tko.util.rtext import RText
 from tko.repository.repository_paths import RepositoryPaths
 
@@ -19,6 +19,35 @@ import csv
 
 
 logger = logging.getLogger(__name__)
+
+_CMD_COLLECT_REPO_NOT_FOUND = Msg(
+    pt="Repositório não encontrado em {path}",
+    en="Repository not found in {path}",
+)
+_CMD_COLLECT_TKO_REPO_NOT_FOUND = Msg(
+    pt="Repositório TKO não encontrado em {path}",
+    en="TKO repo not found in {path}",
+)
+_CMD_COLLECT_MULTIPLE_REPOS_FOUND = Msg(
+    pt=" - Múltiplos repositórios TKO encontrados, usando o primeiro.",
+    en=" - Multiple TKO repos found, using the first one.",
+)
+_CMD_COLLECT_RUNNING_IN = Msg(
+    pt="Executando tko collect em {folder}",
+    en="Running tko collect in {folder}",
+)
+_CMD_COLLECT_JSON_PARSE_FAILED = Msg(
+    pt="Erro: Falha ao analisar saída JSON para {username}",
+    en="Error: Failed to parse JSON output for {username}",
+)
+_CMD_COLLECT_ERROR = Msg(
+    pt="Erro: {error}",
+    en="Error: {error}",
+)
+_CMD_COLLECT_SAVING_EXTRACTED_DATA = Msg(
+    pt="Salvando dados extraídos em {path}",
+    en="Saving extracted data to {path}",
+)
 
 class CmdCollect:
     @staticmethod
@@ -91,7 +120,7 @@ class CollectSingle:
         rep = Repository(param.folder)
         if not rep.found():
             path = os.path.abspath(param.folder)
-            print(t(MsgKey.CMD_COLLECT_REPO_NOT_FOUND, path=path))
+            print(t(_CMD_COLLECT_REPO_NOT_FOUND, path=path))
             return Collected()
         rep.set_global_cache()
         from tko.repository.repository_loader import RepositoryLoader
@@ -154,26 +183,26 @@ class CollectMany:
         for git_dir, username in zip(git_dir_list, usernames):
             tko_rep_folder_list = RepositoryPaths.rec_search_for_repo_subdir(git_dir)
             if not tko_rep_folder_list:
-                print(RText(f"{username: <{padding}}", "r") + RText(t(MsgKey.CMD_COLLECT_TKO_REPO_NOT_FOUND, path=git_dir), "r"))
+                print(RText(f"{username: <{padding}}", "r") + RText(t(_CMD_COLLECT_TKO_REPO_NOT_FOUND, path=git_dir), "r"))
                 continue
             tko_folder = tko_rep_folder_list[0]
-            multiple_found = RText(t(MsgKey.CMD_COLLECT_MULTIPLE_REPOS_FOUND), "r") if len(tko_rep_folder_list) > 1 else RText()
-            print(RText(f"{username: <{padding}}", "y" if multiple_found else "g") + t(MsgKey.CMD_COLLECT_RUNNING_IN, folder=tko_folder) + multiple_found)
+            multiple_found = RText(t(_CMD_COLLECT_MULTIPLE_REPOS_FOUND), "r") if len(tko_rep_folder_list) > 1 else RText()
+            print(RText(f"{username: <{padding}}", "y" if multiple_found else "g") + t(_CMD_COLLECT_RUNNING_IN, folder=tko_folder) + multiple_found)
             output = CollectSingle.collect_to_json(tko_folder, daily=False, resume=True, game=False)
 
             try:
                 json_output: dict[str, Any] = json.loads(output) if output != "" else {}
             except json.JSONDecodeError:
-                logger.exception(t(MsgKey.CMD_COLLECT_JSON_PARSE_FAILED, username=username))
+                logger.exception(t(_CMD_COLLECT_JSON_PARSE_FAILED, username=username))
                 continue
             if "error" in json_output:
-                print(RText(f"{username: <{padding}}", "r") + RText(t(MsgKey.CMD_COLLECT_ERROR, error=json_output['error']), "r"))
+                print(RText(f"{username: <{padding}}", "r") + RText(t(_CMD_COLLECT_ERROR, error=json_output['error']), "r"))
                 continue
 
             output_map[username] = json_output["resume"] if "resume" in json_output else {}
         if json_path is not None:
             with open(json_path, "w", encoding="utf-8") as f:
-                print(RText(t(MsgKey.CMD_COLLECT_SAVING_EXTRACTED_DATA, path=json_path), "g"))
+                print(RText(t(_CMD_COLLECT_SAVING_EXTRACTED_DATA, path=json_path), "g"))
                 json.dump(output_map, f, indent=4, ensure_ascii=False)
         
         header_keys = ["username", "key", "quest", "minutes", "versions", "executions", "rate", "study", "self", "friend", "concept", "problem", "code", "debug", "refactor", "guided"]
@@ -210,4 +239,4 @@ class CollectMany:
                         if block_prefix is not None:
                             row["block"]= f"{block_prefix}"
                         writer.writerow(row)
-            print(RText(t(MsgKey.CMD_COLLECT_SAVING_EXTRACTED_DATA, path=csv_path), "g"))
+            print(RText(t(_CMD_COLLECT_SAVING_EXTRACTED_DATA, path=csv_path), "g"))

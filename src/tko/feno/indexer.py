@@ -3,13 +3,46 @@
 import logging
 import re
 from pathlib import Path
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 from tko.util.decoder import Decoder
 from tko.util.rtext import RText
 from tko.game.task_matcher import TaskMatcher
 
 
 logger = logging.getLogger(__name__)
+
+_INDEXER_INVALID_LABEL = Msg(
+    pt="Rótulo inválido na linha: {label}",
+    en="Invalid label in line: {label}",
+)
+_INDEXER_FOUND_READMES = Msg(
+    pt="Encontrados {count} arquivos README.md no diretório base '{base_dir}'",
+    en="Found {count} README.md files in base directory '{base_dir}'",
+)
+_INDEXER_MISSING_README_REMOVING = Msg(
+    pt="Warning: README file '[y]{readme}[.]' does not exist for task:[b]{task}[.], removing from index",
+    en="Warning: README file '[y]{readme}[.]' does not exist for task:[b]{task}[.], removing from index",
+)
+_INDEXER_MISSING_README_TASK = Msg(
+    pt="Warning: README file '[y]{readme}[.]' does not exist for task:[b]{task}[.]",
+    en="Warning: README file '[y]{readme}[.]' does not exist for task:[b]{task}[.]",
+)
+_INDEXER_MISMATCH_TITLE = Msg(
+    pt="Mismatch title for task:[b]{readme}[.]\n\tREADME:'[y]{line_title}[.]' != TASK:'[g]{folder_title}[.]'",
+    en="Mismatch title for task:[b]{readme}[.]\n\tREADME:'[y]{line_title}[.]' != TASK:'[g]{folder_title}[.]'",
+)
+_INDEXER_REPLACE_TITLE_README_MISSING = Msg(
+    pt="Error: README file '{readme}' does not exist, cannot replace title.",
+    en="Error: README file '{readme}' does not exist, cannot replace title.",
+)
+_INDEXER_REPLACED_TITLE = Msg(
+    pt="Replaced title in '{readme}' with '{title}'",
+    en="Replaced title in '{readme}' with '{title}'",
+)
+_INDEXER_MISSING_HOOKS_ADDING = Msg(
+    pt="Found {count} missing hooks, adding to quest '{quest}':",
+    en="Found {count} missing hooks, adding to quest '{quest}':",
+)
 
 def load_title_from_markdown_file(path: Path) -> str | None:
     if not path.exists():
@@ -86,7 +119,7 @@ class IndexLine:
         words = [w for w in words if not w.startswith("@") and w != ""]
         tags = [f"{w}" for w in words if w.startswith(":")]
         others = [w for w in words if not w.startswith(":")]
-        out = f"`@{self.key:<{key_pad + 1}}{" ".join(tags)}`"
+        out = f"`@{self.key:<{key_pad + 1}}{' '.join(tags)}`"
         if len(others) > 0:
             out += " " + " ".join(others)
         return out
@@ -106,8 +139,8 @@ class IndexLine:
             if char in valid_chars:
                 valid_label += char
             else:
-                logger.error(t(MsgKey.INDEXER_INVALID_LABEL, label=edit_task_label))
-                raise ValueError(t(MsgKey.INDEXER_INVALID_LABEL, label=edit_task_label))
+                logger.error(t(_INDEXER_INVALID_LABEL, label=edit_task_label))
+                raise ValueError(t(_INDEXER_INVALID_LABEL, label=edit_task_label))
 
         return valid_label
     
@@ -132,7 +165,7 @@ class Indexer:
                         titles[readme] = title
         self.path_title_dict = titles
         if self.verbose:
-            print(t(MsgKey.INDEXER_FOUND_READMES, count=len(self.path_title_dict), base_dir=self.base_dir))
+            print(t(_INDEXER_FOUND_READMES, count=len(self.path_title_dict), base_dir=self.base_dir))
 
     def found_unused_task_dirs(self,) -> None:
         index_tasks: set[str] = set([f.key for f in self.index_lines if f.isTask])
@@ -153,7 +186,7 @@ class Indexer:
             if file_line.isTask and file_line.readme_file is not None:
                 if not file_line.readme_file.exists():
                     if self.verbose:
-                        print(RText.parse(t(MsgKey.INDEXER_MISSING_README_REMOVING, readme=file_line.readme_file, task=file_line.key)))
+                        print(RText.parse(t(_INDEXER_MISSING_README_REMOVING, readme=file_line.readme_file, task=file_line.key)))
                     continue
             index_lines.append(file_line)
         self.index_lines = index_lines
@@ -165,13 +198,13 @@ class Indexer:
                 continue
             if not line.readme_file in self.path_title_dict: # wiki maybe?
                 if self.verbose:
-                    print(RText.parse(t(MsgKey.INDEXER_MISSING_README_TASK, readme=line.readme_file, task=line.readme_file)))
+                    print(RText.parse(t(_INDEXER_MISSING_README_TASK, readme=line.readme_file, task=line.readme_file)))
                 continue
             folder_title = self.path_title_dict[line.readme_file]
             if folder_title == line.title:
                 continue
             if self.verbose:
-                print(RText.parse(t(MsgKey.INDEXER_MISMATCH_TITLE, readme=line.readme_file, line_title=line.title, folder_title=folder_title)))
+                print(RText.parse(t(_INDEXER_MISMATCH_TITLE, readme=line.readme_file, line_title=line.title, folder_title=folder_title)))
             if save_titles:
                 self.replace_title_in_readme(line.readme_file, line.title)
             if load_titles:
@@ -179,7 +212,7 @@ class Indexer:
 
     def replace_title_in_readme(self, readme_file: Path, new_title: str) -> None:
         if not readme_file.exists():
-            logger.error(t(MsgKey.INDEXER_REPLACE_TITLE_README_MISSING, readme=readme_file))
+            logger.error(t(_INDEXER_REPLACE_TITLE_README_MISSING, readme=readme_file))
             return
         with open(readme_file, "r", encoding="utf-8") as f:
             content = f.read()
@@ -189,7 +222,7 @@ class Indexer:
         with open(readme_file, "w", encoding="utf-8") as f:
             f.write(new_content)
         if self.verbose:
-            print(t(MsgKey.INDEXER_REPLACED_TITLE, readme=readme_file, title=new_title))
+            print(t(_INDEXER_REPLACED_TITLE, readme=readme_file, title=new_title))
 
     def insert_missing_tasks(self, default_quest_name: str) -> list[list[IndexLine]]:
         quest_lines: list[list[IndexLine]] = []
@@ -211,7 +244,7 @@ class Indexer:
             found_index = len(quest_lines) - 1
         if self.missing_entries:
             if self.verbose:
-                print(t(MsgKey.INDEXER_MISSING_HOOKS_ADDING, count=len(self.missing_entries), quest=default_quest_name))
+                print(t(_INDEXER_MISSING_HOOKS_ADDING, count=len(self.missing_entries), quest=default_quest_name))
             for _, line in self.missing_entries.items():
                 quest_lines[found_index].append(line)
         return quest_lines

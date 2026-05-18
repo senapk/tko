@@ -16,10 +16,16 @@ from tko.play_tree.task_tree import TaskTree
 from tko.play_gui.gui import Gui
 from tko.play.play_actions import PlayActions
 from tko.play.flag_functors import FlagFunctor
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 from icecream import ic # type: ignore
 
 import curses
+
+
+_PLAY_KEY_NOT_RECOGNIZED = Msg(
+    pt="Tecla char:{char}, code:{code}, não reconhecida",
+    en="Key char:{char}, code:{code}, not recognized",
+)
 
 class Play:
     def __init__(self, settings: Settings, repo: Repository):
@@ -165,7 +171,7 @@ class Play:
             return
         self.fman.add_input(
             Floating().bottom().right().set_error().put_text(
-                t(MsgKey.PLAY_KEY_NOT_RECOGNIZED, char=chr(key), code=key)
+                t(_PLAY_KEY_NOT_RECOGNIZED, char=chr(key), code=key)
             )
         )
 

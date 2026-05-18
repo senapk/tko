@@ -6,10 +6,32 @@ from tko.run.solver_builder import SolverBuilder
 from tko.run.wdir_summary_service import WdirSummaryService
 from tko.run.wdir_target_resolver import WdirTargetResolver
 from tko.run.wdir_units_service import WdirUnitsService
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 from tko.util.rtext import RText
 from pathlib import Path
 from tko.config.settings import Settings
+
+
+_RUN_NO_SOURCE_FILES = Msg(
+    pt="Nenhum arquivo de código encontrado.",
+    en="No source files found.",
+)
+_RUN_AUTOLOAD_FOLDER_NOT_SET = Msg(
+    pt="fail: pasta de autoload não definida",
+    en="fail: autoload folder is not set",
+)
+_RUN_AUTOLOAD_LANG_HINT = Msg(
+    pt="Você não definiu os arquivos diretamente. Use [y]-l[.] caso queira especificar a linguagem para autoloading.",
+    en="You did not define files directly. Use [y]-l[.] if you want to specify the language for autoloading.",
+)
+_RUN_NO_TEST_CASES = Msg(
+    pt="Nenhum caso de teste encontrado.",
+    en="No test cases found.",
+)
+_RUN_FILTER_INDEX_OUT_OF_BOUNDS = Msg(
+    pt="Índice fora dos limites: {index}",
+    en="Index out of bounds: {index}",
+)
 
 class Wdir:
     def __init__(self, settings: Settings):
@@ -32,7 +54,7 @@ class Wdir:
 
     def get_solver(self) -> SolverBuilder:
         if self.__solver is None:
-            raise FileNotFoundError(t(MsgKey.RUN_NO_SOURCE_FILES))
+            raise FileNotFoundError(t(_RUN_NO_SOURCE_FILES))
         return self.__solver
     
     def get_unit_list(self) -> list[Unit]:
@@ -72,11 +94,11 @@ class Wdir:
 
     def autoload(self):
         if self.__config.autoload_folder is None:
-            raise Warning(t(MsgKey.RUN_AUTOLOAD_FOLDER_NOT_SET))
+            raise Warning(t(_RUN_AUTOLOAD_FOLDER_NOT_SET))
         folder: Path = self.__config.autoload_folder
 
         if self.__config.lang == "":
-            print(RText.parse(t(MsgKey.RUN_AUTOLOAD_LANG_HINT)))
+            print(RText.parse(t(_RUN_AUTOLOAD_LANG_HINT)))
 
         source_list, solver_list = self.__target_resolver.resolve_autoload(folder, self.__config.lang)
 
@@ -101,7 +123,7 @@ class Wdir:
     def build(self):
         self.__pack_list, loading_failures = self.__units_service.load_packs(self.__source_list)
         if loading_failures > 0 and loading_failures == len(self.__source_list):
-            raise FileNotFoundError(t(MsgKey.RUN_NO_TEST_CASES))
+            raise FileNotFoundError(t(_RUN_NO_TEST_CASES))
         self.__unit_list = self.__units_service.merge_unique_units(self.__pack_list)
         #self.__number_and_mark_duplicated()
         #self.__remove_duplicated()
@@ -119,7 +141,7 @@ class Wdir:
             if 0 <= index < len(self.__unit_list):
                 self.__unit_list = [self.__unit_list[index]]
             else:
-                raise ValueError(t(MsgKey.RUN_FILTER_INDEX_OUT_OF_BOUNDS, index=index))
+                raise ValueError(t(_RUN_FILTER_INDEX_OUT_OF_BOUNDS, index=index))
         return self
 
     def manipulate(self, param: Param.Manip):

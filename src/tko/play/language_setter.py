@@ -6,7 +6,16 @@ from tko.repository.repository_loader import RepositoryLoader
 from tko.util.rtext import RText
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
-from tko.i18n import MsgKey, set_language as set_ui_language, t
+from tko.i18n import Msg, set_language as set_ui_language, t
+
+
+class _LangSetterMsg:
+    DEFAULT_NOT_SET = Msg(pt="Linguagem padrão ainda não foi definida.", en="Default language has not been set yet.")
+    OPTIONS_PREFIX = Msg(pt="[", en="[")
+    OPTIONS_SUFFIX = Msg(pt="]", en="]")
+    PROMPT = Msg(pt="Escolha entre as opções a seguir", en="Choose from the following options")
+    UI_LANGUAGE_CHANGED = Msg(pt="Idioma da interface alterado para {language}", en="Interface language changed to {language}")
+    LANGUAGE_CHANGED = Msg(pt="Linguagem alterada para {language}", en="Language changed to {language}")
 
 
 class LanguageSetter:
@@ -17,10 +26,10 @@ class LanguageSetter:
         lang_drafts: dict[str, str] = settings.get_languages_settings().get_languages_with_drafts()
         if lang == "":
             options = lang_drafts.keys()
-            print(f"\n{t(MsgKey.LANG_SELECT_DEFAULT_NOT_SET)}\n")
+            print(f"\n{t(_LangSetterMsg.DEFAULT_NOT_SET)}\n")
             while True:
-                print(t(MsgKey.LANG_SELECT_PROMPT) + " ", end="")
-                print(t(MsgKey.LANG_SELECT_OPTIONS_PREFIX) + ", ".join(options) + t(MsgKey.LANG_SELECT_OPTIONS_SUFFIX), end="", flush=True)
+                print(t(_LangSetterMsg.PROMPT) + " ", end="")
+                print(t(_LangSetterMsg.OPTIONS_PREFIX) + ", ".join(options) + t(_LangSetterMsg.OPTIONS_SUFFIX), end="", flush=True)
                 print(":", end=" ")
                 lang = input()
                 if lang in options:
@@ -63,7 +72,7 @@ class LanguageSetter:
             .bottom()
             .right()
             .put_text("")
-            .put_text(t(MsgKey("ui.language_changed"), language=next_lang))
+            .put_text(t(_LangSetterMsg.UI_LANGUAGE_CHANGED, language=next_lang))
             .put_text("")
             .set_warning()
         )
@@ -90,7 +99,7 @@ class SetLangFunctor:
             .bottom()
             .right()
             .put_text("")
-            .put_text("Linguagem alterada para " + self.value)
+            .put_text(t(_LangSetterMsg.LANGUAGE_CHANGED, language=self.value))
             .put_text("")
             .set_warning()
         )

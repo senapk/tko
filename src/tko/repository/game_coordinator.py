@@ -1,9 +1,15 @@
 from __future__ import annotations
 import logging
 from tko.repository.git_cache import UpdateMode
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 from tko.logger.log_sort import LogSort
 from tko.repository.repository import Repository
+
+
+_GAME_COORDINATOR_LOADING_REPOSITORY = Msg(
+    pt="Carregando repositório de {root}...",
+    en="Loading repository from {root}...",
+)
 
 class GameCoordinator:
 
@@ -14,7 +20,7 @@ class GameCoordinator:
 
     def load_game(self, verbose: bool) -> GameCoordinator:
         if verbose:
-            self.logger.info(t(MsgKey.GAME_COORDINATOR_LOADING_REPOSITORY, root=self.repo.paths.root_dir))
+            self.logger.info(t(_GAME_COORDINATOR_LOADING_REPOSITORY, root=self.repo.paths.root_dir))
         
         remotes = self.repo.remotes
         if not remotes: # load now

@@ -1,7 +1,13 @@
 from __future__ import annotations
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 from tko.logger.task_resume import TaskResume
 from typing import Any
+
+
+_COLLECTED_NO_RESUME_DATA = Msg(
+    pt="No resume data found in the JSON.",
+    en="No resume data found in the JSON.",
+)
 
 default_value: int = 1
 default_leet: bool = True
@@ -82,7 +88,7 @@ class Collected:
 
     def load_from_dict(self, json_data: dict[str, Any]):
         if not Collected.resume_str in json_data:
-            print(t(MsgKey.COLLECTED_NO_RESUME_DATA))
+            print(t(_COLLECTED_NO_RESUME_DATA))
             return self
 
         task_resume = json_data.get(Collected.resume_str, self.resume)

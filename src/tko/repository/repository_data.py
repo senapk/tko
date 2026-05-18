@@ -1,11 +1,16 @@
 import logging
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 from tko.repository.remote import Remote
 
 from typing import Any
 
 
 logger = logging.getLogger(__name__)
+
+_REPOSITORY_DATA_LOAD_ERROR = Msg(
+    pt="Error loading data from dictionary",
+    en="Error loading data from dictionary",
+)
 
 class RepositoryData:
     def __init__(self):
@@ -87,7 +92,7 @@ class RepositoryData:
                     raise TypeError("The 'sources' field must be a list.")
 
         except (KeyError, TypeError):
-            logger.exception(t(MsgKey.REPOSITORY_DATA_LOAD_ERROR))
+            logger.exception(t(_REPOSITORY_DATA_LOAD_ERROR))
 
     def save_to_dict(self) -> dict[str, Any]:
         return {

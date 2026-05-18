@@ -1,5 +1,6 @@
 from tko.game.quest import Quest
 from tko.game.task import Task
+from tko.i18n import Msg
 from tko.play.task_action import TaskAction
 from tko.floating.floating_manager import FloatingManager
 from tko.play_tree.task_formatter import TaskFormatter
@@ -17,7 +18,7 @@ class GuiActionResolver:
         self.task_formatter = task_formatter
         self.flags = flags
 
-    def get_task_action(self, task: Task) -> tuple[str, str]:
+    def get_task_action(self, task: Task) -> tuple[str, Msg]:
         if task.resource.is_view:
             return "B", TaskAction.VISITAR
         if task.resource.is_static_type:
@@ -26,7 +27,7 @@ class GuiActionResolver:
             return "Y", TaskAction.BAIXAR
         return "G", TaskAction.EXECUTAR
 
-    def get_activate_label(self) -> tuple[str, str]:
+    def get_activate_label(self) -> tuple[str, Msg]:
         try:
             obj = self.tree.get_selected_throw()
         except IndexError:

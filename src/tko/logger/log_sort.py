@@ -5,8 +5,14 @@ from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_move import LogItemMove
 from tko.logger.log_item_self import LogItemSelf
 from tko.logger.delta import Delta
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 from icecream import ic # type: ignore
+
+
+_LOGGER_INVALID_ITEM_TYPE = Msg(
+    pt="Tipo de item inválido",
+    en="Invalid Item Type",
+)
 
 class LogSort:
     def __init__(self):
@@ -30,7 +36,7 @@ class LogSort:
         elif isinstance(base, LogItemSelf):
             self.self_list.append((delta, base))
         else:
-            raise ValueError(t(MsgKey.LOGGER_INVALID_ITEM_TYPE))
+            raise ValueError(t(_LOGGER_INVALID_ITEM_TYPE))
         
 
     @staticmethod

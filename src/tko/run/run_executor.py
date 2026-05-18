@@ -7,7 +7,13 @@ from tko.run.run_tracker import RunTracker
 from tko.run.run_presenter import RunPresenter
 from tko.run.run_loader import RunLoader
 from tko.run.test_loop_service import TestLoopService
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
+
+
+_RUN_TESTING_LABEL = Msg(
+    pt=" Testando o código com os casos de teste ",
+    en=" Testing code with test cases ",
+)
 
 class RunExecutor:
     def __init__(self, ctx: RunContext):
@@ -32,7 +38,7 @@ class RunExecutor:
 
     def run_tests_on_raw_term(self) -> int:
         if not self.ctx.config.eval_mode:
-            print(RText.parse(t(MsgKey.RUN_TESTING_LABEL)).center(RawTerminal.get_terminal_size(), "═"))
+            print(RText.parse(t(_RUN_TESTING_LABEL)).center(RawTerminal.get_terminal_size(), "═"))
         
         percent = self.test_loop.run_top_line(self.get_rate)
         self.presenter.print_diff()

@@ -6,10 +6,34 @@ from pathlib import Path
 import yaml #type: ignore
 
 from tko.config.languages_settings import LanguagesSettings
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 from tko.util.rtext import RText
 from tko.widget.colors import Colors
 from tko.util.decoder import Decoder
+
+
+_SETTINGS_GIT_LABEL_NOT_FOUND = Msg(
+    pt="Repositório git label {alias} não encontrado",
+    en="Git repository label {alias} not found",
+)
+_SETTINGS_EMPTY_CONFIG_FILE = Msg(
+    pt="Arquivo de configuração vazio: {path}",
+    en="Empty config file: {path}",
+)
+_RESET_SETTINGS_PATH = Msg(
+    pt="Arquivo global configuração:",
+    en="Global settings file:",
+)
+_RESET_LANGUAGES_PATH = Msg(
+    pt="Configurações de linguagem:",
+    en="Language settings:",
+)
+_SETTINGS_REMOTE_SOURCES_REGISTERED = Msg(
+    pt="Fontes de tarefas remotas cadastradas:",
+    en="Registered remote task sources:",
+)
+
+
 def singleton(class_): # type: ignore
     instances = {}
     def getinstance(*args, **kwargs): # type: ignore
@@ -78,7 +102,7 @@ class Settings:
     def get_alias_git(self, alias: str) -> str:
         if alias in self.dict_alias_git:
             return self.dict_alias_git[alias]
-        raise Warning(t(MsgKey.SETTINGS_GIT_LABEL_NOT_FOUND, alias=alias))
+        raise Warning(t(_SETTINGS_GIT_LABEL_NOT_FOUND, alias=alias))
 
     def has_alias_git(self, alias: str) -> bool:
         return alias in self.dict_alias_git
@@ -91,7 +115,7 @@ class Settings:
             data: Any = yaml.safe_load(content)
 
             if data is None or not isinstance(data, dict):
-                raise FileNotFoundError(t(MsgKey.SETTINGS_EMPTY_CONFIG_FILE, path=settings_file))
+                raise FileNotFoundError(t(_SETTINGS_EMPTY_CONFIG_FILE, path=settings_file))
             self.data = data
             self.dict_alias_git = data.get(self.__gitrepos, self.Defaults.alias_git) # type: ignore
             if len(self.dict_alias_git.keys()) == 0: # type: ignore
@@ -118,13 +142,13 @@ class Settings:
 
     def __str__(self):
         output: list[str] = []
-        output.append(str(RText.parse(f"[g]{t(MsgKey.RESET_SETTINGS_PATH)}[.]")))
+        output.append(str(RText.parse(f"[g]{t(_RESET_SETTINGS_PATH)}[.]")))
         output.append("    " + self.get_settings_file().resolve().as_posix())
-        output.append(str(RText.parse(f"[g]{t(MsgKey.RESET_LANGUAGES_PATH)}[.]")))
+        output.append(str(RText.parse(f"[g]{t(_RESET_LANGUAGES_PATH)}[.]")))
         output.append("    " + self.get_languages_file().resolve().as_posix())
         output.append("")
         
-        output.append(str(RText.parse(f"[g]{t(MsgKey.SETTINGS_REMOTE_SOURCES_REGISTERED)}[.]")))
+        output.append(str(RText.parse(f"[g]{t(_SETTINGS_REMOTE_SOURCES_REGISTERED)}[.]")))
         max_alias = max([len(key) for key in self.dict_alias_git])
         for key in self.dict_alias_git:
             output.append("- @{} : {}".format(key.ljust(max_alias), self.dict_alias_git[key]))

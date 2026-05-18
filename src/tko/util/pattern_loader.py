@@ -1,10 +1,27 @@
 from __future__ import annotations
 import logging
 import re
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 
 
 logger = logging.getLogger(__name__)
+
+_PATTERN_WILDCARD_ONLY_ONCE = Msg(
+    pt="  fail: o curinga @ deve ser usado apenas uma vez por padrão",
+    en="  fail: the wildcard @ should be used only once per pattern",
+)
+_PATTERN_INPUT_WILDCARD_REQUIRES_OUTPUT = Msg(
+    pt="  fail: se input_pattern tem o curinga @, output_pattern deve ter também",
+    en="  fail: if input_pattern has wildcard @, output_pattern should have it too",
+)
+_PATTERN_OUTPUT_WILDCARD_REQUIRES_INPUT = Msg(
+    pt="  fail: se output_pattern tem o curinga @, input_pattern deve ter também",
+    en="  fail: if output_pattern has wildcard @, input_pattern should have it too",
+)
+_PATTERN_OUTPUT_FILE_NOT_FOUND = Msg(
+    pt="fail: arquivo {file} não encontrado",
+    en="fail: file {file} not found",
+)
 
 
 class FileSource:
@@ -33,13 +50,13 @@ class PatternLoader:
 
     def __check_double_wildcard(self):
         if self.input_pattern.count("@") > 1 or self.output_pattern.count("@") > 1:
-            raise ValueError(t(MsgKey.PATTERN_WILDCARD_ONLY_ONCE))
+            raise ValueError(t(_PATTERN_WILDCARD_ONLY_ONCE))
 
     def __check_missing_wildcard(self):
         if "@" in self.input_pattern and "@" not in self.output_pattern:
-            raise ValueError(t(MsgKey.PATTERN_INPUT_WILDCARD_REQUIRES_OUTPUT))
+            raise ValueError(t(_PATTERN_INPUT_WILDCARD_REQUIRES_OUTPUT))
         if "@" not in self.input_pattern and "@" in self.output_pattern:
-            raise ValueError(t(MsgKey.PATTERN_OUTPUT_WILDCARD_REQUIRES_INPUT))
+            raise ValueError(t(_PATTERN_OUTPUT_WILDCARD_REQUIRES_INPUT))
 
     def make_file_source(self, label: str) -> FileSource:
         return FileSource(label, self.input_pattern.replace("@", label), self.output_pattern.replace("@", label))
@@ -55,7 +72,7 @@ class PatternLoader:
             label = match[0]
             file_source = self.make_file_source(label)
             if file_source.output_file not in filename_list:
-                logger.error(t(MsgKey.PATTERN_OUTPUT_FILE_NOT_FOUND, file=file_source.output_file))
+                logger.error(t(_PATTERN_OUTPUT_FILE_NOT_FOUND, file=file_source.output_file))
             else:
                 file_source_list.append(file_source)
         return file_source_list

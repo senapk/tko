@@ -7,7 +7,13 @@ from tko.enums.diff_mode import DiffMode
 from tko.run.diff_builder_down import DiffBuilderDown
 from tko.run.diff_builder_side import DiffBuilderSide
 from tko.run.run_context import RunContext
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
+
+
+_RUN_NO_CODE_FOUND = Msg(
+    pt="Nenhum arquivo de código encontrado. Listando casos de teste.",
+    en="No source files found. Listing test cases.",
+)
 
 class RunPresenter:
     def __init__(self, ctx: RunContext):
@@ -52,7 +58,7 @@ class RunPresenter:
 
     def list_mode(self):
         if not self.ctx.config.eval_mode:
-            print(RText.parse(t(MsgKey.RUN_NO_CODE_FOUND)).center(RawTerminal.get_terminal_size(), "╌"), flush=True)
+            print(RText.parse(t(_RUN_NO_CODE_FOUND)).center(RawTerminal.get_terminal_size(), "╌"), flush=True)
         print(self.ctx.wdir.resume_splitted())
         for line in self.ctx.wdir.unit_list_resume():
             print(line)

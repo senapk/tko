@@ -8,9 +8,19 @@ from tko.floating.floating_input_text import FloatingInputText
 from tko.play_tree.task_tree import TaskTree
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 from tko.util.rtext import RText
 from tko.down.sandbox_drafts import SandboxDrafts
+
+
+class _DraftMsg:
+    TITLE_PLACEHOLDER = Msg(pt="Digite o título da tarefa aqui", en="Type task title here")
+    FOLDER_EXISTS = Msg(pt="A pasta {folder} já existe.", en="Folder {folder} already exists.")
+    CREATED_AT = Msg(pt="Rascunho criado em {folder}", en="Draft created at {folder}")
+    TITLE_PROMPT = Msg(
+        pt="Digite o Título (use @label para definir a chave manualmente)",
+        en="Type the Title (use @label to define the key manually)",
+    )
 
 
 class DraftCreator:
@@ -54,7 +64,7 @@ class DraftCreator:
             if key == "":
                 key = SandboxDrafts.format_draft_key(find_numbered_draft_id(sandbox_folder))
             if title == "":
-                title = t(MsgKey.DRAFT_CREATOR_TITLE_PLACEHOLDER)
+                title = t(_DraftMsg.TITLE_PLACEHOLDER)
 
             folder: Path = sandbox_folder / key
             if not folder.exists():
@@ -62,7 +72,7 @@ class DraftCreator:
             else:
                 self.fman.add_input(
                     Floating().bottom().right()
-                    .put_text("\n" + t(MsgKey.DRAFT_CREATOR_FOLDER_EXISTS, folder=folder) + "\n")
+                    .put_text("\n" + t(_DraftMsg.FOLDER_EXISTS, folder=folder) + "\n")
                     .set_error()
                 )
                 return
@@ -83,11 +93,11 @@ class DraftCreator:
             self.reload()
             self.fman.add_input(
                 Floating().bottom().right()
-                .put_text(t(MsgKey.DRAFT_CREATOR_CREATED_AT, folder=folder))
+                .put_text(t(_DraftMsg.CREATED_AT, folder=folder))
                 .set_warning()
             )
 
         current_folders_on_rep: list[str] = [f"@{folder.name}" for folder in sandbox_folder.iterdir() if folder.is_dir()]
         self.fman.add_input(
-            FloatingInputText(RText(t(MsgKey.DRAFT_CREATOR_TITLE_PROMPT)), __create, current_folders_on_rep)
+            FloatingInputText(RText(t(_DraftMsg.TITLE_PROMPT)), __create, current_folders_on_rep)
         )

@@ -1,25 +1,11 @@
-from enum import Enum
-
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg
 
 
-class _TaskActionMeta(type):
-    _KEY_MAP: dict[str, Enum] = {
-        "BAIXAR":   MsgKey("task_action.baixar"),
-        "EXECUTAR": MsgKey("task_action.executar"),
-        "VISITAR":  MsgKey("task_action.visitar"),
-        "EXPANDIR": MsgKey("task_action.expandir"),
-        "CONTRAIR": MsgKey("task_action.contrair"),
-        "NENHUMA":  MsgKey("task_action.nenhuma"),
-        "BLOQUEIO": MsgKey("task_action.bloqueio"),
-    }
-
-    def __getattr__(cls, name: str) -> str:
-        key = cls._KEY_MAP.get(name)
-        if key is not None:
-            return t(key)
-        raise AttributeError(name)
-
-
-class TaskAction(metaclass=_TaskActionMeta):
-    pass
+class TaskAction:
+    BAIXAR = Msg(pt="Baixar  ", en="Download")
+    EXECUTAR = Msg(pt="Escolher", en="Choose  ")
+    VISITAR = Msg(pt="Visitar ", en="Visit   ")
+    EXPANDIR = Msg(pt="Expandir", en="Expand  ")
+    CONTRAIR = Msg(pt="Contrair", en="Collapse")
+    NENHUMA = Msg(pt="Retornar", en="Return  ")
+    BLOQUEIO = Msg(pt="Travado", en="Locked ")

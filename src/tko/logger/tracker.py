@@ -4,11 +4,21 @@ import argparse
 import csv
 from pathlib import Path
 from tko.logger.patch_history import PatchHistory
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 from tko.util.decoder import Decoder
 import tempfile
 from tko.logger.log_sort import LogSort
 from pathlib import Path
+
+
+_TRACKER_NOT_ENOUGH_COLUMNS = Msg(
+    pt="Colunas insuficientes para criar um objeto Track.",
+    en="Not enough columns to create a Track object.",
+)
+_TRACKER_INVALID_TIMESTAMP_FORMAT = Msg(
+    pt="Formato de timestamp inválido: {timestamp}. O formato esperado é YYYY-MM-DD_HH-MM-SS.",
+    en="Invalid timestamp format: {timestamp}. Expected format is YYYY-MM-DD_HH-MM-SS.",
+)
 
 class Track:
     def __init__(self):
@@ -33,7 +43,7 @@ class Track:
 
     def column_to_track(self, columns: list[str]):
         if len(columns) < 3:
-            raise ValueError(t(MsgKey.TRACKER_NOT_ENOUGH_COLUMNS))
+            raise ValueError(t(_TRACKER_NOT_ENOUGH_COLUMNS))
         self.timestamp = columns[0]
         self.result = columns[1]
         self.file_stamp_list = columns[2].split(";")
@@ -117,7 +127,7 @@ class Tracker:
         try:
             return datetime.datetime.strptime(timestamp, "%Y-%m-%d_%H-%M-%S")
         except ValueError:
-            raise ValueError(t(MsgKey.TRACKER_INVALID_TIMESTAMP_FORMAT, timestamp=timestamp))
+            raise ValueError(t(_TRACKER_INVALID_TIMESTAMP_FORMAT, timestamp=timestamp))
 
     # return timestamp of the last version of the file
     def save_file_with_timestamp_prefix(self, timestamp: str, file: Path) -> tuple[str, bool, int]:

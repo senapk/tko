@@ -1,11 +1,17 @@
 from tko.widget.frame import Frame
 from tko.util.rtext import RText
 from tko.widget.fmt import Fmt
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 from typing import Callable
 import enum
 import curses
 from abc import ABC, abstractmethod
+
+
+_FLOATING_INVALID_ALIGN = Msg(
+    pt="Invalid align {align}",
+    en="Invalid align {align}",
+)
 
 
 class FloatingType(enum.Enum):
@@ -101,7 +107,7 @@ class Floating(FloatingABC):
         valid = "<>^v"
         for c in self.floating_align:
             if c not in valid:
-                raise ValueError(t(MsgKey.FLOATING_INVALID_ALIGN, align=c))
+                raise ValueError(t(_FLOATING_INVALID_ALIGN, align=c))
 
         lines, cols = Fmt.get_size()
 

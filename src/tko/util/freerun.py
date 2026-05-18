@@ -6,11 +6,21 @@ from tko.util.raw_terminal import RawTerminal
 from tko.util.runner import Runner
 from tko.play.images import compilling_image
 from tko.run.solver_builder import SolverBuilder
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 import subprocess
 import random
 import sys
 import os
+
+
+_FREERUN_PROMPT_RERUN = Msg(
+    pt="Para recompilar e reexecutar pressione enter",
+    en="Press enter to recompile and rerun",
+)
+_FREERUN_PROMPT_BACK = Msg(
+    pt="Para voltar para tela anterior digite q e pressione enter",
+    en="To go back, type q and press enter",
+)
 
 if os.name == 'nt':  # Windows
     import msvcrt
@@ -85,8 +95,8 @@ class Free:
             while input_available():
                 read_input()
             print(RText().center(RawTerminal.get_terminal_size(), "─"))
-            print(RText.parse(t(MsgKey.FREERUN_PROMPT_RERUN)))
-            print(RText.parse(t(MsgKey.FREERUN_PROMPT_BACK)))
+            print(RText.parse(t(_FREERUN_PROMPT_RERUN)))
+            print(RText.parse(t(_FREERUN_PROMPT_BACK)))
 
             valor = input()
             if valor != "n" and valor != "q":

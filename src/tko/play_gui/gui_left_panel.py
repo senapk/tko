@@ -5,9 +5,16 @@ from tko.play.search import Search
 from tko.play_tree.task_tree import TaskTree
 from tko.util.rtext import RText
 from tko.util.symbols import Symbols
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 from typing import Callable
 from tko.game.tree_item import IsTreeItem
+
+
+class _LeftPanelMsg:
+    SEARCH = Msg(pt=" Busca: ", en=" Search: ")
+    OUTDATED = Msg(pt=" TKO DESATUALIZADO!", en=" TKO OUTDATED!")
+    UPDATE_MESSAGE = Msg(pt=" Atualize com: ", en=" Update with: ")
+    UPDATE_COMMAND = Msg(pt="pipx upgrade tko ", en="pipx upgrade tko ")
 
 class GuiLeftPanel:
 
@@ -17,7 +24,7 @@ class GuiLeftPanel:
         self._need_update_fn = need_update_fn
 
     def make_search_text(self, size: int) -> RText:
-        text = t(MsgKey.GUI_LEFT_PANEL_SEARCH) + self.tree.state.search + Symbols.cursor
+        text = t(_LeftPanelMsg.SEARCH) + self.tree.state.search + Symbols.cursor
         text = text.ljust(size)
         return RText(text)
 
@@ -36,9 +43,9 @@ class GuiLeftPanel:
         text = RText.format(" {} ", dirname_str)
         if self._need_update_fn():
             text = (
-                RText(t(MsgKey.GUI_LEFT_PANEL_OUTDATED), "r")
-                + RText(t(MsgKey.GUI_LEFT_PANEL_UPDATE_MESSAGE), "y")
-                + RText(t(MsgKey.GUI_LEFT_PANEL_UPDATE_COMMAND), "g")
+                RText(t(_LeftPanelMsg.OUTDATED), "r")
+                + RText(t(_LeftPanelMsg.UPDATE_MESSAGE), "y")
+                + RText(t(_LeftPanelMsg.UPDATE_COMMAND), "g")
             )
         frame.set_footer(text, "<", prefix="{", suffix="}")
         frame.set_scrollbar(

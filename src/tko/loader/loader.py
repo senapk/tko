@@ -6,10 +6,20 @@ from tko.loader.dir_parser import DirParser
 from tko.loader.tio_parser import TioParser
 from tko.loader.toml_parser import TomlParser
 from tko.loader.vpl_parser import VplParser
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 from tko.run.unit import Unit
 from tko.util.decoder import Decoder
 from pathlib import Path
+
+
+_LOADER_TARGET_FORMAT_NOT_SUPPORTED = Msg(
+    pt="fail: formato de target não suportado {source}",
+    en="fail: target format not supported {source}",
+)
+_LOADER_UNABLE_TO_FIND = Msg(
+    pt="fail: impossível encontrar {source}",
+    en="fail: unable to find {source}",
+)
 
 class Loader:
 
@@ -63,7 +73,7 @@ class Loader:
                     pass
                 return tests
             else:
-                print(t(MsgKey.LOADER_TARGET_FORMAT_NOT_SUPPORTED, source=source))  # make this a raise
+                print(t(_LOADER_TARGET_FORMAT_NOT_SUPPORTED, source=source))  # make this a raise
         else:
-            raise FileNotFoundError(t(MsgKey.LOADER_UNABLE_TO_FIND, source=source))
+            raise FileNotFoundError(t(_LOADER_UNABLE_TO_FIND, source=source))
         return []

@@ -3,11 +3,16 @@ import math
 from pathlib import Path
 
 from tko.loader.loader import Loader
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 from tko.run.unit import Unit
 
 
 logger = logging.getLogger(__name__)
+
+_RUN_PACK_LOAD_FAILED = Msg(
+    pt="Falha ao carregar pacote de unidades em {source}",
+    en="Failed to load unit pack from {source}",
+)
 
 
 class WdirUnitsService:
@@ -25,7 +30,7 @@ class WdirUnitsService:
                     unit_list.append(unit)
                 pack_list.append(unit_list)
             except FileNotFoundError:
-                logger.exception(t(MsgKey.RUN_PACK_LOAD_FAILED, source=source))
+                logger.exception(t(_RUN_PACK_LOAD_FAILED, source=source))
                 loading_failures += 1
         return pack_list, loading_failures
 

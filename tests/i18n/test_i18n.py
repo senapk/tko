@@ -1,5 +1,11 @@
 from tko.config.app_settings import AppSettings
-from tko.i18n import MsgKey, get_catalog_keys, normalize_language, set_language, t
+from tko.i18n import Msg, normalize_language, set_language, t
+
+
+_CLI_COMMON_NO_REPO = Msg(
+    pt="Nenhum repositório TKO encontrado.",
+    en="No TKO repository found.",
+)
 
 
 class TestI18N:
@@ -14,14 +20,13 @@ class TestI18N:
 
     def test_translate_pt_and_en(self):
         set_language("en")
-        assert t(MsgKey.RESET_NO_REPO) == "No TKO repository found."
+        assert t(_CLI_COMMON_NO_REPO) == "No TKO repository found."
         set_language("pt-BR")
-        assert t(MsgKey.RESET_NO_REPO) == "Nenhum repositório TKO encontrado."
+        assert t(_CLI_COMMON_NO_REPO) == "Nenhum repositório TKO encontrado."
 
-    def test_msg_key_matches_catalogs(self):
-        keys = {key.value for key in MsgKey}
-        assert keys == get_catalog_keys("pt-BR")
-        assert keys == get_catalog_keys("en")
+    def test_string_fallback_uses_literal_template(self):
+        set_language("en")
+        assert t("No catalog {value}", value="path") == "No catalog path"
 
     def test_app_settings_ui_language_roundtrip(self):
         settings = AppSettings(ui_language="en")

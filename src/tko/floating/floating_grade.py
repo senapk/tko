@@ -3,33 +3,60 @@ from tko.floating.floating import FloatingABC, Floating
 from tko.game.task import Task
 from tko.util.rtext import RText
 from tko.util.symbols import Symbols
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 
 from abc import ABC, abstractmethod
 from typing import Callable
 
 import curses
 
-from tko.i18n.catalogs import TRANSLATIONS
+
+class _GradeMsg:
+    NO = Msg(pt="Não", en="No")
+    YES = Msg(pt="Sim", en="Yes")
+    HEADER = Msg(pt=" Utilize os direcionais e texto para marcar", en=" Use arrow keys and text to mark")
+    FOOTER = Msg(pt=" Pressione Enter para confirmar, Esc para cancelar", en=" Press Enter to confirm, Esc to cancel")
+    NOTHING = Msg(pt=" Nada", en=" Nothing")
+
+    AUTO_MODE_LABEL = Msg(pt="Taxa de testes que passou na última execução:", en="Percentage of tests that passed in the last run:")
+    MANUAL_MODE_LABEL = Msg(pt="Informe qual percentual da atividade você fez?", en="What percentage of the activity did you complete?")
+    STUDY_TIME_LABEL = Msg(pt="Qual tempo total estimado, estudo + código, em minutos?", en="What is the total estimated time, study + code, in minutes?")
+    FRIEND_LABEL = Msg(pt="Deixe em branco se fez sozinho, ou com o nome de quem ajudou", en="Leave blank if you did it alone, or with the name of who helped")
+    GUIDED_LABEL = Msg(pt="Fez o código copiando da aula ou vídeo aula?", en="Did you code by copying from class or video?")
+    CONCEPT_LABEL = Msg(pt="ESTUDAR conceitos sem gerar a solução do problema?", en="STUDY concepts without generating the problem solution?")
+    PROBLEM_LABEL = Msg(pt="ENTENDER o problema a ser resolvido?", en="UNDERSTAND the problem to be solved?")
+    CODE_LABEL = Msg(pt="GERAR ou CORRIGIR código relacionado ao problema?", en="GENERATE or FIX code related to the problem?")
+    DEBUG_LABEL = Msg(pt="COMPREENDER mensagens de ERRO ou SAÍDA incorreta?", en="UNDERSTAND ERROR messages or incorrect OUTPUT?")
+    REFACTOR_LABEL = Msg(pt="REFATORAR o código só após fazer tudo sozinho?", en="REFACTOR code only after doing everything yourself?")
+
+    GUIDED_DISCOUNT = Msg(pt="COPIOU:", en="COPIED:")
+    CONCEPT_DISCOUNT = Msg(pt="ESTUDAR:", en="STUDY:")
+    PROBLEM_DISCOUNT = Msg(pt="ENTENDER:", en="UNDERSTAND:")
+    CODE_DISCOUNT = Msg(pt="CORRIGIR:", en="FIX:")
+    DEBUG_DISCOUNT = Msg(pt="DEBUGAR:", en="DEBUG:")
+    REFACTOR_DISCOUNT = Msg(pt="REFATORAR:", en="REFACTOR:")
+
+    SECTION_TITLE = Msg(
+        pt="Pontue de acordo com a última vez que você (re)fez a tarefa do zero (sprint)",
+        en="Rate according to the last time you (re)did the task from scratch (sprint)",
+    )
+    SECTION_HUMAN_HELP = Msg(pt="Você fez com ajuda humana ou guiado?", en="Did you do it with human help or guided?")
+    SECTION_AI_USAGE = Msg(pt="Você usou IA (LLMs) para", en="Did you use AI (LLMs) for")
 
 
-_GRADE_LABEL_KEYS = (
-    "grade.auto_mode_label",
-    "grade.manual_mode_label",
-    "grade.study_time_label",
-    "grade.friend_label",
-    "grade.guided_label",
-    "grade.concept_label",
-    "grade.problem_label",
-    "grade.code_label",
-    "grade.debug_label",
-    "grade.refactor_label",
+_GRADE_LABELS = (
+    _GradeMsg.AUTO_MODE_LABEL,
+    _GradeMsg.MANUAL_MODE_LABEL,
+    _GradeMsg.STUDY_TIME_LABEL,
+    _GradeMsg.FRIEND_LABEL,
+    _GradeMsg.GUIDED_LABEL,
+    _GradeMsg.CONCEPT_LABEL,
+    _GradeMsg.PROBLEM_LABEL,
+    _GradeMsg.CODE_LABEL,
+    _GradeMsg.DEBUG_LABEL,
+    _GradeMsg.REFACTOR_LABEL,
 )
-_GRADE_LABEL_WIDTH = max(
-    len(TRANSLATIONS[language][key])
-    for language in ("pt-BR", "en")
-    for key in _GRADE_LABEL_KEYS
-)
+_GRADE_LABEL_WIDTH = max(max(len(label.pt), len(label.en)) for label in _GRADE_LABELS)
 _GRADE_LINE_PAD = _GRADE_LABEL_WIDTH + 10
 
 
@@ -176,7 +203,7 @@ class InputBoolean(InputLine):
         else:
             text += self.prefix
         text = text.ljust(pad) + "│ "
-        text += RText(t(MsgKey.GRADE_NO), self.CHOOSEN_COLOR if self.value == "0" else "") + " " + RText(t(MsgKey.GRADE_YES), self.CHOOSEN_COLOR if self.value == "1" else "")
+        text += RText(t(_GradeMsg.NO), self.CHOOSEN_COLOR if self.value == "0" else "") + " " + RText(t(_GradeMsg.YES), self.CHOOSEN_COLOR if self.value == "1" else "")
         return text
 
 
@@ -187,12 +214,12 @@ class FloatingGrade(FloatingABC):
         self._line = 0
         self.floating.set_text_ljust()
         self.floating.frame.set_border_color("g")
-        self.floating.set_header_text(RText(t(MsgKey.GRADE_HEADER), "y/"))
-        self.floating.set_footer_text(RText(t(MsgKey.GRADE_FOOTER), "y/"))
+        self.floating.set_header_text(RText(t(_GradeMsg.HEADER), "y/"))
+        self.floating.set_footer_text(RText(t(_GradeMsg.FOOTER), "y/"))
         self.fn_exit = fn_exit
 
         progression: list[tuple[str, RText]] = [
-            ("x", RText(t(MsgKey.GRADE_NOTHING), "g")),
+            ("x", RText(t(_GradeMsg.NOTHING), "g")),
             ("1", RText(" 10%", "y")),
             ("2", RText(" 20%", "y")),
             ("3", RText(" 30%", "y")),
@@ -205,9 +232,9 @@ class FloatingGrade(FloatingABC):
             ("✓", RText(" 100%", "y"))]
 
         if self._task.config.is_auto:
-            texto_auto = t(MsgKey.GRADE_AUTO_MODE_LABEL)
+            texto_auto = t(_GradeMsg.AUTO_MODE_LABEL)
         else:
-            texto_auto = t(MsgKey.GRADE_MANUAL_MODE_LABEL)
+            texto_auto = t(_GradeMsg.MANUAL_MODE_LABEL)
         
         guided   = "" if not self._task.info.feedback else ("1" if self._task.info.guided else "0")
         concept  = "" if not self._task.info.feedback else ("1" if self._task.info.ia_concept else "0")
@@ -218,18 +245,18 @@ class FloatingGrade(FloatingABC):
 
         self.quantity_input_lines: list[InputLine] = [
             InputSlide("rate", RText(texto_auto), progression, self._task.info.rate // 10).set_locked(self._task.config.is_auto),
-            InputText("study", RText(t(MsgKey.GRADE_STUDY_TIME_LABEL)), str(self._task.info.study)).set_number_only(True),
+            InputText("study", RText(t(_GradeMsg.STUDY_TIME_LABEL)), str(self._task.info.study)).set_number_only(True),
         ]
         self.support_input_lines: list[InputLine] = [
-            InputText("friend", RText(t(MsgKey.GRADE_FRIEND_LABEL)), self._task.info.friend),
-            InputBoolean("guided",  RText(t(MsgKey.GRADE_GUIDED_LABEL)) + "      " + RText("   " + t(MsgKey.GRADE_GUIDED_DISCOUNT), "g") + self.get_discount("guided"), guided),
+            InputText("friend", RText(t(_GradeMsg.FRIEND_LABEL)), self._task.info.friend),
+            InputBoolean("guided",  RText(t(_GradeMsg.GUIDED_LABEL)) + "      " + RText("   " + t(_GradeMsg.GUIDED_DISCOUNT), "g") + self.get_discount("guided"), guided),
         ]
         self.quality_input_lines: list[InputLine] = [
-            InputBoolean("concept", RText(t(MsgKey.GRADE_CONCEPT_LABEL)) + "" + RText("  " + t(MsgKey.GRADE_CONCEPT_DISCOUNT), "g") + self.get_discount("concept"), concept),
-            InputBoolean("problem", RText(t(MsgKey.GRADE_PROBLEM_LABEL)) + "              " + RText(" " + t(MsgKey.GRADE_PROBLEM_DISCOUNT), "g") + self.get_discount("problem"), problem),
-            InputBoolean("code",    RText(t(MsgKey.GRADE_CODE_LABEL)) + " " + RText(" " + t(MsgKey.GRADE_CODE_DISCOUNT), "g") + self.get_discount("code"), code),
-            InputBoolean("debug",   RText(t(MsgKey.GRADE_DEBUG_LABEL)) + " " + RText("  " + t(MsgKey.GRADE_DEBUG_DISCOUNT), "g") + self.get_discount("debug"), debug),
-            InputBoolean("refactor",RText(t(MsgKey.GRADE_REFACTOR_LABEL)) + "    " + RText("" + t(MsgKey.GRADE_REFACTOR_DISCOUNT), "g") + self.get_discount("refactor"), refactor),
+            InputBoolean("concept", RText(t(_GradeMsg.CONCEPT_LABEL)) + "" + RText("  " + t(_GradeMsg.CONCEPT_DISCOUNT), "g") + self.get_discount("concept"), concept),
+            InputBoolean("problem", RText(t(_GradeMsg.PROBLEM_LABEL)) + "              " + RText(" " + t(_GradeMsg.PROBLEM_DISCOUNT), "g") + self.get_discount("problem"), problem),
+            InputBoolean("code",    RText(t(_GradeMsg.CODE_LABEL)) + " " + RText(" " + t(_GradeMsg.CODE_DISCOUNT), "g") + self.get_discount("code"), code),
+            InputBoolean("debug",   RText(t(_GradeMsg.DEBUG_LABEL)) + " " + RText("  " + t(_GradeMsg.DEBUG_DISCOUNT), "g") + self.get_discount("debug"), debug),
+            InputBoolean("refactor",RText(t(_GradeMsg.REFACTOR_LABEL)) + "    " + RText("" + t(_GradeMsg.REFACTOR_DISCOUNT), "g") + self.get_discount("refactor"), refactor),
         ]
         self.all_input_lines: list[InputLine] = self.quantity_input_lines + self.support_input_lines + self.quality_input_lines
         self.input_dict: dict[str, InputLine] = {line.id: line for line in self.all_input_lines}
@@ -258,7 +285,7 @@ class FloatingGrade(FloatingABC):
         self.set_focus()
         content = self.floating.content
         content.clear()
-        content.append(RText(f"         {t(MsgKey.GRADE_SECTION_TITLE)}         "))
+        content.append(RText(f"         {t(_GradeMsg.SECTION_TITLE)}         "))
         width = 90
         pad = _GRADE_LINE_PAD
         dummy_task = self._task.clone()
@@ -270,10 +297,10 @@ class FloatingGrade(FloatingABC):
         left_side = "║ "
         for line in self.quantity_input_lines:
             content.append(RText(left_side) + line.get_text(pad))
-        content.append(RText("╠═") + RText(f" {t(MsgKey.GRADE_SECTION_HUMAN_HELP)} ").center(width, "═"))
+        content.append(RText("╠═") + RText(f" {t(_GradeMsg.SECTION_HUMAN_HELP)} ").center(width, "═"))
         for line in self.support_input_lines:
             content.append(RText(left_side) + line.get_text(pad))
-        content.append(RText("╠═") + RText(f" {t(MsgKey.GRADE_SECTION_AI_USAGE)} ").center(width, "═"))
+        content.append(RText("╠═") + RText(f" {t(_GradeMsg.SECTION_AI_USAGE)} ").center(width, "═"))
         for line in self.quality_input_lines:
             content.append(RText(left_side) + line.get_text(pad))
         content.append(RText("╚═══════════════════════════════════════════════════════════").ljust(width, "═"))

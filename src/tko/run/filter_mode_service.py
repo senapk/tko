@@ -2,9 +2,15 @@ import os
 from pathlib import Path
 
 from tko.feno.filter import CodeFilter
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 from tko.util.raw_terminal import RawTerminal
 from tko.util.rtext import RText
+
+
+_RUN_FILTER_MODE_BANNER = Msg(
+    pt=" Entrando no modo de filtragem ",
+    en=" Entering filter mode ",
+)
 
 
 class TkoFilterMode:
@@ -18,7 +24,7 @@ class TkoFilterMode:
 class FilterModeService:
     @staticmethod
     def apply(target_list: list[Path]) -> list[Path]:
-        print(RText(t(MsgKey.RUN_FILTER_MODE_BANNER)).center(RawTerminal.get_terminal_size(), "═"))
+        print(RText(t(_RUN_FILTER_MODE_BANNER)).center(RawTerminal.get_terminal_size(), "═"))
 
         TkoFilterMode.deep_copy_and_change_dir()
         new_target_list: list[Path] = []

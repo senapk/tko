@@ -10,7 +10,13 @@ from tko.run.wdir import Wdir
 from tko.util.rtext import RText
 from tko.util.symbols import Symbols
 from tko.enums.execution_result import ExecutionResult
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
+
+
+class _TesterTopBarMsg:
+    RUNNING_LOCKED_ACTIVITY = Msg(pt="Executando atividade travada", en="Running locked activity")
+    NO_TESTS_REGISTERED = Msg(pt="Nenhum teste cadastrado", en="No tests registered")
+    COMPILE_ERROR = Msg(pt="Erro de compilação", en="Compilation error")
 
 
 class TesterTopBar:
@@ -58,7 +64,7 @@ class TesterTopBar:
         count_missing = self.borders.border(running_color, f"({done}/{full})")
         if state.mode == SeqMode.running:
             if state.locked_index:
-                solvers = self.borders.border("R", t(MsgKey.TESTER_TOP_BAR_RUNNING_LOCKED_ACTIVITY))
+                solvers = self.borders.border("R", t(_TesterTopBarMsg.RUNNING_LOCKED_ACTIVITY))
             else:
                 solvers = count_missing
 
@@ -69,7 +75,7 @@ class TesterTopBar:
         if self.wdir.has_tests():
             sources = self.borders.round_l(sources_color) + source_names + self.borders.round_r(sources_color)
         else:
-            sources = self.borders.border("R", t(MsgKey.TESTER_TOP_BAR_NO_TESTS_REGISTERED))
+            sources = self.borders.border("R", t(_TesterTopBarMsg.NO_TESTS_REGISTERED))
 
         delta = frame_dx - solvers.len()
         left, right = 1, 1
@@ -136,7 +142,7 @@ class TesterTopBar:
         unit = state.get_focused_unit(self.wdir, self._dummy_unit)
         info = RText()
         if self.wdir.get_solver().has_compile_error():
-            info = self.borders.border("R", t(MsgKey.TESTER_TOP_BAR_COMPILE_ERROR))
+            info = self.borders.border("R", t(_TesterTopBarMsg.COMPILE_ERROR))
         elif not state.is_all_right() and state.mode != SeqMode.intro:
             info = unit.str(pad=False)
         frame.write(0, 0, info.center(frame.get_dx()))

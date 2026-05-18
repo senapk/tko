@@ -1,43 +1,29 @@
-from enum import Enum
-
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg
 
 
-class _GuiActionsMeta(type):
-    _KEY_MAP: dict[str, Enum] = {
-        "create_draft": MsgKey("gui_action.create_draft"),
-        "tab": MsgKey("gui_action.tab"),
-        "leave": MsgKey("gui_action.leave"),
-        "edit": MsgKey("gui_action.edit"),
-        "show_time": MsgKey("gui_action.show_time"),
-        "filter": MsgKey("gui_action.filter"),
-        "principal": MsgKey("gui_action.principal"),
-        "github": MsgKey("gui_action.github"),
-        "help": MsgKey("gui_action.help"),
-        "download": MsgKey("gui_action.download"),
-        "activate": MsgKey("gui_action.activate"),
-        "navigate": MsgKey("gui_action.navigate"),
-        "uncheck": MsgKey("gui_action.uncheck"),
-        "search": MsgKey("gui_action.search"),
-        "pallete": MsgKey("gui_action.pallete"),
-        "grade": MsgKey("gui_action.grade"),
-        "time_limit": MsgKey("gui_action.time_limit"),
-        "evaluate_tester": MsgKey("gui_action.evaluate_tester"),
-        "execute_tester": MsgKey("gui_action.execute_tester"),
-        "calibrate": MsgKey("gui_action.calibrate"),
-        "draft": MsgKey("gui_action.draft"),
-        "all": MsgKey("gui_action.all"),
-    }
-
-    def __getattr__(cls, name: str) -> str:
-        key = cls._KEY_MAP.get(name)
-        if key is not None:
-            return t(key)
-        raise AttributeError(name)
-
-
-class GuiActions(metaclass=_GuiActionsMeta):
-    pass
+class GuiActions:
+    create_draft = Msg(pt="Criar Rascunho", en="Create Draft")
+    tab = Msg(pt="↔TAB", en="↔TAB")
+    leave = Msg(pt="Sair [esc]", en="Quit [esc]")
+    edit = Msg(pt="Ver tarefa", en="View task")
+    show_time = Msg(pt="Tempo", en="Time")
+    filter = Msg(pt="Filtrar", en="Filter")
+    principal = Msg(pt="Principal", en="Main")
+    github = Msg(pt="Web   ", en="Web   ")
+    help = Msg(pt="Ajuda", en="Help")
+    download = Msg(pt="Baixar", en="Download")
+    activate = Msg(pt="Ativar", en="Activate")
+    navigate = Msg(pt="←↓→", en="←↓→")
+    uncheck = Msg(pt="Desmarcar", en="Uncheck")
+    search = Msg(pt="Busca", en="Search")
+    pallete = Msg(pt="Paleta", en="Palette")
+    grade = Msg(pt="Auto Avaliação", en="Self Evaluation")
+    time_limit = Msg(pt="Limite de tempo", en="Time limit")
+    evaluate_tester = Msg(pt="Testar", en="Test")
+    execute_tester = Msg(pt="Executar", en="Run")
+    calibrate = Msg(pt="Calibrar teclas", en="Calibrate keys")
+    draft = Msg(pt="Rascunho", en="Draft")
+    all = Msg(pt="Todos", en="All")
 
 class GuiKeys:
     calibrate = "c"

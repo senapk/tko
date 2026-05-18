@@ -19,7 +19,17 @@ from tko.cli.remote_cli import app as remote_app
 from tko.cli.reset import app as reset_app
 from tko.cli.task_cli import app as task_app
 from tko.cli.tool import app as tool_app
-from tko.i18n import MsgKey, set_language, t
+from tko.i18n import Msg, set_language, t
+
+
+_APP_VERSION = Msg(
+    pt="tko {version}",
+    en="tko {version}",
+)
+_APP_KEYBOARD_INTERRUPT = Msg(
+    pt="Interrupção de teclado",
+    en="Keyboard Interrupt",
+)
 
 if os.name != "nt":
     import signal
@@ -60,7 +70,7 @@ def main_callback(
     from tko.util.rtext import RenderConfig, RenderMode
 
     if version:
-        print(t(MsgKey.APP_VERSION, version=__version__))
+        print(t(_APP_VERSION, version=__version__))
         raise typer.Exit()
 
     if width is not None:
@@ -98,7 +108,7 @@ def main():
     try:
         app()
     except KeyboardInterrupt:
-        print(f"\n\n{t(MsgKey.APP_KEYBOARD_INTERRUPT)}")
+        print(f"\n\n{t(_APP_KEYBOARD_INTERRUPT)}")
         sys.exit(1)
     except Warning as w:
         logger.warning("%s", w)

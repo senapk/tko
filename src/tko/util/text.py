@@ -3,7 +3,17 @@ from typing import Any
 import unicodedata
 
 import re
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
+
+
+_TEXT_MUST_BE_STRING = Msg(
+    pt="text must be a string",
+    en="text must be a string",
+)
+_TEXT_INDEX_OUT_OF_RANGE = Msg(
+    pt="index out of range",
+    en="index out of range",
+)
 
 class AnsiColor:
     enabled = True
@@ -50,7 +60,7 @@ class Text:
     class Token:
         def __init__(self, text: str = "", fmt: str = ""):
             if not isinstance(text, str): # type: ignore
-                raise TypeError(t(MsgKey.TEXT_MUST_BE_STRING))
+                raise TypeError(t(_TEXT_MUST_BE_STRING))
             self.text = text
             self.fmt = fmt
         
@@ -191,7 +201,7 @@ class Text:
 
     def __getitem__(self, index: int) -> Text.Token:
         if index < 0 or index >= len(self):
-            raise IndexError(t(MsgKey.TEXT_INDEX_OUT_OF_RANGE))
+            raise IndexError(t(_TEXT_INDEX_OUT_OF_RANGE))
         return self.data[index]
 
     def __len__(self):

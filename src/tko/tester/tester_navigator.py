@@ -10,7 +10,30 @@ from tko.tester.tester_state import TesterState, SeqMode
 from tko.tester import tester_util
 from tko.repository.repository import Repository
 from tko.run.wdir import Wdir
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
+
+
+class _TesterNavigatorMsg:
+    LOCKED_HINT = Msg(
+        pt="{arrow}\nAtividade travada\nAperte {lock_key} para destravar",
+        en="{arrow}\nLocked activity\nPress {lock_key} to unlock",
+    )
+    SINGLE_SOLVER_1 = Msg(
+        pt="Seu projeto só tem um arquivo de solução.",
+        en="Your project has only one solution file.",
+    )
+    SINGLE_SOLVER_2 = Msg(
+        pt="Essa funcionalidade troca qual dos arquivos",
+        en="This feature switches which solution file",
+    )
+    SINGLE_SOLVER_3 = Msg(
+        pt="de solução será o principal.",
+        en="will be used as the main one.",
+    )
+    NO_LOG_REPO = Msg(
+        pt="Nenhum repositório de logs encontrado.",
+        en="No log repository found.",
+    )
 
 
 class TesterNavigator:
@@ -41,7 +64,7 @@ class TesterNavigator:
         if state.locked_index:
             self.fman.add_input(
                 Floating().bottom().right().set_warning()
-                .put_text(t(MsgKey.TESTER_NAVIGATOR_LOCKED_HINT, arrow="←", lock_key=GuiKeys.lock))
+                .put_text(t(_TesterNavigatorMsg.LOCKED_HINT, arrow="←", lock_key=GuiKeys.lock))
             )
             return
         if not self.wdir.get_solver().has_compile_error():
@@ -58,7 +81,7 @@ class TesterNavigator:
         if state.locked_index:
             self.fman.add_input(
                 Floating().bottom().right().set_warning()
-                .put_text(t(MsgKey.TESTER_NAVIGATOR_LOCKED_HINT, arrow="→", lock_key=GuiKeys.lock))
+                .put_text(t(_TesterNavigatorMsg.LOCKED_HINT, arrow="→", lock_key=GuiKeys.lock))
             )
             return
         if not self.wdir.get_solver().has_compile_error():
@@ -87,9 +110,9 @@ class TesterNavigator:
         if len(solver_names) == 1:
             self.fman.add_input(
                 Floating().bottom().right().set_warning()
-                .put_text(t(MsgKey.TESTER_NAVIGATOR_SINGLE_SOLVER_1))
-                .put_text(t(MsgKey.TESTER_NAVIGATOR_SINGLE_SOLVER_2))
-                .put_text(t(MsgKey.TESTER_NAVIGATOR_SINGLE_SOLVER_3))
+                .put_text(t(_TesterNavigatorMsg.SINGLE_SOLVER_1))
+                .put_text(t(_TesterNavigatorMsg.SINGLE_SOLVER_2))
+                .put_text(t(_TesterNavigatorMsg.SINGLE_SOLVER_3))
             )
             return
         self.task.main_idx = (self.task.main_idx + 1) % len(solver_names)
@@ -116,7 +139,7 @@ class TesterNavigator:
         if self.rep is None:
             self.fman.add_input(
                 Floating().bottom().right().set_warning()
-                .put_text(t(MsgKey.TESTER_NAVIGATOR_NO_LOG_REPO))
+                .put_text(t(_TesterNavigatorMsg.NO_LOG_REPO))
             )
             return
         logger = self.rep.logger

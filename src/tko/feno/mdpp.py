@@ -5,13 +5,38 @@ import re
 import enum
 import logging
 from tko.feno.filter import Filter
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 from tko.util.decoder import Decoder
 from pathlib import Path
 from dataclasses import dataclass
 from tko.loader.unit_data import UnitData
 
 logger = logging.getLogger(__name__)
+
+_MDPP_MISSING_EXTRACT_VALUE = Msg(
+    pt="missing value for --extract",
+    en="missing value for --extract",
+)
+_MDPP_INVALID_TESTS_INTEGER = Msg(
+    pt="invalid or missing integer for --tests",
+    en="invalid or missing integer for --tests",
+)
+_MDPP_UNRECOGNIZED_TAG = Msg(
+    pt="unrecognized tag '{tag}'",
+    en="unrecognized tag '{tag}'",
+)
+_MDPP_FILE_NOT_FOUND = Msg(
+    pt="file {path} not found",
+    en="file {path} not found",
+)
+_MDPP_FILE_UPDATED = Msg(
+    pt="file {path} updated",
+    en="file {path} updated",
+)
+_MDPP_FILE_NOT_MARKDOWN = Msg(
+    pt="File {path} is not a markdown file",
+    en="File {path} is not a markdown file",
+)
 
 class Action(enum.Enum):
     RUN = 1
@@ -223,7 +248,7 @@ class Load:
                     params.extract = val
                     i += 1 # Consome o valor
                 else:
-                    logger.warning(t(MsgKey.MDPP_MISSING_EXTRACT_VALUE))
+                    logger.warning(t(_MDPP_MISSING_EXTRACT_VALUE))
             elif token == "--tests":
                 val = Load.__get_value(tokens, i)
                 try:
@@ -233,7 +258,7 @@ class Load:
                     else:
                         raise ValueError
                 except ValueError:
-                    logger.warning(t(MsgKey.MDPP_INVALID_TESTS_INTEGER))
+                    logger.warning(t(_MDPP_INVALID_TESTS_INTEGER))
 
             elif token == "--rmcom":
                 params.rmcom = True
@@ -242,7 +267,7 @@ class Load:
                 params.filter = True
 
             elif token.startswith("--"):
-                logger.warning(t(MsgKey.MDPP_UNRECOGNIZED_TAG, tag=token))
+                logger.warning(t(_MDPP_UNRECOGNIZED_TAG, tag=token))
             
             i += 1 # Sempre avança para o próximo token
             
@@ -307,7 +332,7 @@ class Load:
     def _process_file_content(abspath: Path, rel_path: str, params: LoadParams) -> str:
         """Encapsula a lógica de leitura e transformação do conteúdo."""
         if not abspath.is_file():
-            logger.warning(t(MsgKey.MDPP_FILE_NOT_FOUND, path=rel_path))
+            logger.warning(t(_MDPP_FILE_NOT_FOUND, path=rel_path))
             return ""
 
         data = Decoder.load(abspath)
@@ -367,7 +392,7 @@ class Save:
                 content_old = Decoder.load(path)
             if not exists or content != content_old:
                 Decoder.save(path, content)
-                logger.info(t(MsgKey.MDPP_FILE_UPDATED, path=path))
+                logger.info(t(_MDPP_FILE_UPDATED, path=path))
 
 class MdppMain:
     @staticmethod
@@ -382,7 +407,7 @@ class MdppMain:
         if path.is_file():
             file_content = Decoder.load(path)
             return True, file_content
-        logger.warning(t(MsgKey.MDPP_FILE_NOT_FOUND, path=path))
+        logger.warning(t(_MDPP_FILE_NOT_FOUND, path=path))
         return False, "" 
 
 class Mdpp:
@@ -391,10 +416,10 @@ class Mdpp:
         # path = MdppMain.fix_path(target)
         path = target
         if not path.suffix == ".md":
-            logger.warning(t(MsgKey.MDPP_FILE_NOT_MARKDOWN, path=path))
+            logger.warning(t(_MDPP_FILE_NOT_MARKDOWN, path=path))
             return False
         if not path.is_file():
-            logger.warning(t(MsgKey.MDPP_FILE_NOT_FOUND, path=path))
+            logger.warning(t(_MDPP_FILE_NOT_FOUND, path=path))
             return False
         target_dir = path.parent.resolve()
         found, original = MdppMain.open_file(path)

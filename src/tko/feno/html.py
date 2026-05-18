@@ -3,10 +3,19 @@ from pathlib import Path
 
 import markdown
 from typing import Any
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 
 
 logger = logging.getLogger(__name__)
+
+_FENO_HTML_MARKDOWN_NOT_FOUND = Msg(
+    pt="Erro: Arquivo Markdown não encontrado em '{path}'",
+    en="Error: Markdown file not found at '{path}'",
+)
+_FENO_HTML_CONVERSION_ERROR = Msg(
+    pt="Ocorreu um erro durante a conversão",
+    en="An error occurred during conversion",
+)
 
 def convert_lists_to_4_spaces(markdown_content: str) -> str:
     """
@@ -160,6 +169,6 @@ def convert_markdown_to_html(title: str, markdown_file_path: Path, output_html_p
         # print(f"Conversão concluída: '{markdown_file_path}' -> '{output_html_path}'")
 
     except FileNotFoundError:
-        logger.exception(t(MsgKey.FENO_HTML_MARKDOWN_NOT_FOUND, path=markdown_file_path))
+        logger.exception(t(_FENO_HTML_MARKDOWN_NOT_FOUND, path=markdown_file_path))
     except Exception:
-        logger.exception(t(MsgKey.FENO_HTML_CONVERSION_ERROR))
+        logger.exception(t(_FENO_HTML_CONVERSION_ERROR))

@@ -7,11 +7,26 @@ from tko.enums.identifier_type import IdentifierType
 from tko.loader.toml_parser import TomlParser
 from tko.run.unit import Unit
 from tko.util.decoder import Decoder
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 from pathlib import Path
 
 
 logger = logging.getLogger(__name__)
+
+_WRITER_NO_CHANGES_TEST_FILE = Msg(
+    pt="no changes in test file",
+    en="no changes in test file",
+)
+_WRITER_FILE_WROTE = Msg(
+    pt="file {path} wrote",
+    en="file {path} wrote",
+)
+_WRITER_TARGET_NOT_SUPPORTED_BUILD = Msg(
+    pt="fail: target {target} do not supported for build operation",
+    en="fail: target {target} do not supported for build operation",
+)
+
+
 class Writer:
 
     def __init__(self):
@@ -76,13 +91,13 @@ class Writer:
                 _old = Decoder.load(_target)
                 if _old == _new:
                     if not quiet:
-                        print(t(MsgKey.WRITER_NO_CHANGES_TEST_FILE))
+                        print(t(_WRITER_NO_CHANGES_TEST_FILE))
                     return False
 
             with open(_target, "w", encoding="utf-8") as f:
                 f.write(_new)
                 if not quiet:
-                    print(t(MsgKey.WRITER_FILE_WROTE, path=_target))
+                    print(t(_WRITER_FILE_WROTE, path=_target))
                 return True
 
         target_type = Identifier.get_type(str(target))
@@ -91,6 +106,6 @@ class Writer:
         elif target_type in [IdentifierType.TIO, IdentifierType.VPL, IdentifierType.TOML]:
             save_file(target, unit_list)
         else:
-            logger.error(t(MsgKey.WRITER_TARGET_NOT_SUPPORTED_BUILD, target=target))
+            logger.error(t(_WRITER_TARGET_NOT_SUPPORTED_BUILD, target=target))
             return False
         return True

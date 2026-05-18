@@ -2,10 +2,23 @@ import logging
 
 from tko.game.quest import Quest
 from tko.game.task import Task
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 
 
 logger = logging.getLogger(__name__)
+
+_GAME_VALIDATOR_DUPLICATE_KEY = Msg(
+    pt="Chave repetida: {task_key}",
+    en="Duplicate key: {task_key}",
+)
+_GAME_VALIDATOR_SELF_REF_ERROR = Msg(
+    pt="Erro: auto referência {line_number} {line}",
+    en="Error: self reference {line_number} {line}",
+)
+_GAME_VALIDATOR_CYCLE_DETECTED = Msg(
+    pt="Cycle detected: {visited}",
+    en="Cycle detected: {visited}",
+)
 
 class GameValidator:
     def __init__(self, quests: dict[str, Quest]):
@@ -25,7 +38,7 @@ class GameValidator:
                 if task.basic.full_key in keys:
                     logger.error(
                         "%s em %s %s, ignorando tarefa",
-                        t(MsgKey.GAME_VALIDATOR_DUPLICATE_KEY, task_key=task.basic.full_key),
+                        t(_GAME_VALIDATOR_DUPLICATE_KEY, task_key=task.basic.full_key),
                         task.resource.line_number,
                         task.resource.line_data,
                     )
@@ -36,7 +49,7 @@ class GameValidator:
         # print chaves repetidas
         for k in keys:
             if keys.count(k) > 1:
-                logger.error(t(MsgKey.GAME_VALIDATOR_DUPLICATE_KEY, task_key=k))
+                logger.error(t(_GAME_VALIDATOR_DUPLICATE_KEY, task_key=k))
                 exit(1)
 
         # trim titles
@@ -47,7 +60,7 @@ class GameValidator:
         for q in self.quests.values():
             for r in q.requirements.requires:
                 if q.basic.full_key == r:
-                    logger.error(t(MsgKey.GAME_VALIDATOR_SELF_REF_ERROR, line_number=q.source.line_number, line=q.source.line))
+                    logger.error(t(_GAME_VALIDATOR_SELF_REF_ERROR, line_number=q.source.line_number, line=q.source.line))
                     exit(1)
 
 
@@ -56,7 +69,7 @@ class GameValidator:
         def dfs(qx: Quest, visitedx: list[str]):
             if len(visitedx) > 0:
                 if visitedx[0] == qx.basic.full_key:
-                    logger.error(t(MsgKey.GAME_VALIDATOR_CYCLE_DETECTED, visited=visitedx))
+                    logger.error(t(_GAME_VALIDATOR_CYCLE_DETECTED, visited=visitedx))
                     exit(1)
             if qx.basic.full_key in visitedx:
                 return

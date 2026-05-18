@@ -1,10 +1,16 @@
 from tko.feno.github_url_structure import GithubUrlStructure
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 from tko.util.rtext import RText
 
 
 import tomllib
 from pathlib import Path
+
+
+_FENO_GITHUB_CFG_NOT_SET = Msg(
+    pt="fail: arquivo {filename} não definido",
+    en="fail: {filename} file not set",
+)
 
 
 class GithubCfg:
@@ -17,7 +23,7 @@ class GithubCfg:
             self.__load_cfg_path(target)
             self.__parse_cfg()
             if self.cfg_path is None:
-                print(RText.parse(f"[r]{t(MsgKey.FENO_GITHUB_CFG_NOT_SET, filename=self.FILENAME)}[.]"))
+                print(RText.parse(f"[r]{t(_FENO_GITHUB_CFG_NOT_SET, filename=self.FILENAME)}[.]"))
 
     def cfg_exists(self):
         return self.cfg_path is not None

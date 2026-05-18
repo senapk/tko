@@ -1,13 +1,38 @@
 import logging
 from pathlib import Path
 import shutil
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
 from tko.util.rtext import RText
 from tko.util.decoder import Decoder
 from typing import Any
 
 
 logger = logging.getLogger(__name__)
+
+_FILTER_ACTION_DISABLED_PATH = Msg(
+    pt="action: disabled, path: {path}",
+    en="action: disabled, path: {path}",
+)
+_FILTER_ACTION_PATH = Msg(
+    pt="action: {action}, path: {path}",
+    en="action: {action}, path: {path}",
+)
+_FILTER_FILE_NOT_FOUND = Msg(
+    pt="Aviso: Arquivo {path} não encontrado",
+    en="Warning: File {path} not found",
+)
+_FILTER_TARGET_MUST_BE_FOLDER = Msg(
+    pt="Erro: target deve ser uma pasta no modo recursivo",
+    en="Error: target must be a folder in recursive mode",
+)
+_FILTER_OUTPUT_FOLDER_REQUIRED = Msg(
+    pt="Erro: pasta de saída deve ser especificada no modo recursivo",
+    en="Error: output folder must be specified in recursive mode",
+)
+_FILTER_OUTPUT_FOLDER_EXISTS = Msg(
+    pt="Erro: pasta de saída já existe",
+    en="Error: output folder already exists",
+)
 
 class Mark:
     def __init__(self, marker: str, indent: int):
@@ -182,7 +207,7 @@ class DeepFilter:
             with open(deny_list) as f:
                 deny = [x.strip() for x in f.read().splitlines()]
                 if filename in deny:
-                    print(t(MsgKey.FILTER_ACTION_DISABLED_PATH, path=destiny))
+                    print(t(_FILTER_ACTION_DISABLED_PATH, path=destiny))
                     action_map[destiny] = Action(Action.DISABLED, "")
                     return
 
@@ -238,12 +263,12 @@ class DeepFilter:
         #     return
         for path, action in actions:
             if (run_actions or path.suffix[1:] in DeepFilter.include) and action.name in [Action.FILTERED, Action.COMCLEAN, Action.ORIGINAL] :
-                print(RText.parse(t(MsgKey.FILTER_ACTION_PATH, action=f"[g]{action.name}[.]", path=path.resolve())))
+                print(RText.parse(t(_FILTER_ACTION_PATH, action=f"[g]{action.name}[.]", path=path.resolve())))
                 path.parent.mkdir(parents=True, exist_ok=True)
                 with open(path, "w") as f:
                     f.write(action.content) 
             else:
-                print(RText.parse(t(MsgKey.FILTER_ACTION_DISABLED_PATH, path=path.resolve())))
+                print(RText.parse(t(_FILTER_ACTION_DISABLED_PATH, path=path.resolve())))
         
 class CodeFilter:
     @staticmethod
@@ -251,7 +276,7 @@ class CodeFilter:
         if path.is_file():
             file_content = Decoder.load(path)
             return True, file_content
-        logger.warning(t(MsgKey.FILTER_FILE_NOT_FOUND, path=path))
+        logger.warning(t(_FILTER_FILE_NOT_FOUND, path=path))
         return False, "" 
 
     @staticmethod
@@ -261,14 +286,14 @@ class CodeFilter:
         if isinstance(destiny_dir, str):
             destiny_dir = Path(destiny_dir)
         if not source_dir.is_dir():
-            logger.error(t(MsgKey.FILTER_TARGET_MUST_BE_FOLDER))
+            logger.error(t(_FILTER_TARGET_MUST_BE_FOLDER))
             exit()
         if destiny_dir is None:
-            logger.error(t(MsgKey.FILTER_OUTPUT_FOLDER_REQUIRED))
+            logger.error(t(_FILTER_OUTPUT_FOLDER_REQUIRED))
             exit()
         if destiny_dir.exists():
             if not force:
-                logger.error(t(MsgKey.FILTER_OUTPUT_FOLDER_EXISTS))
+                logger.error(t(_FILTER_OUTPUT_FOLDER_EXISTS))
                 exit()
             else:
                 # recursive delete all folder content without deleting the folder itself

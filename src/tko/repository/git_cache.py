@@ -9,7 +9,29 @@ import hashlib
 from filelock import FileLock
 import shutil
 import enum
-from tko.i18n import MsgKey, t
+from tko.i18n import Msg, t
+
+
+_GIT_CACHE_CLEARING = Msg(
+    pt="Limpando cache git em {cache_dir}...",
+    en="Clearing git cache at {cache_dir}...",
+)
+_GIT_CACHE_CLONING = Msg(
+    pt="Clonando {url} para o cache...",
+    en="Cloning {url} into cache...",
+)
+_GIT_CACHE_CLONE_FAILED = Msg(
+    pt="Falha ao clonar {url}. Removendo diretório de cache...",
+    en="Failed to clone {url}. Removing cache directory...",
+)
+_GIT_CACHE_UPDATING = Msg(
+    pt="Atualizando cache para {url}...",
+    en="Updating cache for {url}...",
+)
+_GIT_CACHE_UPDATE_FAILED_RECLONE = Msg(
+    pt="Falha ao atualizar cache para {url}. Removendo e clonando novamente...",
+    en="Failed to update cache for {url}. Removing and re-cloning...",
+)
 
 class UpdateMode(enum.Enum):
     ALWAYS = "always"
@@ -29,7 +51,7 @@ class GitCache:
 
     def clear_cache(self):
         if self.cache_dir.exists():
-            self.logger.info(t(MsgKey.GIT_CACHE_CLEARING, cache_dir=self.cache_dir))
+            self.logger.info(t(_GIT_CACHE_CLEARING, cache_dir=self.cache_dir))
             shutil.rmtree(self.cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
@@ -88,24 +110,24 @@ class GitCache:
         with self._acquire_lock(lock_path):
             if not repo.exists():
                 if verbose:
-                    self.logger.info(t(MsgKey.GIT_CACHE_CLONING, url=url))
+                    self.logger.info(t(_GIT_CACHE_CLONING, url=url))
                 ok = self._clone(url, repo)
                 if not ok:
                     if verbose:
-                        self.logger.warning(t(MsgKey.GIT_CACHE_CLONE_FAILED, url=url))
+                        self.logger.warning(t(_GIT_CACHE_CLONE_FAILED, url=url))
                     shutil.rmtree(repo, ignore_errors=True)
                     return None
 
             if self._is_expired(repo) or (self.update_mode == UpdateMode.ALWAYS) and not self.updated.get(str(repo), False):
                 try:
                     if verbose:
-                        self.logger.info(t(MsgKey.GIT_CACHE_UPDATING, url=url))
+                        self.logger.info(t(_GIT_CACHE_UPDATING, url=url))
                     self._update(repo)
                 except subprocess.CalledProcessError:
                     if self.update_mode == UpdateMode.IF_OLDER:
                         pass
                     if verbose:
-                        self.logger.warning(t(MsgKey.GIT_CACHE_UPDATE_FAILED_RECLONE, url=url))
+                        self.logger.warning(t(_GIT_CACHE_UPDATE_FAILED_RECLONE, url=url))
                     shutil.rmtree(repo, ignore_errors=True)
                     self._clone(url, repo)
         return repo
