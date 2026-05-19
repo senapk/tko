@@ -45,7 +45,7 @@ class GuiTopBar:
 
         limit = frame.get_dx()
         extra = RT()
-        if self.flags.panel.is_graph():
+        if self.flags.panel.is_graph() and self.flags.show_panel.is_true():
             extra = RT.join(last, RT(""))
 
         info = RT.join(pre + pos, RT(""))
