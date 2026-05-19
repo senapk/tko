@@ -84,7 +84,9 @@ class IndexLine:
             if tm.task_link.startswith(r"http://") or tm.task_link.startswith(r"https://"):
                 self.url = tm.task_link
             else:
-                link = Path(tm.task_link)
+                # Markdown links may come from Windows paths; normalize separators first.
+                normalized_link = tm.task_link.replace("\\", "/")
+                link = Path(normalized_link)
                 if link.name != "README.md":
                     raise ValueError(f"Invalid README file name: {link}")
                 if link.is_absolute():
