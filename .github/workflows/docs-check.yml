@@ -28,6 +28,7 @@ jobs:
           args: >-
             --verbose
             --no-progress
+            --base-url file://${{ github.workspace }}
             --root-dir .
             README.md
             wiki/*.md

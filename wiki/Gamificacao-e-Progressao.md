@@ -32,8 +32,8 @@ Exemplo:
 
 Comportamento no codigo:
 
-- Parser de quest: [src/tko/game/quest_parser.py](src/tko/game/quest_parser.py)
-- Entidade quest: [src/tko/game/quest.py](src/tko/game/quest.py)
+- Parser de quest: [src/tko/game/quest_parser.py](../src/tko/game/quest_parser.py)
+- Entidade quest: [src/tko/game/quest.py](../src/tko/game/quest.py)
 
 ## Tasks: como entram na gamificacao
 
@@ -51,9 +51,9 @@ Regra importante:
 
 Comportamento no codigo:
 
-- Parser de task: [src/tko/game/task_parser.py](src/tko/game/task_parser.py)
-- Config de task: [src/tko/game/task_config.py](src/tko/game/task_config.py)
-- Estado de jogo da task (xp/reachable): [src/tko/game/task_game.py](src/tko/game/task_game.py)
+- Parser de task: [src/tko/game/task_parser.py](../src/tko/game/task_parser.py)
+- Config de task: [src/tko/game/task_config.py](../src/tko/game/task_config.py)
+- Estado de jogo da task (xp/reachable): [src/tko/game/task_game.py](../src/tko/game/task_game.py)
 
 ## Como o TaskGrader calcula a nota
 
@@ -82,8 +82,8 @@ Completude da tarefa:
 
 Comportamento no codigo:
 
-- Regras de penalidade e calculo: [src/tko/game/task_grader.py](src/tko/game/task_grader.py)
-- Dados de autoavaliacao: [src/tko/game/task_info.py](src/tko/game/task_info.py)
+- Regras de penalidade e calculo: [src/tko/game/task_grader.py](../src/tko/game/task_grader.py)
+- Dados de autoavaliacao: [src/tko/game/task_info.py](../src/tko/game/task_info.py)
 
 ## Como o progresso da quest e calculado
 
@@ -103,9 +103,9 @@ Pontos importantes:
 
 Comportamento no codigo:
 
-- Calculo por quest: [src/tko/game/quest.py](src/tko/game/quest.py)
-- Funcoes de agregacao: [src/tko/game/quest_grader.py](src/tko/game/quest_grader.py)
-- Resume global de XP/skills: [src/tko/game/xp_resume.py](src/tko/game/xp_resume.py)
+- Calculo por quest: [src/tko/game/quest.py](../src/tko/game/quest.py)
+- Funcoes de agregacao: [src/tko/game/quest_grader.py](../src/tko/game/quest_grader.py)
+- Resume global de XP/skills: [src/tko/game/xp_resume.py](../src/tko/game/xp_resume.py)
 
 ## Desbloqueio de quests e inbox
 
@@ -115,7 +115,7 @@ Desbloqueio de quest:
 
 Comportamento no codigo:
 
-- Atualizacao de alcance: [src/tko/game/game.py](src/tko/game/game.py)
+- Atualizacao de alcance: [src/tko/game/game.py](../src/tko/game/game.py)
 
 Inbox (visao reduzida de tarefas):
 
@@ -125,8 +125,8 @@ Inbox (visao reduzida de tarefas):
 
 Comportamento no codigo:
 
-- Filtro de inbox e montagem da arvore: [src/tko/play_tree/tree_builder.py](src/tko/play_tree/tree_builder.py)
-- Estado do filtro de inbox: [src/tko/play_tree/tree_state.py](src/tko/play_tree/tree_state.py)
+- Filtro de inbox e montagem da arvore: [src/tko/play_tree/tree_builder.py](../src/tko/play_tree/tree_builder.py)
+- Estado do filtro de inbox: [src/tko/play_tree/tree_state.py](../src/tko/play_tree/tree_state.py)
 
 ## Papel do build index no banco de tarefas
 
