@@ -159,9 +159,22 @@ class LanguagesSettings:
             dict_lang_drafts[lang] = self.lang_settings[lang].draft
         return dict_lang_drafts
 
+    def _build_file_content(self) -> str:
+        output: list[str] = []
+        for lang, settings in self.lang_settings.items():
+            output.append(f"[{lang}]")
+            for key, value in settings.to_dict().items():
+                if value == "":
+                    output.append(f"{key} = ''")
+                else:
+                    output.append(f"{key} = '''\n{value.strip()}\n'''")
+            output.append("")
+        return "\n".join(output)
+
     def __init__(self, path: Path):
         self.path = path
         self.lang_settings: dict[str, LangSettings] = {}
+        self._cached_output: str = ""  # Cache the output after loading
 
     def reset(self):
         self.lang_settings = self.default_lang_settings.copy()
@@ -169,15 +182,16 @@ class LanguagesSettings:
 
     def save_file_settings(self):
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.path, "w") as f:
-            for lang, settings in self.lang_settings.items():
-                f.write(f"[{lang}]\n")
-                for key, value in settings.to_dict().items():
-                    if value == "":
-                        f.write(f"{key} = ''\n")
-                    else:
-                        f.write(f"{key} = '''\n{value.strip()}\n'''\n")
-                f.write("\n")
+
+        new_content = self._build_file_content()
+        # Compare with cached output instead of reading the file
+        if new_content == self._cached_output:
+            return self
+
+        with open(self.path, "w", encoding="utf-8", newline='\n') as f:
+            f.write(new_content)
+        # Update the cached output after saving
+        self._cached_output = new_content
         return self
 
     def load_file_settings(self):
@@ -195,6 +209,8 @@ class LanguagesSettings:
                     run_cmd=settings.get("run_cmd", ""),
                     draft=settings.get("draft", "")
                 )
+            # Update the cached output after loading
+            self._cached_output = self._build_file_content()
         except Exception:
             logger.exception(t(_CONFIG_LANG_LOAD_FAILED, path=self.path))
             self.reset()

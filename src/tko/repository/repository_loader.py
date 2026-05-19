@@ -34,8 +34,9 @@ class ConfigMergeConflictError(Exception):
     pass
 
 class RepositoryLoader:
-    def __init__(self, repo: Repository): # repo is of type Repository
+    def __init__(self, repo: Repository):
         self.repo = repo
+        self._cached_output: dict[str, Any] = {}  # Cache the output in the Repository instance
 
     def check_for_merge_conflicts(self, content: str):
         lines = content.splitlines()
@@ -54,7 +55,7 @@ class RepositoryLoader:
     def load_config(self) -> RepositoryLoader:
         content = Decoder.load(self.repo.paths.config_file)
         self.check_for_merge_conflicts(content)
-        
+
         local_data: dict[str, Any] | Any = {}
         try:
             local_data = yaml.safe_load(content)
@@ -62,10 +63,10 @@ class RepositoryLoader:
                 backup_content = Decoder.load(self.repo.paths.config_backup_file)
                 self.check_for_merge_conflicts(backup_content)
                 local_data = yaml.safe_load(backup_content)
-                
+
             if local_data is None or not isinstance(local_data, dict) or self.length(local_data) == 0:
                 raise FileNotFoundError(t(_REPOSITORY_LOADER_EMPTY_CONFIG_FILE, file=self.repo.paths.config_file))
-                
+
         except ConfigMergeConflictError:
             raise
         except yaml.YAMLError as e:
@@ -75,15 +76,40 @@ class RepositoryLoader:
         except Exception as e:
             raise Warning(RT.parse(t(_REPOSITORY_LOADER_CONFIG_CORRUPTED_UNEXPECTED, file=self.repo.paths.config_file, error=e)))
 
-        self.repo.data.load_from_dict(local_data) # type: ignore
-        self.repo.flags.from_dict(self.repo.data.flags) # type: ignore
-        
+        self.repo.data.load_from_dict(local_data)  # type: ignore
+        self.repo.flags.from_dict(self.repo.data.flags)  # type: ignore
+
+        # Cache the output after loading
+        self._cached_output = self.repo.data.save_to_dict()
         return self
 
-    def save_config(self) -> RepositoryLoader:
+    @staticmethod
+    def _without_volatile_fields(data: dict[str, Any]) -> dict[str, Any]:
+        normalized = data.copy()
+        normalized.pop("selected", None)
+        normalized.pop("selected_index", None)
+        return normalized
+
+    def save_config(self, force: bool = False) -> RepositoryLoader:
         self.repo.data.version = "0.2"
         self.repo.data.flags = self.repo.flags.to_dict()
+
         path: Path = Path(self.repo.paths.config_file)
+        payload = self.repo.data.save_to_dict()
+
+        # Compare with cached output instead of reading the file
+        if not force:
+            if payload == self._cached_output:
+                return self
+
+            cached_normalized = self._without_volatile_fields(self._cached_output)
+            payload_normalized = self._without_volatile_fields(payload)
+            if payload_normalized == cached_normalized:
+                return self
+
         path.parent.mkdir(parents=True, exist_ok=True)
-        atomic_write_yaml(path, self.repo.data.save_to_dict())
+        atomic_write_yaml(path, payload)
+
+        # Update the cached output after saving
+        self._cached_output = payload
         return self

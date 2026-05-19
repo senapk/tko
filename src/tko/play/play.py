@@ -1,3 +1,6 @@
+import sys
+import time
+
 from tko.game.game import Game
 from tko.widget.fmt import Fmt
 from tko.play.language_setter import LanguageSetter
@@ -40,6 +43,7 @@ class Play:
         self.gui = Gui(tree=self.tree, fman=self.fman)
         self.actions = PlayActions(self.gui)
         self.play_palette = PlayPalette(self.actions)
+        self.loader = RepositoryLoader(repo)
 
     def display_need_update(self):
         self.gui.set_need_update()
@@ -48,7 +52,7 @@ class Play:
     def save_to_json(self):
         self.tree.save_state()
         self.settings.save_settings()
-        RepositoryLoader(self.repo).save_config()
+        self.loader.save_config(force=self.exit)
 
     def send_quit_msg(self):
         def set_exit():
@@ -91,11 +95,14 @@ class Play:
         self.gui.xray_offset = 0
         return self.actions.launcher.select_task()
 
+    def quit_directly(self):
+        self.exit = True
+
     def make_callback(self) -> InputManager:
         cman = InputManager()
 
         cman.add_str(GuiKeys.key_quit, self.send_quit_msg)
-        cman.add_int(curses.KEY_EXIT, self.send_quit_msg)
+        cman.add_int(curses.KEY_EXIT, self.quit_directly)
         cman.add_int(curses.KEY_UP, self.move_up)
         cman.add_int(curses.KEY_DOWN, self.move_down)
         cman.add_int(curses.KEY_LEFT, self.move_left)
@@ -182,7 +189,7 @@ class Play:
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global
 
-        while True:
+        while not self.exit:
             self.tree.update()
 
             self.fman.draw_warnings()
@@ -200,9 +207,6 @@ class Play:
                 # if consumed, value becomes -1
                 value = self.fman.process_input(value)
                 
-            if self.exit:
-                break
-
             if self.gui.search.search_mode:
                 self.gui.search.process_search(value)
             elif cman.has_int_key(value):
@@ -211,8 +215,10 @@ class Play:
                     return callback
             else:
                 self.send_char_not_found(value)
-
+            start = time.perf_counter()
             self.save_to_json()
+            end = time.perf_counter()
+            print(f"Saved state in {end - start:.4f} seconds", file=sys.stderr)
             
     def play(self):
         LanguageSetter.check_lang_in_text_mode(self.settings, self.repo)

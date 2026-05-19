@@ -150,3 +150,93 @@ def test_save_config_sets_version_and_writes_flags(monkeypatch: MonkeyPatch, tmp
     assert captured["path"] == repo.paths.config_file
     assert captured["payload"] == repo.data.saved_payload
     assert repo.paths.config_file.parent.exists()
+
+
+def test_save_config_skips_write_when_payload_is_unchanged(monkeypatch: MonkeyPatch, tmp_path: Path):
+    loader, repo = make_loader(tmp_path)
+    repo.data.saved_payload = {"sources": [{"name": "sandbox"}], "lang": "py"}
+    write_text(
+        repo.paths.config_file,
+        "sources:\n- name: sandbox\nlang: py\n",
+    )
+    loader.load_config()
+
+    calls = {"count": 0}
+
+    def fake_atomic_write_yaml(path: Path, payload: dict[str, Any]) -> None:
+        calls["count"] += 1
+
+    monkeypatch.setattr(repository_loader_module, "atomic_write_yaml", fake_atomic_write_yaml)
+
+    returned = loader.save_config()
+
+    assert returned.repo is repo
+    assert repo.data.version == "0.2"
+    assert repo.data.flags == {"show_time": "true"}
+    assert calls["count"] == 0
+
+
+def test_save_config_skips_write_when_only_selected_fields_change(monkeypatch: MonkeyPatch, tmp_path: Path):
+    loader, repo = make_loader(tmp_path)
+    repo.data.saved_payload = {
+        "sources": [{"name": "sandbox"}],
+        "lang": "py",
+        "selected": "repo@q1@t1",
+        "selected_index": 3,
+    }
+    write_text(
+        repo.paths.config_file,
+        "sources:\n- name: sandbox\nlang: py\nselected: repo@q1@t1\nselected_index: 3\n",
+    )
+    loader.load_config()
+    repo.data.saved_payload = {
+        "sources": [{"name": "sandbox"}],
+        "lang": "py",
+        "selected": "repo@q1@t2",
+        "selected_index": 4,
+    }
+
+    calls = {"count": 0}
+
+    def fake_atomic_write_yaml(path: Path, payload: dict[str, Any]) -> None:
+        calls["count"] += 1
+
+    monkeypatch.setattr(repository_loader_module, "atomic_write_yaml", fake_atomic_write_yaml)
+
+    returned = loader.save_config()
+
+    assert returned.repo is repo
+    assert calls["count"] == 0
+
+
+def test_save_config_writes_when_only_selected_fields_change_and_force_is_true(monkeypatch: MonkeyPatch, tmp_path: Path):
+    loader, repo = make_loader(tmp_path)
+    repo.data.saved_payload = {
+        "sources": [{"name": "sandbox"}],
+        "lang": "py",
+        "selected": "repo@q1@t1",
+        "selected_index": 3,
+    }
+    write_text(
+        repo.paths.config_file,
+        "sources:\n- name: sandbox\nlang: py\nselected: repo@q1@t1\nselected_index: 3\n",
+    )
+    loader.load_config()
+    repo.data.saved_payload = {
+        "sources": [{"name": "sandbox"}],
+        "lang": "py",
+        "selected": "repo@q1@t2",
+        "selected_index": 4,
+    }
+
+    calls = {"count": 0}
+
+    def fake_atomic_write_yaml(path: Path, payload: dict[str, Any]) -> None:
+        calls["count"] += 1
+
+    monkeypatch.setattr(repository_loader_module, "atomic_write_yaml", fake_atomic_write_yaml)
+
+    returned = loader.save_config(force=True)
+
+    assert returned.repo is repo
+    assert calls["count"] == 1

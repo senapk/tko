@@ -60,13 +60,14 @@ class Settings:
         self.__colors = "colors"
 
         self.package_name = 'tko'
-        self.dict_alias_git: dict[str, str] = {}
+        self.dict_alias_git: dict[str, str] = self.Defaults.alias_git.copy()  # Explicitly initialize as dict[str, str]
         self.app = AppSettings()
         self.__languages_settings: LanguagesSettings | None = None
         self.colors = Colors()
 
         self.settings_dir: Path | None = path_dir
         self.data: dict[str, Any] = {}
+        self._cached_output: dict[str, Any] = {}  # Cache the output after loading
 
     def get_languages_settings(self) -> LanguagesSettings:
         if self.__languages_settings is None:
@@ -117,12 +118,19 @@ class Settings:
             if data is None or not isinstance(data, dict):
                 raise FileNotFoundError(t(_SETTINGS_EMPTY_CONFIG_FILE, path=settings_file))
             self.data = data
-            self.dict_alias_git = data.get(self.__gitrepos, self.Defaults.alias_git) # type: ignore
+            self.dict_alias_git: dict[str, str] = dict(self.dict_alias_git) # type: ignore
             if len(self.dict_alias_git.keys()) == 0: # type: ignore
                 self.dict_alias_git = self.Defaults.alias_git.copy()
             self.app = AppSettings().from_dict(data.get(self.__appcfg, AppSettings())) # type: ignore
             # self.colors = Colors().from_dict(data.get(self.__colors, Colors())) # type: ignore
             self.__languages_settings = LanguagesSettings(self.get_languages_file()).load_file_settings()
+
+            # Cache the output after loading
+            self._cached_output = {
+                self.__gitrepos: dict(self.dict_alias_git),  # Explicitly cast to dict[str, str]
+                self.__appcfg: self.app.to_dict(),
+                # self.__colors: self.colors.to_dict()
+            }
         except:
             self.reset()
             self.save_settings()
@@ -135,9 +143,19 @@ class Settings:
             self.__appcfg: self.app.to_dict(),
             # self.__colors: self.colors.to_dict()
         }
+
+        self.get_languages_settings().save_file_settings()
+
+        # Compare with cached output instead of reading the file
+        if value == self._cached_output:
+            return self
+
         with open(file, "w", encoding="utf-8") as f:
             yaml.dump(value, f)
-        self.get_languages_settings().save_file_settings()
+
+        # Update the cached output after saving
+        self._cached_output = value
+
         return self
 
     def __str__(self):
