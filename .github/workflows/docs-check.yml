@@ -28,7 +28,6 @@ jobs:
           args: >-
             --verbose
             --no-progress
-            --exclude-mail
             --base .
             README.md
             wiki/**/*.md
