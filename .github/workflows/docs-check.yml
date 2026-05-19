@@ -28,6 +28,6 @@ jobs:
           args: >-
             --verbose
             --no-progress
-            --base .
+            --root-dir .
             README.md
-            wiki/**/*.md
+            wiki/*.md
