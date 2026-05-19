@@ -29,43 +29,43 @@ class _PaletteMsg:
     @staticmethod
     def change_main(action: str) -> MsgRT:
         return MsgRT(
-            pt=RT.parse(" <> Mudar arquivo <> de execução", action, _PaletteMsg.MAIN_FILE.pt),
-            en=RT.parse(" <> Change <> execution file", action, _PaletteMsg.MAIN_FILE.en),
+            pt=RT.parse(" <$> Mudar arquivo <$> de execução", action, _PaletteMsg.MAIN_FILE.pt),
+            en=RT.parse(" <$> Change <$> execution file", action, _PaletteMsg.MAIN_FILE.en),
         )
 
     @staticmethod
     def diff_mode(symbol: str) -> MsgRT:
         return MsgRT(
-            pt=RT.parse(" <> Mudar modo <>", symbol, _PaletteMsg.DIFF.pt),
-            en=RT.parse(" <> Change mode <>", symbol, _PaletteMsg.DIFF.en),
+            pt=RT.parse(" <$> Mudar modo <$>", symbol, _PaletteMsg.DIFF.pt),
+            en=RT.parse(" <$> Change mode <$>", symbol, _PaletteMsg.DIFF.en),
         )
 
     @staticmethod
     def time_limit(action: str, value: RT) -> MsgRT:
         return MsgRT(
-            pt=RT.parse(" <> Mudar <> de tempo de execução: <>", action, _PaletteMsg.LIMIT.pt, value),
-            en=RT.parse(" <> Change <> execution time limit: <>", action, _PaletteMsg.LIMIT.en, value),
+            pt=RT.parse(" <$> Mudar <$> de tempo de execução: <$>", action, _PaletteMsg.LIMIT.pt, value),
+            en=RT.parse(" <$> Change <$> execution time limit: <$>", action, _PaletteMsg.LIMIT.en, value),
         )
 
     @staticmethod
     def test_scope(icon_value: str) -> MsgRT:
         return MsgRT(
-            pt=RT.parse(" <> Testar [y]<>[] os casos ou apenas o selecionado", icon_value, _PaletteMsg.ALL.pt),
-            en=RT.parse(" <> Test [y]<>[] all cases or only the selected one", icon_value, _PaletteMsg.ALL.en),
+            pt=RT.parse(" <$> Testar [y]<$>[] os casos ou apenas o selecionado", icon_value, _PaletteMsg.ALL.pt),
+            en=RT.parse(" <$> Test [y]<$>[] all cases or only the selected one", icon_value, _PaletteMsg.ALL.en),
         )
 
     @staticmethod
     def images(icon_value: str) -> MsgRT:
         return MsgRT(
-            pt=RT.parse(" <> Mostrar [y]<>[]", icon_value, _PaletteMsg.IMAGES_LABEL.pt),
-            en=RT.parse(" <> Show [y]<>[]", icon_value, _PaletteMsg.IMAGES_LABEL.en),
+            pt=RT.parse(" <$> Mostrar [y]<$>[]", icon_value, _PaletteMsg.IMAGES_LABEL.pt),
+            en=RT.parse(" <$> Show [y]<$>[]", icon_value, _PaletteMsg.IMAGES_LABEL.en),
         )
 
     @staticmethod
     def self_evaluate(action: str) -> MsgRT:
         return MsgRT(
-            pt=RT.parse(" <> Tarefa: Auto <> método de estudo", action, _PaletteMsg.EVALUATE_LABEL.pt),
-            en=RT.parse(" <> Task: Self-<> study method", action, _PaletteMsg.EVALUATE_LABEL.en),
+            pt=RT.parse(" <$> Tarefa: Auto <$> método de estudo", action, _PaletteMsg.EVALUATE_LABEL.pt),
+            en=RT.parse(" <$> Task: Self-<$> study method", action, _PaletteMsg.EVALUATE_LABEL.en),
         )
 
 

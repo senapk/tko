@@ -11,19 +11,19 @@ from tko.util.symbols import Symbols
 
 
 class _PaletteMsg:
-    DOWN_TASK            = Msg(pt=" <> Tarefa: [y]Baixar tarefa[.] para o repositório",   en=" <> Task: [y]Download task[.] to repository")
-    EVALUATE             = Msg(pt=" <> Tarefa: [y]Avaliar tarefa[.]",                     en=" <> Task: [y]Evaluate task[.]")
-    DELETE               = Msg(pt=" <> Tarefa: [y]Excluir tarefa[.]",                     en=" <> Task: [y]Delete task[.]")
-    DRAFT                = Msg(pt=" <> Tarefa: [y]Criar rascunho[.]",                     en=" <> Task: [y]Create draft[.]")
-    IMAGES               = Msg(pt=" <> Mostrar: [y]Imagens[.] após passar nos testes",    en=" <> Show: [y]Images[.] after passing tests")
-    TIME                 = Msg(pt=" <> Mostrar: [y]Tempo[.] gasto nas tarefas",           en=" <> Show: [y]Time[.] spent on tasks")
-    VERSIONS             = Msg(pt=" <> Mostrar: [y]Ver versões[.] da tarefa",             en=" <> Show: [y]Show task versions[.]")
-    LANGUAGE             = Msg(pt=" <> Config: Mudar [y]linguagem[.] de programação",     en=" <> Config: Change [y]programming language[.]")
-    UI_LANGUAGE          = Msg(pt=" <> Config: Alternar [y]idioma[.] da interface PT/EN", en=" <> Config: [y]Toggle UI language[.] PT/EN")
-    CALIBRATE            = Msg(pt=" <> Config: Calibrar [y]teclas[.] do teclado",         en=" <> Config: Calibrate [y]keyboard keys[.]")
-    RELOAD               = Msg(pt=" <> Config: [y]Recarregar TKO[.]",                     en=" <> Config: [y]Reload TKO[.]")
-    INCREASE_PANEL_SIZE  = Msg(pt=" <> Mostrar: [y]Aumentar[.] tamanho do painel",        en=" <> Show: [y]Increase[.] panel size")
-    DECREASE_PANEL_SIZE  = Msg(pt=" <> Mostrar: [y]Diminuir[.] tamanho do painel",        en=" <> Show: [y]Decrease[.] panel size")
+    DOWN_TASK            = Msg(pt=" <$> Tarefa: [y]Baixar tarefa[.] para o repositório",   en=" <$> Task: [y]Download task[.] to repository")
+    EVALUATE             = Msg(pt=" <$> Tarefa: [y]Avaliar tarefa[.]",                     en=" <$> Task: [y]Evaluate task[.]")
+    DELETE               = Msg(pt=" <$> Tarefa: [y]Excluir tarefa[.]",                     en=" <$> Task: [y]Delete task[.]")
+    DRAFT                = Msg(pt=" <$> Tarefa: [y]Criar rascunho[.]",                     en=" <$> Task: [y]Create draft[.]")
+    IMAGES               = Msg(pt=" <$> Mostrar: [y]Imagens[.] após passar nos testes",    en=" <$> Show: [y]Images[.] after passing tests")
+    TIME                 = Msg(pt=" <$> Mostrar: [y]Tempo[.] gasto nas tarefas",           en=" <$> Show: [y]Time[.] spent on tasks")
+    VERSIONS             = Msg(pt=" <$> Mostrar: [y]Ver versões[.] da tarefa",             en=" <$> Show: [y]Show task versions[.]")
+    LANGUAGE             = Msg(pt=" <$> Config: Mudar [y]linguagem[.] de programação",     en=" <$> Config: Change [y]programming language[.]")
+    UI_LANGUAGE          = Msg(pt=" <$> Config: Alternar [y]idioma[.] da interface PT/EN", en=" <$> Config: [y]Toggle UI language[.] PT/EN")
+    CALIBRATE            = Msg(pt=" <$> Config: Calibrar [y]teclas[.] do teclado",         en=" <$> Config: Calibrate [y]keyboard keys[.]")
+    RELOAD               = Msg(pt=" <$> Config: [y]Recarregar TKO[.]",                     en=" <$> Config: [y]Reload TKO[.]")
+    INCREASE_PANEL_SIZE  = Msg(pt=" <$> Mostrar: [y]Aumentar[.] tamanho do painel",        en=" <$> Show: [y]Increase[.] panel size")
+    DECREASE_PANEL_SIZE  = Msg(pt=" <$> Mostrar: [y]Diminuir[.] tamanho do painel",        en=" <$> Show: [y]Decrease[.] panel size")
 
 class PlayPalette:
     def __init__(self, actions: PlayActions):

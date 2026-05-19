@@ -34,13 +34,13 @@ class GuiLeftPanel:
         if self.search.search_mode:
             top = self.make_search_text(dx - 20)
         else:
-            top = RT.parse(" <> ", self.tree.repo.data.lang.upper())
+            top = RT.parse(" <$> ", self.tree.repo.data.lang.upper())
         frame.set_header(top, "<", prefix="{", suffix="}")
 
         dirname: Path = self.tree.repo.paths.root_dir
         dirname_str = dirname.name.upper()
 
-        text = RT.parse(" <> ", dirname_str)
+        text = RT.parse(" <$> ", dirname_str)
         if self._need_update_fn():
             text = (
                 RT(t(_LeftPanelMsg.OUTDATED), "r")

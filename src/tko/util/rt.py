@@ -71,6 +71,39 @@ class ParseError(ValueError):
 
 @dataclass(frozen=True)
 class RT:
+    """
+    Contrato funcional do RT.
+
+    Objetivo:
+    - Representar texto rico como uma sequência imutável de runs (style, text).
+    - Oferecer operações previsíveis de composição, fatia, alinhamento e renderização.
+
+    Invariantes:
+    - A estrutura interna é imutável (dataclass frozen).
+    - Runs com texto vazio são descartados durante normalização/merge.
+    - Runs adjacentes com o mesmo estilo são mesclados.
+    - Todo estilo é normalizado por normalize_style.
+
+    Modelo de estilo:
+    - O estilo corrente do parse é cumulativo por overlay.
+    - [] e [.] resetam o estilo corrente para vazio.
+    - [x] aplica overlay do estilo literal x no estilo corrente.
+    - [.x] faz reset + apply do estilo literal x.
+    - [$] e [$nome] aplicam overlay de estilo dinâmico (posicional/nomeado).
+
+    Contrato de parse:
+    - Delimitadores são "[ ]" (controle de estilo) e "< >" (inserção).
+    - Tokens de variável usam prefixo "$" dentro de "< >".
+    - "<<", ">>", "[[" e "]]" são escapes literais.
+    - Placeholders de valor aceitam estilo inline com ":".
+    - Estilo inline malformado não lança erro: é ignorado (equivale a estilo vazio).
+    - Erros de fechamento e variáveis ausentes lançam ParseError.
+
+    Renderização:
+    - ANSI: aplica códigos de estilo em cada run com reset ao fim do run.
+    - PLAIN: retorna apenas o conteúdo textual.
+    - DEBUG: expõe runs no formato [style]text.
+    """
     runs: tuple[Run, ...] = ()
 
     def __init__(self, text: str = "", style: str = "", runs: Iterable[Run] | None = None):
@@ -169,6 +202,34 @@ class RT:
 
     @staticmethod
     def parse(template: str, *args: Any, **kwargs: Any) -> RT:
+        """
+        Gramática do parser.
+
+        Controle de estilo (delimitador [ ]):
+        - [estilo]       overlay de estilo literal.
+        - []             reset do estilo corrente.
+        - [.]            reset do estilo corrente.
+        - [.estilo]      reset + apply do estilo literal.
+        - [$]            overlay com estilo posicional de args.
+        - [$nome]        overlay com estilo nomeado de kwargs.
+
+        Inserção (delimitador < >):
+        - <$>            valor posicional de args.
+        - <$nome>        valor nomeado de kwargs.
+        - <$:estilo>     valor posicional com estilo inline extra.
+        - <$nome:estilo> valor nomeado com estilo inline extra.
+        - <texto>        texto literal.
+        - <texto:estilo> texto literal com estilo inline.
+
+        Regras de estilo inline (após ':'):
+        - Se o estilo for válido, ele é normalizado e aplicado.
+        - Se for vazio ou malformado, é ignorado (estilo vazio).
+
+        Regras de erro:
+        - Delimitador sem fechamento gera ParseError.
+        - Placeholder nomeado ausente em kwargs gera ParseError.
+        - Placeholder posicional sem argumento disponível gera ParseError.
+        """
         runs: list[Run] = []
         buf = ""
         style = ""
@@ -183,153 +244,142 @@ class RT:
                 runs.append((style, buf))
                 buf = ""
 
-        def append_value(value: Any) -> None:
-            if isinstance(value, RT):
-                for s, t in value.runs:
-                    runs.append((RT._combine_styles(style, s), t))
-                return
-
-            if isinstance(value, tuple) and len(value) == 2:  # type: ignore
-                s = value[0]  # type: ignore
-                t = value[1]  # type: ignore
-                runs.append((RT._combine_styles(style, f"{s}"), f"{t}"))
-                return
-
-            runs.append((style, f"{value}"))
-
-        def apply_style(value: Any, reset: bool = False) -> None:
-            nonlocal style
-            style_value = str(value)
-            force_reset = False
-            if style_value.startswith("."):
-                force_reset = True
-                style_value = style_value[1:]
-
-            if reset or force_reset:
-                style = normalize_style(style_value)
-            else:
-                style = RT._combine_styles(style, style_value)
-
         def parse_error(message: str) -> ParseError:
             return ParseError(f"{message} at pos {i}")
+
+        def parse_inline_style(style_token: str) -> str:
+            if not style_token:
+                return ""
+            if any(ch not in ANSI for ch in style_token):
+                return ""
+            return normalize_style(style_token)
+
+        def append_value(value: Any, extra_style: str = "") -> None:
+            if isinstance(value, RT):
+                for s, t in value.runs:
+                    base_style = RT._combine_styles(style, s)
+                    final_style = RT._combine_styles(base_style, extra_style) if extra_style else base_style
+                    runs.append((final_style, t))
+                return
+
+            if isinstance(value, tuple) and len(value) == 2:
+                s, t = value
+                base_style = RT._combine_styles(style, str(s))
+                final_style = RT._combine_styles(base_style, extra_style) if extra_style else base_style
+                runs.append((final_style, str(t)))
+                return
+
+            final_style = RT._combine_styles(style, extra_style) if extra_style else style
+            runs.append((final_style, str(value)))
 
         while i < len(template):
             c = template[i]
 
-            if c == "[":
-                if i + 1 < len(template) and template[i+1] == "[":
-                    buf += "["
-                    i += 2
-                    continue
-
-                j = template.find("]", i)
-                if j == -1:
-                    raise parse_error("missing closing ]")
-
-                token = template[i+1:j]
-                flush()
-
-                if token == "." or token == "":
-                    style = ""
-                elif token.startswith("."):
-                    style = normalize_style(token[1:])
-                else:
-                    style = RT._combine_styles(style, token)
-
-                i = j + 1
+            # Escapes
+            if c == "[" and i + 1 < len(template) and template[i+1] == "[":
+                buf += "["
+                i += 2
                 continue
-
-            if c == "<":
-                if i + 1 < len(template) and template[i + 1] == "<":
-                    buf += "<"
-                    i += 2
-                    continue
-
-                j = template.find(">", i)
-                if j == -1:
-                    raise parse_error("missing closing >")
-
-                token = template[i + 1:j]
-                flush()
-
-                if token == "":
-                    if arg_i >= len(args):
-                        raise parse_error("missing positional value for <>")
-                    append_value(args[arg_i])
-                    arg_i += 1
-                else:
-                    if ident_re.match(token):
-                        if token not in kwargs:
-                            raise parse_error(f"missing named value: {token}")
-                        append_value(kwargs[token])
-                    else:
-                        # Non-identifier payload is treated as literal text.
-                        buf += f"<{token}>"
-
-                i = j + 1
-                continue
-
-            if c == "(":
-                if i + 1 < len(template) and template[i + 1] == "(":
-                    buf += "("
-                    i += 2
-                    continue
-
-                j = template.find(")", i)
-                if j == -1:
-                    raise parse_error("missing closing )")
-
-                token = template[i + 1:j]
-                flush()
-
-                if token == "":
-                    if arg_i >= len(args):
-                        raise parse_error("missing positional style for ()")
-                    apply_style(args[arg_i], reset=False)
-                    arg_i += 1
-                elif token == ".":
-                    style = ""
-                elif token.startswith("."):
-                    key = token[1:]
-                    if ident_re.match(key):
-                        if key not in kwargs:
-                            raise parse_error(f"missing named style: {key}")
-                        apply_style(kwargs[key], reset=True)
-                    else:
-                        buf += f"({token})"
-                else:
-                    if ident_re.match(token):
-                        if token not in kwargs:
-                            raise parse_error(f"missing named style: {token}")
-                        apply_style(kwargs[token], reset=False)
-                    else:
-                        buf += f"({token})"
-
-                i = j + 1
-                continue
-
-            elif c == "]" and i + 1 < len(template) and template[i+1] == "]":
+            if c == "]" and i + 1 < len(template) and template[i+1] == "]":
                 buf += "]"
                 i += 2
                 continue
-
-            elif c == ">" and i + 1 < len(template) and template[i + 1] == ">":
+            if c == "<" and i + 1 < len(template) and template[i+1] == "<":
+                buf += "<"
+                i += 2
+                continue
+            if c == ">" and i + 1 < len(template) and template[i+1] == ">":
                 buf += ">"
                 i += 2
                 continue
 
-            elif c == ")" and i + 1 < len(template) and template[i + 1] == ")":
-                buf += ")"
-                i += 2
+            # Estilo
+            if c == "[":
+                j = template.find("]", i)
+                if j == -1:
+                    raise parse_error("missing closing ]")
+                token = template[i+1:j]
+                flush()
+                if token == "" or token == ".":
+                    style = ""
+                elif token.startswith("."):
+                    # Reset + apply style (literal, positional or named).
+                    rest = token[1:]
+                    if rest == "":
+                        style = ""
+                    elif rest == "$":
+                        if arg_i >= len(args):
+                            raise parse_error("missing positional style for [.$]")
+                        style = normalize_style(str(args[arg_i]))
+                        arg_i += 1
+                    elif ident_re.match(rest) and rest in kwargs:
+                        style = normalize_style(str(kwargs[rest]))
+                    else:
+                        style = normalize_style(rest)
+                elif token.startswith("$"):
+                    # Overlay de estilo posicional ou nomeado.
+                    if token == "$":
+                        if arg_i >= len(args):
+                            raise parse_error("missing positional style for [$]")
+                        style = RT._combine_styles(style, str(args[arg_i]))
+                        arg_i += 1
+                    else:
+                        key = token[1:]
+                        if key not in kwargs:
+                            raise parse_error(f"missing named style: {key}")
+                        style = RT._combine_styles(style, str(kwargs[key]))
+                else:
+                    # Overlay de estilo literal.
+                    style = RT._combine_styles(style, token)
+                i = j + 1
                 continue
 
-            else:
-                buf += c
-                i += 1
+            # Variáveis e texto estilizado
+            if c == "<":
+                j = template.find(">", i)
+                if j == -1:
+                    raise parse_error("missing closing >")
+                token = template[i+1:j]
+                flush()
+                # <$> ou <$nome>
+                if token.startswith("$"):
+                    value_token = token
+                    value_extra_style = ""
+                    if ":" in token:
+                        value_token, raw_style = token.split(":", 1)
+                        value_extra_style = parse_inline_style(raw_style)
+
+                    if value_token == "$":
+                        if arg_i >= len(args):
+                            raise parse_error("missing positional value for <$>")
+                        value = args[arg_i]
+                        arg_i += 1
+                        append_value(value, value_extra_style)
+                    else:
+                        key = value_token[1:]
+                        if key not in kwargs:
+                            raise parse_error(f"missing named value: {key}")
+                        value = kwargs[key]
+                        append_value(value, value_extra_style)
+                    i = j + 1
+                    continue
+                # <texto:estilo>
+                if ":" in token:
+                    txt, sty = token.split(":", 1)
+                    runs.append((parse_inline_style(sty), txt))
+                    i = j + 1
+                    continue
+                # <texto> literal
+                runs.append((style, token))
+                i = j + 1
+                continue
+
+            # Normal
+            buf += c
+            i += 1
 
         if buf:
             runs.append((style, buf))
-
         return RT.from_runs(runs)
 
     def _merge(self, runs: Iterable[Run]) -> list[Run]:
@@ -739,13 +789,24 @@ class RBuffer:
 
 if __name__ == "__main__":
     # Example usage
-    t = RT.parse("(name)Hello <who>(.)!", who=("r", "Red"), name="b")
+    # Exemplo 1: estilo nomeado e valor nomeado
+    t = RT.parse("[$name]Hello <$who>[$]!", who=("r", "Red"), name="b")
     print(t)
+
+    # Exemplo 2: texto literal com estilo
+    t2 = RT.parse("<Aviso:y> <$>", "atenção!")
+    print(t2)
+
+    # Exemplo 3: estilo posicional
+    t3 = RT.parse("[$]Título", "_b")
+    print(t3)
+
+    # Exemplo 4: valor posicional
+    t4 = RT.parse("Olá, <$>", "mundo")
+    print(t4)
+
+    # Exemplo 5: uso do RBuffer permanece igual
     b = RBuffer()
     b.add("Hello ", "r").add("World", "R").add(" ").add(RT("oi", "bR"))
-    # RenderConfig.mode = RenderMode.DEBUG
-    
-    # print(b.to_text().render(RenderMode.ANSI))
-    # print(b.to_text().render(RenderMode.PLAIN))
     print(b.to_text().render())
     print(b.to_text().plain())

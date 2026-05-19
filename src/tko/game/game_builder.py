@@ -97,6 +97,9 @@ class GameBuilder:
             filename.parent.mkdir(parents=True, exist_ok=True)
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(f"# {self.remote.data.name}\n\n")
+        work_dir = self.remote.path.work_dir
+        if not work_dir.exists():
+            return
         fix_readme(filename.resolve(), self.remote.path.work_dir, self.remote.data.name, verbose=False, load_titles=True)
 
     def collect_tasks(self) -> dict[str, Task]:

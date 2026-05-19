@@ -36,7 +36,7 @@ class CmdOpen:
         if not self.repo.paths.config_file.exists():
             print(RT.parse(t(_OPEN_INVALID_REPO)))
             print(RT.parse(t(_OPEN_ACTION_HINT)))
-            raise Warning(RT.parse("[r]Erro:[.] [y]<>[] não contém um repositório do tko", repo_dir))
+            raise Warning(RT.parse("[r]Erro:[.] [y]<$>[] não contém um repositório do tko", repo_dir))
         from tko.repository.repository_loader import RepositoryLoader
         from tko.repository.game_coordinator import GameCoordinator
         RepositoryLoader(self.repo).load_config()
