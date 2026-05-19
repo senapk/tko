@@ -7,6 +7,8 @@ from tko.util.symbols import Symbols
 from tko.i18n import Msg, t
 from typing import Callable
 from tko.game.tree_item import IsTreeItem
+from tko.game.quest import Quest
+from tko.game.task import Task
 
 
 class _LeftPanelMsg:
@@ -27,24 +29,31 @@ class GuiLeftPanel:
         text = text.ljust(size)
         return RT(text)
 
+    def _find_quest(self, sentences: list[tuple[RT, IsTreeItem]], quest: Quest) -> bool:
+        for _, item in sentences:
+            if item.basic.full_key == quest.basic.full_key:
+                return True
+        return False
+
     def show(self, frame: Frame) -> None:
         dy, dx = frame.get_inner()
+
+        sentences: list[tuple[RT, IsTreeItem]] = self.tree.get_visible_sentences(dy)
 
         top = RT("")
         if self.search.search_mode:
             top = self.make_search_text(dx - 20)
-        # else:
-        #     try:
-        #         element = self.tree.get_selected_throw()
-        #         if isinstance(element, Task):
-        #             quest = self.tree.game.quests[element.quest_key]
-        #             top = self.tree.renderer.render_quest(quest, False)
-        #         elif isinstance(element, Quest):
-        #             top = self.tree.renderer.render_quest(element, False)
-            # except IndexError:
-            #     pass
+        else:
+            try:
+                element = sentences[0][1]
+                if isinstance(element, Task):
+                    quest = self.tree.game.quests[element.quest_key]
+                    if not self._find_quest(sentences, quest): 
+                        top = self.tree.renderer.render_quest(quest, False)
+            except IndexError:
+                pass
 
-        frame.set_header(top, "<", prefix="{", suffix="}")
+        frame.set_header(top, "<")
 
         dirname: Path = self.tree.repo.paths.root_dir
         dirname_str = dirname.name.upper()
@@ -64,7 +73,7 @@ class GuiLeftPanel:
         )
         frame.draw()
 
-        sentences: list[tuple[RT, IsTreeItem]] = self.tree.get_visible_sentences(dy)
+        
         for y, (sentence, _) in enumerate(sentences):
             if sentence.len() > dx:
                 sentence = sentence.trim_end(dx - 1) + RT("…", "r")

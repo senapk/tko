@@ -1,6 +1,3 @@
-import sys
-import time
-
 from tko.game.game import Game
 from tko.widget.fmt import Fmt
 from tko.play.language_setter import LanguageSetter
@@ -215,10 +212,8 @@ class Play:
                     return callback
             else:
                 self.send_char_not_found(value)
-            start = time.perf_counter()
             self.save_to_json()
-            end = time.perf_counter()
-            print(f"Saved state in {end - start:.4f} seconds", file=sys.stderr)
+
             
     def play(self):
         LanguageSetter.check_lang_in_text_mode(self.settings, self.repo)
