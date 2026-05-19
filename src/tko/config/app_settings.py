@@ -5,7 +5,7 @@ from typing import Any
 import curses
 
 from tko.enums.diff_mode import DiffMode
-from tko.util.rtext import RText
+from tko.util.rt import RT
 
 
 class ToggleOption(enum.Enum):
@@ -26,7 +26,6 @@ class AppSettings:
     ui_language: str = "pt-BR"
     diff_mode: DiffMode = DiffMode.SIDE
     use_images: bool = True
-    use_borders: bool = False
     editor: str = "code"
     timeout: int = 2
     last_tko_check_update: str = ""
@@ -77,8 +76,6 @@ class AppSettings:
                 obj.diff_mode = DiffMode(value)
             elif key == "keys":
                 obj.keys = {AppKeys(k): v for k, v in value.items()}
-            elif key == "use_borders":
-                obj.use_borders = False
             elif hasattr(obj, key):
                 setattr(obj, key, value)
 
@@ -87,7 +84,7 @@ class AppSettings:
     # -------- display --------
     def __str__(self) -> str:
         output = [
-            str(RText.parse("[g]Configurações globais:[.]")),
+            str(RT.parse("[g]Configurações globais:[.]")),
             f"- Language: {self.ui_language}",
             f"- Diff    : {self.diff_mode.value}",
             f"- Editor  : {self.editor}",

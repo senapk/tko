@@ -7,7 +7,7 @@ from tko.run.wdir_summary_service import WdirSummaryService
 from tko.run.wdir_target_resolver import WdirTargetResolver
 from tko.run.wdir_units_service import WdirUnitsService
 from tko.i18n import Msg, t
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from pathlib import Path
 from tko.config.settings import Settings
 
@@ -98,7 +98,7 @@ class Wdir:
         folder: Path = self.__config.autoload_folder
 
         if self.__config.lang == "":
-            print(RText.parse(t(_RUN_AUTOLOAD_LANG_HINT)))
+            print(RT.parse(t(_RUN_AUTOLOAD_LANG_HINT)))
 
         source_list, solver_list = self.__target_resolver.resolve_autoload(folder, self.__config.lang)
 
@@ -147,7 +147,7 @@ class Wdir:
     def manipulate(self, param: Param.Manip):
         self.__unit_list = self.__manipulation_service.apply(self.__unit_list, param)
 
-    def unit_list_resume(self) -> list[RText]:
+    def unit_list_resume(self) -> list[RT]:
         return self.__summary_service.unit_list_resume(self.__unit_list)
 
     def sources_names(self) -> list[tuple[str, str]]:
@@ -156,8 +156,8 @@ class Wdir:
     def solvers_names(self) -> list[str]:
         return self.__summary_service.solvers_names(self.__solver)
 
-    def resume_splitted(self) -> RText:
+    def resume_splitted(self) -> RT:
         return self.__summary_service.resume_splitted(self.__source_list, self.__pack_list, self.__solver)
 
-    def resume_join(self) -> RText:
+    def resume_join(self) -> RT:
         return self.__summary_service.resume_join(self.__source_list, self.__pack_list, self.__solver)

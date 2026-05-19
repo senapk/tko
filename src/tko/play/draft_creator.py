@@ -9,7 +9,7 @@ from tko.play_tree.task_tree import TaskTree
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
 from tko.i18n import Msg, t
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.down.sandbox_drafts import SandboxDrafts
 
 
@@ -99,5 +99,5 @@ class DraftCreator:
 
         current_folders_on_rep: list[str] = [f"@{folder.name}" for folder in sandbox_folder.iterdir() if folder.is_dir()]
         self.fman.add_input(
-            FloatingInputText(RText(t(_DraftMsg.TITLE_PROMPT)), __create, current_folders_on_rep)
+            FloatingInputText(RT(t(_DraftMsg.TITLE_PROMPT)), __create, current_folders_on_rep)
         )

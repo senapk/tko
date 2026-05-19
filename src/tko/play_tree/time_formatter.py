@@ -2,7 +2,7 @@ from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.repository.repository import Repository
 from tko.util.symbols import Symbols
-from tko.util.rtext import RText
+from tko.util.rt import RT
 
 
 class TimeFormatter:
@@ -10,40 +10,40 @@ class TimeFormatter:
         self.repo = repo
         self.cache_task_times: dict[str, tuple[int, int]] = {}
 
-    def format_percent_1s(self, value: float) -> RText:
+    def format_percent_1s(self, value: float) -> RT:
         prog = value
         if prog < 0.1:
-            return RText(Symbols.middle_dot)
+            return RT(Symbols.middle_dot)
         if prog > 99:
-            return RText(Symbols.check, "g")
-        return RText(str(round(prog / 10)).rjust(1, "0"), "y")
+            return RT(Symbols.check, "g")
+        return RT(str(round(prog / 10)).rjust(1, "0"), "y")
 
-    def format_percent_2s(self, value: float | None) -> RText:
+    def format_percent_2s(self, value: float | None) -> RT:
         if value is None:
-            return RText("--")
+            return RT("--")
         prog = round(value)
         if prog < 0.1:
-            return RText(Symbols.middle_dot + Symbols.middle_dot)
+            return RT(Symbols.middle_dot + Symbols.middle_dot)
         if prog > 99:
-            return RText("▬▬", "g")
+            return RT("▬▬", "g")
 
-        return RText(str(prog).rjust(2, "0"), "y")
+        return RT(str(prog).rjust(2, "0"), "y")
 
-    def format_percent_3s(self, value: float | None) -> RText:
+    def format_percent_3s(self, value: float | None) -> RT:
         if value is None or value < 1:
-            return RText("----")
+            return RT("----")
         rvalue = round(value)
         color = self.get_percent_color(value)
-        return RText(f"{rvalue:>3}%", color)
+        return RT(f"{rvalue:>3}%", color)
 
     def get_percent_color(self, value: float) -> str:
         color = "g" if value > 99 else ("y" if value > 49 else "r")
         return color
 
-    def format_hours_minutes(self, color: str, hours: int, minutes: int) -> RText:
+    def format_hours_minutes(self, color: str, hours: int, minutes: int) -> RT:
         if hours > 0 or minutes > 0:
-            return RText(f"{hours:02}h{minutes:02}m ", color)
-        return RText("------ ")
+            return RT(f"{hours:02}h{minutes:02}m ", color)
+        return RT("------ ")
 
     def get_task_hours_minutes(self, task: Task) -> tuple[int, int]:
         if task.basic.full_key in self.cache_task_times:

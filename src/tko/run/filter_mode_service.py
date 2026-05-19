@@ -4,7 +4,7 @@ from pathlib import Path
 from tko.feno.filter import CodeFilter
 from tko.i18n import Msg, t
 from tko.util.raw_terminal import RawTerminal
-from tko.util.rtext import RText
+from tko.util.rt import RT
 
 
 _RUN_FILTER_MODE_BANNER = Msg(
@@ -24,7 +24,7 @@ class TkoFilterMode:
 class FilterModeService:
     @staticmethod
     def apply(target_list: list[Path]) -> list[Path]:
-        print(RText(t(_RUN_FILTER_MODE_BANNER)).center(RawTerminal.get_terminal_size(), "═"))
+        print(RT(t(_RUN_FILTER_MODE_BANNER)).center(RawTerminal.get_terminal_size(), "═"))
 
         TkoFilterMode.deep_copy_and_change_dir()
         new_target_list: list[Path] = []

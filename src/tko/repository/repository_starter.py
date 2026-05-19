@@ -1,6 +1,6 @@
 from pathlib import Path
 from tko.play.language_setter import LanguageSetter
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.repository.repository import Repository
 from tko.repository.repository_paths import RepositoryPaths
 import shutil
@@ -69,7 +69,7 @@ class RepositoryStarter:
         cache_folder.mkdir(parents=True, exist_ok=True)
         if self.language is not None:
             repo.data.lang = self.language
-            print(RText.parse(t(_REPO_STARTER_LANGUAGE_SET, language=self.language)))
+            print(RT.parse(t(_REPO_STARTER_LANGUAGE_SET, language=self.language)))
         else:
             LanguageSetter.check_lang_in_text_mode(self.settings, self.repo)
         
@@ -78,34 +78,34 @@ class RepositoryStarter:
         return True
 
     def print_end_msg(self):
-        print(RText.parse(t(_REPO_STARTER_OPEN_HINT)))
+        print(RT.parse(t(_REPO_STARTER_OPEN_HINT)))
     
     def create_repository(self) -> Repository | None:
         path_parents = RepositoryPaths.rec_search_for_repo_parents(self.folder)
 
         if path_parents is not None and path_parents.resolve() == self.folder.resolve():
-            print(RText.parse(t(_REPO_STARTER_EXISTS, folder=self.folder.resolve())))
-            print(RText.parse(t(_REPO_STARTER_RESET_PROMPT)), end="")
+            print(RT.parse(t(_REPO_STARTER_EXISTS, folder=self.folder.resolve())))
+            print(RT.parse(t(_REPO_STARTER_RESET_PROMPT)), end="")
             op = input()
             if op == "n":
                 return None
 
         elif path_parents is not None:
             if self.folder != path_parents:
-                print(RText.parse(t(_REPO_STARTER_INSIDE_OTHER_REPO, parent=path_parents)))
-                print(RText.parse(t(_REPO_STARTER_DEEP_REPO_WARN_2)))
+                print(RT.parse(t(_REPO_STARTER_INSIDE_OTHER_REPO, parent=path_parents)))
+                print(RT.parse(t(_REPO_STARTER_DEEP_REPO_WARN_2)))
             self.folder = path_parents
-            print(RText.parse(t(_REPO_STARTER_OVERWRITE_PROMPT, folder=self.folder)), end="")
+            print(RT.parse(t(_REPO_STARTER_OVERWRITE_PROMPT, folder=self.folder)), end="")
             op = input()
             if op == "n":
                 return None
         else:
             path_subdir_list = RepositoryPaths.rec_search_for_repo_subdir(self.folder)
             if len(path_subdir_list) > 0:
-                print(RText.parse(t(_REPO_STARTER_DEEP_REPO_WARN, folder=self.folder.resolve())))
-                print(RText.parse(t(_REPO_STARTER_DEEP_REPO_WARN_2)))
+                print(RT.parse(t(_REPO_STARTER_DEEP_REPO_WARN, folder=self.folder.resolve())))
+                print(RT.parse(t(_REPO_STARTER_DEEP_REPO_WARN_2)))
                 for path in path_subdir_list:
-                    print(RText.parse(f"- [r]{path}[.]"))
+                    print(RT.parse(f"- [r]{path}[.]"))
                 return None
 
         return Repository(self.folder)

@@ -9,7 +9,7 @@ from tko.floating import Floating
 from tko.floating.floating_input_text import FloatingInputText
 from tko.game.task import Task
 from tko.play_gui.gui import Gui
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.i18n import Msg, t
 
 from tko.play.draft_creator import DraftCreator
@@ -123,7 +123,7 @@ class PlayActions:
             else:
                 self.fman.add_input(
                     FloatingInputText(
-                        RText(t(_PlayActionMsg.DELETE_CONFIRM_PREFIX)) + RText(f"{obj.basic.key}", "y"),
+                        RT(t(_PlayActionMsg.DELETE_CONFIRM_PREFIX)) + RT(f"{obj.basic.key}", "y"),
                         action=delete_folder,
                     )
                 )

@@ -3,7 +3,7 @@ from tko.game.task import Task
 from tko.game.tree_item import IsTreeItem
 from tko.play.quest_visibility_service import QuestVisibilityService
 from tko.play_tree.tree_state import TreeState
-from tko.util.rtext import RText
+from tko.util.rt import RT
 
 
 class TreePresentationService:
@@ -21,9 +21,9 @@ class TreePresentationService:
             tasks: list[Task] = [task for task in quest.get_tasks() if task.ui.visible]
             has_hidden = len(tasks) != len(quest.get_tasks())
             if quest.basic.full_key not in state.expanded:
-                quest.ui.ligature = RText("┅┄", color) if has_hidden else RText("━─", color)
+                quest.ui.ligature = RT("┅┄", color) if has_hidden else RT("━─", color)
                 continue
-            quest.ui.ligature = RText("┅┅", color) if has_hidden else RText("━━", color)
+            quest.ui.ligature = RT("┅┅", color) if has_hidden else RT("━━", color)
             for task in tasks:
                 items.append(task)
         return items

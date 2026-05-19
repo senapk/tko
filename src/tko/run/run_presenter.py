@@ -1,5 +1,5 @@
 from tko.run.unit import Unit
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.util.raw_terminal import RawTerminal
 from tko.enums.execution_result import ExecutionResult
 from tko.enums.diff_count import DiffCount
@@ -58,7 +58,7 @@ class RunPresenter:
 
     def list_mode(self):
         if not self.ctx.config.eval_mode:
-            print(RText.parse(t(_RUN_NO_CODE_FOUND)).center(RawTerminal.get_terminal_size(), "╌"), flush=True)
+            print(RT.parse(t(_RUN_NO_CODE_FOUND)).center(RawTerminal.get_terminal_size(), "╌"), flush=True)
         print(self.ctx.wdir.resume_splitted())
         for line in self.ctx.wdir.unit_list_resume():
             print(line)

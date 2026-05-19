@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 from tko.i18n import Msg, t
 from tko.util.decoder import Decoder
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.game.task_matcher import TaskMatcher
 
 
@@ -186,7 +186,7 @@ class Indexer:
             if file_line.isTask and file_line.readme_file is not None:
                 if not file_line.readme_file.exists():
                     if self.verbose:
-                        print(RText.parse(t(_INDEXER_MISSING_README_REMOVING, readme=file_line.readme_file, task=file_line.key)))
+                        print(RT.parse(t(_INDEXER_MISSING_README_REMOVING, readme=file_line.readme_file, task=file_line.key)))
                     continue
             index_lines.append(file_line)
         self.index_lines = index_lines
@@ -198,13 +198,13 @@ class Indexer:
                 continue
             if not line.readme_file in self.path_title_dict: # wiki maybe?
                 if self.verbose:
-                    print(RText.parse(t(_INDEXER_MISSING_README_TASK, readme=line.readme_file, task=line.readme_file)))
+                    print(RT.parse(t(_INDEXER_MISSING_README_TASK, readme=line.readme_file, task=line.readme_file)))
                 continue
             folder_title = self.path_title_dict[line.readme_file]
             if folder_title == line.title:
                 continue
             if self.verbose:
-                print(RText.parse(t(_INDEXER_MISMATCH_TITLE, readme=line.readme_file, line_title=line.title, folder_title=folder_title)))
+                print(RT.parse(t(_INDEXER_MISMATCH_TITLE, readme=line.readme_file, line_title=line.title, folder_title=folder_title)))
             if save_titles:
                 self.replace_title_in_readme(line.readme_file, line.title)
             if load_titles:

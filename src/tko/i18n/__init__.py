@@ -5,7 +5,8 @@ import re
 from enum import Enum
 from typing import Any
 
-from tko.i18n.message import Msg
+from tko.i18n.message import Msg, MsgRT
+from tko.util.rt import RT
 
 
 _SUPPORTED_LANGUAGES = {"pt-BR", "en"}
@@ -69,4 +70,8 @@ def t(key: Enum | str | Msg, **params: Any) -> str:
     return re.sub(r"\{([A-Za-z_][A-Za-z0-9_]*)\}", replace, template)
 
 
-__all__ = ["Msg", "normalize_language", "get_language", "set_language", "t"]
+def tr(msg: MsgRT) -> RT:
+    return msg.for_language(get_language())
+
+
+__all__ = ["Msg", "MsgRT", "normalize_language", "get_language", "set_language", "t", "tr"]

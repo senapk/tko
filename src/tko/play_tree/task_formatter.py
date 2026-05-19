@@ -4,7 +4,7 @@ from tko.game.task_config import TaskLoss, TaskMain, TaskTest
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
 from tko.util.symbols import Symbols
-from tko.util.rtext import RText
+from tko.util.rt import RT
 
 
 class TaskFormatter:
@@ -93,22 +93,22 @@ class TaskFormatter:
         return ("", "")
 
     @staticmethod
-    def color_task_title(key: str, title: str) -> RText:
+    def color_task_title(key: str, title: str) -> RT:
         words = title.split(" ")
-        output = RText()
+        output = RT()
         for i, word in enumerate(words):
             if word.startswith("@") or word.startswith("#") or word.startswith("!"):
-                output += RText(word, "g")
+                output += RT(word, "g")
             elif word.startswith(":"):
-                output += RText(word, "y")
+                output += RT(word, "y")
             elif word.startswith("*"):
-                output += RText(word, "c")
+                output += RT(word, "c")
             elif word.startswith("+"):
-                output += RText(word, "c")
+                output += RT(word, "c")
             else:
                 output += word
             if i < len(words) - 1:
                 output += " "
         if key != "":
-            output = RText(key, "g") + output
+            output = RT(key, "g") + output
         return output

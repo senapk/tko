@@ -1,4 +1,4 @@
-from tko.util.rtext import RText, RBuffer, RenderMode
+from tko.util.rt import RT, RBuffer, RenderMode
 
 
 # =========================================================
@@ -6,50 +6,50 @@ from tko.util.rtext import RText, RBuffer, RenderMode
 # =========================================================
 
 def test_parse_plain():
-    t = RText.parse("hello")
+    t = RT.parse("hello")
     assert t.plain() == "hello"
     assert t.runs == (("", "hello"),)
 
 
 def test_parse_style():
-    t = RText.parse("[r]hello")
+    t = RT.parse("[r]hello")
     assert t.runs == (("r", "hello"),)
 
 
 def test_parse_reset():
-    t = RText.parse("[r]hello[.] world")
+    t = RT.parse("[r]hello[.] world")
     assert t.runs == (("r", "hello"), ("", " world"))
 
 
 def test_parse_overlay():
-    t = RText.parse("[r]red [B]blue")
+    t = RT.parse("[r]red [B]blue")
     # overlay -> rB
     assert t.runs == (("r", "red "), ("rB", "blue"))
 
 
 def test_parse_reset_overlay():
-    t = RText.parse("[r]red [.B]blue")
+    t = RT.parse("[r]red [.B]blue")
     assert t.runs == (("r", "red "), ("B", "blue"))
 
 
 def test_parse_argument_string():
-    t = RText.parse("Hello [$]", "World")
+    t = RT.parse("Hello <>", "World")
     assert t.runs == (("", "Hello World"),)
 
 
 def test_parse_argument_text_overlay():
-    name = RText("World", "y")
-    t = RText.parse("[r]Hello [$]", name)
+    name = RT("World", "y")
+    t = RT.parse("[r]Hello <>", name)
     assert t.runs == (("r", "Hello "), ("y", "World"))
 
 
 def test_parse_escape():
-    t = RText.parse("[[ hello ]]")
+    t = RT.parse("[[ hello ]]")
     assert t.plain() == "[ hello ]"
 
 
 def test_parse_multiple_args():
-    t = RText.parse("[$] + [$] = [$]", 1, 2, 3)
+    t = RT.parse("<> + <> = <>", 1, 2, 3)
     assert t.plain() == "1 + 2 = 3"
 
 
@@ -58,24 +58,24 @@ def test_parse_multiple_args():
 # =========================================================
 
 def test_concat():
-    t = RText("A", "r") + RText("B", "g")
+    t = RT("A", "r") + RT("B", "g")
     assert t.plain() == "AB"
     assert len(t.runs) == 2
 
 
 def test_merge_runs():
-    t = RText("A", "r") + RText("B", "r")
+    t = RT("A", "r") + RT("B", "r")
     assert len(t.runs) == 1
     assert t.runs[0] == ("r", "AB")
 
 
 def test_len():
-    t = RText("hello", "r")
+    t = RT("hello", "r")
     assert len(t) == 5
 
 
 def test_plain():
-    t = RText.parse("[r]hello[.] world")
+    t = RT.parse("[r]hello[.] world")
     assert t.plain() == "hello world"
 
 
@@ -84,23 +84,23 @@ def test_plain():
 # =========================================================
 
 def test_upper():
-    t = RText("hello", "r").upper()
+    t = RT("hello", "r").upper()
     assert t.runs == (("r", "HELLO"),)
 
 
 def test_lower():
-    t = RText("HELLO", "r").lower()
+    t = RT("HELLO", "r").lower()
     assert t.runs == (("r", "hello"),)
 
 
 def test_replace_simple():
-    t = RText.parse("hello world")
+    t = RT.parse("hello world")
     t2 = t.replace("world", "there", "r")
     assert t2.plain() == "hello there"
 
 
 def test_replace_across_runs():
-    t = RText.from_runs([
+    t = RT.from_runs([
         ("r", "Hel"),
         ("g", "lo Wo"),
         ("y", "rld"),
@@ -114,7 +114,7 @@ def test_replace_across_runs():
 # =========================================================
 
 def test_split_preserve_style():
-    t = RText.from_runs([
+    t = RT.from_runs([
         ("r", "Hello"),
         ("", " "),
         ("g", "World"),
@@ -129,21 +129,21 @@ def test_split_preserve_style():
 # =========================================================
 
 def test_ljust():
-    t = RText("A", "r")
-    t2 = t.ljust(3, RText(".", "g"))
+    t = RT("A", "r")
+    t2 = t.ljust(3, RT(".", "g"))
     assert t2.plain() == "A.."
     assert t2.runs[1][0] == "g"
 
 
 def test_rjust():
-    t = RText("A", "r")
-    t2 = t.rjust(3, RText(".", "g"))
+    t = RT("A", "r")
+    t2 = t.rjust(3, RT(".", "g"))
     assert t2.plain() == "..A"
 
 
 def test_center():
-    t = RText("A", "r")
-    t2 = t.center(3, RText(".", "g"))
+    t = RT("A", "r")
+    t2 = t.center(3, RT(".", "g"))
     assert t2.plain() == ".A."
 
 
@@ -167,7 +167,7 @@ def test_buffer_rb_renders_blue_foreground_red_background():
 
 def test_buffer_add_text():
     buf = RBuffer()
-    buf.add(RText("Hello", "r"))
+    buf.add(RT("Hello", "r"))
     assert buf.to_text().runs == (("r", "Hello"),)
 
 
@@ -186,7 +186,7 @@ def test_buffer_merge_runs():
 
 def test_buffer_iadd():
     buf = RBuffer()
-    buf += RText("Hello", "r")
+    buf += RT("Hello", "r")
     buf += " World"
     assert buf.to_text().plain() == "Hello World"
 
@@ -207,12 +207,12 @@ def test_buffer_extend_buffer():
 # =========================================================
 
 def test_equality():
-    t1 = RText("Hello", "r")
-    t2 = RText("Hello", "r")
+    t1 = RT("Hello", "r")
+    t2 = RT("Hello", "r")
     assert t1.runs == t2.runs
 
 def test_slice_preserves_style():
-    t = RText.from_runs([
+    t = RT.from_runs([
         ("r", "Hello"),
         ("g", "World"),
     ])
@@ -221,13 +221,13 @@ def test_slice_preserves_style():
 
 
 def test_truncate_width():
-    t = RText("Hello", "r")
+    t = RT("Hello", "r")
     s = t.truncate(3)
     assert s.plain() == "Hel"
 
 
 def test_wrap():
-    t = RText("Hello World", "r")
+    t = RT("Hello World", "r")
     lines = t.wrap(5)
     assert lines[0].plain() == "Hello"
     assert lines[1].plain() == " Worl"

@@ -1,6 +1,6 @@
 from tko.floating.floating import Floating, FloatingABC
 from tko.util.symbols import Symbols
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.i18n import Msg, t
 
 import curses
@@ -11,7 +11,7 @@ _INPUT_TEXT_PROMPT = Msg(pt="Digite aqui: ", en="Type here: ")
 
 
 class FloatingInputText(FloatingABC):
-    def __init__(self, label: RText, action: Callable[[str], None], unallowed_strings: list[str] | None = None):
+    def __init__(self, label: RT, action: Callable[[str], None], unallowed_strings: list[str] | None = None):
         self.floating = Floating()
         self.floating.set_footer(" Use Enter para confirmar ou Esc para cancelar ")
         self.floating.set_text_ljust()
@@ -32,9 +32,9 @@ class FloatingInputText(FloatingABC):
         content = self.floating.content
         content.clear()
         content.append(self.label)
-        is_allowed = RText(Symbols.check, "g") if self.input_text not in self.unallowed_strings else RText(Symbols.failure, "r")
-        content.append(RText(t(_INPUT_TEXT_PROMPT)) + self.input_text + Symbols.cursor + is_allowed)
-        content.append(RText())
+        is_allowed = RT(Symbols.check, "g") if self.input_text not in self.unallowed_strings else RT(Symbols.failure, "r")
+        content.append(RT(t(_INPUT_TEXT_PROMPT)) + self.input_text + Symbols.cursor + is_allowed)
+        content.append(RT())
         self.floating.draw()
 
     def process_input(self, key: int) -> int:

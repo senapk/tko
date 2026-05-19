@@ -14,7 +14,7 @@ from tko.run.diff_builder_down import DiffBuilderDown
 from tko.run.diff_builder_side import DiffBuilderSide
 from tko.run.unit import Unit
 from tko.run.wdir import Wdir
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.util.symbols import Symbols
 
 
@@ -50,9 +50,9 @@ class TesterRenderer:
         if align == "v":
             init_y = dy - len(lines) - 1
         for i, line in enumerate(lines):
-            info = RText(line, color).center(dx - 2, " ")
+            info = RT(line, color).center(dx - 2, " ")
             if clear:
-                Fmt.write(i + init_y, 1, RText(" " * info.len()))
+                Fmt.write(i + init_y, 1, RT(" " * info.len()))
             else:
                 Fmt.write(i + init_y, 1, info)
 
@@ -77,11 +77,11 @@ class TesterRenderer:
     # Barras
     # ------------------------------------------------------------------
 
-    def border(self, color: str, text: str) -> RText:
-        return RText(f" {text} ", color)
+    def border(self, color: str, text: str) -> RT:
+        return RT(f" {text} ", color)
 
-    def make_bottom_line(self, state: TesterState) -> list[RText]:
-        cmds: list[RText] = []
+    def make_bottom_line(self, state: TesterState) -> list[RT]:
+        cmds: list[RT] = []
         cmds.append(self.border("C", f"{GuiActions.goback}"))
         cmds.append(self.border("C", f"{GuiActions.pallete} [{GuiKeys.palette}]"))
         if self.opener is not None:
@@ -94,7 +94,7 @@ class TesterRenderer:
 
     def show_bottom_line(self, state: TesterState) -> None:
         lines, cols = Fmt.get_size()
-        out = RText.join(self.make_bottom_line(state), RText(" "))
+        out = RT.join(self.make_bottom_line(state), RT(" "))
         Fmt.write(lines - 1, 0, out.center(cols, " "))
 
     # ------------------------------------------------------------------
@@ -121,7 +121,7 @@ class TesterRenderer:
         if self.wdir.get_solver().has_compile_error():
             executable, _ = self.wdir.get_solver().get_executable()
             received = executable.get_error_msg().get_str()
-            line_list = [RText(line) for line in received.splitlines()]
+            line_list = [RT(line) for line in received.splitlines()]
         elif self.settings.app.diff_mode == DiffMode.DOWN or not self.wdir.has_tests():
             line_list = DiffBuilderDown(cols, unit).build_diff()
         else:

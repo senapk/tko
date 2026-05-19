@@ -2,7 +2,7 @@ from tko.play_tree.task_tree import TaskTree
 from tko.config.settings import Settings
 from tko.repository.repository import Repository
 from tko.play.play import Play
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from pathlib import Path
 from tko.repository.git_cache import UpdateMode
 from tko.play_tree.task_formatter import TaskFormatter
@@ -34,9 +34,9 @@ class CmdOpen:
         self.repo_dir = repo_dir
         self.repo = Repository(repo_dir, self.update_mode)
         if not self.repo.paths.config_file.exists():
-            print(RText.parse(t(_OPEN_INVALID_REPO)))
-            print(RText.parse(t(_OPEN_ACTION_HINT)))
-            raise Warning(RText.parse("[r]Erro:[.] [y][$][.] não contém um repositório do tko", repo_dir))
+            print(RT.parse(t(_OPEN_INVALID_REPO)))
+            print(RT.parse(t(_OPEN_ACTION_HINT)))
+            raise Warning(RT.parse("[r]Erro:[.] [y]<>[] não contém um repositório do tko", repo_dir))
         from tko.repository.repository_loader import RepositoryLoader
         from tko.repository.game_coordinator import GameCoordinator
         RepositoryLoader(self.repo).load_config()

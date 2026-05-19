@@ -2,7 +2,7 @@ from tko.run.diff_builder import DiffBuilder
 from tko.run.unit import Unit
 from tko.enums.execution_result import ExecutionResult
 from tko.util.symbols import Symbols
-from tko.util.rtext import RText
+from tko.util.rt import RT
 
 
 class DiffBuilderDown:
@@ -11,7 +11,7 @@ class DiffBuilderDown:
         self.curses = False
         self.db = DiffBuilder(width)
         self.unit = unit
-        self.output: list[RText] = []
+        self.output: list[RT] = []
         self.__to_insert_header = False
         self.__standalone_diff = False
         self.no_diff_mode = self.unit.input == "" and self.unit.get_expected() == ""
@@ -30,35 +30,35 @@ class DiffBuilderDown:
         return self
 
     @staticmethod
-    def put_left_equal(exp_rec_list: list[tuple[RText | None, RText | None]], unequal: RText | None) -> list[tuple[RText, RText]]:
+    def put_left_equal(exp_rec_list: list[tuple[RT | None, RT | None]], unequal: RT | None) -> list[tuple[RT, RT]]:
         if unequal is None:
-            unequal = RText(Symbols.unequal)
+            unequal = RT(Symbols.unequal)
 
-        output: list[tuple[RText, RText]] = []
+        output: list[tuple[RT, RT]] = []
         for exp, rec in exp_rec_list:
             if exp is None or rec is None or exp != rec:
-                exp_lines = RText() + unequal + " " + (exp or RText())
-                rec_lines = RText() + unequal + " " + (rec or RText())
+                exp_lines = RT() + unequal + " " + (exp or RT())
+                rec_lines = RT() + unequal + " " + (rec or RT())
             else:
-                exp_lines = RText(Symbols.vbar) + " " + exp
-                rec_lines = RText(Symbols.vbar) + " " + rec
+                exp_lines = RT(Symbols.vbar) + " " + exp
+                rec_lines = RT(Symbols.vbar) + " " + rec
             output.append((exp_lines, rec_lines))
         return output
 
     def insert_header(self):
-        self.output.append(RText().fold_in(self.width, Symbols.hbar, "╭", "╮"))
+        self.output.append(RT().fold_in(self.width, Symbols.hbar, "╭", "╮"))
         self.output.append(self.unit.str().fold_in(self.width, " ", Symbols.vbar, Symbols.vbar))
 
     def insert_input(self):
         color = "g" if self.unit.get_expected() == self.unit.get_received() else "b"
         # header
         if self.__to_insert_header:
-            self.output.append(RText(DiffBuilder.vinput, color).fold_in(self.width, Symbols.hbar, "├", "┤"))
+            self.output.append(RT(DiffBuilder.vinput, color).fold_in(self.width, Symbols.hbar, "├", "┤"))
         else:
-            self.output.append(RText(DiffBuilder.vinput, color).fold_in(self.width, Symbols.hbar, "╭", "╮"))
+            self.output.append(RT(DiffBuilder.vinput, color).fold_in(self.width, Symbols.hbar, "╭", "╮"))
         # lines
         for line in self.unit.input.splitlines():
-            self.output.append((RText(Symbols.vbar) + " " + line).ljust(self.width - 1, " ") + Symbols.vbar)
+            self.output.append((RT(Symbols.vbar) + " " + line).ljust(self.width - 1, " ") + Symbols.vbar)
 
     def insert_expected(self):
         if self.no_diff_mode:
@@ -72,7 +72,7 @@ class DiffBuilderDown:
         else:
             opening = "├"
             ending = "┤" if self.curses else "╯"
-        self.output.append(RText(DiffBuilder.vexpected, color).fold_in(self.width, Symbols.hbar, opening, ending))
+        self.output.append(RT(DiffBuilder.vexpected, color).fold_in(self.width, Symbols.hbar, opening, ending))
         for line, _ in self.expected_received:
             if line is not None:
                 if self.curses:
@@ -90,10 +90,10 @@ class DiffBuilderDown:
         else:
             opening = "├"
             ending = "┤" if self.curses else Symbols.hbar
-        self.output.append(RText(DiffBuilder.vreceived, color).fold_in(self.width, Symbols.hbar, opening, ending))
+        self.output.append(RT(DiffBuilder.vreceived, color).fold_in(self.width, Symbols.hbar, opening, ending))
 
         # lines
-        received: list[RText] = []
+        received: list[RT] = []
         for _, line in self.expected_received:
             if line is not None:
                 received.append(line)
@@ -117,23 +117,23 @@ class DiffBuilderDown:
         if not include_rendering:
             return False
         ending = "┤" if self.curses else "╮"
-        self.output.append(RText(DiffBuilder.vunequal, "b").fold_in(self.width, Symbols.hbar, "├", ending))
+        self.output.append(RT(DiffBuilder.vunequal, "b").fold_in(self.width, Symbols.hbar, "├", ending))
         for line in self.db.first_failure_diff(self.unit.get_expected(), self.unit.get_received(), self.first_failure):
-            self.output.append((RText("│") + line).ljust(self.width - 1, " ") + "│")
+            self.output.append((RT("│") + line).ljust(self.width - 1, " ") + "│")
         return True
 
     def end_frame(self, mistatch_inserted: bool):
         end = "╯" if mistatch_inserted else Symbols.hbar
-        self.output.append(RText().fold_in(self.width, Symbols.hbar, "╰", end))
+        self.output.append(RT().fold_in(self.width, Symbols.hbar, "╰", end))
 
-    def build_diff(self) -> list[RText]:
+    def build_diff(self) -> list[RT]:
         if self.__to_insert_header:
             self.insert_header()
         if not self.no_diff_mode and not self.__standalone_diff:
             self.insert_input()
-        symb = RText(Symbols.unequal)
+        symb = RT(Symbols.unequal)
         if self.unit.result == ExecutionResult.EXECUTION_ERROR or self.unit.result == ExecutionResult.COMPILATION_ERROR or self.unit.get_expected() == "":
-            symb = RText(Symbols.vbar)
+            symb = RT(Symbols.vbar)
         left_equal = self.put_left_equal(self.expected_received, symb)
 
         self.expected_received.clear()

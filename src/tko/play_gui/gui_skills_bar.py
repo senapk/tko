@@ -3,7 +3,7 @@ from tko.widget.bar_builder import BarBuilder
 from tko.widget.colors import Colors
 from tko.widget.frame import Frame
 from tko.config.flags import Flags
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.game.xp_resume import XPResume
 
 
@@ -15,20 +15,20 @@ class GuiSkillsBar:
         self.colors = colors
         self.flags = flags
 
-    def build_list_sentence(self, items: list[RText]) -> list[RText]:
-        out: list[RText] = []
+    def build_list_sentence(self, items: list[RT]) -> list[RT]:
+        out: list[RT] = []
         for x in items:
             color_ini = x[0].runs[0][0] if x[0].runs else ""
             color_end = x[-1].runs[0][0] if x[-1].runs else ""
-            left = RText(" ", color_ini)
-            right = RText(" ", color_end)
+            left = RT(" ", color_ini)
+            right = RT(" ", color_end)
             middle = x
             if x.plain().startswith("!"):
                 middle = x.slice(1)
             out.append(left + middle + right)
         return out
 
-    def make_xp_button(self, size: int) -> RText:
+    def make_xp_button(self, size: int) -> RT:
         xp_resume = XPResume(self.game.quests)
         obtained, priority, complete = xp_resume.get_skills_resume()
 
@@ -52,7 +52,7 @@ class GuiSkillsBar:
 
         skill_size = int(size / qtd)
 
-        elements: list[RText] = []
+        elements: list[RT] = []
         for skill, _ in complete.items():
             text = f"{skill}"
             perc = obtained.get(skill, 0) / priority.get(skill, 1)
@@ -67,10 +67,10 @@ class GuiSkillsBar:
             )
             elements.append(skill_bar)
         cover_color = "K"
-        xpbar =  RText(" █", cover_color.lower())
+        xpbar =  RT(" █", cover_color.lower())
         for skill_bar in elements:
-            xpbar += skill_bar + RText("█", cover_color.lower())
-        xpbar += RText("█", cover_color.lower())
+            xpbar += skill_bar + RT("█", cover_color.lower())
+        xpbar += RT("█", cover_color.lower())
         return xpbar
 
     def show(self, frame_xp: Frame) -> None:
@@ -79,7 +79,7 @@ class GuiSkillsBar:
         obtained, priority, complete = xp_resume.get_skills_resume()
         frame_xp.draw()
 
-        elements: list[RText] = []
+        elements: list[RT] = []
         for skill, value in complete.items():
             if self.flags.show_panel.is_true():
                 obtained_value = round(100 * obtained.get(skill, 0) / priority.get(skill, 1))
@@ -125,4 +125,4 @@ class GuiSkillsBar:
             frame_xp.print(1, skill_bar)
             if line_breaks > 0:
                 line_breaks -= 1
-                frame_xp.print(1, RText())
+                frame_xp.print(1, RT())

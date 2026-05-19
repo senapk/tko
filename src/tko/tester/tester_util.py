@@ -3,7 +3,7 @@ from tko.enums.diff_mode import DiffMode
 from tko.enums.execution_result import ExecutionResult
 from tko.game.task import Task
 from tko.run.wdir import Wdir
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.util.symbols import Symbols
 from tko.i18n import Msg, t
 
@@ -14,16 +14,16 @@ _TESTER_TASK_FOLDER_NOT_FOUND = Msg(
 )
 
 
-def get_token(result: ExecutionResult) -> RText:
+def get_token(result: ExecutionResult) -> RT:
     if result == ExecutionResult.SUCCESS:
-        return RText(ExecutionResult.get_symbol(ExecutionResult.SUCCESS).plain(), "G")
+        return RT(ExecutionResult.get_symbol(ExecutionResult.SUCCESS).plain(), "G")
     if result == ExecutionResult.WRONG_OUTPUT:
-        return RText(ExecutionResult.get_symbol(ExecutionResult.WRONG_OUTPUT).plain(), "R")
+        return RT(ExecutionResult.get_symbol(ExecutionResult.WRONG_OUTPUT).plain(), "R")
     if result == ExecutionResult.COMPILATION_ERROR:
-        return RText(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).plain(), "X")
+        return RT(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).plain(), "X")
     if result == ExecutionResult.EXECUTION_ERROR:
-        return RText(ExecutionResult.get_symbol(ExecutionResult.EXECUTION_ERROR).plain(), "Y")
-    return RText(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).plain(), "X")
+        return RT(ExecutionResult.get_symbol(ExecutionResult.EXECUTION_ERROR).plain(), "Y")
+    return RT(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).plain(), "X")
 
 
 def get_diff_symbol(diff_mode: DiffMode) -> str:

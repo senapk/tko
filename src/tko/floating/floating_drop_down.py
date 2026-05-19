@@ -1,13 +1,13 @@
 from tko.floating.floating import Floating, FloatingABC
 from tko.util.symbols import Symbols
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from typing import Callable
 
 import curses
 
 
 class FloatingInputData:
-    def __init__(self, label: Callable[[], RText], action: Callable[[], None], shortcut: str = ""):
+    def __init__(self, label: Callable[[], RT], action: Callable[[], None], shortcut: str = ""):
         self.label = label
         self.action = action
         self.shortcut = shortcut
@@ -81,7 +81,7 @@ class FloatingDropDown(FloatingABC):
     def update_content(self):
         content = self.floating.content
         content.clear()
-        content.append(RText("Busca: ") + "".join(self.search_text) + Symbols.cursor)
+        content.append(RT("Busca: ") + "".join(self.search_text) + Symbols.cursor)
 
         _, dx = self.calc_dy_dx()
         for i, option in enumerate(self.options):

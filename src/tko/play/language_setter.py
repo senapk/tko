@@ -3,7 +3,7 @@ from tko.floating.floating_drop_down import FloatingDropDown
 from tko.floating.floating_drop_down import FloatingInputData
 from tko.floating.floating_manager import FloatingManager
 from tko.repository.repository_loader import RepositoryLoader
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
 from tko.i18n import Msg, set_language as set_ui_language, t
@@ -82,7 +82,7 @@ class TextFunctor:
         self.value = data
     
     def __call__(self):
-        return RText(self.value)
+        return RT(self.value)
 
 class SetLangFunctor:
     def __init__(self, settings: Settings, rep: Repository, fman: FloatingManager, lang: str):

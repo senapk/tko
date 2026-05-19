@@ -1,11 +1,11 @@
 from __future__ import annotations
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from typing import Protocol
 
 
 class TreeUi:
     def __init__(self):
-        self.ligature: RText = RText(" ")
+        self.ligature: RT = RT(" ")
         self.visible: bool = False
         self.is_requirement_color: str = ""
 

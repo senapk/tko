@@ -1,6 +1,6 @@
-from tko.util.rtext import RText
+from tko.util.rt import RT
 
 class TabRenderer:
-    def render_button(self, info: str, test: bool) -> RText:
+    def render_button(self, info: str, test: bool) -> RT:
         bg = "X" if test else ""
-        return RText(" " + info + " ", bg)
+        return RT(" " + info + " ", bg)

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from tko.i18n import Msg, t
 from tko.util.symbols import Symbols
-from tko.util.rtext import RText
+from tko.util.rt import RT
 import enum
 
 
@@ -18,17 +18,17 @@ class ExecutionResult(enum.Enum):
     EXECUTION_ERROR   = "erro_execução__"
 
     @staticmethod
-    def get_symbol(result: ExecutionResult) -> RText:
+    def get_symbol(result: ExecutionResult) -> RT:
         if result == ExecutionResult.UNTESTED:
-            return RText(Symbols.neutral)
+            return RT(Symbols.neutral)
         elif result == ExecutionResult.SUCCESS:
-            return RText(Symbols.success)
+            return RT(Symbols.success)
         elif result == ExecutionResult.WRONG_OUTPUT:
-            return RText(Symbols.wrong)
+            return RT(Symbols.wrong)
         elif result == ExecutionResult.COMPILATION_ERROR:
-            return RText(Symbols.compilation)
+            return RT(Symbols.compilation)
         elif result == ExecutionResult.EXECUTION_ERROR:
-            return RText(Symbols.execution)
+            return RT(Symbols.execution)
         else:
             raise ValueError(t(_EXECUTION_RESULT_INVALID_TYPE))
 

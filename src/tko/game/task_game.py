@@ -1,5 +1,5 @@
 from __future__ import annotations
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.util.symbols import Symbols
 
 
@@ -31,21 +31,21 @@ class TaskGame:
             return "g"
         return "w"
 
-    def get_rate_symbol(self, value: int, min_value: None | int = None) -> RText:
+    def get_rate_symbol(self, value: int, min_value: None | int = None) -> RT:
         if value < 0:
             if min_value is not None:
                 if value < min_value:
-                    return RText("x")
+                    return RT("x")
         elif value < 100:
             prog = (value + 5) // 10
             color = "y" if value >= 50 else "r"
             if prog == 10:
                 prog = 9
-            return RText(str(prog), color)
+            return RT(str(prog), color)
         elif value >= 100:
             color = "g"
-            return RText(Symbols.check, color)
-        return RText("0")
+            return RT(Symbols.check, color)
+        return RT("0")
 
     @property
     def xp(self) -> int:

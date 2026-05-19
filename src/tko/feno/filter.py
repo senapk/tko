@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 import shutil
 from tko.i18n import Msg, t
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.util.decoder import Decoder
 from typing import Any
 
@@ -259,16 +259,16 @@ class DeepFilter:
                 run_actions = True
                 break
         # if not run_actions:
-        #     print(RText.parse(f"Nenhuma filtragem encontrada para a pasta [r]{parent}[.], nenhuma ação tomada."))
+        #     print(RT.parse(f"Nenhuma filtragem encontrada para a pasta [r]{parent}[.], nenhuma ação tomada."))
         #     return
         for path, action in actions:
             if (run_actions or path.suffix[1:] in DeepFilter.include) and action.name in [Action.FILTERED, Action.COMCLEAN, Action.ORIGINAL] :
-                print(RText.parse(t(_FILTER_ACTION_PATH, action=f"[g]{action.name}[.]", path=path.resolve())))
+                print(RT.parse(t(_FILTER_ACTION_PATH, action=f"[g]{action.name}[.]", path=path.resolve())))
                 path.parent.mkdir(parents=True, exist_ok=True)
                 with open(path, "w") as f:
                     f.write(action.content) 
             else:
-                print(RText.parse(t(_FILTER_ACTION_DISABLED_PATH, path=path.resolve())))
+                print(RT.parse(t(_FILTER_ACTION_DISABLED_PATH, path=path.resolve())))
         
 class CodeFilter:
     @staticmethod

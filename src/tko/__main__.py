@@ -67,7 +67,7 @@ def main_callback(
 ):
     from tko.config.settings import Settings
     from tko.util.raw_terminal import RawTerminal
-    from tko.util.rtext import RenderConfig, RenderMode
+    from tko.util.rt import RenderConfig, RenderMode
 
     if version:
         print(t(_APP_VERSION, version=__version__))

@@ -1,6 +1,6 @@
 from tko.run.solver_builder import SolverBuilder
 from tko.run.unit import Unit
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.util.symbols import Symbols
 
 from pathlib import Path
@@ -8,7 +8,7 @@ from pathlib import Path
 
 class WdirSummaryService:
     @staticmethod
-    def unit_list_resume(unit_list: list[Unit]) -> list[RText]:
+    def unit_list_resume(unit_list: list[Unit]) -> list[RT]:
         return [unit.str() for unit in unit_list]
 
     @staticmethod
@@ -34,14 +34,14 @@ class WdirSummaryService:
             return ["free cmd"]
         return [path.name for path in path_list]
 
-    def resume_splitted(self, source_list: list[Path], pack_list: list[list[Unit]], solver: SolverBuilder | None) -> RText:
+    def resume_splitted(self, source_list: list[Path], pack_list: list[list[Unit]], solver: SolverBuilder | None) -> RT:
         sources = ["{}({})".format(name, str(count).rjust(2, "0")) for name, count in self.sources_names(source_list, pack_list)]
-        source_text = RText("Testes:[") + RText(", ".join(sources), "y") + "]"
-        solver_text = RText("Códigos:[") + RText(", ".join(self.solvers_names(solver)), "g") + "]"
+        source_text = RT("Testes:[") + RT(", ".join(sources), "y") + "]"
+        solver_text = RT("Códigos:[") + RT(", ".join(self.solvers_names(solver)), "g") + "]"
         return solver_text + " " + source_text
 
-    def resume_join(self, source_list: list[Path], pack_list: list[list[Unit]], solver: SolverBuilder | None) -> RText:
+    def resume_join(self, source_list: list[Path], pack_list: list[list[Unit]], solver: SolverBuilder | None) -> RT:
         sources = ["{}({})".format(name, str(count).rjust(2, "0")) for name, count in self.sources_names(source_list, pack_list)]
-        source_text = RText(", ".join(sources), "y")
-        solver_text = RText(", ".join(self.solvers_names(solver)), "g")
+        source_text = RT(", ".join(sources), "y")
+        solver_text = RT(", ".join(self.solvers_names(solver)), "g")
         return solver_text + ", " + source_text

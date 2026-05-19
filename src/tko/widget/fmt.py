@@ -1,5 +1,5 @@
 import curses
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.widget.colors import Colors
 from tko.i18n import Msg, t
 
@@ -11,7 +11,7 @@ _FMT_NOT_INITIALIZED = Msg(
 
 
 class TextPosition:
-    def __init__(self, y: int, x: int, text: RText):
+    def __init__(self, y: int, x: int, text: RT):
         self.y = y
         self.x = x
         self.text = text
@@ -129,8 +129,8 @@ class Fmt:
             stdscr.attroff(curses.A_REVERSE)
 
     @staticmethod
-    def cut_box(y: int, x: int, box_y: int, box_x: int, sentence: RText) -> list[TextPosition]:
-        lines: list[RText] = sentence.split("\n")
+    def cut_box(y: int, x: int, box_y: int, box_x: int, sentence: RT) -> list[TextPosition]:
+        lines: list[RT] = sentence.split("\n")
         output: list[TextPosition] = []
         for line in lines:
             px = x
@@ -161,9 +161,9 @@ class Fmt:
         return output
 
     @staticmethod
-    def write(y: int, x: int, sentence: RText | str):
+    def write(y: int, x: int, sentence: RT | str):
         if isinstance(sentence, str):
-            data = RText(sentence)
+            data = RT(sentence)
         else:
             data = sentence
 
@@ -176,16 +176,16 @@ class Fmt:
             Fmt.stroke(y, x, token_pos.style, token_pos.text)
 
     @staticmethod
-    def get_percent(value: int, pad: int = 0) -> RText:
+    def get_percent(value: int, pad: int = 0) -> RT:
         colors = Colors()
         text = f"{str(value)}%".rjust(pad)
         if value == 100:
-            return RText("100%", colors.mark_complete)
+            return RT("100%", colors.mark_complete)
         if value >= 70:
-            return RText(text, colors.mark_required)
+            return RT(text, colors.mark_required)
         if value == 0:
-            return RText(text, colors.mark_nothing)
-        return RText(text, colors.mark_started)
+            return RT(text, colors.mark_nothing)
+        return RT(text, colors.mark_started)
     
     @staticmethod
     def get_screen() -> curses.window:
@@ -215,9 +215,9 @@ def test_fmt(scr: curses.window):
     Fmt.init_colors()
     Fmt.set_scr(scr)
 
-    output = RText("..")
+    output = RT("..")
     for i in range(60):
-        output += RText(str(i) + " ", "r")
+        output += RT(str(i) + " ", "r")
     for i in range(15):
         Fmt.write(i - 2, -1, output)
     scr.getch()

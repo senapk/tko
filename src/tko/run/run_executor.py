@@ -1,4 +1,4 @@
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.util.raw_terminal import RawTerminal
 from tko.util.freerun import Free
 from tko.enums.execution_result import ExecutionResult
@@ -38,7 +38,7 @@ class RunExecutor:
 
     def run_tests_on_raw_term(self) -> int:
         if not self.ctx.config.eval_mode:
-            print(RText.parse(t(_RUN_TESTING_LABEL)).center(RawTerminal.get_terminal_size(), "═"))
+            print(RT.parse(t(_RUN_TESTING_LABEL)).center(RawTerminal.get_terminal_size(), "═"))
         
         percent = self.test_loop.run_top_line(self.get_rate)
         self.presenter.print_diff()

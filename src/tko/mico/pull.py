@@ -6,7 +6,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.i18n import Msg, t
 
 
@@ -82,22 +82,22 @@ class Pull:
         return local.strip() == remote_hash
 
     @staticmethod
-    def pull(directory: str) -> RText:
+    def pull(directory: str) -> RT:
         repo_path = Path(directory)
 
         if not repo_path.is_dir() or not (repo_path / ".git").exists():
-            return RText()
+            return RT()
 
-        output = RText(directory, "g") + " "
+        output = RT(directory, "g") + " "
 
         branch = Pull.get_default_branch(directory)
 
         # 1. Skip se já atualizado
         if Pull.is_up_to_date(directory, branch):
-            return output + RText(t(_PULL_UP_TO_DATE), "c")
+            return output + RT(t(_PULL_UP_TO_DATE), "c")
 
         # 2. Fetch otimizado
-        output += RText(t(_PULL_FETCH_LABEL), "y")
+        output += RT(t(_PULL_FETCH_LABEL), "y")
         ok, msg = Pull.git_ok(
             directory,
             "fetch",
@@ -111,12 +111,12 @@ class Pull:
             return output + "\n" + t(_PULL_FETCH_FAILED, msg=msg)
 
         # 3. Aplicar atualização
-        output += RText(t(_PULL_UPDATE_LABEL), "y")
+        output += RT(t(_PULL_UPDATE_LABEL), "y")
         ok, msg = Pull.git_ok(directory, "reset", "--hard", "FETCH_HEAD")
 
         if not ok:
             # fallback raro (repo zoado)
-            output += RText(t(_PULL_FALLBACK_LABEL), "r")
+            output += RT(t(_PULL_FALLBACK_LABEL), "r")
             Pull.git_ok(directory, "clean", "-fd")
             ok, msg = Pull.git_ok(directory, "reset", "--hard", f"origin/{branch}")
             if not ok:
@@ -126,7 +126,7 @@ class Pull:
 
     @staticmethod
     def pull_all_parallel(repo_list: list[Path], max_workers: int = 10):
-        print("\n" + str(RText(t(_PULL_ALL_PARALLEL, count=len(repo_list), threads=max_workers), "y")))
+        print("\n" + str(RT(t(_PULL_ALL_PARALLEL, count=len(repo_list), threads=max_workers), "y")))
         start = time.time()
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -142,4 +142,4 @@ class Pull:
                     logger.exception(t(_PULL_ERROR_IN_REPO, repo=repo))
 
         elapsed = time.time() - start
-        print("\n" + str(RText(t(_PULL_COMPLETED, elapsed=elapsed), "y")))
+        print("\n" + str(RT(t(_PULL_COMPLETED, elapsed=elapsed), "y")))

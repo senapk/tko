@@ -14,7 +14,7 @@ from tko.play_tree.tree_state import TreeState, TreeFilter
 from tko.play_tree.tree_visibility_service import TreeVisibilityService
 from tko.config.settings import Settings
 from tko.repository.repository import Repository
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.util.to_asc import SearchAsc
 
 
@@ -75,14 +75,14 @@ class TaskTree:
     def move_left(self):
         self.selection.move_left(self.items)
 
-    def get_visible_sentences(self, height: int) -> list[tuple[RText, IsTreeItem]]:
+    def get_visible_sentences(self, height: int) -> list[tuple[RT, IsTreeItem]]:
         self.selection.update_scroll(height, self.items)
         visible_items = self.items[
             self.state.scroll : self.state.scroll + height
         ]
         return self.get_rendered_items(visible_items)
     
-    def get_rendered_items(self, items: list[IsTreeItem] | None = None) -> list[tuple[RText, IsTreeItem]]:
+    def get_rendered_items(self, items: list[IsTreeItem] | None = None) -> list[tuple[RT, IsTreeItem]]:
         if items is None:
             items = self.items
         matcher = SearchAsc(self.state.search)

@@ -9,7 +9,7 @@ from tko.play_tree.tree_layout import TreeLayout
 from tko.play_tree.tree_state import TreeState
 from tko.play.quest_visibility_service import QuestVisibilityService
 from tko.config.settings import Settings
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.util.to_asc import SearchAsc
 
 
@@ -33,14 +33,14 @@ class TreeRenderer:
         self.state = state
         self.filler = "."
 
-    def mark_search_match(self, text: RText, matcher: SearchAsc):
+    def mark_search_match(self, text: RT, matcher: SearchAsc):
         pos = matcher.find(text.plain())
         if pos != -1:
             end = pos + len(matcher.pattern)
             text = text.slice(0, pos) + text.slice(pos, end).add_style("X") + text.slice(end)
         return text
 
-    def render(self, item: IsTreeItem, selected_key: str, matcher: SearchAsc) -> RText:
+    def render(self, item: IsTreeItem, selected_key: str, matcher: SearchAsc) -> RT:
         if isinstance(item, Quest):
             focused = item.basic.full_key == selected_key
             return self.render_quest(item, focused)
@@ -49,16 +49,16 @@ class TreeRenderer:
             focused = item.basic.full_key == selected_key
             return self.mark_search_match(self.render_task(item, focused), matcher)
 
-        return RText("")
+        return RT("")
 
-    def render_task(self, t: Task, focused: bool) -> RText:
-        output = RText(" ")
-        output += RText(str(t.game.xp), "b") + " "
+    def render_task(self, t: Task, focused: bool) -> RT:
+        output = RT(" ")
+        output += RT(str(t.game.xp), "b") + " "
 
-        output += RText(self.task_formatter.get_task_down_symbol(t)[1], self.task_formatter.get_task_down_symbol(t)[0]) + " "
+        output += RT(self.task_formatter.get_task_down_symbol(t)[1], self.task_formatter.get_task_down_symbol(t)[0]) + " "
         output += self.time_formatter.format_percent_1s(t.grader.get_rate_percent()) + " "
-        output += RText(self.task_formatter.get_task_help_symbol(t)[1], self.task_formatter.get_task_help_symbol(t)[0]) + " "
-        output += RText(self.task_formatter.get_task_path_symbol(t)[1], self.task_formatter.get_task_path_symbol(t)[0]) + " "
+        output += RT(self.task_formatter.get_task_help_symbol(t)[1], self.task_formatter.get_task_help_symbol(t)[0]) + " "
+        output += RT(self.task_formatter.get_task_path_symbol(t)[1], self.task_formatter.get_task_path_symbol(t)[0]) + " "
         remote_name: str = ""
         if self.layout.use_full_key:
             remote_name = t.basic.remote_name
@@ -76,7 +76,7 @@ class TreeRenderer:
         if len(output) > self.layout.sentence_cut_size:
             output = output.slice(0, self.layout.sentence_cut_size - 1) + "…"
         else:
-            output = output.ljust(self.layout.sentence_cut_size, RText(" ", focus_color))
+            output = output.ljust(self.layout.sentence_cut_size, RT(" ", focus_color))
         output += " "
 
         if self.flags.show_time.is_true():
@@ -87,7 +87,7 @@ class TreeRenderer:
         output += self.time_formatter.format_percent_3s(value)
         return output
 
-    def render_quest(self, q: Quest, focused: bool) -> RText:
+    def render_quest(self, q: Quest, focused: bool) -> RT:
         color = "g" if QuestVisibilityService.is_reachable(q) else "y"
         output = q.ui.ligature.set_style(color)
         done, total = q.progress.get_completion()
@@ -108,7 +108,7 @@ class TreeRenderer:
         if len(output) > self.layout.sentence_cut_size:
             output = output.slice(0, self.layout.sentence_cut_size - 1) + "…"
         else:
-            output = output.ljust(self.layout.sentence_cut_size, RText(self.filler, color))
+            output = output.ljust(self.layout.sentence_cut_size, RT(self.filler, color))
         output += " "
         if self.flags.show_time.is_true():
             h, m = self.time_formatter.get_quest_time(q)

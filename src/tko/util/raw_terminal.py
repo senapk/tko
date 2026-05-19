@@ -1,5 +1,5 @@
 import shutil
-from tko.util.rtext import RText
+from tko.util.rt import RT
 
 class RawTerminal:
     __term_width: None | int = None
@@ -22,9 +22,9 @@ class RawTerminal:
         RawTerminal.__term_width = value
 
     @staticmethod
-    def centralize(text: RText | str, filler: RText | str = " "):
+    def centralize(text: RT | str, filler: RT | str = " "):
         if isinstance(text, str):
-            text2: RText = RText(text)
+            text2: RT = RT(text)
         else:
             text2 = text
         width = RawTerminal.get_terminal_size()

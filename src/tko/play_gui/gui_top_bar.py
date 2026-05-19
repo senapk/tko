@@ -2,7 +2,7 @@ from tko.config.app_settings import AppSettings
 from tko.widget.frame import Frame
 from tko.config.flags import Flags
 from tko.play.keys import GuiKeys
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.util.tab_renderer import TabRenderer
 from tko.i18n import Msg, t
 
@@ -30,7 +30,7 @@ class GuiTopBar:
         pre = [
             vi.render_button(f"{t(_TopBarMsg.RECOMMENDED)}[{GuiKeys.inbox}]", self.flags.task_view_mode.is_inbox()),
             vi.render_button(f"{t(_TopBarMsg.ALL)}[{GuiKeys.all_tasks}]", self.flags.task_view_mode.is_all()),
-            RText(" "),
+            RT(" "),
         ]
         pos = [
             vi.render_button(f"{t(_TopBarMsg.GRAPHS)}[{GuiKeys.panel_graph}]", panel_on and self.flags.panel.is_graph()),
@@ -44,11 +44,11 @@ class GuiTopBar:
         ]
 
         limit = frame.get_dx()
-        extra = RText()
+        extra = RT()
         if self.flags.panel.is_graph():
-            extra = RText.join(last, RText(""))
+            extra = RT.join(last, RT(""))
 
-        info = RText.join(pre + pos, RText(""))
-        info = RText(" " * ((limit - len(info)) // 2)) + info
-        info += RText(" " * (limit - len(info) - len(extra))) + extra
+        info = RT.join(pre + pos, RT(""))
+        info = RT(" " * ((limit - len(info)) // 2)) + info
+        info += RT(" " * (limit - len(info) - len(extra))) + extra
         frame.write(0, 1, info)

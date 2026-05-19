@@ -1,5 +1,5 @@
 from tko.widget.frame import Frame
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.widget.fmt import Fmt
 from tko.i18n import Msg, t
 from typing import Callable
@@ -36,7 +36,7 @@ class FloatingABC(ABC):
 class Floating(FloatingABC):
     def __init__(self):
         self.frame = Frame(0, 0)
-        self.content: list[RText] = []
+        self.content: list[RT] = []
         self.type: FloatingType = FloatingType.WARNING
         self.enable = True
         self.exit_fn: Callable[[], None] | None = None
@@ -80,18 +80,18 @@ class Floating(FloatingABC):
         return self
 
     def set_header(self, text: str):
-        self.frame.set_header(RText(text, "/"), "")
+        self.frame.set_header(RT(text, "/"), "")
         return self
     
-    def set_header_text(self, sentence: RText):
+    def set_header_text(self, sentence: RT):
         self.frame.set_header(sentence, "")
         return self
     
     def set_footer(self, text: str):
-        self.frame.set_footer(RText(text, "/"), "")
+        self.frame.set_footer(RT(text, "/"), "")
         return self
     
-    def set_footer_text(self, sentence: RText):
+    def set_footer_text(self, sentence: RT):
         self.frame.set_footer(sentence, "")
         return self
     
@@ -147,21 +147,21 @@ class Floating(FloatingABC):
     def put_text(self, text: str):
         lines = text.splitlines()
         for line in lines:
-            self.content.append(RText(line))
+            self.content.append(RT(line))
         return self
 
-    def put_sentence(self, sentence: RText):
+    def put_sentence(self, sentence: RT):
         for line in sentence.split('\n'):
             self.content.append(line)
         return self
     
     def set_content(self, content: list[str]):
-        self.content = [RText(x) for x in content]
+        self.content = [RT(x) for x in content]
         return self
 
     def set_default_footer(self):
         if self.frame.get_footer().len() == 0:
-            label = RText(" Pressione espaço ", "/")
+            label = RT(" Pressione espaço ", "/")
             self.frame.set_footer(label, "", "─", "─")
         return self
 

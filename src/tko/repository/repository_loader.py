@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any
 from tko.util.decoder import Decoder
 from tko.i18n import Msg, t
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.util.atomic_write_yaml import atomic_write_yaml
 from tko.repository.repository import Repository
 
@@ -69,11 +69,11 @@ class RepositoryLoader:
         except ConfigMergeConflictError:
             raise
         except yaml.YAMLError as e:
-            raise Warning(RText.parse(t(_REPOSITORY_LOADER_YAML_CORRUPTED, file=self.repo.paths.config_file, error=e)))
+            raise Warning(RT.parse(t(_REPOSITORY_LOADER_YAML_CORRUPTED, file=self.repo.paths.config_file, error=e)))
         except FileNotFoundError:
-            raise Warning(RText.parse(t(_REPOSITORY_LOADER_CONFIG_EMPTY, file=self.repo.paths.config_file)))
+            raise Warning(RT.parse(t(_REPOSITORY_LOADER_CONFIG_EMPTY, file=self.repo.paths.config_file)))
         except Exception as e:
-            raise Warning(RText.parse(t(_REPOSITORY_LOADER_CONFIG_CORRUPTED_UNEXPECTED, file=self.repo.paths.config_file, error=e)))
+            raise Warning(RT.parse(t(_REPOSITORY_LOADER_CONFIG_CORRUPTED_UNEXPECTED, file=self.repo.paths.config_file, error=e)))
 
         self.repo.data.load_from_dict(local_data) # type: ignore
         self.repo.flags.from_dict(self.repo.data.flags) # type: ignore

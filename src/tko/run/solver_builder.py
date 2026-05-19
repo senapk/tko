@@ -3,7 +3,7 @@ from collections.abc import Callable
 
 import os
 import shutil
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.util.runner import Runner
 from tko.config.settings import Settings
 from pathlib import Path
@@ -41,7 +41,7 @@ class Executable:
         self.__folder: Path = folder
         self.__compiled: bool = False
         self.__compile_error: bool = False
-        self.__error_msg: RText = RText()
+        self.__error_msg: RT = RT()
         self.__shell_mode: bool = False # subprocess needs bash mode to process symbols like & or |
     
     def needs_shell_mode(self):
@@ -63,11 +63,11 @@ class Executable:
             cmd += [str(file.resolve()) for file in self.__files]
         return cmd, self.__folder
 
-    def set_compile_error(self, error_msg: RText | str):
+    def set_compile_error(self, error_msg: RT | str):
         self.__compiled = True
         self.__compile_error = True
         if isinstance(error_msg, str):
-            self.__error_msg = RText(error_msg)
+            self.__error_msg = RT(error_msg)
         else:
             self.__error_msg = error_msg
         return self
@@ -98,7 +98,7 @@ class SolverBuilder:
 
     def check_tool(self, name: str):
         if shutil.which(name) is None:
-            self.__exec.set_compile_error(RText.parse(f"[r]{t(_SOLVER_COMMAND_NOT_FOUND, name=name)}[.]"))
+            self.__exec.set_compile_error(RT.parse(f"[r]{t(_SOLVER_COMMAND_NOT_FOUND, name=name)}[.]"))
             raise CompileError(t(_SOLVER_COMMAND_NOT_FOUND, name=name))
 
     def not_compiled(self):
@@ -174,7 +174,7 @@ class SolverBuilder:
     def prepare_exec_with_lang(self):
         lang = self.settings.get_languages_settings().get_languages().get(self.args_list[0].suffix[1:], None)
         if lang is None:
-            self.__exec.set_compile_error(RText.parse(f"[r]{t(_SOLVER_EXTENSION_UNRECOGNIZED, suffix=self.args_list[0].suffix)}[.]"))
+            self.__exec.set_compile_error(RT.parse(f"[r]{t(_SOLVER_EXTENSION_UNRECOGNIZED, suffix=self.args_list[0].suffix)}[.]"))
             return
         self._prepare_exec_with_commands(lang.build_cmd, lang.run_cmd)
 
@@ -217,7 +217,7 @@ class SolverBuilder:
         try:
             lang = self.settings.get_languages_settings().get_languages().get("ts", None)
             if lang is None:
-                self.__exec.set_compile_error(RText.parse(f"[r]{t(_SOLVER_TS_CONFIG_NOT_FOUND)}[.]"))
+                self.__exec.set_compile_error(RT.parse(f"[r]{t(_SOLVER_TS_CONFIG_NOT_FOUND)}[.]"))
                 return
             build_cmd = lang.build_cmd.strip()
             run_cmd = lang.run_cmd.strip()

@@ -1,6 +1,6 @@
 from tko.logger.logger import Logger
 from uniplot import plot_to_string # type: ignore
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.logger.delta import Delta
 from icecream import ic # type: ignore
 
@@ -40,7 +40,7 @@ class DailyGraph:
     #         output[i] = output[i].replace(".", ":").rjust(5, " ")
     #     return output
 
-    def get_graph(self) -> tuple[list[RText], list[RText]]:
+    def get_graph(self) -> tuple[list[RT], list[RT]]:
         # collected: list[float] = []
         # eixo: list[int] = []
         if not self.daily:
@@ -87,11 +87,11 @@ class DailyGraph:
         if isinstance(result, str):
             result = result.splitlines()
         
-        decoded: list[RText] = []
+        decoded: list[RT] = []
         for line in result:
-            decoded.append(RText.decode_raw(line))
+            decoded.append(RT.decode_raw(line))
 
-        fixed: list[RText] = []
+        fixed: list[RT] = []
         qtd = len(decoded)
         for i, line in enumerate(decoded):
             if i == 0 or i == qtd - 2:
@@ -104,11 +104,11 @@ class DailyGraph:
 
         
         header = [
-            RText(" Máximo diário: ", "c")
-            + RText(f"{Delta.format_h_min(max_daily)} ", "c")
+            RT(" Máximo diário: ", "c")
+            + RT(f"{Delta.format_h_min(max_daily)} ", "c")
             + " "
-            + RText(" Acumulado: ", "m")
-            + RText(f"{Delta.format_h_min(max_accumulates)} ", "m")
+            + RT(" Acumulado: ", "m")
+            + RT(f"{Delta.format_h_min(max_accumulates)} ", "m")
         ]
         
 

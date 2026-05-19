@@ -5,7 +5,7 @@ from tko.play.opener import Opener
 from tko.repository.repository import Repository
 from tko.util.param import Param
 from tko.config.settings import Settings
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.run.run_config import RunConfig
 from tko.run.run_context import RunContext
 from tko.run.run_loader import RunLoader
@@ -127,7 +127,7 @@ class Run:
             if not self.context.config.eval_mode:
                 executor.free_run()
             else:
-                print(RText("fail: ") + t(_RUN_NO_TEST_CASES))
+                print(RT("fail: ") + t(_RUN_NO_TEST_CASES))
             return 0
         
         # Normal test mode
@@ -136,6 +136,6 @@ class Run:
     def _missing_target(self) -> bool:
         if not self.context.wdir.has_solver() and not self.context.wdir.has_tests():
             if not self.context.config.curses_mode:
-                print(RText("fail: ") + t(_RUN_NO_SOURCE_OR_TESTS))
+                print(RT("fail: ") + t(_RUN_NO_SOURCE_OR_TESTS))
             return True
         return False

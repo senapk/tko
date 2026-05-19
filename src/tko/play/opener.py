@@ -1,6 +1,6 @@
 from tko.floating import Floating
 from tko.floating.floating_manager import FloatingManager
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.config.settings import Settings
 from tko.cmds.drafts_finder_cached import DraftsFinderCached
 from pathlib import Path
@@ -41,11 +41,11 @@ class Opener:
                 .bottom()
                 .right()
                 .set_warning()
-                .put_sentence(RText("Pasta: ") + RText(str(folder), "g") + " ")
+                .put_sentence(RT("Pasta: ") + RT(str(folder), "g") + " ")
                 .put_text("Abrindo arquivos com o comando")
                 )
         files = [path.name for path in files_to_open]
-        aviso.put_sentence(RText(f"{cmd}", "g") + " " + RText(" ".join(files), "g") + " ")
+        aviso.put_sentence(RT(f"{cmd}", "g") + " " + RT(" ".join(files), "g") + " ")
         self.send_floating(aviso)
         fullcmd = "{} {}".format(cmd, " ".join([f'"{f}"' for f in files_to_open]))
         outfile = tempfile.NamedTemporaryFile(delete=False)

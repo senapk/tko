@@ -5,7 +5,7 @@ from tko.logger.log_sort import LogSort
 from tko.logger.task_resume import TaskResume
 from tko.run.run_context import RunContext
 from tko.run.unit_runner import UnitRunner
-from tko.util.rtext import RText
+from tko.util.rt import RT
 from tko.util.symbols import Symbols
 
 
@@ -14,7 +14,7 @@ class TestLoopService:
         self.ctx = ctx
 
     def run_top_line(self, get_rate: Callable[[], int]) -> int:
-        print(RText(Symbols.opening) + self.ctx.wdir.resume_splitted(), end="")
+        print(RT(Symbols.opening) + self.ctx.wdir.resume_splitted(), end="")
         print(" [", end="")
         self._run_units()
         print("] ", end="")
@@ -46,7 +46,7 @@ class TestLoopService:
                 if log_sort is not None:
                     log_resume = TaskResume(self.ctx.get_task().basic.full_key, "").from_log_sort(log_sort)
                     print(
-                        RText(
+                        RT(
                             f"time:{log_resume.resume.minutes:.0f}, diff:{log_resume.resume.versions}, runs:{log_resume.resume.executions},",
                             "g",
                         )
