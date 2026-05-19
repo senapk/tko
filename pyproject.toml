@@ -14,11 +14,7 @@ where = ["src"]
 
 [project]
 name = "tko"
-<<<<<<< HEAD
 version = "9.14.4"
-=======
-version = "9.14.3"
->>>>>>> f32750f2c171bca595324c39f59746a60d222ca9
 description = "Add your description here"
 authors = [
     { name = "David", email = "sena.ufc@gmail.com" }
