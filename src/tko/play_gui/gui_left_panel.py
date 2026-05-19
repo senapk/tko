@@ -1,5 +1,4 @@
 from pathlib import Path
-
 from tko.widget.frame import Frame
 from tko.play.search import Search
 from tko.play_tree.task_tree import TaskTree
@@ -8,8 +7,6 @@ from tko.util.symbols import Symbols
 from tko.i18n import Msg, t
 from typing import Callable
 from tko.game.tree_item import IsTreeItem
-from tko.game.task import Task
-from tko.game.quest import Quest
 
 
 class _LeftPanelMsg:
@@ -72,3 +69,4 @@ class GuiLeftPanel:
             if sentence.len() > dx:
                 sentence = sentence.trim_end(dx - 1) + RT("…", "r")
             frame.write(y, 0, sentence)
+        

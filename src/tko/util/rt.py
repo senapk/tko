@@ -262,15 +262,15 @@ class RT:
                     runs.append((final_style, t))
                 return
 
-            if isinstance(value, tuple) and len(value) == 2:
-                s, t = value
-                base_style = RT._combine_styles(style, str(s))
+            if isinstance(value, tuple) and len(value) == 2: # type: ignore
+                s, t = value # type: ignore
+                base_style = RT._combine_styles(style, str(s)) # type: ignore
                 final_style = RT._combine_styles(base_style, extra_style) if extra_style else base_style
-                runs.append((final_style, str(t)))
+                runs.append((final_style, str(t))) # type: ignore
                 return
 
             final_style = RT._combine_styles(style, extra_style) if extra_style else style
-            runs.append((final_style, str(value)))
+            runs.append((final_style, str(value))) # type: ignore
 
         while i < len(template):
             c = template[i]
