@@ -19,7 +19,7 @@ class UnitRunner:
         if timeout == 0:
             timeout = None
 
-        return_code, stdout, stderr = Runner.subprocess_run(
+        return_code, stdout, _ = Runner.subprocess_run(
             cmd = cmd, 
             input_data = unit.input,
             timeout = timeout, 

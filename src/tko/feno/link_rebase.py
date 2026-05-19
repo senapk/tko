@@ -41,7 +41,7 @@ class LinkRebase:
         return result
 
     @staticmethod
-    def rebase(content: str, rl: GithubUrlStructure) -> None:
+    def rebase(content: str, rl: GithubUrlStructure) -> str:
         parts = rl.relative_path.split("/")
         if parts and "." in parts[-1]:
             folder = "/".join(parts[:-1])
@@ -61,7 +61,7 @@ class LinkRebase:
 
     @staticmethod
     def convert_or_copy_or_print(source: Path, target: Path | None, make_remote: bool = False):
-        content = Decoder.load(source)
+        content: str = Decoder.load(source)
         cfg = GithubCfg(source, make_remote)
         if cfg.cfg_exists():
             content = LinkRebase.rebase(content, cfg.calc_link_for_local_file())

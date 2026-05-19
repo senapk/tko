@@ -28,20 +28,21 @@ class TesterPalette:
 
         options: list[FloatingInputData] = [
             FloatingInputData(
-                lambda: RText.format(" {} Mudar arquivo {y} de execução", Symbols.action, "principal"),
+                lambda: RText.parse(" [$] Mudar arquivo [$] de execução", Symbols.action, ("y","principal")),
                 lambda: self.navigator.change_main(state),
                 "TAB",
             ),
             FloatingInputData(
-                lambda: RText.format(" {} Mudar modo {y}}", tester_util.get_diff_symbol(self.app.diff_mode), "Diff"),
+                lambda: RText.format(" {} Mudar modo {}", tester_util.get_diff_symbol(self.app.diff_mode), RText("Diff", 'y')),
                 self.app.toggle_diff,
                 GuiKeys.diff,
             ),
             FloatingInputData(
                 lambda: RText.format(
-                    " {} Mudar {y} de tempo de execução: {r}",
-                    Symbols.action, "Limite",
-                    tester_util.get_time_limit_symbol(self.app.timeout),
+                    " {} Mudar {} de tempo de execução: {}",
+                    Symbols.action, 
+                    RText("Limite", 'y'),
+                    RText.run("r", tester_util.get_time_limit_symbol(self.app.timeout)),
                 ),
                 lambda: self.navigator.change_limit(state),
                 GuiKeys.limite,
@@ -53,11 +54,6 @@ class TesterPalette:
                 ),
                 lambda: self.navigator.lock_unit(state),
                 GuiKeys.lock,
-            ),
-            FloatingInputData(
-                lambda: RText.format(" {} Mostrar {y}", icon(self.app.use_borders), "Bordas"),
-                lambda: self.app.toggle(ToggleOption.BORDERS),
-                GuiKeys.borders,
             ),
             FloatingInputData(
                 lambda: RText.format(" {} Mostrar {y}", icon(self.app.use_images), "Imagens"),

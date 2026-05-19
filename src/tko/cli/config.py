@@ -16,7 +16,6 @@ def config_set(
     side: bool = typer.Option(False, "--side", help="Set side_by_side diff mode"),
     down: bool = typer.Option(False, "--down", help="Set up_to_down diff mode"),
     editor : None | str = typer.Option(None, "--editor", help="Set editor command"),
-    borders: None | str = typer.Option(None, "--borders", help="Enable borders [0|1]"),
     images : None | str = typer.Option(None, "--images", help="Enable images [0|1]"),
     timeout: None | int = typer.Option(None, "--timeout", help="Set timeout in sec")
 ):
@@ -28,7 +27,6 @@ def config_set(
     param.down = down
     param.images = images
     param.editor = editor
-    param.borders = borders
     param.timeout = timeout
     
     if settings:

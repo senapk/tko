@@ -33,13 +33,13 @@ def test_parse_reset_overlay():
 
 
 def test_parse_argument_string():
-    t = RText.parse("Hello []", "World")
+    t = RText.parse("Hello [$]", "World")
     assert t.runs == (("", "Hello World"),)
 
 
 def test_parse_argument_text_overlay():
     name = RText("World", "y")
-    t = RText.parse("[r]Hello []", name)
+    t = RText.parse("[r]Hello [$]", name)
     assert t.runs == (("r", "Hello "), ("y", "World"))
 
 
@@ -49,7 +49,7 @@ def test_parse_escape():
 
 
 def test_parse_multiple_args():
-    t = RText.parse("[] + [] = []", 1, 2, 3)
+    t = RText.parse("[$] + [$] = [$]", 1, 2, 3)
     assert t.plain() == "1 + 2 = 3"
 
 

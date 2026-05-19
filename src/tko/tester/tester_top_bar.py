@@ -1,6 +1,5 @@
 from tko.config.app_settings import AppSettings
 from tko.game.task import Task
-from tko.widget.border import Border
 from tko.widget.frame import Frame
 from tko.play.keys import GuiActions, GuiKeys
 from tko.tester.tester_state import TesterState, SeqMode
@@ -18,13 +17,11 @@ class _TesterTopBarMsg:
     NO_TESTS_REGISTERED = Msg(pt="Nenhum teste cadastrado", en="No tests registered")
     COMPILE_ERROR = Msg(pt="Erro de compilação", en="Compilation error")
 
-
 class TesterTopBar:
 
-    def __init__(self, wdir: Wdir, task: Task, borders: Border, app: AppSettings) -> None:
+    def __init__(self, wdir: Wdir, task: Task, app: AppSettings) -> None:
         self.wdir = wdir
         self.task = task
-        self.borders = borders
         self.app = app
         self._dummy_unit = Unit()
 
@@ -37,7 +34,7 @@ class TesterTopBar:
         else:
             output += RText(" ", "B")
         symbol = Symbols.locked_locked if state.locked_index else Symbols.locked_free
-        output += RText(f" {GuiKeys.lock} {symbol} ", color) + self.borders.sharp_r(color)
+        output += RText(f" {GuiKeys.lock} {symbol} ", color)
         return output
 
     def build_top_line_header(self, state: TesterState, frame_dx: int) -> RText:
@@ -47,35 +44,32 @@ class TesterTopBar:
         running_color  = "R"
 
         folder   = tester_util.get_folder(self.task)
-        activity = self.borders.border(activity_color, folder.name)
+        activity = RText(f" {folder.name} ", activity_color)
 
         solver_names = tester_util.get_solver_names(self.wdir)
         solvers = RText()
         if len(solver_names) > 1:
-            solvers += self.borders.round_l("R") + RText(f"{GuiActions.tab}", "R") + self.borders.sharp_r("R")
+            solvers += RText(f" {GuiActions.tab} ", "R")
         for i, solver in enumerate(solver_names):
             if len(solver_names) > 1:
-                solvers += " "
+                solvers += RText(" ")
             color = "G" if i == self.task.main_idx else solver_color
-            solvers += self.borders.border(color, solver)
+            solvers += RText(f" {solver} ", color)
 
         done = len(state.results)
         full = len(self.wdir.get_unit_list())
-        count_missing = self.borders.border(running_color, f"({done}/{full})")
+        count_missing = RText(f" ({done}/{full}) ", running_color)
         if state.mode == SeqMode.running:
             if state.locked_index:
-                solvers = self.borders.border("R", t(_TesterTopBarMsg.RUNNING_LOCKED_ACTIVITY))
+                solvers = RText(f" {t(_TesterTopBarMsg.RUNNING_LOCKED_ACTIVITY)} ", "R")
             else:
                 solvers = count_missing
 
-        source_names = RText.join(
-            [RText(f"{name[0]}({name[1]})", sources_color) for name in self.wdir.sources_names()],
-            RText(", ")
-        )
+        source_names = " ".join([f" {name[0]}({name[1]}) " for name in self.wdir.sources_names()])
         if self.wdir.has_tests():
-            sources = self.borders.round_l(sources_color) + source_names + self.borders.round_r(sources_color)
+            sources = RText(f"{source_names}", sources_color)
         else:
-            sources = self.borders.border("R", t(_TesterTopBarMsg.NO_TESTS_REGISTERED))
+            sources = RText(f" {t(_TesterTopBarMsg.NO_TESTS_REGISTERED)} ", "R")
 
         delta = frame_dx - solvers.len()
         left, right = 1, 1
@@ -110,22 +104,22 @@ class TesterTopBar:
             and not state.is_all_right()
         )
 
-        output = self.get_fixed_arrow(state)
+        output = self.get_fixed_arrow(state) + " "
         i = 0
         for unit_result, index in done_list + todo_list:
             foco = i == state.focused_index
             token = tester_util.get_token(unit_result)
             token_style = token.runs[0][0] if token.runs else ""
             token_text  = token.plain()
-            extrap = self.borders.round_l(token_style)
-            extras = self.borders.round_r(token_style)
+            extrap = RText(" ")
+            extras = RText(" ")
             if foco and show_focused:
-                extrap = RText("(")
-                extras = RText(")")
+                extrap = RText("▒")
+                extras = RText("▒")
             if state.locked_index and not foco:
-                output += "  " + RText(str(index).zfill(2), token_style.lower()) + RText(token_text, token_style.lower()) + " "
+                output += RText(str(index).zfill(2), token_style.lower()) + RText(token_text, token_style.lower())
             else:
-                output += " " + extrap + RText(str(index).zfill(2), token_style) + token + extras
+                output += extrap + RText(str(index).zfill(2), token_style) + token + extras
             i += 1
 
         size     = 6
@@ -142,7 +136,7 @@ class TesterTopBar:
         unit = state.get_focused_unit(self.wdir, self._dummy_unit)
         info = RText()
         if self.wdir.get_solver().has_compile_error():
-            info = self.borders.border("R", t(_TesterTopBarMsg.COMPILE_ERROR))
+            info = RText(f" {t(_TesterTopBarMsg.COMPILE_ERROR)} ", "R")
         elif not state.is_all_right() and state.mode != SeqMode.intro:
             info = unit.str(pad=False)
         frame.write(0, 0, info.center(frame.get_dx()))

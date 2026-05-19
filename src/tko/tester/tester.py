@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 import curses
 from typing import Callable
@@ -6,7 +7,6 @@ from tko.config.settings import Settings
 from tko.game.task import Task
 from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_move import LogItemMove
-from tko.widget.border import Border
 from tko.floating.floating import Floating
 from tko.floating.floating_manager import FloatingManager
 from tko.widget.fmt import Fmt
@@ -47,13 +47,12 @@ class Tester:
         self.task = task
         self.app = settings.app
 
-        borders = Border(settings.app)
         fman    = FloatingManager()
 
         self.state    = TesterState(list(wdir.get_unit_list()))
-        self.top_bar  = TesterTopBar(wdir, task, borders, settings.app)
+        self.top_bar  = TesterTopBar(wdir, task, settings.app)
         self.executor = TesterExecutor(settings, rep, wdir, task, fman, self.top_bar)
-        self.renderer = TesterRenderer(settings, wdir, task, borders, self.top_bar, None)
+        self.renderer = TesterRenderer(settings, wdir, task, self.top_bar, None)
         self.navigator = TesterNavigator(settings, rep, wdir, task, fman, self.executor)
         self.palette   = TesterPalette(settings.app, fman, self.navigator)
         self.ui_actions = TesterUiActions(settings, fman, self.navigator, self.palette)
@@ -64,18 +63,18 @@ class Tester:
                     LogItemMove().set_mode(LogItemMove.Mode.PICK).set_key(task.basic.full_key)
             )
 
-    def set_opener(self, opener: Opener) -> "Tester":
+    def set_opener(self, opener: Opener) -> Tester:
         opener_with_fman = opener.set_fman(self.fman)
         self.renderer.set_opener(opener_with_fman)
         self.navigator_opener = opener_with_fman
         return self
 
-    def set_autorun(self, value: bool) -> "Tester":
+    def set_autorun(self, value: bool) -> Tester:
         if value:
             self.state.mode = SeqMode.running
         return self
 
-    def set_exit(self) -> "Tester":
+    def set_exit(self) -> Tester:
         self.state.exit = True
         return self
 
@@ -108,7 +107,6 @@ class Tester:
         cman.add_str(GuiKeys.self_evaluate, lambda: nav.self_evaluate(state))
         cman.add_str(GuiKeys.limite, lambda: self.ui_actions.change_limit(state))
         cman.add_str(GuiKeys.diff, self.ui_actions.toggle_diff)
-        cman.add_str(GuiKeys.borders, self.ui_actions.toggle_borders)
         cman.add_str(GuiKeys.images, self.ui_actions.toggle_images)
         cman.add_str(GuiKeys.palette, lambda: self.ui_actions.open_palette(state))
 

@@ -255,7 +255,7 @@ class RText:
                 flush()
 
                 # ---------- argumento ----------
-                if token == "":
+                if token == "$":
                     if arg_i < len(args):
                         arg = args[arg_i]
                         arg_i += 1
@@ -271,7 +271,7 @@ class RText:
                             runs.append((style, str(arg))) # type: ignore
 
                 # ---------- reset ----------
-                elif token == ".":
+                elif token == "." or token == '':
                     style = ""
 
                 # ---------- reset + style ----------
@@ -706,7 +706,7 @@ class RBuffer:
 
 if __name__ == "__main__":
     # Example usage
-    t = RText.parse("Hello [] []!", ("r", "Red"), ("b", "Blue"))
+    t = RText.parse("Hello [$] [$]!", ("r", "Red"), ("b", "Blue"))
     print(t)
     b = RBuffer()
     b.add("Hello ", "r").add("World", "R").add(" ").add(RText("oi", "bR"))

@@ -9,7 +9,6 @@ from tko.util.rtext import RText
 
 
 class ToggleOption(enum.Enum):
-    BORDERS = "use_borders"
     IMAGES = "use_images"
 
 class AppKeys(enum.Enum):
@@ -78,6 +77,8 @@ class AppSettings:
                 obj.diff_mode = DiffMode(value)
             elif key == "keys":
                 obj.keys = {AppKeys(k): v for k, v in value.items()}
+            elif key == "use_borders":
+                obj.use_borders = False
             elif hasattr(obj, key):
                 setattr(obj, key, value)
 
@@ -90,7 +91,6 @@ class AppSettings:
             f"- Language: {self.ui_language}",
             f"- Diff    : {self.diff_mode.value}",
             f"- Editor  : {self.editor}",
-            f"- Bordas  : {self.use_borders}",
             f"- Images  : {self.use_images}",
             f"- Timeout : {self.timeout}",
         ]

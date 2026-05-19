@@ -4,10 +4,11 @@ from typing import Callable
 
 from tko.game.quest_grader import QuestGrader
 from tko.game.task_config import TaskMain
+from tko.game.task import Task
 
 
 class QuestProgress:
-    def __init__(self, tasks_getter: Callable[[], list], min_percent_getter: Callable[[], int]):
+    def __init__(self, tasks_getter: Callable[[], list[Task]], min_percent_getter: Callable[[], int]):
         self._tasks_getter = tasks_getter
         self._min_percent_getter = min_percent_getter
 

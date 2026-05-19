@@ -109,7 +109,6 @@ class Play:
         cman.add_str(GuiKeys.activate, self.activate) # type: ignore
         # cman.add_str(GuiKeys.open_url, self.actions.open_link)
         cman.add_str(GuiKeys.down_task, self.actions.downloader.down_remote_task)
-        cman.add_str(GuiKeys.borders, lambda: self.app.toggle(ToggleOption.BORDERS))
         cman.add_str(GuiKeys.images, lambda: self.app.toggle(ToggleOption.IMAGES))
         cman.add_str(GuiKeys.set_lang_drafts, self.gui.language.set_language)
         cman.add_str(GuiKeys.toggle_ui_language, self.gui.language.toggle_ui_language)
@@ -147,6 +146,7 @@ class Play:
     def open_toggle_panel(self, value: str):
         current = self.flags.panel.get_value()
         panel = self.flags.panel
+        
         if self.flags.show_panel.is_true():
             if current != value:
                 panel.set_value(value)

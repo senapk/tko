@@ -7,8 +7,7 @@ from tko.util.symbols import Symbols
 
 class _GuiHelpMsg:
     SECTION_CONFIG = Msg(pt=" Configuração ", en=" Configuration ")
-    BORDERS_LINE = Msg(pt="   Bordas {r} Habilita {r}{R}{r}", en="   Borders {r} Enables {r}{R}{r}")
-    BORDERS_DESC = Msg(pt="bordas redondas", en="rounded borders")
+
     CALIBRATE_LINE = Msg(pt=" Calibrar {r} Para calibrar os direcionais do teclado", en=" Calibrate {r} To calibrate the keyboard arrow keys")
 
     SECTION_SYMBOLS = Msg(pt=" Símbolos ", en=" Symbols ")
@@ -34,7 +33,7 @@ class _GuiHelpMsg:
     TASK_DOWNLOAD = Msg(pt=" Download {r} Baixa novamente a tarefa selecionada", en=" Download {r} Downloads the selected task again")
     TASK_DELETE = Msg(pt="   Apagar {r} Apaga a pasta da tarefa selecionada", en="   Delete {r} Deletes the selected task folder")
     TASK_DRAFT = Msg(pt=" Rascunho {r} Cria um rascunho para escrever código ou anotações", en="    Draft {r} Creates a draft for code or notes")
-    TASK_EVALUATION = Msg(pt="Avaliação {r} Abre tela para auto avaliação", en="Evaluate {r} Opens self-evaluation screen")
+    TASK_EVALUATION = Msg(pt="Avaliação {r} Abre tela para auto avaliação", en=" Evaluate {r} Opens self-evaluation screen")
 
     SECTION_DEFAULT_EDITOR = Msg(pt=" Editor padrão ", en=" Default editor ")
     EDITOR_DESC = Msg(pt=" Para mudar o editor padrão para abrir arquivos use o comando", en=" To change the default editor used to open files, run")
@@ -48,7 +47,6 @@ class GuiHelpPanel:
         dx = frame.get_dx() - 2
         help_lines: list[RText] = []
         help_lines.append(RText.format("{g}", t(_GuiHelpMsg.SECTION_CONFIG)).center(dx, RText("-")))
-        help_lines.append(RText.format(t(_GuiHelpMsg.BORDERS_LINE), "B", "", t(_GuiHelpMsg.BORDERS_DESC), ""))
         help_lines.append(RText.format(t(_GuiHelpMsg.CALIBRATE_LINE), GuiKeys.calibrate))
 
         help_lines.append(RText(t(_GuiHelpMsg.SECTION_SYMBOLS), "g").center(dx, RText("-")))

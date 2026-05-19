@@ -1,5 +1,5 @@
 from tko.game.game import Game
-from tko.widget.border import Border
+from tko.widget.bar_builder import BarBuilder
 from tko.widget.colors import Colors
 from tko.widget.frame import Frame
 from tko.config.flags import Flags
@@ -9,9 +9,9 @@ from tko.game.xp_resume import XPResume
 
 class GuiSkillsBar:
 
-    def __init__(self, game: Game, style: Border, colors: Colors, flags: Flags):
+    def __init__(self, game: Game, colors: Colors, flags: Flags):
         self.game = game
-        self.style = style
+        self.style = BarBuilder()
         self.colors = colors
         self.flags = flags
 
@@ -20,12 +20,10 @@ class GuiSkillsBar:
         for x in items:
             color_ini = x[0].runs[0][0] if x[0].runs else ""
             color_end = x[-1].runs[0][0] if x[-1].runs else ""
-            left = self.style.round_l(color_ini)
-            right = self.style.round_r(color_end)
+            left = RText(" ", color_ini)
+            right = RText(" ", color_end)
             middle = x
             if x.plain().startswith("!"):
-                left = self.style.sharp_l(color_ini)
-                right = self.style.sharp_r(color_end)
                 middle = x.slice(1)
             out.append(left + middle + right)
         return out
@@ -50,7 +48,7 @@ class GuiSkillsBar:
         if qtd == 0:
             text = " Nenhuma habilidade disponível "
             percent = 0.0
-            return self.style.build_bar(text, percent, size, "W", "W", rounded=False)
+            return self.style.build_bar(text, percent, size, "W", "W")
 
         skill_size = int(size / qtd)
 
@@ -66,14 +64,13 @@ class GuiSkillsBar:
                 length=skill_size - 2,
                 fmt_true=done_color,
                 fmt_false=todo_color,
-                rounded=False,
             )
             elements.append(skill_bar)
         cover_color = "K"
-        xpbar = self.style.round_l(cover_color) + RText("█", cover_color.lower())
+        xpbar =  RText(" █", cover_color.lower())
         for skill_bar in elements:
             xpbar += skill_bar + RText("█", cover_color.lower())
-        xpbar += self.style.round_r(cover_color)
+        xpbar += RText("█", cover_color.lower())
         return xpbar
 
     def show(self, frame_xp: Frame) -> None:
@@ -102,7 +99,6 @@ class GuiSkillsBar:
                 length=dx - 2,
                 fmt_true=done_color,
                 fmt_false=todo_color,
-                rounded=False,
             )
             elements.append(skill_bar)
 
@@ -120,7 +116,7 @@ class GuiSkillsBar:
         done_color = self.colors.main_bar_done
         todo_color = self.colors.main_bar_todo
         percent = total_obtained / total_priority if total_priority > 0 else 0.0
-        total_bar = self.style.build_bar(text, percent, dx - 2, done_color, todo_color, rounded=False)
+        total_bar = self.style.build_bar(text, percent, dx - 2, done_color, todo_color)
         elements.append(total_bar)
 
         # printing — calculating line breaks

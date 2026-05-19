@@ -1,7 +1,7 @@
 from tko.config.settings import Settings
 from tko.config.app_settings import AppSettings
 from tko.game.task import Task
-from tko.widget.border import Border
+from tko.i18n.message import Msg
 from tko.widget.fmt import Fmt
 from tko.widget.frame import Frame
 from tko.floating.floating_manager import FloatingManager
@@ -28,7 +28,6 @@ class Gui:
         self.fman = fman
         self.settings: Settings = tree.settings
         self.search = Search(tree=self.tree, fman=self.fman)
-        self.style: Border = Border(self.settings.app)
         self.language = LanguageSetter(self.settings, self.repo, self.fman)
         self.colors = self.settings.colors
         self.app: AppSettings = self.settings.app
@@ -40,7 +39,7 @@ class Gui:
         self.left_panel      = GuiLeftPanel(self.tree, self.search, lambda: self._need_update)
         self.bottom_bar      = GuiBottomBar(self.tree, self.action_resolver)
         self.top_bar         = GuiTopBar(self.flags, self.app)
-        self.skills_bar      = GuiSkillsBar(self.game, self.style, self.colors, self.flags)
+        self.skills_bar      = GuiSkillsBar(self.game, self.colors, self.flags)
         self.help_panel      = GuiHelpPanel()
         self.graph_panel     = GuiGraphPanel(self.settings, self.repo, self.flags)
 
@@ -63,10 +62,10 @@ class Gui:
     # Delegações para compatibilidade com play_actions.py
     # ------------------------------------------------------------------
 
-    def get_task_action(self, tr: Task) -> tuple[str, str]:
+    def get_task_action(self, tr: Task) -> tuple[str, Msg]:
         return self.action_resolver.get_task_action(tr)
 
-    def get_activate_label(self) -> tuple[str, str]:
+    def get_activate_label(self) -> tuple[str, Msg]:
         return self.action_resolver.get_activate_label()
 
     # ------------------------------------------------------------------

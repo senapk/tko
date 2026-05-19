@@ -45,8 +45,7 @@ class GitHubUrl:
         content = Decoder.load(tempfile)
         if self.url_structure is not None:
             rebased = LinkRebase.rebase(content, self.url_structure)
-            if rebased is not None:
-                content = rebased
+            content = rebased
         Decoder.save(filename, content)
         return
 

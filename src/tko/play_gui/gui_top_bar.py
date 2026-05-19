@@ -3,7 +3,7 @@ from tko.widget.frame import Frame
 from tko.config.flags import Flags
 from tko.play.keys import GuiKeys
 from tko.util.rtext import RText
-from tko.util.visual import Visual
+from tko.util.tab_renderer import TabRenderer
 from tko.i18n import Msg, t
 
 
@@ -26,7 +26,7 @@ class GuiTopBar:
 
     def show(self, frame: Frame) -> None:
         panel_on = self.flags.show_panel.is_true()
-        vi = Visual(self.app.use_borders)
+        vi = TabRenderer()
         pre = [
             vi.render_button(f"{t(_TopBarMsg.RECOMMENDED)}[{GuiKeys.inbox}]", self.flags.task_view_mode.is_inbox()),
             vi.render_button(f"{t(_TopBarMsg.ALL)}[{GuiKeys.all_tasks}]", self.flags.task_view_mode.is_all()),

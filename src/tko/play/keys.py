@@ -9,13 +9,14 @@ class GuiActions:
     show_time = Msg(pt="Tempo", en="Time")
     filter = Msg(pt="Filtrar", en="Filter")
     principal = Msg(pt="Principal", en="Main")
-    github = Msg(pt="Web   ", en="Web   ")
+    github = Msg(pt="Web", en="Web")
     help = Msg(pt="Ajuda", en="Help")
     download = Msg(pt="Baixar", en="Download")
     activate = Msg(pt="Ativar", en="Activate")
     navigate = Msg(pt="←↓→", en="←↓→")
     uncheck = Msg(pt="Desmarcar", en="Uncheck")
     search = Msg(pt="Busca", en="Search")
+    goback = Msg(pt="Tela Anterior[Esc]", en="Previous Screen[Esc]")
     pallete = Msg(pt="Paleta", en="Palette")
     grade = Msg(pt="Auto Avaliação", en="Self Evaluation")
     time_limit = Msg(pt="Limite de tempo", en="Time limit")
@@ -56,7 +57,6 @@ class GuiKeys:
     key_quit = "q"
     edit= "v"
     colors = "C"
-    borders = "B"
     search = "/"
     self_evaluate = "a"
     self_evaluate_full = "A"
