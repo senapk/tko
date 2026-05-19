@@ -263,7 +263,7 @@ class DeepFilter:
         #     return
         for path, action in actions:
             if (run_actions or path.suffix[1:] in DeepFilter.include) and action.name in [Action.FILTERED, Action.COMCLEAN, Action.ORIGINAL] :
-                print(RT.parse(t(_FILTER_ACTION_PATH, action=f"[g]{action.name}[.]", path=path.resolve())))
+                print(RT.parse(t(_FILTER_ACTION_PATH, action=f"<{action.name}:g>", path=path.resolve())))
                 path.parent.mkdir(parents=True, exist_ok=True)
                 with open(path, "w") as f:
                     f.write(action.content) 

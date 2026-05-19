@@ -66,7 +66,7 @@ class AppSettings:
         return data
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "AppSettings":
+    def from_dict(cls, data: dict[str, Any]) -> AppSettings:
         obj = cls()
 
         for key, value in data.items():
@@ -84,7 +84,7 @@ class AppSettings:
     # -------- display --------
     def __str__(self) -> str:
         output = [
-            str(RT.parse("[g]Configurações globais:[.]")),
+            str(RT("Configurações globais:", "g")),
             f"- Language: {self.ui_language}",
             f"- Diff    : {self.diff_mode.value}",
             f"- Editor  : {self.editor}",

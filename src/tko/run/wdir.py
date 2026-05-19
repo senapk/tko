@@ -21,8 +21,8 @@ _RUN_AUTOLOAD_FOLDER_NOT_SET = Msg(
     en="fail: autoload folder is not set",
 )
 _RUN_AUTOLOAD_LANG_HINT = Msg(
-    pt="Você não definiu os arquivos diretamente. Use [y]-l[.] caso queira especificar a linguagem para autoloading.",
-    en="You did not define files directly. Use [y]-l[.] if you want to specify the language for autoloading.",
+    pt="Você não definiu os arquivos diretamente. Use <-l:y> caso queira especificar a linguagem para autoloading.",
+    en="You did not define files directly. Use <-l:y> if you want to specify the language for autoloading.",
 )
 _RUN_NO_TEST_CASES = Msg(
     pt="Nenhum caso de teste encontrado.",

@@ -18,16 +18,16 @@ _REPOSITORY_LOADER_EMPTY_CONFIG_FILE = Msg(
     en="Empty config file: {file}",
 )
 _REPOSITORY_LOADER_YAML_CORRUPTED = Msg(
-    pt="O arquivo de configuração do repositório [y]{file}[.] contém erros de YAML e está [r]corrompido[.].\nErro: {error}\nAbra e corrija o conteúdo ou crie um novo.",
-    en="The repository configuration file [y]{file}[.] contains YAML errors and is [r]corrupted[.].\nError: {error}\nOpen and fix the content or create a new one.",
+    pt="O arquivo de configuração do repositório <{file}:y> contém erros de YAML e está <corrompido:r>.\nErro: {error}\nAbra e corrija o conteúdo ou crie um novo.",
+    en="The repository configuration file <{file}:y> contains YAML errors and is <corrupted:r>.\nError: {error}\nOpen and fix the content or create a new one.",
 )
 _REPOSITORY_LOADER_CONFIG_EMPTY = Msg(
-    pt="O arquivo de configuração do repositório [y]{file}[.] está [r]vazio[.].\nAbra e corrija o conteúdo ou crie um novo.",
-    en="The repository configuration file [y]{file}[.] is [r]empty[.].\nOpen and fix the content or create a new one.",
+    pt="O arquivo de configuração do repositório <{file}:y> está <vazio:r>.\nAbra e corrija o conteúdo ou crie um novo.",
+    en="The repository configuration file <{file}:y> is <empty:r>.\nOpen and fix the content or create a new one.",
 )
 _REPOSITORY_LOADER_CONFIG_CORRUPTED_UNEXPECTED = Msg(
-    pt="O arquivo de configuração do repositório [y]{file}[.] está [r]corrompido[.].\nErro inesperado: {error}\nAbra e corrija o conteúdo ou crie um novo.",
-    en="The repository configuration file [y]{file}[.] is [r]corrupted[.].\nUnexpected error: {error}\nOpen and fix the content or create a new one.",
+    pt="O arquivo de configuração do repositório <{file}:y> está <corrompido:r>.\nErro inesperado: {error}\nAbra e corrija o conteúdo ou crie um novo.",
+    en="The repository configuration file <{file}:y> is <corrupted:r>.\nUnexpected error: {error}\nOpen and fix the content or create a new one.",
 )
 
 class ConfigMergeConflictError(Exception):

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from tko.floating.floating import FloatingABC, Floating
 from tko.game.task import Task
-from tko.util.rt import RT
+from tko.util.rt import RT, RBuffer
 from tko.util.symbols import Symbols
 from tko.i18n import Msg, t
 
@@ -127,10 +127,11 @@ class InputSlide(InputLine):
 
     def get_text(self, pad: int) -> RT:
         color = self.get_selected_color() if self.focus else ""
-        text = self.get_opening() + self.prefix.set_style(color) + " "
+        text_buffer = RBuffer().add(self.get_opening()).add(self.prefix.set_style(color)).add(" ")
         for i, c in enumerate(self.opt_msgs):
             opt, _ = c
-            text += RT(opt, self.CHOOSEN_COLOR if i == self.index else "")
+            text_buffer.add(opt, self.CHOOSEN_COLOR if i == self.index else "")
+        text = text_buffer.to_text()
         text = text.ljust(pad)
         text += "├" + self.opt_msgs[self.index][1]
         return text
@@ -197,14 +198,17 @@ class InputBoolean(InputLine):
 
     def get_text(self, pad: int) -> RT:
         color = self.get_selected_color() if self.focus else ""
-        text = self.get_opening()
+        text_buffer = RBuffer().add(self.get_opening())
         if self.focus:
-            text += self.prefix.set_style(color)
+            text_buffer.add(self.prefix.set_style(color))
         else:
-            text += self.prefix
-        text = text.ljust(pad) + "│ "
-        text += RT(t(_GradeMsg.NO), self.CHOOSEN_COLOR if self.value == "0" else "") + " " + RT(t(_GradeMsg.YES), self.CHOOSEN_COLOR if self.value == "1" else "")
-        return text
+            text_buffer.add(self.prefix)
+        text = text_buffer.to_text().ljust(pad)
+        text_buffer = RBuffer().add(text).add("│ ")
+        text_buffer.add(t(_GradeMsg.NO), self.CHOOSEN_COLOR if self.value == "0" else "")
+        text_buffer.add(" ")
+        text_buffer.add(t(_GradeMsg.YES), self.CHOOSEN_COLOR if self.value == "1" else "")
+        return text_buffer.to_text()
 
 
 class FloatingGrade(FloatingABC):

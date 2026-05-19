@@ -20,16 +20,16 @@ _INDEXER_FOUND_READMES = Msg(
     en="Found {count} README.md files in base directory '{base_dir}'",
 )
 _INDEXER_MISSING_README_REMOVING = Msg(
-    pt="Warning: README file '[y]{readme}[.]' does not exist for task:[b]{task}[.], removing from index",
-    en="Warning: README file '[y]{readme}[.]' does not exist for task:[b]{task}[.], removing from index",
+    pt="Warning: README file '<{readme}:y>' does not exist for task:<{task}:b>, removing from index",
+    en="Warning: README file '<{readme}:y>' does not exist for task:<{task}:b>, removing from index",
 )
 _INDEXER_MISSING_README_TASK = Msg(
-    pt="Warning: README file '[y]{readme}[.]' does not exist for task:[b]{task}[.]",
-    en="Warning: README file '[y]{readme}[.]' does not exist for task:[b]{task}[.]",
+    pt="Warning: README file '<{readme}:y>' does not exist for task:<{task}:b>",
+    en="Warning: README file '<{readme}:y>' does not exist for task:<{task}:b>",
 )
 _INDEXER_MISMATCH_TITLE = Msg(
-    pt="Mismatch title for task:[b]{readme}[.]\n\tREADME:'[y]{line_title}[.]' != TASK:'[g]{folder_title}[.]'",
-    en="Mismatch title for task:[b]{readme}[.]\n\tREADME:'[y]{line_title}[.]' != TASK:'[g]{folder_title}[.]'",
+    pt="Mismatch title for task:<{readme}:b>\n\tREADME:'<{line_title}:y>' != TASK:'<{folder_title}:g>'",
+    en="Mismatch title for task:<{readme}:b>\n\tREADME:'<{line_title}:y>' != TASK:'<{folder_title}:g>'",
 )
 _INDEXER_REPLACE_TITLE_README_MISSING = Msg(
     pt="Error: README file '{readme}' does not exist, cannot replace title.",

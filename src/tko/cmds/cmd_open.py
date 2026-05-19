@@ -11,12 +11,12 @@ from tko.i18n import Msg, t
 
 
 _OPEN_INVALID_REPO = Msg(
-    pt="[r]Erro[.]: O comando [g]tko open[.] deve ser executado na pasta onde o repositório foi iniciado.",
-    en="[r]Error[.]: The [g]tko open[.] command must run in the folder where the repository was initialized.",
+    pt="<Erro:r>: O comando <tko open:g> deve ser executado na pasta onde o repositório foi iniciado.",
+    en="<Error:r>: The <tko open:g> command must run in the folder where the repository was initialized.",
 )
 _OPEN_ACTION_HINT = Msg(
-    pt="[g]Ação[.]: Navegue ou passe o caminho até a pasta do repositório e tente novamente.",
-    en="[g]Action[.]: Navigate to that folder or pass its path and try again.",
+    pt="<Ação:g>: Navegue ou passe o caminho até a pasta do repositório e tente novamente.",
+    en="<Action:g>: Navigate to that folder or pass its path and try again.",
 )
 
 class CmdOpen:
@@ -36,7 +36,7 @@ class CmdOpen:
         if not self.repo.paths.config_file.exists():
             print(RT.parse(t(_OPEN_INVALID_REPO)))
             print(RT.parse(t(_OPEN_ACTION_HINT)))
-            raise Warning(RT.parse("[r]Erro:[.] [y]<$>[] não contém um repositório do tko", repo_dir))
+            raise Warning(RT.parse("<$:r> <$:y> não contém um repositório do tko", "Erro:", repo_dir))
         from tko.repository.repository_loader import RepositoryLoader
         from tko.repository.game_coordinator import GameCoordinator
         RepositoryLoader(self.repo).load_config()

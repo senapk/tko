@@ -10,36 +10,36 @@ from tko.i18n import Msg, t
 
 
 _REPO_STARTER_LANGUAGE_SET = Msg(
-    pt="A linguagem do repositório foi definida como [y]{language}[.].",
-    en="Repository language set to [y]{language}[.].",
+    pt="A linguagem do repositório foi definida como <{language}:y>.",
+    en="Repository language set to <{language}:y>.",
 )
 _REPO_STARTER_OPEN_HINT = Msg(
-    pt="Voce pode acessar o repositório com o comando [g]tko open[.]",
-    en="You can access the repository with the command [g]tko open[.]",
+    pt="Voce pode acessar o repositório com o comando <tko open:g>",
+    en="You can access the repository with the command <tko open:g>",
 )
 _REPO_STARTER_EXISTS = Msg(
-    pt="Já existe um repositório TKO na pasta [y]{folder}[.]",
-    en="A TKO repository already exists in folder [y]{folder}[.]",
+    pt="Já existe um repositório TKO na pasta <{folder}:y>",
+    en="A TKO repository already exists in folder <{folder}:y>",
 )
 _REPO_STARTER_RESET_PROMPT = Msg(
-    pt="Deseja resetar o repositório? ([g]s[.]/[r]n[.]): ",
-    en="Do you want to reset the repository? ([g]y[.]/[r]n[.]): ",
+    pt="Deseja resetar o repositório? (<s:g>/<n:r>): ",
+    en="Do you want to reset the repository? (<y:g>/<n:r>): ",
 )
 _REPO_STARTER_INSIDE_OTHER_REPO = Msg(
-    pt="Você está tentando criar um repositório dentro de outro, pois já existe rep em [r]{parent}[.]",
-    en="You are trying to create a repository inside another one, because there is already a repo in [r]{parent}[.]",
+    pt="Você está tentando criar um repositório dentro de outro, pois já existe rep em <{parent}:r>",
+    en="You are trying to create a repository inside another one, because there is already a repo in <{parent}:r>",
 )
 _REPO_STARTER_DEEP_REPO_WARN_2 = Msg(
     pt="Porém já existem repositórios TKO abaixo dessa pasta. Mova ou apague-os",
     en="But there are already TKO repositories below that folder. Move or delete them",
 )
 _REPO_STARTER_OVERWRITE_PROMPT = Msg(
-    pt="Deseja sobrescrever as configurações do repositório em [y]{folder}[.] ? ([g]s[.]/[r]n[.]): ",
-    en="Do you want to overwrite the repository settings in [y]{folder}[.] ? ([g]y[.]/[r]n[.]): ",
+    pt="Deseja sobrescrever as configurações do repositório em <{folder}:y> ? (<s:g>/<n:r>): ",
+    en="Do you want to overwrite the repository settings in <{folder}:y> ? (<y:g>/<n:r>): ",
 )
 _REPO_STARTER_DEEP_REPO_WARN = Msg(
-    pt="Você está tentando criar um repositório TKO na pasta [y]{folder}[.]",
-    en="You are trying to create a TKO repository in folder [y]{folder}[.]",
+    pt="Você está tentando criar um repositório TKO na pasta <{folder}:y>",
+    en="You are trying to create a TKO repository in folder <{folder}:y>",
 )
 _REPO_STARTER_EMPTY_REPO = Msg(
     pt="Criando repositório vazio, como pasta para atividades locais",
@@ -105,7 +105,7 @@ class RepositoryStarter:
                 print(RT.parse(t(_REPO_STARTER_DEEP_REPO_WARN, folder=self.folder.resolve())))
                 print(RT.parse(t(_REPO_STARTER_DEEP_REPO_WARN_2)))
                 for path in path_subdir_list:
-                    print(RT.parse(f"- [r]{path}[.]"))
+                    print(RT.parse("- <$:r>", path))
                 return None
 
         return Repository(self.folder)

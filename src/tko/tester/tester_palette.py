@@ -50,15 +50,15 @@ class _PaletteMsg:
     @staticmethod
     def test_scope(icon_value: str) -> MsgRT:
         return MsgRT(
-            pt=RT.parse(" <$> Testar [y]<$>[] os casos ou apenas o selecionado", icon_value, _PaletteMsg.ALL.pt),
-            en=RT.parse(" <$> Test [y]<$>[] all cases or only the selected one", icon_value, _PaletteMsg.ALL.en),
+            pt=RT.parse(" <$> Testar <$:y> os casos ou apenas o selecionado", icon_value, _PaletteMsg.ALL.pt),
+            en=RT.parse(" <$> Test <$:y> all cases or only the selected one", icon_value, _PaletteMsg.ALL.en),
         )
 
     @staticmethod
     def images(icon_value: str) -> MsgRT:
         return MsgRT(
-            pt=RT.parse(" <$> Mostrar [y]<$>[]", icon_value, _PaletteMsg.IMAGES_LABEL.pt),
-            en=RT.parse(" <$> Show [y]<$>[]", icon_value, _PaletteMsg.IMAGES_LABEL.en),
+            pt=RT.parse(" <$> Mostrar <$:y>", icon_value, _PaletteMsg.IMAGES_LABEL.pt),
+            en=RT.parse(" <$> Show <$:y>", icon_value, _PaletteMsg.IMAGES_LABEL.en),
         )
 
     @staticmethod

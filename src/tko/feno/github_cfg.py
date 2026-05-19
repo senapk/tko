@@ -23,7 +23,7 @@ class GithubCfg:
             self.__load_cfg_path(target)
             self.__parse_cfg()
             if self.cfg_path is None:
-                print(RT.parse(f"[r]{t(_FENO_GITHUB_CFG_NOT_SET, filename=self.FILENAME)}[.]"))
+                print(RT(t(_FENO_GITHUB_CFG_NOT_SET, filename=self.FILENAME), "r"))
 
     def cfg_exists(self):
         return self.cfg_path is not None

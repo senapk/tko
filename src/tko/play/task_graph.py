@@ -1,7 +1,7 @@
 from tko.config.settings import Settings
 from tko.repository.repository import Repository
 from uniplot import plot_to_string # type: ignore
-from tko.util.rt import RT
+from tko.util.rt import RT, RBuffer
 from tko.logger.log_sort import LogSort
 from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_base import LogItemBase
@@ -157,14 +157,14 @@ class TaskGraph:
             return [], []
         
         # title = RT(f" {self.task_key} ", "C")
-        title = RT()
-        title += RT(f"Total {self.actual_rate:.0f}% ", "g")
+        title_builder = RBuffer().add(f"Total {self.actual_rate:.0f}% ", "g")
         time_h: int = int(self.total_elapsed) // 60
         time_m: int = (int(self.total_elapsed) % 60)
         time = f"{time_h:02.0f}h {time_m:.0f}min" if time_h > 0 else f"{time_m:.0f}min"
-        title += RT(f"Tempo {time} ", "b")
-        title += RT(f"Linhas {self.max_lines:.0f} ", "m")
-        title += RT(f"Versões {self.versions} ", "r")
+        title_builder.add(f"Tempo {time} ", "b")
+        title_builder.add(f"Linhas {self.max_lines:.0f} ", "m")
+        title_builder.add(f"Versões {self.versions} ", "r")
+        title = title_builder.to_text()
 
         header: list[RT] = []
         # title = title.center(self.width)

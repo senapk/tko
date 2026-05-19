@@ -76,8 +76,8 @@ _REMOTE_CLONED_SUCCESS = Msg(
     en="Repository {link} cloned successfully.",
 )
 _REMOTE_CAN_ACCESS = Msg(
-    pt="Você pode acessar o repositório com o comando [g]tko open[.]",
-    en="You can access the repository with the command [g]tko open[.]",
+    pt="Você pode acessar o repositório com o comando <tko open:g>",
+    en="You can access the repository with the command <tko open:g>",
 )
 
 class RemoteActions:
@@ -88,7 +88,7 @@ class RemoteActions:
     def remote_list(self):
         remotes = self.repo.remotes
         print(t(_REMOTE_EDIT_HINT))
-        print(RT.parse(f"[y]{self.repo.paths.config_file}[.]"))
+        print(RT(str(self.repo.paths.config_file), "y"))
         if len(remotes) == 0:
             print(t(_REMOTE_NONE_CONFIGURED))
             return
@@ -97,11 +97,11 @@ class RemoteActions:
             self.show_source(remote)
     
     def show_source(self, remote: Remote):
-        print(RT.parse(f"[y]{t(_REMOTE_LABEL)} {remote.data.name}[.]"))
-        print(RT.parse(f"  [y]{t(_REMOTE_LINK)} {remote.data.target}[.]"))
-        print(RT.parse(f"  [y]{t(_REMOTE_INDEX)} {remote.data.index}[.]"))
+        print(RT(f"{t(_REMOTE_LABEL)} {remote.data.name}", "y"))
+        print(RT.parse("  <$:y>", f"{t(_REMOTE_LINK)} {remote.data.target}"))
+        print(RT.parse("  <$:y>", f"{t(_REMOTE_INDEX)} {remote.data.index}"))
         status = t(_REMOTE_FILTER_DISABLED) if remote.data.quest_filters is None else t(_REMOTE_FILTER_ENABLED)
-        print(RT.parse(f"  [y]{t(_REMOTE_QUEST_FILTER)} {status}[.]"))
+        print(RT.parse("  <$:y>", f"{t(_REMOTE_QUEST_FILTER)} {status}"))
         if remote.data.quest_filters is not None:
             for f, v in remote.data.quest_filters.items():
                 print(f"    - {f}: {v}")
@@ -112,7 +112,7 @@ class RemoteActions:
             if remote.data.name == alias:
                 found = True
                 self.repo.data.del_remote(alias)
-                print(RT.parse(f"[y]{t(_REMOTE_REMOVED_SUCCESS, alias=alias)}[.]"))
+                print(RT(t(_REMOTE_REMOVED_SUCCESS, alias=alias), "y"))
                 break
         if not found:
             raise Warning(t(_REMOTE_NOT_FOUND))
@@ -133,7 +133,7 @@ class RemoteActions:
             change = True
         self.show_source(remote)
         if change:
-            print(RT.parse(f"[y]{t(_REMOTE_FILTERS_UPDATED, alias=alias)}[.]"))
+            print(RT(t(_REMOTE_FILTERS_UPDATED, alias=alias), "y"))
             RepositoryLoader(repo).save_config()
 
     def remote_filter(self, alias: str, filter_quest: list[str] | None = None, clear: bool = False, filter_to: str | None = None) -> None:
@@ -158,7 +158,7 @@ class RemoteActions:
         # if not quests and not tasks and not clear:
         self.show_source(source)
         if change:
-            print(RT.parse(f"[y]{t(_REMOTE_FILTERS_UPDATED, alias=alias)}[.]"))
+            print(RT(t(_REMOTE_FILTERS_UPDATED, alias=alias), "y"))
             RepositoryLoader(repo).save_config()
 
     def fix_filter(self, source: list[str] | None, destiny: str | None) -> dict[str, str] | None:
@@ -185,7 +185,7 @@ class RemoteActions:
 
         repo = self.repo
         if remote_default is not None:
-            print(RT.parse(f"[y]{t(_REMOTE_ADDING_GIT, url=remote_default)}[.]"))
+            print(RT(t(_REMOTE_ADDING_GIT, url=remote_default), "y"))
             url: str = ""
             settings = self.settings
             if not settings.has_alias_git(remote_default):
@@ -204,13 +204,13 @@ class RemoteActions:
             dir_path = Path(remote_dir)
             if not dir_path.exists() or not dir_path.is_dir():
                 raise Warning(t(_REMOTE_DIR_NOT_FOUND))
-            print(RT.parse(f"[y]{t(_REMOTE_ADDING_LOCAL, path=dir_path)}[.]"))
+            print(RT(t(_REMOTE_ADDING_LOCAL, path=dir_path), "y"))
             remote = Remote(alias=name)
             remote.data.set_local_source(target=dir_path)
             remote.data.quest_filters = self.fix_filter(filter_quest, filter_to)
             self.repo.data.set_remote(remote)
         elif remote_url is not None:
-            print(RT.parse(f"[y]{t(_REMOTE_ADDING_URL, url=remote_url)}[.]"))
+            print(RT(t(_REMOTE_ADDING_URL, url=remote_url), "y"))
             try:
                 self.git_clone_repository(remote_url)
                 remote = Remote(alias=name)
@@ -218,21 +218,21 @@ class RemoteActions:
                 remote.data.quest_filters = self.fix_filter(filter_quest, filter_to)
                 remote.data.is_editable = writeable
                 self.repo.data.set_remote(remote)
-                print(RT.parse(f"[y]{t(_REMOTE_ADDED_SUCCESS, name=name)}[.]"))
+                print(RT(t(_REMOTE_ADDED_SUCCESS, name=name), "y"))
             except Warning:
                 logger.exception(t(_REMOTE_CLONE_ERROR))
                 raise Warning(t(_REMOTE_CLONE_FAILED))
         RepositoryLoader(repo).save_config()
    
     def git_clone_repository(self, link: str) -> None:
-        print(RT.parse(f"[y]{t(_REMOTE_CLONING, link=link)}[.]"))
+        print(RT(t(_REMOTE_CLONING, link=link), "y"))
         repo_dir = self.repo.git_cache.get_remote_dir(link, verbose=True)
         if repo_dir is None:
             raise Warning(t(_REMOTE_CLONE_FAILED))
-        print(RT.parse(f"[y]{t(_REMOTE_CLONED_SUCCESS, link=link)}[.]\n"))
+        print(RT.parse("<$:y>\n", t(_REMOTE_CLONED_SUCCESS, link=link)))
         
 
 
     def print_end_msg(self):
-        print(RT.parse(f"[y]{t(_REMOTE_CAN_ACCESS)}[.]\n"))
+        print(RT.parse("<$:y>\n", t(_REMOTE_CAN_ACCESS)))
         

@@ -142,13 +142,13 @@ class Settings:
 
     def __str__(self):
         output: list[str] = []
-        output.append(str(RT.parse(f"[g]{t(_RESET_SETTINGS_PATH)}[.]")))
+        output.append(str(RT(t(_RESET_SETTINGS_PATH), "g")))
         output.append("    " + self.get_settings_file().resolve().as_posix())
-        output.append(str(RT.parse(f"[g]{t(_RESET_LANGUAGES_PATH)}[.]")))
+        output.append(str(RT(t(_RESET_LANGUAGES_PATH), "g")))
         output.append("    " + self.get_languages_file().resolve().as_posix())
         output.append("")
         
-        output.append(str(RT.parse(f"[g]{t(_SETTINGS_REMOTE_SOURCES_REGISTERED)}[.]")))
+        output.append(str(RT(t(_SETTINGS_REMOTE_SOURCES_REGISTERED), "g")))
         max_alias = max([len(key) for key in self.dict_alias_git])
         for key in self.dict_alias_git:
             output.append("- @{} : {}".format(key.ljust(max_alias), self.dict_alias_git[key]))
