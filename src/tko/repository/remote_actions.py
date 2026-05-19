@@ -229,10 +229,10 @@ class RemoteActions:
         repo_dir = self.repo.git_cache.get_remote_dir(link, verbose=True)
         if repo_dir is None:
             raise Warning(t(_REMOTE_CLONE_FAILED))
-        print(RT.parse("<$:y>\n", t(_REMOTE_CLONED_SUCCESS, link=link)))
+        print(RT.parse("[y]<$>\n", RT.parse(t(_REMOTE_CLONED_SUCCESS, link=link))))
         
 
 
     def print_end_msg(self):
-        print(RT.parse("<$:y>\n", t(_REMOTE_CAN_ACCESS)))
+        print(RT.parse("[y]<$>\n", RT.parse(t(_REMOTE_CAN_ACCESS))))
         

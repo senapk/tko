@@ -8,6 +8,8 @@ from tko.util.symbols import Symbols
 from tko.i18n import Msg, t
 from typing import Callable
 from tko.game.tree_item import IsTreeItem
+from tko.game.task import Task
+from tko.game.quest import Quest
 
 
 class _LeftPanelMsg:
@@ -31,16 +33,26 @@ class GuiLeftPanel:
     def show(self, frame: Frame) -> None:
         dy, dx = frame.get_inner()
 
+        top = RT("")
         if self.search.search_mode:
             top = self.make_search_text(dx - 20)
-        else:
-            top = RT.parse(" <$> ", self.tree.repo.data.lang.upper())
+        # else:
+        #     try:
+        #         element = self.tree.get_selected_throw()
+        #         if isinstance(element, Task):
+        #             quest = self.tree.game.quests[element.quest_key]
+        #             top = self.tree.renderer.render_quest(quest, False)
+        #         elif isinstance(element, Quest):
+        #             top = self.tree.renderer.render_quest(element, False)
+            # except IndexError:
+            #     pass
+
         frame.set_header(top, "<", prefix="{", suffix="}")
 
         dirname: Path = self.tree.repo.paths.root_dir
         dirname_str = dirname.name.upper()
 
-        text = RT.parse(" <$> ", dirname_str)
+        text = RT.parse(" <$>-<$> ", dirname_str, self.tree.repo.data.lang.upper())
         if self._need_update_fn():
             text = (
                 RT(t(_LeftPanelMsg.OUTDATED), "r")
