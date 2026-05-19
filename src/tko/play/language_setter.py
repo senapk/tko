@@ -24,8 +24,8 @@ class LanguageSetter:
     def check_lang_in_text_mode(settings: Settings, repo: Repository):
         lang = repo.data.lang
         lang_drafts: dict[str, str] = settings.get_languages_settings().get_languages_with_drafts()
-        if lang == "":
-            options = lang_drafts.keys()
+        if lang == "" or lang not in lang_drafts:
+            options = sorted(lang_drafts.keys())
             print(f"\n{t(_LangSetterMsg.DEFAULT_NOT_SET)}\n")
             while True:
                 print(t(_LangSetterMsg.PROMPT) + " ", end="")
