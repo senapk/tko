@@ -198,6 +198,8 @@ class GameBuilder:
         for pattern, destiny in quest_filters.items():
             for q in available_quests:
                 if (pattern.lower() in q.basic.title.lower()) or (pattern.lower() == f"@{q.basic.key}".lower()):
+                    if q.config.active is False:
+                        continue
                     if destiny == "":
                         quests.append(q)
                     else:
@@ -215,6 +217,8 @@ class GameBuilder:
     def filter_by_language_and_empty(self, language: str):
         quests: list[Quest] = []
         for q in self.quests.values():
+            if q.config.active is False:
+                continue
             if len(q.get_tasks()) == 0:
                 continue
             if len(q.config.languages) == 0 or language in q.config.languages:

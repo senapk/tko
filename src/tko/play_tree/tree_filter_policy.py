@@ -39,7 +39,7 @@ class TreeFilterPolicy:
             count = 0
             tasks = sorted(
                 quest.get_tasks(),
-                key=lambda task: (task.grader.get_rate_percent() != 100, task.config.path != TaskMain.MAIN),
+                key=lambda task: (task.grader.get_rate_percent() != 100, task.config.main != TaskMain.MAIN),
             )
             for task in tasks:
                 if task.grader.get_rate_percent() == 100 and task.grader.get_quality_percent() == 100:

@@ -5,20 +5,19 @@ import enum
 
 
 
-class TaskTest(enum.Enum):
-    NULL = "null"  # default mode, EDIT if TEST, VIEW if USER
+class TaskEval(enum.Enum):
+    NULL = "null"  # default mode, DO if TEST, READ if USER
     TEST = "test"  # rate uses % of test cases passed
     SELF = "self"  # rate uses user self-evaluation
 
 
 class TaskMain(enum.Enum):
     MAIN = "main"  # main task, required to complete the quest
-    PERK = "perk"  # optional task that gives extra rewards and count as main for completion
     SIDE = "side"  # side task, allowing to achieve above 100% completion
 
 
 class TaskLoss(enum.Enum):
-    NULL = "null"  # default mode, FREE if VIEW, PART if EDIT
+    NULL = "null"  # default mode, FREE if READ, PART if DO
     FREE = "free"  # help allowed without penalty
     PART = "part"  # help allowed with partial penalty
     ZERO = "zero"  # if help is given, task is not completed (0% progress)
@@ -26,21 +25,21 @@ class TaskLoss(enum.Enum):
 
 @dataclass
 class TaskConfig:
-    path: TaskMain = TaskMain.MAIN
-    test: TaskTest = TaskTest.NULL
+    main: TaskMain = TaskMain.MAIN
+    test: TaskEval = TaskEval.NULL
     loss: TaskLoss = TaskLoss.NULL
 
     def clone(self) -> TaskConfig:
         return TaskConfig(
             test=self.test,
-            path=self.path,
+            main=self.main,
             loss=self.loss,
         )
 
     @property
     def is_optional(self):
-        return self.path == TaskMain.SIDE
+        return self.main == TaskMain.SIDE
     
     @property
     def is_auto(self):
-        return self.test == TaskTest.TEST
+        return self.test == TaskEval.TEST

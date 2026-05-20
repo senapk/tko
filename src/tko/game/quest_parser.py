@@ -2,10 +2,7 @@ from tko.game.quest import Quest
 from tko.util.get_md_link import get_md_link
 from pathlib import Path
 
-"""
-## Quest Title [@key] [+skill[:value]]... [!@quest_required]... [=lang] [=lang] [%min_percent_complete]
-Values can be hided with <!-- comment -->
-"""
+
 
 class QuestParser:
     def __init__(self, source_alias: str):
@@ -37,46 +34,107 @@ class QuestParser:
     def process_words(self, line: str) -> str:
         words = [tag.strip() for tag in line.split(" ") if tag != ""]
 
+        # key (novo formato)
+        for w in words:
+            if w.startswith("key="):
+                self.quest.basic.key = w[4:]
+
+        # key (legacy)
         keys = [tag for tag in words if tag[0] == "@"]
-        if keys:
+        if keys and not self.quest.basic.key:
             self.quest.basic.key = keys[0]
 
-        # skills
-        skills = [t[1:] for t in words if t[0] == "+"]
-        if len(skills) > 0:
-            self.quest.config.skills = {}
-            for s in skills:
-                try:
-                    k, v = s.split(":")
-                    self.quest.config.skills[k] = int(v)
-                except ValueError:
-                    self.quest.config.skills[s] = 1  # default value is 1 if not specified
-        if len(self.quest.config.skills) == 0:
-            self.quest.config.skills = {
-                self.quest.basic.key: 1
-            }
-
-        # languages
-        languages = [t[1:] for t in words if t[0] == "="]
-        if len(languages) > 0:
-            self.quest.config.languages = []
-            for l in languages:
-                self.quest.config.languages.append(l)
-
-        # quest percent
-        qmin = [t[1:] for t in words if t[0] == "%"]
-        if len(qmin) > 0:
-            try:
-                self.quest.config.min_percent_completion = int(qmin[0])
-            except ValueError:
-                self.quest.config.min_percent_completion = 50
+        # tags (novo formato)
+        tags = [w[4:] for w in words if w.startswith("tag=")]
+        if tags:
+            self.quest.config.tags = {t: 1 for t in tags}
+        else:
+            # skills antigos (+skill)
+            skills_legacy = [t[1:] for t in words if t[0] == "+"]
+            for sk in skills_legacy:
+                if ":" in sk:
+                    skill_name, skill_value = sk.split(":", 1)
+                    try:
+                        skill_value_int = int(skill_value)
+                    except ValueError:
+                        skill_value_int = 1
+                    self.quest.config.tags[skill_name] = skill_value_int
         
-        required = [t[1:] for t in words if t[0] == "!"]
-        for req_key in required:
+        if not self.quest.config.tags and self.quest.basic.key:
+            self.quest.config.tags[self.quest.basic.key] = 1
+
+        # requires (novo formato)
+        requires = [w[9:] for w in words if w.startswith("requires=")]
+        for req_key in requires:
             self.quest.requirements.add_require_key(self.quest.basic.remote_name, req_key)
 
-        words = [w for w in words if w[0] not in ["@", "%", "=", "+", "!"]]
-        return " ".join(words)
+        # requires antigo (!@)
+        required_legacy = [t[1:] for t in words if t[0] == "!"]
+        for req_key in required_legacy:
+            self.quest.requirements.add_require_key(self.quest.basic.remote_name, req_key)
+
+        # factor (novo formato)
+        for w in words:
+            if w.startswith("factor="):
+                try:
+                    multiplier = int(w[7:])
+                    if multiplier < 0:
+                        multiplier = 1
+                    for tag in self.quest.config.tags:
+                        self.quest.config.tags[tag] = int(self.quest.config.tags[tag] * multiplier)
+                except Exception:
+                    pass
+
+        # total (novo formato)
+        for w in words:
+            if w.startswith("total="):
+                try:
+                    self.quest.config.total_xp = int(w[6:])
+                except Exception:
+                    self.quest.config.total_xp = 0
+
+        # threshold (novo formato)
+        for w in words:
+            if w.startswith("threshold="):
+                try:
+                    self.quest.config.threshold = int(w[10:])
+                except Exception:
+                    pass
+
+        # percent antigo (%)
+        qmin = [t[1:] for t in words if t[0] == "%"]
+        if qmin and not any(w.startswith("threshold=") for w in words):
+            try:
+                self.quest.config.threshold = int(qmin[0])
+            except ValueError:
+                pass
+
+        # languages (novo formato: lang=nome)
+        langs = [w[5:] for w in words if w.startswith("lang=")]
+        if langs:
+            self.quest.config.languages = list(langs)
+        else:
+            # suporte legado: =lang
+            languages = [t[1:] for t in words if t[0] == "="]
+            if languages:
+                self.quest.config.languages = list(languages)
+
+
+        # active (novo formato)
+        for w in words:
+            if w.startswith("active="):
+                val = w[7:].lower()
+                self.quest.config.active = (val == "true" or val == "1")
+
+        # Remove campos já processados para título
+        def is_field(w: str) -> bool:
+            return (
+                w.startswith("key=") or w.startswith("tag=") or w.startswith("requires=") or
+                w.startswith("factor=") or w.startswith("total=") or w.startswith("threshold=") or
+                w.startswith("active=") or (w[0] in ["@", "%", "=", "+", "!"])
+            )
+        words_title = [w for w in words if not is_field(w)]
+        return " ".join(words_title)
 
     def parse_quest(self, filename: Path, line: str, line_num: int) -> None | Quest:
         self.line = line

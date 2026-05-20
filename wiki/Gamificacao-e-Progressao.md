@@ -46,8 +46,8 @@ Nas linhas de tarefa, o parser extrai:
 
 Regra importante:
 
-- Chave com `@+` vira VIEW (consumo).
-- Chave com `@` (sem `+`) fica como EDIT por padrao.
+- A chave sempre começa com `@`.
+- `:read` marca tarefa de consumo e `:do` marca tarefa de producao.
 
 Comportamento no codigo:
 

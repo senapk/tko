@@ -69,13 +69,13 @@ Partes:
 
 Regra importante da chave:
 
-- Chave iniciando com `@+` indica tarefa de consumo (`VIEW`).
-- Chave iniciando com `@` (sem `+`) indica tarefa para fazer/editar (`EDIT`).
+- A chave inicia com `@`.
+- O tipo da atividade e indicado por `:read` ou `:do`.
 
 Exemplo de tarefa de consumo:
 
 ```md
-- [ ]`@+video_intro :1:self`[Video de introducao](https://exemplo.com/video)
+- [ ]`@video_intro :1:read:self`[Video de introducao](https://exemplo.com/video)
 ```
 
 ## Tipos e marcadores

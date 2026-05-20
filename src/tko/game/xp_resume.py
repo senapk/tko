@@ -9,7 +9,7 @@ class XPResume:
         total = 0
         obtained = 0
         for q in self.quests.values():
-            o, t = q.progress.get_xp(include_main_perk=include_main, include_side=include_side)
+            o, t = q.progress.get_xp(include_main=include_main, include_side=include_side)
             total += t
             obtained += o
         return obtained, total
@@ -22,7 +22,7 @@ class XPResume:
 
         for q in self.quests.values():
             for t in q.get_tasks():
-                for skill, value in t.game.skills.items():
+                for skill, value in t.game.tags.items():
                     if skill == "":
                         continue
                     gvalue = (value * t.game.xp * t.grader.ratio)

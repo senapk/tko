@@ -9,7 +9,7 @@ from tko.game.game import Game
 from tko.util.decoder import Decoder
 from tko.feno.link_rebase import LinkRebase
 from tko.game.task import Task
-from tko.game.task_config import TaskTest
+from tko.game.task_config import TaskEval
 from tko.feno.filter import CodeFilter
 from pathlib import Path
 from tko.loader.toml_parser import TomlParser
@@ -120,7 +120,7 @@ class CmdDown:
         self.settings = settings
         self.task: Task = self.repo.game.get_task(self.task_key)
         self.resolver = self.task.path
-        if self.task.resource.is_view:
+        if self.task.resource.is_read:
             raise ValueError(t(_CMD_DOWN_ACTIVITY_LINK_NOT_DOWNLOADABLE, task_key=self.task_key))
         
         origin_target = self.resolver.origin_target
@@ -195,7 +195,7 @@ class CmdDown:
         origin_drafts_source: Path = CodeFilter.get_source_drafts_dir(self.origin_folder, self.language)
         if not self.copy_drafts_from(origin_drafts_source, destiny_drafts_folder):
             self.actions.create_default_draft(destiny_drafts_folder, self.language)
-        if self.task.config.test == TaskTest.SELF:
+        if self.task.config.test == TaskEval.SELF:
             self.actions.create_default_draft(destiny_drafts_folder, "md")
         removed, last_path = finder.remove_secondary_dir_if_duplicated()
         self.actions.cached = False

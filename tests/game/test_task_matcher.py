@@ -6,19 +6,19 @@ class TestTaskMatcher:
         matcher = TaskMatcher()
 
         line = "- [ ]   @chave :test [Minha tarefa](path/to/task.md)  #obs"
-        found = matcher.match_full_pattern(line)
+        found = matcher.match_pattern(line)
 
         assert found is True
         assert matcher.raw_pre == "   @chave :test "
-        assert matcher.task_title == "Minha tarefa"
-        assert matcher.task_link == "path/to/task.md"
+        assert matcher.title == "Minha tarefa"
+        assert matcher.link == "path/to/task.md"
         assert matcher.raw_pos == "  #obs"
 
     def test_match_full_pattern_filters_backticks_and_html_comment_tags(self):
         matcher = TaskMatcher()
 
         line = "- [ ] `@key` <!--main:10--> [Titulo](task.md)"
-        found = matcher.match_full_pattern(line)
+        found = matcher.match_pattern(line)
 
         assert found is True
         raw_middle = matcher.filter_tags(" `@key` <!--main:10--> ")
@@ -31,19 +31,19 @@ class TestTaskMatcher:
     def test_match_full_pattern_rejects_invalid_checkbox_format(self):
         matcher = TaskMatcher()
 
-        found = matcher.match_full_pattern("- [x] [Tarefa](task.md)")
+        found = matcher.match_pattern("- [x] [Tarefa](task.md)")
 
         assert found is False
 
     def test_match_full_pattern_invalid_line_does_not_overwrite_previous_state(self):
         matcher = TaskMatcher()
 
-        assert matcher.match_full_pattern("- [ ] @k [  Titulo ](task.md) after") is True
+        assert matcher.match_pattern("- [ ] @k [  Titulo ](task.md) after") is True
 
-        found = matcher.match_full_pattern("linha sem formato")
+        found = matcher.match_pattern("linha sem formato")
 
         assert found is False
         assert matcher.raw_pre == " @k "
-        assert matcher.task_title == "  Titulo "
-        assert matcher.task_link == "task.md"
+        assert matcher.title == "  Titulo "
+        assert matcher.link == "task.md"
         assert matcher.raw_pos == " after"
