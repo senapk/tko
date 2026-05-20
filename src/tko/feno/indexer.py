@@ -7,6 +7,7 @@ from tko.i18n import Msg, t
 from tko.util.decoder import Decoder
 from tko.util.rt import RT
 from tko.game.task_matcher import TaskMatcher
+from tko.game.task_resource import ResourceType
 
 
 logger = logging.getLogger(__name__)
@@ -72,20 +73,22 @@ class IndexLine:
     def init_by_line(self, line: str):
         self.raw_line = line
         tm = TaskMatcher()
-        if not tm.match_full_pattern(line):
+        if not tm.match_pattern(line):
             return self
         self.isTask = True
         self.raw_pre = tm.raw_pre
         self.raw_pos = tm.raw_pos
-        self.title = tm.task_title
+        self.title = tm.title
         self.origin_key = tm.key
-        
-        if not tm.is_view:
-            if tm.task_link.startswith(r"http://") or tm.task_link.startswith(r"https://"):
-                self.url = tm.task_link
+        self.is_read = tm.resource_type == ResourceType.READ
+        if self.is_read:
+            self.url = tm.link
+        else:
+            if tm.link.startswith(r"http://") or tm.link.startswith(r"https://"):
+                self.url = tm.link
             else:
                 # Markdown links may come from Windows paths; normalize separators first.
-                normalized_link = tm.task_link.replace("\\", "/")
+                normalized_link = tm.link.replace("\\", "/")
                 link = Path(normalized_link)
                 if link.name != "README.md":
                     raise ValueError(f"Invalid README file name: {link}")
@@ -93,8 +96,7 @@ class IndexLine:
                     self.readme_file = Path(link).resolve()
                 else:
                     self.readme_file = (self.index_path.parent / link).resolve()
-        else:
-            self.url = tm.task_link
+        
         return self
 
     def init_by_readme_file(self, readme_file: Path, title: str):
@@ -129,6 +131,8 @@ class IndexLine:
     @property
     def key(self) -> str:
         edit_task_label = ""
+        if self.is_read:
+            return self.origin_key if self.origin_key is not None else ""
         if self.readme_file is not None:
             if self.readme_file.resolve().is_relative_to(self.base_dir.resolve()):
                 edit_task_label = self.readme_file.parent.name
@@ -198,10 +202,11 @@ class Indexer:
         for line in self.index_lines:
             if not line.isTask or line.readme_file is None:
                 continue
-            if not line.readme_file in self.path_title_dict: # wiki maybe?
-                if self.verbose:
-                    print(RT.parse(t(_INDEXER_MISSING_README_TASK, readme=line.readme_file, task=line.readme_file)))
-                continue
+            if not line.readme_file in self.path_title_dict:
+                # wiki
+                title = load_title_from_markdown_file(line.readme_file)
+                if title is not None:
+                    self.path_title_dict[line.readme_file] = title
             folder_title = self.path_title_dict[line.readme_file]
             if folder_title == line.title:
                 continue

@@ -18,7 +18,7 @@ Cada marcador representa uma propriedade da questão.
 Pergunta               Categoria   Valores                      Padrão
 ---------------------- ----------- -----------------------------------
 É Obrigatório?         Prioridade  main, side                   main
-Consumir ou Produzir?  Ação        edit, view                   edit
+Consumir ou Produzir?  Ação        do, read                     do
 Formato de avaliação   Avaliação   auto, user                   auto
 Quanto vale?           Nível       0..9                         1
 Consultar muda nota?   Consulta    free, part, zero             part
@@ -41,8 +41,8 @@ Categoria   Nome    Significado
 ----------- ------- ---------------------------------------
 Avaliação   auto    avaliação automática por testes
             user    avaliação feita pelo próprio usuário
-Ação        edit    editar / produzir conteúdo
-            view    visualizar / consumir conteúdo
+Ação        do      produzir conteúdo
+            read    visualizar / consumir conteúdo
 Prioridade  main    tarefas sugeridas
             side    tarefas opcionais
 Consulta    free    consulta permitida e não afeta a nota
@@ -50,14 +50,14 @@ Consulta    free    consulta permitida e não afeta a nota
             zero    consulta proibida, nota zero se for consultada
 ```
 
-### Comportamento em atividades view
+### Comportamento em atividades read
 
-Se o view for um link remoto → abre no navegador.
-Se o view for um link local → é aberto automaticamente no editor.
+Se o read for um link remoto → abre no navegador.
+Se o read for um link local → é aberto automaticamente no editor.
 
-### Comportamento em atividades edit
+### Comportamento em atividades do
 
-É criado uma pasta com o nome da atividade na pasta do aluno, e o arquivo de descrição, testes(se houverem) e arquivos de rascunho são copiados para essa pasta. Se o view também for `user` para autoavaliação, é criado um `draft.md` para o aluno colocar as respostas.
+É criado uma pasta com o nome da atividade na pasta do aluno, e o arquivo de descrição, testes(se houverem) e arquivos de rascunho são copiados para essa pasta. Se o read também for `user` para autoavaliação, é criado um `draft.md` para o aluno colocar as respostas.
 
 
 ## Exemplos
@@ -65,14 +65,14 @@ Se o view for um link local → é aberto automaticamente no editor.
 ```txt
 Marcação   Interpretação
 ---------- ---------------------------------------------
-                        main, edit, nível 1, auto, open
-:1:main:view:user:free  1 ponto, leitura obrigatória 
-:1:side:view:user:free  1 ponto, leitura extra
-:2:main:edit:auto:part  exercício nível 2 com autoavaliação
-:3:main:edit:auto:zero  prova automática nível 3
-:0:side:view:user:free  leitura sem pontuação
-:1:side:edit:user:free  resumo apenas para entrega
-:1:side:edit:user:part  projeto extra de código com consulta controlada
+                        main, do, nível 1, auto, open
+:1:main:read:user:free  1 ponto, leitura obrigatória 
+:1:side:read:user:free  1 ponto, leitura extra
+:2:main:do:auto:part  exercício nível 2 com autoavaliação
+:3:main:do:auto:zero  prova automática nível 3
+:0:side:read:user:free  leitura sem pontuação
+:1:side:do:user:free  resumo apenas para entrega
+:1:side:do:user:part  projeto extra de código com consulta controlada
 ```
 
 ## Restrições
@@ -86,8 +86,8 @@ Utilizar dois marcadores de mesma categoria é permitido, mas o último prevalec
 Mesmo que qualquer combinação seja possível, nem todas fazem sentido, pois não vão gerar interações coerentes no sistema. Exemplo:
 
 ```txt
-:auto:view → avaliação automática, mas para ser consumida, o que não faz sentido. O ideal seria :auto:edit.
-:zero:view → consulta proibida, mas para ser consumida, o que não faz sentido. O ideal seria :zero:edit.
+:auto:read → avaliação automática, mas para ser consumida, o que não faz sentido. O ideal seria :auto:do.
+:zero:read → consulta proibida, mas para ser consumida, o que não faz sentido. O ideal seria :zero:do.
 ```
 
 Atividades para serem consumidas normalmente vão estar como `free`.

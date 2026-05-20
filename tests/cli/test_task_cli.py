@@ -7,6 +7,7 @@ from tko.app_context import AppContext
 from tko.cli.task_cli import app
 from tko.config.settings import Settings
 from tko.repository.git_cache import UpdateMode
+from tko.repository.repository import Repository
 
 
 def _make_app_context(tmp_path: Path) -> AppContext:
@@ -37,11 +38,11 @@ def test_task_down_invokes_cmd_down_with_full_key(monkeypatch: MonkeyPatch, tmp_
     repo_obj = object()
     calls: dict[str, object] = {"execute": False}
 
-    def fake_load_repo(*_args, **_kwargs):
+    def fake_load_repo(*_args: object, **_kwargs: object) -> tuple[object, Path, UpdateMode]:
         return repo_obj, tmp_path, UpdateMode.IF_OLDER
 
     class DummyCmdDown:
-        def __init__(self, repo, task_key: str, settings):
+        def __init__(self, repo: Repository, task_key: str, settings: Settings):
             calls["repo"] = repo
             calls["task_key"] = task_key
             calls["settings"] = settings
@@ -66,7 +67,7 @@ def test_task_down_returns_when_repo_not_found(monkeypatch: MonkeyPatch, tmp_pat
     runner = CliRunner()
     ctx = _make_app_context(tmp_path)
 
-    def fake_load_repo(*_args, **_kwargs):
+    def fake_load_repo(*_args: object, **_kwargs: object) -> tuple[None, None, UpdateMode]:
         return None, None, UpdateMode.IF_OLDER
 
     monkeypatch.setattr("tko.cli.common.load_repo", fake_load_repo)
@@ -81,11 +82,11 @@ def test_task_down_handles_domain_errors(monkeypatch: MonkeyPatch, tmp_path: Pat
     ctx = _make_app_context(tmp_path)
     repo_obj = object()
 
-    def fake_load_repo(*_args, **_kwargs):
+    def fake_load_repo(*_args: object, **_kwargs: object) -> tuple[object, Path, UpdateMode]:
         return repo_obj, tmp_path, UpdateMode.IF_OLDER
 
     class DummyCmdDown:
-        def __init__(self, _repo, _task_key: str, _settings):
+        def __init__(self, _repo: Repository, _task_key: str, _settings: Settings):
             raise Warning("fail: tarefa 'fup@x' não encontrada no curso")
 
     monkeypatch.setattr("tko.cli.common.load_repo", fake_load_repo)

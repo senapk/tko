@@ -7,12 +7,12 @@ class TaskGame:
     def __init__(self):
         self.default_min_value: int = 5 # default min grade to complete task
         self._xp: int = 1
-        self.skills: dict[str, int] = {} # skills
+        self.tags: dict[str, int] = {} # skills
         self.is_reachable: bool = False
 
     def clone(self) -> TaskGame:
         new_task = TaskGame()
-        new_task.skills = self.skills.copy()
+        new_task.tags = self.tags.copy()
         new_task._xp = self._xp
         new_task.is_reachable = self.is_reachable
         return new_task

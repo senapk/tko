@@ -22,7 +22,7 @@ class XPResume:
 
         for q in self.quests.values():
             for t in q.get_tasks():
-                for skill, value in t.game.skills.items():
+                for skill, value in t.game.tags.items():
                     if skill == "":
                         continue
                     gvalue = (value * t.game.xp * t.grader.ratio)

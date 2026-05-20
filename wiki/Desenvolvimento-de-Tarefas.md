@@ -59,13 +59,13 @@ Capacidades relevantes para autoria de tarefas:
 
 No parser, tarefas podem cair em:
 
-- `VIEW`: visualizacao (link externo ou leitura).
-- `EDIT`: tarefa editavel com fonte local/remota.
+- `VIEW`: leitura ou consulta de recurso externo/local.
+- `EDIT`: tarefa de producao/execucao com fonte local/remota.
 
 Regra de chave:
 
-- Quando a chave inicia com `@+`, a tarefa e tratada como `VIEW` (consumo).
-- Quando a chave inicia com `@` (sem `+`), a tarefa segue como `EDIT` por padrao.
+- A chave sempre inicia com `@`.
+- O tipo da atividade e definido pelos marcadores `:do` e `:read`.
 
 Para links HTTP em tarefas de edicao:
 
@@ -83,8 +83,8 @@ Para links HTTP em tarefas de edicao:
 
 Defaults aplicados em `__parse_task_types()`:
 
-- Para `VIEW`: `loss=FREE`, `test=SELF`.
-- Para `EDIT`: `loss=PART`, `test=TEST`.
+- Para `VIEW`/`:read`: `loss=FREE`, `test=SELF`.
+- Para `EDIT`/`:do`: `loss=PART`, `test=TEST`.
 
 ## Como adicionar um novo marcador/tag
 

@@ -16,7 +16,7 @@ class TaskPath:
     @property
     def work_dir(self) -> Path | None:
         loc = self.loc
-        if loc.resource_type == ResourceType.VIEW:
+        if loc.resource_type == ResourceType.READ:
             return None
         if loc.editable_source:
             target = self.__remote_local_path(loc)

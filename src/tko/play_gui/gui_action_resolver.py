@@ -19,7 +19,7 @@ class GuiActionResolver:
         self.flags = flags
 
     def get_task_action(self, task: Task) -> tuple[str, Msg]:
-        if task.resource.is_view:
+        if task.resource.is_read:
             return "B", TaskAction.VISITAR
         if task.resource.is_static_type:
             return "G", TaskAction.EXECUTAR

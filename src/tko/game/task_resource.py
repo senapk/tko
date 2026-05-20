@@ -3,8 +3,8 @@ from pathlib import Path
 import enum
 
 class ResourceType(enum.Enum):
-    VIEW = "view"  # md_file, url, pdf or other resource link, not editable
-    EDIT = "task"  # editable task
+    READ = "read"  # md_file, url, pdf or other resource link, not editable
+    DO = "do"  # editable task
     UNKNOWN = "unknown"
 
 class TaskResource:
@@ -13,7 +13,7 @@ class TaskResource:
         self.line_number: int = 0
         self.line_data: str = ""
         
-        self.external_url: str | None = None # view task to an external link, can be a url or a absolute file path
+        self.external_url: str | None = None # read task to an external link, can be a url or a absolute file path
         self.resource_type: ResourceType = ResourceType.UNKNOWN
         self.remote_git: str | None = None
         self.remote_dir: Path | None = None
@@ -34,12 +34,12 @@ class TaskResource:
         return new_location
         
     @property
-    def is_view(self) -> bool:
-        return self.resource_type == ResourceType.VIEW
+    def is_read(self) -> bool:
+        return self.resource_type == ResourceType.READ
     
     @property
-    def is_edit(self) -> bool:
-        return self.resource_type == ResourceType.EDIT
+    def is_do(self) -> bool:
+        return self.resource_type == ResourceType.DO
     
     @property
     def is_link(self) -> bool:
@@ -47,8 +47,8 @@ class TaskResource:
         
     @property
     def is_static_type(self) -> bool:
-        return self.resource_type == ResourceType.EDIT and self.editable_source
+        return self.resource_type == ResourceType.DO and self.editable_source
 
     @property
     def is_import_type(self) -> bool:
-        return self.resource_type == ResourceType.EDIT and not self.editable_source
+        return self.resource_type == ResourceType.DO and not self.editable_source

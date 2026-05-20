@@ -11,6 +11,17 @@ from tko.game.task_resource import TaskResource
 from tko.repository.git_cache import GitCache
 
 class Task:
+    """
+    Representa uma tarefa (atividade) do sistema TKO.
+
+    Campos principais:
+        - basic: informações básicas (chave, título, etc)
+        - config: configuração da tarefa (tipo, teste, penalidade)
+        - resource: informações do recurso (link, tipo, linha de origem)
+        - game: informações de gamificação (xp, skills)
+
+    O título da tarefa normalmente é carregado do índice (texto entre colchetes na linha do índice).
+    """
     def __init__(self):
         self.quest_key: str = ""
         self.basic: TreeBasic = TreeBasic()
@@ -56,4 +67,4 @@ class Task:
     def __str__(self):
         lnum = str(self.resource.line_number).rjust(3)
         key = "" if self.basic.full_key == self.basic.title else self.basic.full_key + " "
-        return f"{lnum} key:{key} title:{self.basic.title} skills:{self.game.skills} remote:{self.resource.raw_link}"
+        return f"{lnum} key:{key} title:{self.basic.title} skills:{self.game.tags} remote:{self.resource.raw_link}"

@@ -120,7 +120,7 @@ class CmdDown:
         self.settings = settings
         self.task: Task = self.repo.game.get_task(self.task_key)
         self.resolver = self.task.path
-        if self.task.resource.is_view:
+        if self.task.resource.is_read:
             raise ValueError(t(_CMD_DOWN_ACTIVITY_LINK_NOT_DOWNLOADABLE, task_key=self.task_key))
         
         origin_target = self.resolver.origin_target

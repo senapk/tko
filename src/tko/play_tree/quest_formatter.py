@@ -35,7 +35,7 @@ class QuestFormatter:
     def get_quest_full_title(self, quest: Quest, show_skills: bool) -> RT:
         output = RT(quest.basic.remote_name, "c") + RT(":") + RT(quest.basic.title)
         if show_skills:
-            for skill, value in quest.config.skills.items():
+            for skill, value in quest.config.tags.items():
                 if value > 1:
                     output += RT.run("b", f" +{skill}*{value}")
                 else:

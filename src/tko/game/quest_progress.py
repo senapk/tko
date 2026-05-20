@@ -15,9 +15,9 @@ class QuestProgress:
     def get_xp(self, include_main_perk: bool, include_side: bool) -> tuple[float, float]:
         tasks_info: list[QuestGrader.Elem] = []
         for task in self._tasks_getter():
-            if task.config.path in [TaskMain.MAIN, TaskMain.PERK] and not include_main_perk:
+            if task.config.main in [TaskMain.MAIN, TaskMain.PERK] and not include_main_perk:
                 continue
-            if task.config.path == TaskMain.SIDE and not include_side:
+            if task.config.main == TaskMain.SIDE and not include_side:
                 continue
             percent = task.grader.full_percent
             tasks_info.append(QuestGrader.Elem(task.config.is_optional, task.game.xp, percent))

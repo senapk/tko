@@ -69,6 +69,7 @@ Use o guia recomendado para setup completo com VS Code e WSL:
 - Correção automática com testes e iteração rápida.
 - Acompanhamento docente com indicadores de progresso e histórico.
 
+
 ## Documentação por Perfil
 
 - Professor da disciplina (distribui e coleta via Git, GitHub Classroom (recomendado), Dropbox e e-mail):
@@ -162,3 +163,4 @@ Se possível, mantenha mudanças pequenas, com descrição clara do problema e d
 ## Licença
 
 Este projeto está sob a licença MIT. Veja [LICENSE](LICENSE).
+

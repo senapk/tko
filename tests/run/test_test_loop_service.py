@@ -1,5 +1,9 @@
 from pathlib import Path
-from types import SimpleNamespace
+from tko.run.unit import Unit
+from tko.run.solver_builder import SolverBuilder
+from tko.run.run_context import RunContext
+from tko.run.run_config import RunConfig
+from tko.config.settings import Settings
 
 import pytest
 
@@ -27,23 +31,29 @@ class _FakeWdir:
         return self._solver
 
 
-def _make_ctx(units: list[Unit], no_run: bool, abort_on_exec_error: bool):
-    return SimpleNamespace(
-        config=SimpleNamespace(
-            no_run=no_run,
-            abord_on_exec_error=abort_on_exec_error,
-            timeout=7,
-            show_track_info=False,
-        ),
-        wdir=_FakeWdir(units),
+def _make_ctx(units: list[Unit], no_run: bool, abort_on_exec_error: bool) -> RunContext:
+    config = RunConfig()
+    config.no_run = no_run
+    config.abord_on_exec_error = abort_on_exec_error
+    config.timeout = 7
+    config.show_track_info = False
+    settings = Settings(Path("/tmp"))
+    ctx = RunContext(
+        config=config,
+        settings=settings,
+        target_list=[],
+        param=None,
+        language=None,
         repo=None,
     )
+    ctx.wdir = _FakeWdir(units)  # type: ignore
+    return ctx
 
 
 def test_run_top_line_marks_all_untested_when_no_run(monkeypatch: pytest.MonkeyPatch):
     calls: list[tuple[object, object, int]] = []
 
-    def _fake_run_unit(solver, unit, timeout):
+    def _fake_run_unit(solver: SolverBuilder, unit: Unit, timeout: int) -> ExecutionResult:
         calls.append((solver, unit, timeout))
         return ExecutionResult.SUCCESS
 
@@ -63,7 +73,7 @@ def test_run_top_line_stops_after_execution_error_when_abort_enabled(monkeypatch
     calls: list[tuple[object, object, int]] = []
     results = [ExecutionResult.EXECUTION_ERROR, ExecutionResult.SUCCESS]
 
-    def _fake_run_unit(solver, unit, timeout):
+    def _fake_run_unit(solver: SolverBuilder, unit: Unit, timeout: int) -> ExecutionResult:
         calls.append((solver, unit, timeout))
         return results[len(calls) - 1]
 

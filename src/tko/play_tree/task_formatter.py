@@ -45,7 +45,7 @@ class TaskFormatter:
         return basic.title, "", basic.title
 
     def get_task_down_symbol(self, task: Task) -> tuple[str, str]:
-        if task.resource.is_view:
+        if task.resource.is_read:
             if task.info.feedback:
                 return ("g", Symbols.task_view)
             return ("", Symbols.task_view)
@@ -79,7 +79,7 @@ class TaskFormatter:
 
     def get_task_path_symbol(self, task: Task) -> tuple[str, str]:
         color = "y" if task.resource.is_import_type else "m"
-        if task.config.path == TaskMain.MAIN:
+        if task.config.main == TaskMain.MAIN:
             return (color, Symbols.star_filled)
         return (color, Symbols.star_void)
 

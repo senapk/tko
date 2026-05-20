@@ -77,97 +77,72 @@ Cada tarefa é autocontida e pode ser reutilizada em outros repositórios
 ou trilhas de aprendizado.
 
 
+## Formato de Quest (linha única)
 
-## Dependências entre Quests e Habilidades
+Cada quest é definida em uma linha de título markdown, seguida de pares chave-valor:
+
+Exemplo:
+
+    ## Ponteiros em C key=@ptr tag=ponteiro requires=@intro factor=2 total=100 threshold=80 lang=c lang=c++
+
+**Campos suportados:**
+- `key=@chave`: identificador único da quest
+- `tag=nome`: habilidade/tópico trabalhado (pode repetir para múltiplos)
+- `requires=@outra`: pré-requisito (pode repetir)
+- `factor=valor`: multiplicador de XP das tasks
+- `total=valor`: pontuação-alvo para 100% de completude
+- `threshold=valor`: percentual mínimo para considerar a quest completa
+- `lang=nome`: linguagem de programação específica (pode repetir, ex: lang=c lang=python)
+- `active=true|false`: define se a quest está ativa (default: true). Se `active=false`, a quest e suas questões são desabilitadas e não participam da gamificação.
+
+**Regras e padrões:**
+- Apenas `key` é obrigatória.
+- Se `tag` não for definida, será usada a própria `key` como tag.
+- `factor` é opcional, valor padrão é 1.
+- `requires` não é obrigatório, mas é usado para definir dependências e gamificação da disciplina.
+- `total` define o XP (pontuação de tasks) necessário para atingir 100% da quest.
+- `threshold` é opcional, o padrão é 50 (50%) e define o percentual mínimo para considerar a quest completa.
+- `lang` é opcional, define as linguagens de programação específicas da quest.
+
+**Notas:**
+- Comentários HTML (`<!-- ... -->`) e crases são ignorados.
+- Os campos podem aparecer em qualquer ordem após o título.
+
+**Exemplo completo:**
+
+    ## Estruturas de Repetição key=@loops tag=for tag=while requires=@intro factor=2 total=100 threshold=80 lang=python
+
+
+## Dependências entre Quests, Tags e Habilidades
 
 As **quests** podem declarar duas informações importantes:
 
-1. **quais habilidades são trabalhadas**
-2. **quais quests precisam ser concluídas antes**
+1. **Quais tópicos/habilidades são trabalhados** (usando `tag=nome`)
+2. **Quais quests precisam ser concluídas antes** (usando `requires=@outra`)
 
-Essas informações são definidas diretamente no cabeçalho da missão
-utilizando comentários Markdown e links internos.
+Essas informações são definidas diretamente no cabeçalho da missão usando os campos chave-valor.
 
 Esse formato tem duas vantagens importantes:
 
 - mantém o arquivo **legível para humanos**
-- permite que o **VS Code atualize automaticamente as referências**
-  quando títulos são renomeados
 
 ---
 
-## Definição de habilidades
+## Exemplo de definição de habilidades e dependências
 
-As habilidades são declaradas usando a sintaxe:
-
-```
-+habilidade[:valor]
-```
-
-Onde:
-
-- `+` indica que a quest **contribui para uma habilidade**
-- `habilidade` é o identificador da habilidade
-- `valor` define o **peso ou pontuação** associada
-
-Exemplo:
+As habilidades/tópicos são declarados usando `tag=nome` (pode repetir para múltiplos):
 
 ```md
-## Missão: Operações  +basic @basic
-Isso indica que as tarefas dessa missão trabalham a habilidade `basic` com peso `1`.
-A chave @basic é a chave da atividade.
-```
-
-Uma mesma missão pode contribuir para várias habilidades e pode definir requisitos de outras missões usando links internos.
-```md
-## Missão: Listas +loops:2 +for @list
-Isso indica que as tarefas dessa missão trabalham a habilidade `loops` com peso `2` e a habilidade `for` com peso `1`.
-A chave @list é a chave da atividade.
-```
-
----
-
-## Definição de dependências entre quests
-
-Dependências são declaradas utilizando referências para chaves de outras missões, usando a sintaxe:
-
-```
-!@outra_missão
-```
-
-Sintaxe:
-
-```md
-### Missão: Seleção 1 +if @selection !@operations
-```
-
-Nesse caso:
-
-- a missão trabalha a habilidade `if` com peso `1`
-- a missão `operations` deve ser concluída antes de `selection`
-
----
-
-## Exemplo completo
-
-```md
-
-### Missão: Operações +basic @operations
-
-### Missão: Seleção 1 +if @selection1 !@operations
-
-### Missão: Seleção 2 +if @selection2 !@selection1
-
-### Missão: Repetição1 +for:2 @repetition1 !@selection2
-
-### Missão: Repetição2 +for:2 @repetition2 !@repetition1
-
+## Missão: Operações key=@operations tag=basic
+## Missão: Seleção 1 key=@selection1 tag=if requires=@operations
+## Missão: Seleção 2 key=@selection2 tag=if requires=@selection1
+## Missão: Repetição1 key=@repetition1 tag=for requires=@selection2
+## Missão: Repetição2 key=@repetition2 tag=for requires=@repetition1
 ```
 
 Esse conjunto define o seguinte grafo de progressão:
 
 ```txt
-
 Operações
 ↓
 Seleção 1
@@ -177,7 +152,6 @@ Seleção 2
 Repetição 1
 ↓
 Repetição 2
-
 ```
 
 ---
@@ -195,6 +169,5 @@ Essa abordagem oferece várias vantagens:
 Além disso, o sistema pode usar essas relações para:
 
 - desbloquear quests conforme o progresso
-- calcular domínio de habilidades
+- calcular domínio de habilidades/tags
 - sugerir próximas atividades ao aluno
-```

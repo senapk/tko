@@ -64,7 +64,7 @@ class Repository:
     def get_task_from_task_folder(self, folder: Path) -> Task | None:
         folder = folder.resolve()
         for t in self.game.tasks.values():
-            if t.resource.is_view:
+            if t.resource.is_read:
                 continue
             work_dir = t.path.work_dir
             if work_dir is None:
