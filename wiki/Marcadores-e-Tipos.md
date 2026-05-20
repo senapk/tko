@@ -1,93 +1,67 @@
-# Marcadores e Tipos de Atividades
+# Tipos e Propriedades de Tarefas (Tasks)
 
-Uma questão segue a seguinte estrutura:
+Uma tarefa (task) é definida em uma linha markdown, usando o modelo chave-valor:
 
 ```md
-- [ ] @label :marcadores [Título](pasta/README.md)
-
-# você pode empacotar dentro de crases para alinhas ou tags html para esconder, mas o formato é sempre o mesmo:
-- [ ] `@label :marcadores`[Título](pasta/README.md)
-- [ ] <!-- @label :marcadores -->[Título](pasta/README.md)
-- [ ] @label <!-- :marcadores -->[Título](pasta/README.md)
-
+- [ ] key=@t1 xp=10 type=task path=main eval=test loss=part [Título](pasta/README.md)
+- [ ] @t2 xp=5 type=read path=side eval=self loss=free [Título](pasta/README.md)
 ```
 
-Cada marcador representa uma propriedade da questão.
+**Campos suportados:**
 
-```txt
-Pergunta               Categoria   Valores                      Padrão
----------------------- ----------- -----------------------------------
-É Obrigatório?         Prioridade  main, side                   main
-Consumir ou Produzir?  Ação        do, read                     do
-Formato de avaliação   Avaliação   auto, user                   auto
-Quanto vale?           Nível       0..9                         1
-Consultar muda nota?   Consulta    free, part, zero             part
-```
+| Campo  | Valores possíveis         | Padrão      | Descrição                                                        |
+|--------|--------------------------|-------------|------------------------------------------------------------------|
+| key    | @t1, @foo, ...           | — (obrig.)  | Identificador único da tarefa                                    |
+| xp     | 1, 5, 10, ...            | 1           | Pontuação/XP da tarefa                                           |
+| type   | task, read               | task        | Tipo: task (produção), read (consumo)                            |
+| path   | main, side               | main        | Categoria/trilha: main (recomendada), side (opcional)            |
+| eval   | test, self               | test/read   | Modo de avaliação: test (automática por testes), self (autoavaliação) |
+| loss   | zero, part, free         | part/task   | Penalidade por consulta: zero (perde tudo), part, free (sem perda)|
 
-## Regras
+**Notas:**
+- Apenas key é obrigatória.
+- Campos podem aparecer em qualquer ordem.
+- Campos não obrigatórios assumem valores padrão.
+- Sintaxe antiga (:main, :side, :test, etc) ainda é suportada por compatibilidade, mas recomenda-se o novo formato.
 
-- A ordem dos marcadores é livre.
-- Marcadores omitidos usam o valor padrão. 
-- Se não houver ":" a atividade usa todos os valores padrão.
-- Caso não existe um marcador para uma categoria, o valor padrão é assumido.
-- A ordem dos marcadores é livre.
-- Se dois marcadores de mesma categoria forem especificados, o último prevalece.
-- Marcadores são case-sensitive.
+## Valores padrão
 
-## Significados e interações
-
-```txt
-Categoria   Nome    Significado
------------ ------- ---------------------------------------
-Avaliação   auto    avaliação automática por testes
-            user    avaliação feita pelo próprio usuário
-Ação        do      produzir conteúdo
-            read    visualizar / consumir conteúdo
-Prioridade  main    tarefas sugeridas
-            side    tarefas opcionais
-Consulta    free    consulta permitida e não afeta a nota
-            part    consulta permitida, mas afeta a nota
-            zero    consulta proibida, nota zero se for consultada
-```
-
-### Comportamento em atividades read
-
-Se o read for um link remoto → abre no navegador.
-Se o read for um link local → é aberto automaticamente no editor.
-
-### Comportamento em atividades do
-
-É criado uma pasta com o nome da atividade na pasta do aluno, e o arquivo de descrição, testes(se houverem) e arquivos de rascunho são copiados para essa pasta. Se o read também for `user` para autoavaliação, é criado um `draft.md` para o aluno colocar as respostas.
-
+- xp=1
+- type=task
+- se type=task
+  - eval=test
+  - loss=part
+- se type=read
+  - eval=self
+  - loss=free
 
 ## Exemplos
 
-```txt
-Marcação   Interpretação
----------- ---------------------------------------------
-                        main, do, nível 1, auto, open
-:1:main:read:user:free  1 ponto, leitura obrigatória 
-:1:side:read:user:free  1 ponto, leitura extra
-:2:main:do:auto:part  exercício nível 2 com autoavaliação
-:3:main:do:auto:zero  prova automática nível 3
-:0:side:read:user:free  leitura sem pontuação
-:1:side:do:user:free  resumo apenas para entrega
-:1:side:do:user:part  projeto extra de código com consulta controlada
+```md
+- [ ] key=@t1 xp=10 type=task path=main eval=test loss=part [Implementar função soma](t1/README.md)
+- [ ] @t2 xp=5 type=read path=side eval=self loss=free [Ler artigo sobre listas](t2/README.md)
 ```
 
-## Restrições
+## Significados e interações
 
-Utilizar dois marcadores de mesma categoria é permitido, mas o último prevalece. Exemplo:
+- **type=task**: tarefa de produção (programar, escrever, pesquisar)
+- **type=read**: tarefa de consumo (ler, assistir, explorar)
+- **path=main**: tarefa recomendada, mas não obrigatória (pode ser substituída por outra side de mesmo valor)
+- **path=side**: tarefa opcional
+- **eval=test**: avaliação automática por testes
+- **eval=self**: autoavaliação pelo próprio aluno
+- **loss=zero**: consulta proibida, nota zero se consultar
+- **loss=part**: consulta permitida, mas afeta a nota
+- **loss=free**: consulta permitida e não afeta a nota
 
-```txt
-:3:auto:user → prevalece user, ou seja, avaliação feita pelo próprio usuário
-```
+## Regras
 
-Mesmo que qualquer combinação seja possível, nem todas fazem sentido, pois não vão gerar interações coerentes no sistema. Exemplo:
+- Campos podem ser omitidos; valores padrão serão assumidos.
+- O campo key pode ser definido como key=@t1 ou apenas @t1 para compatibilidade.
+- Campos não obrigatórios assumem valores padrão.
 
-```txt
-:auto:read → avaliação automática, mas para ser consumida, o que não faz sentido. O ideal seria :auto:do.
-:zero:read → consulta proibida, mas para ser consumida, o que não faz sentido. O ideal seria :zero:do.
-```
+## Recomendações
 
-Atividades para serem consumidas normalmente vão estar como `free`.
+- Prefira o modelo chave-valor para clareza e manutenção futura.
+- Use nomes de campos e valores em minúsculas.
+- Evite misturar sintaxe antiga e nova na mesma linha.

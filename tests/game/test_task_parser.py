@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 from tko.game.task_parser import TaskParser
-from tko.game.task_config import TaskLoss, TaskMain, TaskTest
+from tko.game.task_config import TaskLoss, TaskMain, TaskEval
 from tko.game.task_resource import ResourceType
 from tko.repository.git_cache import GitCache
 
@@ -21,7 +21,7 @@ class Test:
         assert task.resource.raw_link == "data/label/r.md"
         assert task.resource.remote_dir == Path("/source")
         assert task.resource.relative_path == Path("data/label/r.md")
-        assert task.resource.resource_type == ResourceType.DO
+        assert task.resource.resource_type == ResourceType.TASK
     
     def test_database_poo(self):
         tp = TaskParser(index_path=Path("/source/arquivo.md"), remote_dir_root=Path("/source"), remote_name="poo")
@@ -69,7 +69,7 @@ class Test:
         )
 
         assert task is not None
-        assert task.resource.resource_type == ResourceType.DO
+        assert task.resource.resource_type == ResourceType.TASK
         assert task.resource.external_url is None
         assert task.resource.remote_git == "https://github.com/user/repo"
         assert task.resource.remote_dir == Path("/source")
@@ -91,7 +91,7 @@ class Test:
         )
 
         assert task is not None
-        assert task.resource.resource_type == ResourceType.DO
+        assert task.resource.resource_type == ResourceType.TASK
         assert task.resource.external_url is None
         assert task.resource.remote_git == "https://github.com/user/repo"
         assert task.resource.remote_dir == Path("/source")
@@ -133,7 +133,7 @@ class Test:
         assert task.resource.resource_type == ResourceType.READ
         assert task.resource.external_url == "https://example.com/material"
         assert task.config.loss == TaskLoss.FREE
-        assert task.config.test == TaskTest.SELF
+        assert task.config.test == TaskEval.SELF
 
     def test_decode_task_types_sets_expected_values(self):
         tp = TaskParser(index_path=Path("/source/arquivo.md"), remote_dir_root=Path("/source"), remote_name="poo")
@@ -141,8 +141,7 @@ class Test:
 
         assert task is not None
         assert task.game.xp == 15
-        assert task.config.test == TaskTest.TEST
-        assert task.config.main == TaskMain.PERK
+        assert task.config.test == TaskEval.TEST
         assert task.config.loss == TaskLoss.ZERO
 
     def test_redirect_from_readme_keeps_absolute_paths(self):
@@ -156,7 +155,7 @@ class Test:
 
         assert task is not None
         # Last tag wins for main/loss in this sequence.
-        assert task.config.test == TaskTest.SELF
+        assert task.config.test == TaskEval.SELF
         assert task.config.main == TaskMain.SIDE
         assert task.config.loss == TaskLoss.PART
 
@@ -168,6 +167,6 @@ class Test:
         assert task is not None
         assert task.basic.key == "label"
         assert task.basic.title == "titulo"
-        assert task.config.test == TaskTest.SELF
+        assert task.config.test == TaskEval.SELF
         assert task.config.main == TaskMain.SIDE
         assert task.config.loss == TaskLoss.FREE

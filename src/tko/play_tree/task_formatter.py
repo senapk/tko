@@ -1,6 +1,6 @@
 from tko.cmds.drafts_finder_cached import DraftsFinderCached
 from tko.game.task import Task
-from tko.game.task_config import TaskLoss, TaskMain, TaskTest
+from tko.game.task_config import TaskLoss, TaskMain, TaskEval
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
 from tko.util.symbols import Symbols
@@ -49,7 +49,7 @@ class TaskFormatter:
             if task.info.feedback:
                 return ("g", Symbols.task_view)
             return ("", Symbols.task_view)
-        if task.config.test == TaskTest.TEST:
+        if task.config.test == TaskEval.TEST:
             if self.is_downloaded_for_lang(task):
                 if task.info.feedback:
                     return ("g", Symbols.diamond_filled)   # baixou e tem feedback
@@ -62,7 +62,7 @@ class TaskFormatter:
                 if task.info.feedback:
                     return ("r", Symbols.diamond_void)       # não baixou e tem feedback
                 return ("", Symbols.diamond_void)              # não baixou e não tem feedback
-        elif task.config.test == TaskTest.SELF:
+        elif task.config.test == TaskEval.SELF:
             if self.is_downloaded_for_lang(task):
                 if task.info.feedback:
                     return ("g", Symbols.square_filled)   # baixou e tem feedback

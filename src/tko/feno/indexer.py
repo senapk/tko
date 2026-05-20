@@ -63,7 +63,7 @@ class IndexLine:
         self.raw_pos: str = ""
         self.title: str = ""
         self.origin_key: str | None = None
-
+        self.is_read: bool = False
         self.readme_file: Path | None = None
         self.url: str | None = None
         
@@ -202,7 +202,7 @@ class Indexer:
         for line in self.index_lines:
             if not line.isTask or line.readme_file is None:
                 continue
-            if not line.readme_file in self.path_title_dict:
+            if line.readme_file not in self.path_title_dict:
                 # wiki
                 title = load_title_from_markdown_file(line.readme_file)
                 if title is not None:

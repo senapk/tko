@@ -24,26 +24,36 @@ _TASK_PARSER_EDIT_EXTERNAL_URL = Msg(
 
 class TaskParser:
     """
-    Faz o parsing de linhas de tarefas no formato markdown.
+    Faz o parsing de linhas de tarefas no formato markdown, suportando tanto o modelo chave-valor quanto o modelo antigo.
 
-    Formato esperado:
-        - [ ] @chave :tag1:tag2 [Título](caminho/para/arquivo.md)  #comentário
+    Formato recomendado (chave-valor):
+        - [ ] key=@t1 xp=10 type=task path=main eval=test loss=part
+        - [ ] @t2 xp=5 type=read path=side eval=self loss=free
 
-    Onde:
-        - @chave: identificador único da tarefa (obrigatório)
-        - :tag: tags opcionais que modificam o comportamento (ex: :main, :side, :test, etc)
-        - [Título]: nome da tarefa apresentado ao usuário (carregado do índice)
-        - (link): caminho relativo ou absoluto para o arquivo da tarefa ou URL externa
-        - #comentário: texto livre ignorado pelo parser
+    Campos suportados:
+        - key=@chave ou @chave: identificador único da task
+        - xp=valor: valor em pontos/XP da tarefa
+        - type=task ou type=read: tipo da tarefa (produção ou consumo)
+        - path=main ou path=side: categoria/trilha da tarefa
+        - eval=test ou eval=self: modo de avaliação (test: automática por testes, self: autoavaliação)
+        - loss=zero, loss=part, loss=free: política de penalidade por consulta (zero: perde tudo, part: perde parte, free: sem penalidade)
 
-    Regras:
-        - A chave deve começar com @ e conter apenas caracteres válidos.
-        - As tags podem aparecer antes do título ou no próprio título.
-        - O link pode ser um arquivo local ou uma URL.
-        - Se o link for URL e a task for de leitura, será tratada como leitura externa.
-        - Se a linha não seguir o padrão, retorna None.
+    Valores padrão:
+        - type: task
+        - path: main
+        - eval: test para tarefas de produção, self para tarefas de consumo
+        - loss: part para tarefas de produção, free para tarefas de consumo
+        - xp: 1
+
+    Notas:
+        - Apenas key é obrigatória.
+        - Campos podem aparecer em qualquer ordem.
+        - Campos não obrigatórios assumem valores padrão.
+        - Sintaxe antiga (:main, :side, :test, etc) ainda é suportada por compatibilidade, mas recomenda-se o novo formato.
 
     Exemplos:
+        - [ ] key=@t1 xp=10 type=task path=main eval=test loss=part
+        - [ ] @t2 xp=5 type=read path=side eval=self loss=free
         - [ ] @foo :main:free [Tarefa de exemplo](exemplo/README.md)
         - [ ] @bar :side:perk [Outra tarefa](https://exemplo.com/material)
     """

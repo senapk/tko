@@ -8,7 +8,7 @@ def test_clone_preserves_fields_for_local_editable_resource(tmp_path: Path) -> N
     location.raw_link = "task.md"
     location.line_number = 7
     location.line_data = "- [ ] [@task title](task.md)"
-    location.resource_type = ResourceType.DO
+    location.resource_type = ResourceType.TASK
     location.remote_dir = (tmp_path / "repo").resolve()
     location.relative_path = Path("task")
     location.editable_source = True
@@ -18,7 +18,7 @@ def test_clone_preserves_fields_for_local_editable_resource(tmp_path: Path) -> N
     assert clone.raw_link == "task.md"
     assert clone.line_number == 7
     assert clone.line_data == "- [ ] [@task title](task.md)"
-    assert clone.resource_type == ResourceType.DO
+    assert clone.resource_type == ResourceType.TASK
     assert clone.remote_dir == (tmp_path / "repo").resolve()
     assert clone.relative_path == Path("task")
     assert clone.editable_source is True

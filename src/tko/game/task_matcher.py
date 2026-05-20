@@ -1,6 +1,6 @@
 import re
 
-from tko.game.task_config import TaskLoss, TaskMain, TaskTest
+from tko.game.task_config import TaskLoss, TaskMain, TaskEval
 from tko.game.task_resource import ResourceType
 
 class TaskMatcher:
@@ -15,10 +15,10 @@ class TaskMatcher:
 
         self.key: str | None = None
 
-        self.resource_type = ResourceType.UNKNOWN
+        self.resource_type = ResourceType.NULL
         self.loss = TaskLoss.NULL
         self.xp = 1
-        self.test = TaskTest.NULL
+        self.test = TaskEval.NULL
         self.main = TaskMain.MAIN
 
     def match_pattern(self, line: str) -> bool:
@@ -48,26 +48,25 @@ class TaskMatcher:
 
     def __decode_task_types(self):
         text = self.filter_tags(self.raw_pre + " " + self.title)
-        items = [w.strip() for w in re.split(r'[:\s]+', text)]
+        text = text.replace(":", " :")
+        items = [w[1:].strip() for w in text.split() if w[0] == ':']
 
         for tag in items:
             # if c is digit, set xp
             if tag.isdigit():
                 self.xp = int(tag)
-            elif tag == TaskTest.TEST.value:
-                self.test = TaskTest.TEST
-            elif tag == TaskTest.SELF.value:
-                self.test = TaskTest.SELF
-            elif tag == ResourceType.DO.value:
-                self.resource_type = ResourceType.DO
+            elif tag == TaskEval.TEST.value:
+                self.test = TaskEval.TEST
+            elif tag == TaskEval.SELF.value:
+                self.test = TaskEval.SELF
+            elif tag == ResourceType.TASK.value:
+                self.resource_type = ResourceType.TASK
             elif tag == ResourceType.READ.value:
                 self.resource_type = ResourceType.READ
             elif tag == TaskMain.MAIN.value:
                 self.main = TaskMain.MAIN
             elif tag == TaskMain.SIDE.value:
                 self.main = TaskMain.SIDE
-            elif tag == TaskMain.PERK.value:
-                self.main = TaskMain.PERK
             elif tag == TaskLoss.FREE.value:
                 self.loss = TaskLoss.FREE
             elif tag == TaskLoss.PART.value:
@@ -83,19 +82,19 @@ class TaskMatcher:
             #     )
 
         # setting default values
-        if self.resource_type == ResourceType.UNKNOWN:
-            self.resource_type = ResourceType.DO
+        if self.resource_type == ResourceType.NULL:
+            self.resource_type = ResourceType.TASK
 
         if self.resource_type == ResourceType.READ:
             if self.loss == TaskLoss.NULL:
                 self.loss = TaskLoss.FREE
-            if self.test == TaskTest.NULL:
-                self.test = TaskTest.SELF
+            if self.test == TaskEval.NULL:
+                self.test = TaskEval.SELF
         else:
             if self.loss == TaskLoss.NULL:
                 self.loss = TaskLoss.PART
-            if self.test == TaskTest.NULL:
-                self.test = TaskTest.TEST
+            if self.test == TaskEval.NULL:
+                self.test = TaskEval.TEST
 
     @staticmethod
     def __filter_task_key(key: str) -> str | None:

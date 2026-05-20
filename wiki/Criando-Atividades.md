@@ -64,6 +64,31 @@ Arquivo opcional contendo casos de teste automatizados.
 
 ------------------------------------------------------------------------
 
+## Formato de Task (linha única)
+
+Cada task é definida em uma linha markdown, seguida de pares chave-valor:
+
+Exemplo:
+
+    - [ ] key=@t1 xp=10 type=task path=main eval=auto loss=part
+    - [ ] @t2 xp=5 type=read path=side eval=self loss=free
+
+**Campos suportados:**
+- `key=@chave` ou `@chave`: identificador único da task
+- `xp=valor`: valor em pontos/XP da tarefa
+- `type=task` ou `type=read`: tipo da tarefa (produção ou consumo)
+- `path=main` ou `path=side`: categoria/trilha da tarefa
+- `eval=auto` ou `eval=self`: modo de avaliação
+- `loss=zero`, `loss=part`, `loss=free`: política de penalidade por consulta
+
+**Notas:**
+- Apenas key é obrigatória.
+- Campos podem aparecer em qualquer ordem.
+- Campos não obrigatórios assumem valores padrão.
+- Sintaxe antiga ainda é suportada por compatibilidade, mas recomenda-se o novo formato.
+
+------------------------------------------------------------------------
+
 ## Benefícios dessa estrutura
 
 Essa organização permite:

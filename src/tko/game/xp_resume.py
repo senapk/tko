@@ -9,7 +9,7 @@ class XPResume:
         total = 0
         obtained = 0
         for q in self.quests.values():
-            o, t = q.progress.get_xp(include_main_perk=include_main, include_side=include_side)
+            o, t = q.progress.get_xp(include_main=include_main, include_side=include_side)
             total += t
             obtained += o
         return obtained, total

@@ -12,10 +12,10 @@ class QuestProgress:
         self._tasks_getter = tasks_getter
         self._min_percent_getter = min_percent_getter
 
-    def get_xp(self, include_main_perk: bool, include_side: bool) -> tuple[float, float]:
+    def get_xp(self, include_main: bool, include_side: bool) -> tuple[float, float]:
         tasks_info: list[QuestGrader.Elem] = []
         for task in self._tasks_getter():
-            if task.config.main in [TaskMain.MAIN, TaskMain.PERK] and not include_main_perk:
+            if task.config.main == TaskMain.MAIN and not include_main:
                 continue
             if task.config.main == TaskMain.SIDE and not include_side:
                 continue
@@ -35,8 +35,8 @@ class QuestProgress:
     def get_percent_main_and_all(self) -> tuple[float | None, float]:
         percent_main: float | None = 0.0
         percent_all: float = 0.0
-        obtainedm, totalm = self.get_xp(include_main_perk=True, include_side=False)
-        obtaineds, totals = self.get_xp(include_main_perk=False, include_side=True)
+        obtainedm, totalm = self.get_xp(include_main=True, include_side=False)
+        obtaineds, totals = self.get_xp(include_main=False, include_side=True)
         if totalm > 0:
             percent_main = (obtainedm / totalm) * 100
             percent_all = ((obtainedm + obtaineds) / totalm) * 100
@@ -50,8 +50,8 @@ class QuestProgress:
     def get_percent(self, include_main_perk: bool, include_side: bool) -> float | None:
         if not include_main_perk and not include_side:
             return None
-        main_obt, main_total = self.get_xp(include_main_perk=include_main_perk, include_side=False)
-        side_obt, side_total = self.get_xp(include_main_perk=False, include_side=include_side)
+        main_obt, main_total = self.get_xp(include_main=include_main_perk, include_side=False)
+        side_obt, side_total = self.get_xp(include_main=False, include_side=include_side)
         if include_main_perk and include_side:
             return QuestGrader.get_percent(main_obt + side_obt, main_total)
         if include_main_perk:

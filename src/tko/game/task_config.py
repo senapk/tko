@@ -5,7 +5,7 @@ import enum
 
 
 
-class TaskTest(enum.Enum):
+class TaskEval(enum.Enum):
     NULL = "null"  # default mode, DO if TEST, READ if USER
     TEST = "test"  # rate uses % of test cases passed
     SELF = "self"  # rate uses user self-evaluation
@@ -13,7 +13,6 @@ class TaskTest(enum.Enum):
 
 class TaskMain(enum.Enum):
     MAIN = "main"  # main task, required to complete the quest
-    PERK = "perk"  # optional task that gives extra rewards and count as main for completion
     SIDE = "side"  # side task, allowing to achieve above 100% completion
 
 
@@ -27,7 +26,7 @@ class TaskLoss(enum.Enum):
 @dataclass
 class TaskConfig:
     main: TaskMain = TaskMain.MAIN
-    test: TaskTest = TaskTest.NULL
+    test: TaskEval = TaskEval.NULL
     loss: TaskLoss = TaskLoss.NULL
 
     def clone(self) -> TaskConfig:
@@ -43,4 +42,4 @@ class TaskConfig:
     
     @property
     def is_auto(self):
-        return self.test == TaskTest.TEST
+        return self.test == TaskEval.TEST
