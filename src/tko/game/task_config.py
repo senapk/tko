@@ -10,12 +10,6 @@ class TaskEval(enum.Enum):
     TEST = "test"  # rate uses % of test cases passed
     SELF = "self"  # rate uses user self-evaluation
 
-
-class TaskMain(enum.Enum):
-    MAIN = "main"  # main task, required to complete the quest
-    SIDE = "side"  # side task, allowing to achieve above 100% completion
-
-
 class TaskLoss(enum.Enum):
     NULL = "null"  # default mode, FREE if READ, PART if DO
     FREE = "free"  # help allowed without penalty
@@ -25,20 +19,14 @@ class TaskLoss(enum.Enum):
 
 @dataclass
 class TaskConfig:
-    main: TaskMain = TaskMain.MAIN
     test: TaskEval = TaskEval.NULL
     loss: TaskLoss = TaskLoss.NULL
 
     def clone(self) -> TaskConfig:
         return TaskConfig(
             test=self.test,
-            main=self.main,
             loss=self.loss,
         )
-
-    @property
-    def is_optional(self):
-        return self.main == TaskMain.SIDE
     
     @property
     def is_auto(self):

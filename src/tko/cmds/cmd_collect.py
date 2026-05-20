@@ -86,7 +86,7 @@ class CmdCollect:
             output_quest = Game.Quest(quest.basic.full_key)
             output.append(output_quest)
             for task in quest.get_tasks():
-                output_quest.tasks.append(Game.Task(key=task.basic.full_key, value=task.game.xp, is_leet=task.config.is_auto, opt=task.config.is_optional))
+                output_quest.tasks.append(Game.Task(key=task.basic.full_key, value=task.game.xp, is_leet=task.config.is_auto))
         return output
     
 

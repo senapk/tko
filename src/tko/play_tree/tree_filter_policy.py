@@ -1,5 +1,4 @@
 from tko.game.game import Game
-from tko.game.task_config import TaskMain
 from tko.play.quest_visibility_service import QuestVisibilityService
 from tko.play_tree.task_formatter import TaskFormatter
 from tko.play_tree.tree_state import TreeFilter, TreeState
@@ -39,7 +38,7 @@ class TreeFilterPolicy:
             count = 0
             tasks = sorted(
                 quest.get_tasks(),
-                key=lambda task: (task.grader.get_rate_percent() != 100, task.config.main != TaskMain.MAIN),
+                key=lambda task: (task.grader.get_rate_percent() != 100),
             )
             for task in tasks:
                 if task.grader.get_rate_percent() == 100 and task.grader.get_quality_percent() == 100:

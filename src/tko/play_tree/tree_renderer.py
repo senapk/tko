@@ -54,22 +54,20 @@ class TreeRenderer:
     def render_task(self, t: Task, focused: bool) -> RT:
         head = RBuffer()
         head.add(" ")
-        head.add(str(t.game.xp), "b").add(" ")
+        head.add(str(t.game.xp), "y").add(" ")
 
         down_style, down_text = self.task_formatter.get_task_down_symbol(t)
         help_style, help_text = self.task_formatter.get_task_help_symbol(t)
-        path_style, path_text = self.task_formatter.get_task_path_symbol(t)
 
         head.add(down_text, down_style).add(" ")
-        head.add(self.time_formatter.format_percent_1s(t.grader.get_rate_percent())).add(" ")
         head.add(help_text, help_style).add(" ")
-        head.add(path_text, path_style).add(" ")
+        head.add(t.game.tier_symbol).add(" ")
 
         output = head.to_text()
         remote_name: str = ""
         if self.layout.use_full_key:
             remote_name = t.basic.remote_name
-        _key_title, _key, _title = self.task_formatter.get_task_full_title(
+        _, _key, _title = self.task_formatter.get_task_full_title(
             task=t,
             key_pad=self.layout.key_size,
             remote_name=remote_name,
@@ -85,12 +83,13 @@ class TreeRenderer:
         else:
             output = output.ljust(self.layout.sentence_cut_size, RT(" ", focus_color))
         tail = RBuffer().add(output).add(" ")
-        if self.flags.show_time.is_true():
-            h, m = self.time_formatter.get_task_hours_minutes(t)
-            tail.add(self.time_formatter.format_hours_minutes("g", h, m))
 
+        tail.add(self.time_formatter.format_percent_1s(t.grader.get_rate_percent())).add(" ")
         value = t.grader.full_percent
         tail.add(self.time_formatter.format_percent_3s(value))
+        if self.flags.show_time.is_true():
+            h, m = self.time_formatter.get_task_hours_minutes(t)
+            tail.add(" ").add(self.time_formatter.format_hours_minutes("g", h, m))
         return tail.to_text()
 
     def render_quest(self, q: Quest, focused: bool) -> RT:
@@ -98,8 +97,8 @@ class TreeRenderer:
         body = RBuffer().add(q.ui.ligature.set_style(color))
         done, total = q.progress.get_completion()
         body.add(f" {done:02}/{total:02}")
-        star_symbol, percent_text = self.quest_formatter.get_start_symbols_and_percent_text(q)
-        body.add(" ").add(star_symbol).add(" ")
+        percent_text = self.quest_formatter.get_percent_text(q)
+        body.add(" ")
 
         color = q.ui.is_requirement_color
 
@@ -115,10 +114,10 @@ class TreeRenderer:
             output = output.slice(0, self.layout.sentence_cut_size - 1) + "…"
         else:
             output = output.ljust(self.layout.sentence_cut_size, RT(self.filler, color))
-        tail = RBuffer().add(output).add(" ")
+        tail = RBuffer().add(output).add("   ")
+        tail.add(percent_text)
         if self.flags.show_time.is_true():
             h, m = self.time_formatter.get_quest_time(q)
-            tail.add(self.time_formatter.format_hours_minutes("g", h, m))
-        tail.add(percent_text)
+            tail.add(" ").add(self.time_formatter.format_hours_minutes("g", h, m))
 
         return tail.to_text()

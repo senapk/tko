@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 from tko.game.task_parser import TaskParser
-from tko.game.task_config import TaskLoss, TaskMain, TaskEval
+from tko.game.task_config import TaskLoss, TaskEval
 from tko.game.task_resource import ResourceType
 from tko.repository.git_cache import GitCache
 
@@ -151,22 +151,20 @@ class Test:
 
     def test_decode_task_types_covers_self_main_side_free_and_part(self):
         tp = TaskParser(index_path=Path("/source/arquivo.md"), remote_dir_root=Path("/source"), remote_name="poo")
-        task = tp.parse_line("- [ ] :self:main:side:free:part [@label title](data/label/r.md)", 0)
+        task = tp.parse_line("- [ ] :self:free:part [@label title](data/label/r.md)", 0)
 
         assert task is not None
         # Last tag wins for main/loss in this sequence.
         assert task.config.test == TaskEval.SELF
-        assert task.config.main == TaskMain.SIDE
         assert task.config.loss == TaskLoss.PART
 
     def test_parse_line_applies_tags_from_title_and_keeps_plain_words(self):
         tp = TaskParser(index_path=Path("/source/arquivo.md"), remote_dir_root=Path("/source"), remote_name="poo")
 
-        task = tp.parse_line("- [ ] [@label :self:side:free titulo](data/label/r.md)", 12)
+        task = tp.parse_line("- [ ] [@label :self:free titulo](data/label/r.md)", 12)
 
         assert task is not None
         assert task.basic.key == "label"
         assert task.basic.title == "titulo"
         assert task.config.test == TaskEval.SELF
-        assert task.config.main == TaskMain.SIDE
         assert task.config.loss == TaskLoss.FREE

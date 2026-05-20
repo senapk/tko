@@ -33,6 +33,7 @@ class TaskParser:
     Campos suportados:
         - key=@chave ou @chave: identificador único da task
         - xp=valor: valor em pontos/XP da tarefa
+        - tier=valor: nível de dificuldade da tarefa
         - type=task ou type=read: tipo da tarefa (produção ou consumo)
         - path=main ou path=side: categoria/trilha da tarefa
         - eval=test ou eval=self: modo de avaliação (test: automática por testes, self: autoavaliação)
@@ -44,15 +45,17 @@ class TaskParser:
         - eval: test para tarefas de produção, self para tarefas de consumo
         - loss: part para tarefas de produção, free para tarefas de consumo
         - xp: 1
+        - tier: 1
 
     Notas:
         - Apenas key é obrigatória.
         - Campos podem aparecer em qualquer ordem.
         - Campos não obrigatórios assumem valores padrão.
         - Sintaxe antiga (:main, :side, :test, etc) ainda é suportada por compatibilidade, mas recomenda-se o novo formato.
+        - tier vai de 1 até 5
 
     Exemplos:
-        - [ ] key=@t1 xp=10 type=task path=main eval=test loss=part
+        - [ ] key=@t1 xp=10 type=task path=main eval=test loss=part tier=3
         - [ ] @t2 xp=5 type=read path=side eval=self loss=free
         - [ ] @foo :main:free [Tarefa de exemplo](exemplo/README.md)
         - [ ] @bar :side:perk [Outra tarefa](https://exemplo.com/material)
@@ -75,9 +78,7 @@ class TaskParser:
         words: list[str] = [w for w in text.split()]
         output: list[str] = []
         for item in words:
-            if item.startswith(":"):
-                continue
-            if item.startswith("@"):
+            if TaskMatcher.is_field(item):
                 continue
             output.append(item)
         return " ".join(output)
@@ -107,7 +108,6 @@ class TaskParser:
         task.resource.raw_link = tm.link
         task.resource.resource_type = tm.resource_type
         task.game.xp = tm.xp
-        task.config.main = tm.main
         task.config.test = tm.test
         task.config.loss = tm.loss
 

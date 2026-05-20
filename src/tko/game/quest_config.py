@@ -6,6 +6,6 @@ class QuestConfig:
         # Percentual minimo para considerar quest completa.
         self.threshold: int = 50
         self.total_xp: int = 0
-        self.tags: dict[str, int] = {}
+        self.skills: dict[str, float] = {}
         self.languages: list[str] = []
         self.active: bool = True

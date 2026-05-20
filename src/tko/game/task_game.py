@@ -7,27 +7,28 @@ class TaskGame:
     def __init__(self):
         self.default_min_value: int = 5 # default min grade to complete task
         self._xp: int = 1
-        self.tags: dict[str, int] = {} # skills
+        self._tier: int = 1
+        self.skills: dict[str, float] = {} # skills
         self.is_reachable: bool = False
 
     def clone(self) -> TaskGame:
         new_task = TaskGame()
-        new_task.tags = self.tags.copy()
+        new_task.skills = self.skills.copy()
         new_task._xp = self._xp
+        new_task._tier = self._tier
         new_task.is_reachable = self.is_reachable
         return new_task
 
     def get_rate_color(self, value: int, min_value: None | int = None) -> str:
         if min_value is None:
             min_value = self.default_min_value
-        prog = value
-        if prog == 0:
+        if value == 0:
             return "c"
-        if prog < min_value:
+        if value < min_value:
             return "r"
-        if prog < 10:
+        if value < 10:
             return "y"
-        if prog == 10:
+        if value == 10:
             return "g"
         return "w"
 
@@ -58,3 +59,27 @@ class TaskGame:
         if value < 0:
             value = 1
         self._xp = value
+
+    @property
+    def tier(self) -> int:
+        if self._tier == 0:
+            return 1
+        return self._tier
+
+    @tier.setter
+    def tier(self, value: int):
+        if value < 0:
+            value = 1
+        if value > 6:
+            value = 6
+        self._tier = value
+
+    @property
+    def tier_symbol(self) -> RT:
+        values = "▁▂▃▄▅▆▇"
+        if self.tier < 3:
+            return RT(values[self.tier], "g")
+        if self.tier < 5:
+            return RT(values[self.tier], "y")
+        return RT(values[self.tier], "r")
+    

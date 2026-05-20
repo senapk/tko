@@ -47,7 +47,7 @@ class QuestParser:
         # tags (novo formato)
         tags = [w[4:] for w in words if w.startswith("tag=")]
         if tags:
-            self.quest.config.tags = {t: 1 for t in tags}
+            self.quest.config.skills = {t: 1 for t in tags}
         else:
             # skills antigos (+skill)
             skills_legacy = [t[1:] for t in words if t[0] == "+"]
@@ -58,10 +58,10 @@ class QuestParser:
                         skill_value_int = int(skill_value)
                     except ValueError:
                         skill_value_int = 1
-                    self.quest.config.tags[skill_name] = skill_value_int
+                    self.quest.config.skills[skill_name] = skill_value_int
         
-        if not self.quest.config.tags and self.quest.basic.key:
-            self.quest.config.tags[self.quest.basic.key] = 1
+        if not self.quest.config.skills and self.quest.basic.key:
+            self.quest.config.skills[self.quest.basic.key] = 1
 
         # requires (novo formato)
         requires = [w[9:] for w in words if w.startswith("requires=")]
@@ -80,8 +80,8 @@ class QuestParser:
                     multiplier = int(w[7:])
                     if multiplier < 0:
                         multiplier = 1
-                    for tag in self.quest.config.tags:
-                        self.quest.config.tags[tag] = int(self.quest.config.tags[tag] * multiplier)
+                    for tag in self.quest.config.skills:
+                        self.quest.config.skills[tag] = float(self.quest.config.skills[tag] * multiplier)
                 except Exception:
                     pass
 

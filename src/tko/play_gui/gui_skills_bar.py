@@ -76,21 +76,21 @@ class GuiSkillsBar:
     def show(self, frame_xp: Frame) -> None:
         dy, dx = frame_xp.get_inner()
         xp_resume = XPResume(self.game.quests)
-        obtained, priority, complete = xp_resume.get_skills_resume()
+        obtained, target, all = xp_resume.get_skills_resume()
         frame_xp.draw()
 
         elements: list[RT] = []
-        for skill, value in complete.items():
+        for skill, value in all.items():
             if self.flags.show_panel.is_true():
-                obtained_value = round(100 * obtained.get(skill, 0) / priority.get(skill, 1))
-                possible_value = round(100 * value / priority.get(skill, 1))
+                obtained_value = round(100 * obtained.get(skill, 0) / target.get(skill, 1))
+                possible_value = round(100 * value / target.get(skill, 1))
                 text = f"{skill}: {obtained_value:03d}%  {possible_value:03d}%"
             else:
                 obtained_value = round(obtained.get(skill, 0))
-                priority_value = round(priority.get(skill, 0))
+                priority_value = round(target.get(skill, 0))
                 complete_value = round(value)
                 text = f"{skill}:{obtained_value:03d}/{priority_value:03d}/{complete_value:03d}"
-            perc = obtained.get(skill, 0) / priority.get(skill, 1)
+            perc = obtained.get(skill, 0) / target.get(skill, 1)
             done_color = self.colors.progress_skill_done
             todo_color = self.colors.progress_skill_todo
             skill_bar = self.style.build_bar(
@@ -103,7 +103,7 @@ class GuiSkillsBar:
             elements.append(skill_bar)
 
         # Total bar
-        total_obtained, total_priority, total_complete = xp_resume.sum_xp(obtained, priority, complete)
+        total_obtained, total_priority, total_complete = xp_resume.sum_xp(obtained, target, all)
         if total_priority == 0:
             grade = 0
         else:

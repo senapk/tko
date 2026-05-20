@@ -71,6 +71,7 @@ class GameBuilder:
         self.__parse_file_content(content)
         quest_filters = self.remote.data.quest_filters
         self.__remove_empty_and_other_language_and_filtered(language, quest_filters)
+        self.__calculate_total_xp()
         self.__create_requirements_pointers()
         self.__create_cross_references()
         return self
@@ -115,6 +116,18 @@ class GameBuilder:
         for quest in self.quests.values():
             quests[quest.basic.full_key] = quest
         return quests
+
+    def __sum_quest_xp(self, quest: Quest):
+        total = 0
+        for t in quest.get_tasks():
+            total += t.game.xp
+        return total
+
+    def __calculate_total_xp(self):
+        for quest in self.quests.values():
+            if quest.config.total_xp == 0:
+                quest.config.total_xp = self.__sum_quest_xp(quest)
+
 
     def __create_requirements_pointers(self):
         quests = self.remote.data.quest_filters

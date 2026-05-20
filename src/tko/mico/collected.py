@@ -25,7 +25,6 @@ class Game:
         def __init__(self, key: str = "", value: int = default_value, is_leet: bool = default_leet, opt: bool = default_opt):
             self.key = key
             self.value: int = value
-            self.opt: bool = opt
             self.leet: bool = is_leet
         
         def to_dict(self) -> dict[str, Any]:
@@ -35,19 +34,16 @@ class Game:
                 output[Game.value_str] = self.value
             if self.leet != default_leet:
                 output[Game.leet_str] = self.leet
-            if self.opt != default_opt:
-                output[Game.opt_str] = self.opt
             return output
         
         def load_from_dict(self, json_data: dict[str, Any]):
             self.key = json_data.get(Game.key_str, self.key)
             self.value = json_data.get(Game.value_str, self.value)
             self.leet = json_data.get(Game.leet_str, self.leet)
-            self.opt = json_data.get(Game.opt_str, self.opt)
             return self
 
         def __str__(self):
-            return f"{self.key}, {Game.value_str}:{self.value}, leet:{self.leet}, {Game.opt_str}:{self.opt}"
+            return f"{self.key}, {Game.value_str}:{self.value}, leet:{self.leet}, {Game.opt_str}"
 
     class Quest:
         def __init__(self, key: str):

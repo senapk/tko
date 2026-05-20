@@ -67,4 +67,4 @@ class Task:
     def __str__(self):
         lnum = str(self.resource.line_number).rjust(3)
         key = "" if self.basic.full_key == self.basic.title else self.basic.full_key + " "
-        return f"{lnum} key:{key} title:{self.basic.title} skills:{self.game.tags} remote:{self.resource.raw_link}"
+        return f"{lnum} key:{key} title:{self.basic.title} skills:{self.game.skills} remote:{self.resource.raw_link}"

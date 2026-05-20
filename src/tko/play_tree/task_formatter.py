@@ -1,6 +1,6 @@
 from tko.cmds.drafts_finder_cached import DraftsFinderCached
 from tko.game.task import Task
-from tko.game.task_config import TaskLoss, TaskMain, TaskEval
+from tko.game.task_config import TaskLoss, TaskEval
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
 from tko.util.symbols import Symbols
@@ -76,12 +76,6 @@ class TaskFormatter:
                     return ("r", Symbols.square_void)       # não baixou e tem feedback
                 return ("", Symbols.square_void)              # não baixou e não tem feedback
         return ("x", "x")
-
-    def get_task_path_symbol(self, task: Task) -> tuple[str, str]:
-        color = "y" if task.resource.is_import_type else "m"
-        if task.config.main == TaskMain.MAIN:
-            return (color, Symbols.star_filled)
-        return (color, Symbols.star_void)
 
     def get_task_help_symbol(self, task: Task) -> tuple[str, str]:
         if task.config.loss == TaskLoss.FREE:

@@ -19,5 +19,5 @@ class QuestVisibilityService:
 
     @staticmethod
     def is_quest_closed_in_inbox(quest: Quest) -> bool:
-        _, percent_all = quest.progress.get_percent_main_and_all()
+        percent_all = quest.progress.get_percent()
         return (not QuestVisibilityService.is_reachable(quest)) or percent_all >= 100

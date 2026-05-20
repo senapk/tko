@@ -22,7 +22,11 @@ class Quest:
         self.basic.title = title
 
         self.__tasks: list[Task] = []
-        self.progress = QuestProgress(lambda: self.__tasks, lambda: self.config.threshold)
+        self.progress = QuestProgress( # using lambda functions to shared primitives
+            lambda: self.__tasks, 
+            lambda: self.config.threshold, 
+            lambda: self.config.total_xp
+        )
     
     def update_tasks_reachable(self):
         for task in self.__tasks:
@@ -34,11 +38,11 @@ class Quest:
         line = str(self.source.line_number).rjust(3)
         tasks_size = str(len(self.__tasks)).rjust(2, "0")
         key = "" if self.basic.full_key == self.basic.title else self.basic.full_key + " "
-        output = f"{line} {tasks_size} {key}{self.basic.title} {self.config.tags} {self.requirements.requires}"
+        output = f"{line} {tasks_size} {key}{self.basic.title} {self.config.skills} {self.requirements.requires}"
         return output
 
     def add_task(self, task: Task):
-        task.game.tags.update(self.config.tags)  # apply quest tags to task
+        task.game.skills.update(self.config.skills)  # apply quest tags to task
         self.__tasks.append(task)
 
     def get_tasks(self):
