@@ -25,7 +25,7 @@ class RunPresenter:
             print(executable.get_error_msg())
             return
         
-        results = [unit.result for unit in self.ctx.wdir.get_unit_list()]
+        results = [unit.result for unit in self.ctx.wdir.unit_list]
         if ExecutionResult.EXECUTION_ERROR not in results and ExecutionResult.WRONG_OUTPUT not in results:
             return
         
@@ -37,12 +37,12 @@ class RunPresenter:
             return
         
         if self.ctx.param.diff_count == DiffCount.FIRST:
-            wrong = [unit for unit in self.ctx.wdir.get_unit_list() if unit.result != ExecutionResult.SUCCESS][0]
+            wrong = [unit for unit in self.ctx.wdir.unit_list if unit.result != ExecutionResult.SUCCESS][0]
             self._print_diff_for_unit(wrong)
             return
 
         if self.ctx.param.diff_count == DiffCount.ALL:
-            for unit in self.ctx.wdir.get_unit_list():
+            for unit in self.ctx.wdir.unit_list:
                 if unit.result != ExecutionResult.SUCCESS:
                     self._print_diff_for_unit(unit)
 

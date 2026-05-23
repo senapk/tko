@@ -1,7 +1,7 @@
 from __future__ import annotations
 import logging
 from tko.game.task import Task
-from tko.game.task_resource import ResourceType
+from tko.game.task_enums import TaskType
 from tko.game.task_matcher import TaskMatcher
 from tko.feno.github_url_structure import GithubUrlStructure
 from tko.i18n import Msg
@@ -106,7 +106,7 @@ class TaskParser:
         task.resource.line_number = line_num
         task.resource.line_data = line
         task.resource.raw_link = tm.link
-        task.resource.resource_type = tm.resource_type
+        task.resource.task_type = tm.resource_type
         task.game.xp = tm.xp
         task.config.test = tm.test
         task.config.loss = tm.loss
@@ -134,7 +134,7 @@ class TaskParser:
                     # logger.warning(t(_TASK_PARSER_EDIT_EXTERNAL_URL, url=tm.link))
                     task.resource.external_url = tm.link
                     task.resource.editable_source = False
-                    task.resource.resource_type = ResourceType.READ
+                    task.resource.task_type = TaskType.READ
                     return task
         
         # file read, static task or import task

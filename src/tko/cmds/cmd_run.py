@@ -91,7 +91,7 @@ class Run:
         if self._missing_target():
             return 0
 
-        if not self.context.wdir.has_solver() and self.context.wdir.has_tests() and not self.context.config.eval_mode:
+        if not self.context.wdir.solver and self.context.wdir.has_tests and not self.context.config.eval_mode:
             RunPresenter(self.context).list_mode()
             return 0
         
@@ -123,7 +123,7 @@ class Run:
         executor = RunExecutor(self.context)
         
         # Free run mode (no tests)
-        if self.context.wdir.has_solver() and not self.context.wdir.has_tests() and not self.context.config.no_run:
+        if self.context.wdir.solver and not self.context.wdir.has_tests and not self.context.config.no_run:
             if not self.context.config.eval_mode:
                 executor.free_run()
             else:
@@ -134,7 +134,7 @@ class Run:
         return executor.run_tests()
 
     def _missing_target(self) -> bool:
-        if not self.context.wdir.has_solver() and not self.context.wdir.has_tests():
+        if not self.context.wdir.solver and not self.context.wdir.has_tests:
             if not self.context.config.curses_mode:
                 print(RT("fail: ") + t(_RUN_NO_SOURCE_OR_TESTS))
             return True

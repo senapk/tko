@@ -25,7 +25,7 @@ class Quest:
         self.progress = QuestProgress( # using lambda functions to shared primitives
             lambda: self.__tasks, 
             lambda: self.config.threshold, 
-            lambda: self.config.total_xp
+            lambda: self.config.goal_xp
         )
     
     def update_tasks_reachable(self):

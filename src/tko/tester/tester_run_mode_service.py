@@ -32,9 +32,9 @@ class TesterRunModeService:
 
     def run_test_mode(self, state: TesterState) -> None:
         state.mode = SeqMode.running
-        if self.wdir.is_autoload():
+        if self.wdir.autoload_folder:
             self.wdir.autoload()
-        self.wdir.build()
+        self.wdir.build_unit_list()
 
         from tko.widget.fmt import Fmt
         Fmt.clear()
@@ -51,11 +51,11 @@ class TesterRunModeService:
         else:
             state.focused_index = 0
             state.results = []
-            state.unit_list = list(self.wdir.get_unit_list())
+            state.unit_list = list(self.wdir.unit_list)
 
     def run_exec_mode(self, state: TesterState) -> Callable[[], bool]:
         state.mode = SeqMode.running
-        if self.wdir.is_autoload():
+        if self.wdir.autoload_folder:
             self.wdir.autoload()
             self.wdir.get_solver().set_main(tester_util.get_solver_names(self.wdir)[self.task.main_idx])
         state.mode = SeqMode.finished

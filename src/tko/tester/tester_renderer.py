@@ -104,7 +104,7 @@ class TesterRenderer:
     def draw_main(self, state: TesterState) -> None:
         unit = state.get_focused_unit(self.wdir, self._dummy_unit)
         lines, cols = Fmt.get_size()
-        if self.wdir.has_tests():
+        if self.wdir.has_tests:
             y_out = 2
             state.space = lines - 4
         else:
@@ -122,7 +122,7 @@ class TesterRenderer:
             executable, _ = self.wdir.get_solver().get_executable()
             received = executable.get_error_msg().get_str()
             line_list = [RT(line) for line in received.splitlines()]
-        elif self.settings.app.diff_mode == DiffMode.DOWN or not self.wdir.has_tests():
+        elif self.settings.app.diff_mode == DiffMode.DOWN or not self.wdir.has_tests:
             line_list = DiffBuilderDown(cols, unit).build_diff()
         else:
             line_list = DiffBuilderSide(cols, unit).build_diff()

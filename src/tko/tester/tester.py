@@ -49,7 +49,7 @@ class Tester:
 
         fman    = FloatingManager()
 
-        self.state    = TesterState(list(wdir.get_unit_list()))
+        self.state    = TesterState(list(wdir.unit_list))
         self.top_bar  = TesterTopBar(wdir, task, settings.app)
         self.executor = TesterExecutor(settings, rep, wdir, task, fman, self.top_bar)
         self.renderer = TesterRenderer(settings, wdir, task, self.top_bar, None)

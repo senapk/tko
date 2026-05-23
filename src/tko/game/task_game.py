@@ -8,7 +8,7 @@ class TaskGame:
         self.default_min_value: int = 5 # default min grade to complete task
         self._xp: int = 1
         self._tier: int = 1
-        self.skills: dict[str, float] = {} # skills
+        self.skills: set[str] = set()
         self.is_reachable: bool = False
 
     def clone(self) -> TaskGame:

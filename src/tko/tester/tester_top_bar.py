@@ -55,7 +55,7 @@ class TesterTopBar:
         solvers = solvers_buffer.to_text()
 
         done = len(state.results)
-        full = len(self.wdir.get_unit_list())
+        full = len(self.wdir.unit_list)
         count_missing = RT(f" ({done}/{full}) ", running_color)
         if state.mode == SeqMode.running:
             if state.locked_index:
@@ -64,7 +64,7 @@ class TesterTopBar:
                 solvers = count_missing
 
         source_names = " ".join([f" {name[0]}({name[1]}) " for name in self.wdir.sources_names()])
-        if self.wdir.has_tests():
+        if self.wdir.has_tests:
             sources = RT(f"{source_names}", sources_color)
         else:
             sources = RT(f" {t(_TesterTopBarMsg.NO_TESTS_REGISTERED)} ", "R")
@@ -75,7 +75,7 @@ class TesterTopBar:
             delta_left = delta // 2
             left  = max(1, delta_left - activity.len())
             right = max(1, (delta - delta_left) - sources.len())
-        filler = "─" if self.wdir.has_tests() else " "
+        filler = "─" if self.wdir.has_tests else " "
         return RBuffer().add(activity).add(filler * left).add(solvers).add(filler * right).add(sources).to_text()
 
     def build_unit_list(self, state: TesterState, frame: Frame) -> RT:
@@ -91,7 +91,7 @@ class TesterTopBar:
         i = len(done_list)
         for _ in state.unit_list:
             if state.locked_index and i == state.focused_index:
-                todo_list.append((self.wdir.get_unit(state.focused_index).result, i))
+                todo_list.append((self.wdir.unit_list[state.focused_index].result, i))
             else:
                 todo_list.append((ExecutionResult.UNTESTED, i))
             i += 1
@@ -135,7 +135,7 @@ class TesterTopBar:
         return output
 
     def draw_top_bar_content(self, state: TesterState, frame: Frame) -> None:
-        if not self.wdir.has_tests():
+        if not self.wdir.has_tests:
             return
         unit = state.get_focused_unit(self.wdir, self._dummy_unit)
         info = RT()
@@ -148,9 +148,9 @@ class TesterTopBar:
     def draw(self, state: TesterState) -> None:
         from tko.widget.fmt import Fmt
         _, cols = Fmt.get_size()
-        size = 3 if self.wdir.has_tests() else 1
+        size = 3 if self.wdir.has_tests else 1
         frame = Frame(0, 0).set_size(size, cols)
-        if not self.wdir.has_tests():
+        if not self.wdir.has_tests:
             frame.set_border_none()
         frame.set_header(self.build_top_line_header(state, frame.get_dx()))
         self.draw_top_bar_content(state, frame)

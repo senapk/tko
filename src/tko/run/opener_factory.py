@@ -13,8 +13,13 @@ class OpenerFactory:
         if ctx.target_list:
             targets = ctx.target_list
 
-        if ctx.wdir.get_solver().args_list:
-            solver_zero = ctx.wdir.get_solver().args_list[0]
+        solver = ctx.wdir.solver
+        if solver is None:
+            return opener
+        if ctx.wdir.lang is not None:
+            opener.set_language(ctx.wdir.lang)
+        elif solver.args_list:
+            solver_zero = solver.args_list[0]
             lang = solver_zero.name.split(".")[-1]
             opener.set_language(lang)
 

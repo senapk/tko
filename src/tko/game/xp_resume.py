@@ -20,17 +20,17 @@ class XPResume:
         target: dict[str, float] = {}
 
         for q in self.quests.values():
-            for skill, factor in q.config.skills.items():
-                target[skill] = target.get(skill, 0) + q.config.total_xp * factor
+            for skill in q.config.skills:
+                target[skill] = target.get(skill, 0) + q.config.goal_xp * q.config.factor
             for t in q.get_tasks():
-                for skill, factor in t.game.skills.items():
+                for skill in t.game.skills:
                     if skill == "":
                         continue
-                    gvalue = (factor * t.game.xp * t.grader.ratio)
+                    gvalue = (q.config.factor * t.game.xp * t.grader.ratio)
                     if gvalue < 0.1:
                         gvalue = 0
                     obtained[skill] = obtained.get(skill, 0) + gvalue
-                    all_available[skill] = all_available.get(skill, 0) + factor * t.game.xp
+                    all_available[skill] = all_available.get(skill, 0) + q.config.factor * t.game.xp
 
         return obtained, target, all_available
 

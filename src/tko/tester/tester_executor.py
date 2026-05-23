@@ -51,7 +51,9 @@ class TesterExecutor:
         track_folder = self.rep.paths.get_track_task_folder(self.task.basic.full_key)
         tracker = Tracker()
         tracker.set_folder(track_folder)
-        tracker.set_files(self.wdir.get_solver().args_list)
+        if not self.wdir.solver:
+            return False, 0
+        tracker.set_files(self.wdir.solver.args_list)
         tracker.set_result(result)
         return tracker.store()
 

@@ -32,13 +32,15 @@ class TesterExecutionService:
         if state.mode != SeqMode.running:
             return
 
-        solver = self.wdir.get_solver()
+        solver = self.wdir.solver
+        if solver is None:
+            return
 
         if solver.has_compile_error():
             self._handle_compile_error(state)
             return
 
-        if state.locked_index or not self.wdir.has_tests():
+        if state.locked_index or not self.wdir.has_tests:
             self._run_locked_or_without_tests(state)
             return
 
@@ -66,7 +68,10 @@ class TesterExecutionService:
     def _run_locked_or_without_tests(self, state: TesterState) -> None:
         state.mode = SeqMode.finished
         unit = state.get_focused_unit(self.wdir, self._dummy_unit)
-        unit.result = UnitRunner.run_unit(self.wdir.get_solver(), unit, self.settings.app.timeout)
+        solver = self.wdir.solver
+        if solver is None:
+            return
+        unit.result = UnitRunner.run_unit(solver, unit, self.settings.app.timeout)
         rate = 100 if unit.result == ExecutionResult.SUCCESS else 0
         changes, total_lines = self.store_version(str(rate))
         if self.rep:
@@ -82,7 +87,10 @@ class TesterExecutionService:
         index = len(state.results)
         unit = state.unit_list[0]
         state.unit_list = state.unit_list[1:]
-        unit.result = UnitRunner.run_unit(self.wdir.get_solver(), unit, self.settings.app.timeout)
+        solver = self.wdir.solver
+        if solver is None:
+            return
+        unit.result = UnitRunner.run_unit(solver, unit, self.settings.app.timeout)
         state.results.append((unit.result, index))
         state.focused_index = index
 

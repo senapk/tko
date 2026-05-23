@@ -1,6 +1,7 @@
 from tko.cmds.drafts_finder_cached import DraftsFinderCached
+from tko.game.task_enums import TaskEval
 from tko.game.task import Task
-from tko.game.task_config import TaskLoss, TaskEval
+from tko.game.task_enums import TaskLoss
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
 from tko.util.symbols import Symbols

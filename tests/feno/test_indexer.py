@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from tko.feno.indexer import IndexLine
+from tko.feno.indexer import TaskLine
 
 
 def test_index_line_accepts_windows_separator_for_readme(tmp_path: Path) -> None:
@@ -8,7 +8,9 @@ def test_index_line_accepts_windows_separator_for_readme(tmp_path: Path) -> None
     base_dir = tmp_path
 
     line = "- [ ] `@user_001` [Sample](user_001\\README.md)"
-    parsed = IndexLine(index_path=index_path, base_dir=base_dir).init_by_line(line)
+    tl = TaskLine(index_path=index_path, base_dir=base_dir)
+    parsed = tl.init_by_line(line)
 
-    assert parsed.isTask
-    assert parsed.readme_file == (index_path.parent / "user_001" / "README.md").resolve()
+    assert parsed is True
+    assert tl.tm.key == "user_001"
+    assert tl.target_file == (index_path.parent / "user_001" / "README.md").resolve()

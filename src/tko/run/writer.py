@@ -1,9 +1,7 @@
 import logging
 import os
 
-from tko.util.identifier import Identifier
 from tko.util.pattern_loader import PatternLoader
-from tko.enums.identifier_type import IdentifierType
 from tko.loader.toml_parser import TomlParser
 from tko.run.unit import Unit
 from tko.util.decoder import Decoder
@@ -100,10 +98,10 @@ class Writer:
                     print(t(_WRITER_FILE_WROTE, path=_target))
                 return True
 
-        target_type = Identifier.get_type(str(target))
-        if target_type == IdentifierType.OBI:
+        
+        if target.is_dir():
             save_dir(target, unit_list)
-        elif target_type in [IdentifierType.TIO, IdentifierType.VPL, IdentifierType.TOML]:
+        elif target.suffix in [".tio", ".vpl", ".toml"]:
             save_file(target, unit_list)
         else:
             logger.error(t(_WRITER_TARGET_NOT_SUPPORTED_BUILD, target=target))

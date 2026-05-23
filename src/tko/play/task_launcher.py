@@ -75,7 +75,7 @@ class TaskLauncher:
         run.set_task(self.repo, task)
         run.load()
 
-        if not run.context.wdir.has_solver():
+        if not run.context.wdir.solver:
             cmd = CmdDown(self.repo, task.basic.full_key, self.settings)
             cmd.execute()
             msg = Floating().bottom().right().set_warning()

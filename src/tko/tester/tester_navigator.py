@@ -67,6 +67,7 @@ class TesterNavigator:
                 .put_text(t(_TesterNavigatorMsg.LOCKED_HINT, arrow="←", lock_key=GuiKeys.lock))
             )
             return
+        
         if not self.wdir.get_solver().has_compile_error():
             state.focused_index = max(0, state.focused_index - 1)
             state.diff_first_line = 1000
@@ -86,7 +87,7 @@ class TesterNavigator:
             return
         if not self.wdir.get_solver().has_compile_error():
             state.focused_index = min(
-                len(self.wdir.get_unit_list()) - 1,
+                len(self.wdir.unit_list) - 1,
                 state.focused_index + 1,
             )
             state.diff_first_line = 1000

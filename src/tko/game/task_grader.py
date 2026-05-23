@@ -1,4 +1,4 @@
-from tko.game.task_config import TaskLoss
+from tko.game.task_enums import TaskLoss
 from tko.game.task_info import TaskSelfInfo
 
 class TaskGrader:

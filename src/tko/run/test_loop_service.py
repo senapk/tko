@@ -24,7 +24,7 @@ class TestLoopService:
     def _run_units(self):
         first = True
         execution_error = False
-        for unit in self.ctx.wdir.get_unit_list():
+        for unit in self.ctx.wdir.unit_list:
             if first:
                 first = False
             else:

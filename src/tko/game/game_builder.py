@@ -125,8 +125,8 @@ class GameBuilder:
 
     def __calculate_total_xp(self):
         for quest in self.quests.values():
-            if quest.config.total_xp == 0:
-                quest.config.total_xp = self.__sum_quest_xp(quest)
+            if quest.config.goal_xp == 0:
+                quest.config.goal_xp = self.__sum_quest_xp(quest)
 
 
     def __create_requirements_pointers(self):

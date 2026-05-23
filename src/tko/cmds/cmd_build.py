@@ -30,9 +30,11 @@ class CmdBuild:
 
     def execute(self):
         try:
-            wdir = Wdir(self.settings).set_sources(self.source_list).build()
+            wdir = Wdir(self.settings)
+            wdir.source_list = self.source_list
+            wdir.build_unit_list()
             wdir.manipulate(self.param)
-            Writer.save_target(self.target_out, wdir.get_unit_list(), quiet=self.quiet)
+            Writer.save_target(self.target_out, wdir.unit_list, quiet=self.quiet)
         except FileNotFoundError:
             logger.exception(t(_CMD_BUILD_EXECUTE_FAILED, target=self.target_out))
             return False

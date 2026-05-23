@@ -1,9 +1,10 @@
 import os
 from pathlib import Path
 
+from tko.game.task_enums import TaskEval
 from tko.game.task_parser import TaskParser
-from tko.game.task_config import TaskLoss, TaskEval
-from tko.game.task_resource import ResourceType
+from tko.game.task_enums import TaskLoss
+from tko.game.task_enums import TaskType
 from tko.repository.git_cache import GitCache
 
 class Test:
@@ -21,7 +22,7 @@ class Test:
         assert task.resource.raw_link == "data/label/r.md"
         assert task.resource.remote_dir == Path("/source")
         assert task.resource.relative_path == Path("data/label/r.md")
-        assert task.resource.resource_type == ResourceType.TASK
+        assert task.resource.task_type == TaskType.MAKE
     
     def test_database_poo(self):
         tp = TaskParser(index_path=Path("/source/arquivo.md"), remote_dir_root=Path("/source"), remote_name="poo")
@@ -69,7 +70,7 @@ class Test:
         )
 
         assert task is not None
-        assert task.resource.resource_type == ResourceType.TASK
+        assert task.resource.task_type == TaskType.MAKE
         assert task.resource.external_url is None
         assert task.resource.remote_git == "https://github.com/user/repo"
         assert task.resource.remote_dir == Path("/source")
@@ -91,7 +92,7 @@ class Test:
         )
 
         assert task is not None
-        assert task.resource.resource_type == ResourceType.TASK
+        assert task.resource.task_type == TaskType.MAKE
         assert task.resource.external_url is None
         assert task.resource.remote_git == "https://github.com/user/repo"
         assert task.resource.remote_dir == Path("/source")
@@ -113,7 +114,7 @@ class Test:
         )
 
         assert task is not None
-        assert task.resource.resource_type == ResourceType.READ
+        assert task.resource.task_type == TaskType.READ
         assert task.resource.external_url == "https://example.com/material"
         assert task.resource.editable_source is False
 
@@ -130,7 +131,7 @@ class Test:
         task = tp.parse_line("- [ ] `@ref :read`[material](https://example.com/material)", 3)
 
         assert task is not None
-        assert task.resource.resource_type == ResourceType.READ
+        assert task.resource.task_type == TaskType.READ
         assert task.resource.external_url == "https://example.com/material"
         assert task.config.loss == TaskLoss.FREE
         assert task.config.test == TaskEval.SELF

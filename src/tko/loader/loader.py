@@ -22,6 +22,7 @@ _LOADER_UNABLE_TO_FIND = Msg(
 )
 
 class Loader:
+    SOURCES_EXTENSIONS = [".tio", ".vpl", ".cases", ".toml", ".md"]
 
     @staticmethod
     def parse_vpl(text: str, source: Path) -> list[Unit]:

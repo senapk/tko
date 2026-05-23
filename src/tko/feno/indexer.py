@@ -1,21 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import logging
-import re
 from pathlib import Path
+from tko.feno.quest_line import QuestLine
 from tko.i18n import Msg, t
 from tko.util.decoder import Decoder
 from tko.util.rt import RT
-from tko.game.task_matcher import TaskMatcher
-from tko.game.task_resource import ResourceType
-
+from tko.feno.task_line import TaskLine
+from tko.feno.indexer_md import IndexerMd
 
 logger = logging.getLogger(__name__)
 
-_INDEXER_INVALID_LABEL = Msg(
-    pt="Rótulo inválido na linha: {label}",
-    en="Invalid label in line: {label}",
-)
+type Line = TaskLine | QuestLine | str
+
 _INDEXER_FOUND_READMES = Msg(
     pt="Encontrados {count} arquivos README.md no diretório base '{base_dir}'",
     en="Found {count} README.md files in base directory '{base_dir}'",
@@ -32,255 +29,231 @@ _INDEXER_MISMATCH_TITLE = Msg(
     pt="Mismatch title for task:<{readme}:b>\n\tREADME:'<{line_title}:y>' != TASK:'<{folder_title}:g>'",
     en="Mismatch title for task:<{readme}:b>\n\tREADME:'<{line_title}:y>' != TASK:'<{folder_title}:g>'",
 )
-_INDEXER_REPLACE_TITLE_README_MISSING = Msg(
-    pt="Error: README file '{readme}' does not exist, cannot replace title.",
-    en="Error: README file '{readme}' does not exist, cannot replace title.",
-)
-_INDEXER_REPLACED_TITLE = Msg(
-    pt="Replaced title in '{readme}' with '{title}'",
-    en="Replaced title in '{readme}' with '{title}'",
-)
+
 _INDEXER_MISSING_HOOKS_ADDING = Msg(
     pt="Found {count} missing hooks, adding to quest '{quest}':",
     en="Found {count} missing hooks, adding to quest '{quest}':",
 )
 
-def load_title_from_markdown_file(path: Path) -> str | None:
-    if not path.exists():
-        return None
-    with open(path, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line.startswith("# "):
-                return line[2:].strip()
-    return "NÃO TEM TÍTULO"
-
-class IndexLine:
-    def __init__(self, index_path: Path, base_dir: Path):
-        self.raw_line: str = ""
-        self.isTask: bool = False
-        self.raw_pre: str = ""
-        self.raw_pos: str = ""
-        self.title: str = ""
-        self.origin_key: str | None = None
-        self.is_read: bool = False
-        self.readme_file: Path | None = None
-        self.url: str | None = None
-        
-        self.index_path: Path = index_path.resolve()
-        self.base_dir: Path = base_dir.resolve()
-    
-    def init_by_line(self, line: str):
-        self.raw_line = line
-        tm = TaskMatcher()
-        if not tm.match_pattern(line):
-            return self
-        self.isTask = True
-        self.raw_pre = tm.raw_pre
-        self.raw_pos = tm.raw_pos
-        self.title = tm.title
-        self.origin_key = tm.key
-        self.is_read = tm.resource_type == ResourceType.READ
-        if self.is_read:
-            self.url = tm.link
-        else:
-            if tm.link.startswith(r"http://") or tm.link.startswith(r"https://"):
-                self.url = tm.link
-            else:
-                # Markdown links may come from Windows paths; normalize separators first.
-                normalized_link = tm.link.replace("\\", "/")
-                link = Path(normalized_link)
-                if link.name != "README.md":
-                    raise ValueError(f"Invalid README file name: {link}")
-                if link.is_absolute():
-                    self.readme_file = Path(link).resolve()
-                else:
-                    self.readme_file = (self.index_path.parent / link).resolve()
-        
-        return self
-
-    def init_by_readme_file(self, readme_file: Path, title: str):
-        self.readme_file = readme_file
-        self.title = title
-        self.origin_key = self.readme_file.parent.name
-        self.raw_pre = f"@{self.origin_key}"
-        self.isTask = True
-        return self
-
-    def get_render_line(self, key_pad: int) -> str:
-        if not self.isTask:
-            return self.raw_line
-        if self.readme_file is not None:
-            readme_path = self.readme_file.resolve().relative_to(self.index_path.parent.resolve(), walk_up=True)
-            return f"- [ ]{self.get_pre(key_pad)}[{self.title}]({readme_path}){self.raw_pos}"
-        elif self.url is not None:
-            return f"- [ ]{self.get_pre(key_pad)}[{self.title}]({self.url}){self.raw_pos}"
-        return self.raw_line
-
-    def get_pre(self, key_pad: int) -> str:
-        pre = self.raw_pre.replace(f"@{self.key}", "").replace("`", "").replace("- [ ]", "").strip()
-        words = pre.split(" ")
-        words = [w for w in words if not w.startswith("@") and w != ""]
-        tags = [f"{w}" for w in words if w.startswith(":")]
-        others = [w for w in words if not w.startswith(":")]
-        out = f"`@{self.key:<{key_pad + 1}}{' '.join(tags)}`"
-        if len(others) > 0:
-            out += " " + " ".join(others)
-        return out
-
-    @property
-    def key(self) -> str:
-        edit_task_label = ""
-        if self.is_read:
-            return self.origin_key if self.origin_key is not None else ""
-        if self.readme_file is not None:
-            if self.readme_file.resolve().is_relative_to(self.base_dir.resolve()):
-                edit_task_label = self.readme_file.parent.name
-        elif self.origin_key is not None:
-            edit_task_label = self.origin_key
-        valid_label = ""
-        # if "@" not in line:
-        valid_chars = TaskMatcher.ALLOWED
-        for char in edit_task_label:
-            if char in valid_chars:
-                valid_label += char
-            else:
-                logger.error(t(_INDEXER_INVALID_LABEL, label=edit_task_label))
-                raise ValueError(t(_INDEXER_INVALID_LABEL, label=edit_task_label))
-
-        return valid_label
-    
-class Indexer:
+class Elements:
     def __init__(self, index_path: Path, base_dir: Path, verbose: bool = True):
         self.index_path = index_path
         self.base_dir = base_dir
         self.verbose = verbose
-        self.index_lines: list[IndexLine] = []
-        self.path_title_dict: dict[Path, str] = {}
-        self.missing_entries: dict[Path, IndexLine] = {}
+        self.lines: list[QuestLine | TaskLine | str] = []
 
-    # retorna uma lista com os readme's encontrados no basedir, com o título extraído de cada um
-    def load_readme_title_dict_from_basedir(self) -> None:
-        titles: dict[Path, str] = {}
+    def load_lines(self) -> None:
+        content = Decoder.load(self.index_path)
+        index_lines: list[TaskLine | QuestLine | str] = []
+        for line in content.splitlines():
+            tl = TaskLine(index_path=self.index_path, base_dir=self.base_dir)
+            if tl.init_by_line(line):
+                index_lines.append(tl)
+                continue
+            ql = QuestLine()
+            if ql.parse(index_path=self.index_path, line=line):
+                index_lines.append(ql)
+                continue
+            index_lines.append(line)
+        self.lines = index_lines
+
+    def print_lines(self) -> None:
+        for line in self.lines:
+            if isinstance(line, TaskLine):
+                print(f"TL: {line.key} -> {line.target_file}")
+            elif isinstance(line, QuestLine):
+                print(f"QL: {line.key} -> {line.quest.basic.title}")
+            else:
+                print(f"STR: {line}")
+
+    def remove_tasks_with_broken_targets(self) -> None:
+        new_list: list[QuestLine | TaskLine | str] = []
+        for line in self.lines:
+            if not isinstance(line, TaskLine):
+                new_list.append(line)
+                continue
+            if line.target_file is not None:
+                if not line.target_file.exists():
+                    if self.verbose:
+                        print(RT.parse(t(_INDEXER_MISSING_README_REMOVING, readme=line.target_file, task=line.key)))
+                    continue
+            new_list.append(line)
+        self.lines = new_list
+
+    def fix_titles(self, save_titles: bool = False, load_titles: bool = False) -> None:
+        for line in self.lines:
+            folder_title: str = ""
+            if not isinstance(line, TaskLine):
+                return
+            if line.tm.is_url:
+                return
+            if line.target_file is None:
+                return
+            if line.target_file.exists():
+                title = IndexerMd.load_title_from_markdown_file(line.target_file)
+                if title is not None:
+                    folder_title = title
+            if folder_title == line.tm.title:
+                continue
+            if self.verbose:
+                print(RT.parse(t(_INDEXER_MISMATCH_TITLE, readme=line.target_file, line_title=line.tm.title, folder_title=folder_title)))
+            if save_titles:
+                IndexerMd.replace_title_in_readme(line.target_file, line.tm.title, self.verbose)
+            if load_titles:
+                line.tm.title = folder_title
+
+
+class Renderer:
+    def __init__(self, index_path: Path):
+        self.index_path = index_path
+
+    def get_render_line(self, item: Line, key_pad: int) -> str:
+        if isinstance(item, TaskLine):
+            return item.render_line(key_pad)
+        elif isinstance(item, QuestLine):
+            return item.render_line()
+        return item
+
+    def _calc_key_pad(self, quest_lines: list[QuestLine]) -> int:
+        keys: list[str] = []
+        for quest in quest_lines:
+            for line in quest.lines:
+                if isinstance(line, TaskLine):
+                    keys.append(line.key)
+        return max([len(k) for k in keys]) if len(keys) > 0 else 0
+
+    def _render(self, header: list[TaskLine | str], quests: list[QuestLine]) -> list[str]:
+        
+        key_pad = self._calc_key_pad(quests)
+        output: list[str] = []
+        for line in header:
+            output.append(self.get_render_line(line, key_pad=key_pad))
+
+        for quest in quests:
+            output.append(quest.render_line())
+            for line in quest.lines:
+                output.append(self.get_render_line(line, key_pad=key_pad))
+        return output
+
+    def write_file(self, header: list[TaskLine | str], quests: list[QuestLine]) -> None:
+        # Combine header and quests into a single list of lines
+        output = self._render(header, quests)
+        # print("\n".join(output))
+        with open(self.index_path, "w", encoding="utf-8") as f:
+            f.write("\n".join(output) + "\n")
+
+
+class Finder:
+    def __init__(self, indexer: Elements):
+        self.base_dir = indexer.base_dir
+        self.lines = indexer.lines
+        self.index_path = indexer.index_path
+
+    def _get_folder_keys(self) -> set[str]:
+        keys: set[str] = set()
         for path in self.base_dir.iterdir():
             if path.is_dir():
                 readme = (path / 'README.md').resolve()
-                if (readme).exists():
-                    title = load_title_from_markdown_file(readme)
-                    if title is not None:
-                        titles[readme] = title
-        self.path_title_dict = titles
-        if self.verbose:
-            print(t(_INDEXER_FOUND_READMES, count=len(self.path_title_dict), base_dir=self.base_dir))
+                if readme.exists():
+                    keys.add(path.name)
+        return keys
 
-    def found_unused_task_dirs(self,) -> None:
-        index_tasks: set[str] = set([f.key for f in self.index_lines if f.isTask])
-        missing_entries = [t for t in self.path_title_dict.keys() if t.parent.name not in index_tasks]
-        output: dict[Path, IndexLine] = {}
-        if len(missing_entries) > 0:
-            for m in missing_entries:
-                task_line = (IndexLine(index_path=self.index_path, base_dir=self.base_dir)
-                                .init_by_readme_file(m, self.path_title_dict[m]))
-                output[m] = task_line
-        self.missing_entries = output
+    def _get_line_keys(self, lines: list[Line]) -> set[str]:
+        line_keys: set[str] = set()
+        for line in lines:
+            if isinstance(line, TaskLine):
+                line_keys.add(line.key)
+        return line_keys
 
-    def load_index_lines_removing_broken(self) -> None:
-        content = Decoder.load(self.index_path)
-        index_lines: list[IndexLine] = []
-        for line in content.splitlines():
-            file_line = IndexLine(index_path=self.index_path, base_dir=self.base_dir).init_by_line(line)
-            if file_line.isTask and file_line.readme_file is not None:
-                if not file_line.readme_file.exists():
-                    if self.verbose:
-                        print(RT.parse(t(_INDEXER_MISSING_README_REMOVING, readme=file_line.readme_file, task=file_line.key)))
-                    continue
-            index_lines.append(file_line)
-        self.index_lines = index_lines
+    def create_tasks_from_unused_dirs(self) -> dict[Path, TaskLine]:
+        folder_keys = self._get_folder_keys()
+        line_keys = self._get_line_keys(self.lines)
+        missing_keys = folder_keys - line_keys
 
-    def fix_titles(self, save_titles: bool = False, load_titles: bool = False) -> None:
-        # fixing titles
-        for line in self.index_lines:
-            if not line.isTask or line.readme_file is None:
+        output: dict[Path, TaskLine] = {}
+        for m in missing_keys:
+            tl = TaskLine(index_path=self.index_path, base_dir=self.base_dir)
+            readme = (self.base_dir / m / 'README.md').resolve()
+            if not readme.exists():
                 continue
-            if line.readme_file not in self.path_title_dict:
-                # wiki
-                title = load_title_from_markdown_file(line.readme_file)
-                if title is not None:
-                    self.path_title_dict[line.readme_file] = title
-            folder_title = self.path_title_dict[line.readme_file]
-            if folder_title == line.title:
+            title = IndexerMd.load_title_from_markdown_file(readme)
+            if title is None:
                 continue
-            if self.verbose:
-                print(RT.parse(t(_INDEXER_MISMATCH_TITLE, readme=line.readme_file, line_title=line.title, folder_title=folder_title)))
-            if save_titles:
-                self.replace_title_in_readme(line.readme_file, line.title)
-            if load_titles:
-                line.title = folder_title
+            tl.init_by_readme_file(readme, title)
+            output[readme] = tl
+        return output
 
-    def replace_title_in_readme(self, readme_file: Path, new_title: str) -> None:
-        if not readme_file.exists():
-            logger.error(t(_INDEXER_REPLACE_TITLE_README_MISSING, readme=readme_file))
-            return
-        with open(readme_file, "r", encoding="utf-8") as f:
-            content = f.read()
-        # regex to replace first line starting with # with the new title
-        regex = r'^(# .*)$'
-        new_content = re.sub(regex, f"# {new_title}", content, count=1, flags=re.MULTILINE)
-        with open(readme_file, "w", encoding="utf-8") as f:
-            f.write(new_content)
-        if self.verbose:
-            print(t(_INDEXER_REPLACED_TITLE, readme=readme_file, title=new_title))
 
-    def insert_missing_tasks(self, default_quest_name: str) -> list[list[IndexLine]]:
-        quest_lines: list[list[IndexLine]] = []
-        found_index = -1
+class Merger:
+    def __init__(self, indexer: Elements):
+        self.lines = indexer.lines
+        self.index_path = indexer.index_path
+        self.base_dir = indexer.base_dir
+        self.verbose = indexer.verbose
+        self.header: list[str | TaskLine] = []
+        self.quests: list[QuestLine] = []
 
-        if self.index_lines:
-            quest_lines.append([self.index_lines[0]])
-        for line in self.index_lines[1:]:
-            if line.raw_line.startswith("## "):
-                quest_lines.append([line])
-                if line.raw_line.startswith(f"## {default_quest_name}"):
-                    found_index = len(quest_lines) - 1
+    def _raw_line(self, line: Line) -> str:
+        if isinstance(line, TaskLine):
+            return line.raw_line
+        elif isinstance(line, QuestLine):
+            return line.qp.raw_line
+        return line
+
+    def _split_header_and_quests(self) -> None:
+        header: list[TaskLine | str] = []
+        quests: list[QuestLine] = []
+
+        for line in self.lines:
+            if isinstance(line, QuestLine):
+                quests.append(line)
+                continue
+            if quests:
+                quests[-1].lines.append(line)
             else:
-                if line.raw_line.strip() != "":
-                    quest_lines[-1].append(line)
+                header.append(line)
+                    
+        self.header = header
+        self.quests = quests
+
+    def _search_sandbox_quest_index(self, default_quest_name: str) -> int:
+        found_index = -1
+        for quest in self.quests:
+            if quest.qp.raw_line.startswith(f"## {default_quest_name}"):
+                found_index = len(self.quests) - 1
+        return found_index
+
+    def insert_missing_tasks(self, default_quest_name: str, missing_entries: dict[Path, TaskLine]) -> tuple[list[TaskLine | str], list[QuestLine]]:
+        self._split_header_and_quests()
+        found_index = self._search_sandbox_quest_index(default_quest_name)
 
         if found_index == -1:
-            quest_lines.append([IndexLine(index_path=self.index_path, base_dir=self.base_dir).init_by_line(f"## {default_quest_name}")])
-            found_index = len(quest_lines) - 1
-        if self.missing_entries:
+            sandbox_quest = QuestLine()
+            sandbox_quest.qp.quest.basic.title = default_quest_name
+            sandbox_quest.qp.raw_line = f"## {default_quest_name}"
+            self.quests.append(sandbox_quest)
+            found_index = len(self.quests) - 1
+
+        if missing_entries:
             if self.verbose:
-                print(t(_INDEXER_MISSING_HOOKS_ADDING, count=len(self.missing_entries), quest=default_quest_name))
-            for _, line in self.missing_entries.items():
-                quest_lines[found_index].append(line)
-        return quest_lines
+                print(t(_INDEXER_MISSING_HOOKS_ADDING, count=len(missing_entries), quest=default_quest_name))
+            for _, line in missing_entries.items():
+                self.quests[found_index].lines.append(line)
+        return self.header, self.quests
 
-    def write_file(self, quest_lines: list[list[IndexLine]], align: bool = False) -> None:
-        keys: list[str] = []
-        for quest in quest_lines:
-            for line in quest:
-                if line.isTask:
-                    keys.append(line.key)
-        key_pad = max([len(k) for k in keys]) if len(keys) > 0 else 0
 
-        with open(self.index_path, "w", encoding="utf-8") as f:
-            for q in quest_lines:
-                f.write(q[0].get_render_line(key_pad=key_pad) + '\n\n')
-                for line in q[1:]:
-                    f.write(line.get_render_line(key_pad=key_pad) + '\n')
-                f.write("\n")
-
-# - create file if not exists
-# - remove lines with broken links
-# - check if last ## is the default quest, if not, create a new one with missing hooks
-#   - else add only the missing hooks to the default quest
 def fix_readme(index: Path, base_dir: Path, default_quest_name: str = "Sem Quest", verbose: bool = True, save_titles: bool = False, load_titles: bool = False) -> None:
     index = index.resolve()
-    indexer = Indexer(index_path=index, base_dir=base_dir, verbose=verbose)
-    indexer.load_readme_title_dict_from_basedir()
-    indexer.load_index_lines_removing_broken()
-    indexer.fix_titles(save_titles, load_titles)
-    indexer.found_unused_task_dirs()
-    quest_lines: list[list[IndexLine]] = indexer.insert_missing_tasks(default_quest_name)
-    indexer.write_file(quest_lines, align=True)
+    elements = Elements(index_path=index, base_dir=base_dir, verbose=verbose)
+    elements.load_lines()
+    elements.remove_tasks_with_broken_targets()
+    elements.fix_titles(save_titles, load_titles)
+
+    finder = Finder(elements)
+    missing_entries = finder.create_tasks_from_unused_dirs()
+    
+    merger = Merger(elements)
+    header, quests = merger.insert_missing_tasks(default_quest_name, missing_entries)
+    
+    renderer = Renderer(index_path=index)
+    renderer.write_file(header, quests)

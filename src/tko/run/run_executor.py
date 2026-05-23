@@ -26,10 +26,10 @@ class RunExecutor:
     def get_rate(self) -> int:
         if self.ctx.config.no_run:
             return 0
-        correct = [unit for unit in self.ctx.wdir.get_unit_list() if unit.result == ExecutionResult.SUCCESS]
-        if len(self.ctx.wdir.get_unit_list()) == 0:
+        correct = [unit for unit in self.ctx.wdir.unit_list if unit.result == ExecutionResult.SUCCESS]
+        if len(self.ctx.wdir.unit_list) == 0:
             return 0
-        percent = (len(correct) * 100) // len(self.ctx.wdir.get_unit_list())
+        percent = (len(correct) * 100) // len(self.ctx.wdir.unit_list)
         return percent
 
     def run_tests(self) -> int:
@@ -44,9 +44,15 @@ class RunExecutor:
         self.presenter.print_diff()
         rate = self.get_rate()
         
-        self.tracker.store_execution_log(rate, percent, self.ctx.wdir.get_solver().has_compile_error())
+        solver = self.ctx.wdir.solver
+        if solver is None:
+            return rate
+        self.tracker.store_execution_log(rate, percent, solver.has_compile_error())
         return percent
 
     def free_run(self):
+        solver = self.ctx.wdir.solver
+        if solver is None:
+            return
         self.tracker.store_free_run_log()
-        Free.free_run(self.ctx.wdir.get_solver(), standalone_mode=True)
+        Free.free_run(solver, standalone_mode=True)

@@ -34,14 +34,16 @@ class WdirSummaryService:
             return ["free cmd"]
         return [path.name for path in path_list]
 
-    def resume_splitted(self, source_list: list[Path], pack_list: list[list[Unit]], solver: SolverBuilder | None) -> RT:
-        sources = ["{}({})".format(name, str(count).rjust(2, "0")) for name, count in self.sources_names(source_list, pack_list)]
+    @staticmethod
+    def resume_splitted(source_list: list[Path], pack_list: list[list[Unit]], solver: SolverBuilder | None) -> RT:
+        sources = ["{}({})".format(name, str(count).rjust(2, "0")) for name, count in WdirSummaryService.sources_names(source_list, pack_list)]
         source_text = RT("Testes:[") + RT(", ".join(sources), "y") + "]"
-        solver_text = RT("Códigos:[") + RT(", ".join(self.solvers_names(solver)), "g") + "]"
+        solver_text = RT("Códigos:[") + RT(", ".join(WdirSummaryService.solvers_names(solver)), "g") + "]"
         return solver_text + " " + source_text
 
-    def resume_join(self, source_list: list[Path], pack_list: list[list[Unit]], solver: SolverBuilder | None) -> RT:
-        sources = ["{}({})".format(name, str(count).rjust(2, "0")) for name, count in self.sources_names(source_list, pack_list)]
+    @staticmethod
+    def resume_join(source_list: list[Path], pack_list: list[list[Unit]], solver: SolverBuilder | None) -> RT:
+        sources = ["{}({})".format(name, str(count).rjust(2, "0")) for name, count in WdirSummaryService.sources_names(source_list, pack_list)]
         source_text = RT(", ".join(sources), "y")
-        solver_text = RT(", ".join(self.solvers_names(solver)), "g")
+        solver_text = RT(", ".join(WdirSummaryService.solvers_names(solver)), "g")
         return solver_text + ", " + source_text

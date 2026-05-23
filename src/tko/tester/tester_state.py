@@ -42,9 +42,9 @@ class TesterState:
         return True
 
     def get_focused_unit(self, wdir: Wdir, dummy_unit: Unit) -> Unit:
-        if not wdir.has_tests():
+        if not wdir.has_tests:
             return dummy_unit
         if len(self.results) != 0:
             _, index = self.results[self.focused_index]
-            return wdir.get_unit(index)
-        return wdir.get_unit(self.focused_index)
+            return wdir.unit_list[index]
+        return wdir.unit_list[self.focused_index]

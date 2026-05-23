@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from tko.game.task_resource import TaskResource
-from tko.game.task_resource import ResourceType
+from tko.game.task_enums import TaskType
 from tko.repository.git_cache import GitCache
 from tko.game.tree_item import TreeBasic
 
@@ -16,7 +16,7 @@ class TaskPath:
     @property
     def work_dir(self) -> Path | None:
         loc = self.loc
-        if loc.resource_type == ResourceType.READ:
+        if loc.task_type == TaskType.READ:
             return None
         if loc.editable_source:
             target = self.__remote_local_path(loc)
