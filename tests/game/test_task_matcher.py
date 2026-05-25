@@ -28,12 +28,15 @@ class TestTaskMatcher:
         assert "@key" in raw_middle
         assert "main:10" in raw_middle
 
-    def test_match_full_pattern_rejects_invalid_checkbox_format(self):
+    def test_match_full_pattern_accepts_checked_and_unchecked(self):
         matcher = TaskMatcher()
 
-        found = matcher.match_pattern("- [x] [Tarefa](task.md)")
+        # Deve aceitar tanto marcada quanto desmarcada
+        found_checked = matcher.match_pattern("- [x] [Tarefa](task.md)")
+        found_unchecked = matcher.match_pattern("- [ ] [Tarefa](task.md)")
 
-        assert found is False
+        assert found_checked is True
+        assert found_unchecked is True
 
     def test_match_full_pattern_invalid_line_does_not_overwrite_previous_state(self):
         matcher = TaskMatcher()

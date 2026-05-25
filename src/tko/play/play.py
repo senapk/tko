@@ -182,7 +182,9 @@ class Play:
 
     def main(self, scr: curses.window):
         InputManager.fix_esc_delay()
+        # curses.curs_set(0)
         curses.curs_set(0)  # Esconde o cursor
+        scr.keypad(True)
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global
 

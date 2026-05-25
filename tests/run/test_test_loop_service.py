@@ -16,17 +16,18 @@ class _FakeSolver:
     pass
 
 
+
 class _FakeWdir:
     def __init__(self, units: list[Unit]):
         self._units = units
         self._solver = _FakeSolver()
-
+    @property
+    def unit_list(self):
+        return self._units
     def resume_splitted(self):
         return "fake/resume"
-
     def get_unit_list(self):
         return self._units
-
     def get_solver(self):
         return self._solver
 

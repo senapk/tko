@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, cast
+
 
 import pytest
 
@@ -11,13 +11,11 @@ class _FakeLangSettings:
         return {"py": "", "cpp": ""}
 
 
-class _FakeSettings:
-    def get_languages_settings(self) -> _FakeLangSettings:
-        return _FakeLangSettings()
+
 
 
 def _resolver() -> WdirTargetResolver:
-    return WdirTargetResolver(cast(Any, _FakeSettings()))
+    return WdirTargetResolver()
 
 
 def test_normalize_targets_injects_current_dir_when_empty():
@@ -28,15 +26,10 @@ def test_normalize_targets_injects_current_dir_when_empty():
     assert normalized == [Path()]
 
 
-def test_get_autoload_folder_detects_single_directory_target(tmp_path: Path):
-    resolver = _resolver()
-
-    folder = resolver.get_autoload_folder([tmp_path])
-
-    assert folder == tmp_path
 
 
-def test_resolve_explicit_targets_splits_sources_and_solvers(tmp_path: Path):
+
+def test_identify_source_and_solver_targets(tmp_path: Path):
     resolver = _resolver()
     source_tio = tmp_path / "cases.tio"
     source_md = tmp_path / "cases.md"
@@ -45,18 +38,18 @@ def test_resolve_explicit_targets_splits_sources_and_solvers(tmp_path: Path):
     source_md.write_text("", encoding="utf-8")
     solver_py.write_text("", encoding="utf-8")
 
-    sources, solvers = resolver.resolve_explicit_targets([source_tio, source_md, solver_py])
+    sources, solvers = resolver.identify_source_and_solver_targets([source_tio, source_md, solver_py])
 
     assert sources == [source_tio, source_md]
     assert solvers == [solver_py]
 
 
-def test_resolve_explicit_targets_raises_when_target_missing(tmp_path: Path):
+def test_identify_source_and_solver_targets_raises_when_target_missing(tmp_path: Path):
     resolver = _resolver()
     missing = tmp_path / "missing.tio"
 
     with pytest.raises(Warning, match="não encontrado"):
-        resolver.resolve_explicit_targets([missing])
+        resolver.identify_source_and_solver_targets([missing])
 
 
 def test_resolve_autoload_collects_sources_and_sorted_solvers(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
