@@ -26,6 +26,7 @@ class TesterState:
         self.locked_index: bool = False
         self.focused_index: int = 0
         self.resumes: list[str] = []
+        self.dummy_unit = Unit()
 
     # ------------------------------------------------------------------
     # Queries que dependem apenas do estado interno + wdir/unit
@@ -41,9 +42,9 @@ class TesterState:
                 return False
         return True
 
-    def get_focused_unit(self, wdir: Wdir, dummy_unit: Unit) -> Unit:
+    def get_focused_unit(self, wdir: Wdir) -> Unit:
         if not wdir.has_tests:
-            return dummy_unit
+            return self.dummy_unit
         if len(self.results) != 0:
             _, index = self.results[self.focused_index]
             return wdir.unit_list[index]

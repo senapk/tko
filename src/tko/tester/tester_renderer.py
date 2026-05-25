@@ -102,7 +102,7 @@ class TesterRenderer:
     # ------------------------------------------------------------------
 
     def draw_main(self, state: TesterState) -> None:
-        unit = state.get_focused_unit(self.wdir, self._dummy_unit)
+        unit = state.get_focused_unit(self.wdir)
         lines, cols = Fmt.get_size()
         if self.wdir.has_tests:
             y_out = 2

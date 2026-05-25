@@ -86,7 +86,7 @@ class DiffBuilderDown:
         if self.no_diff_mode:
             color = "g"
             opening = "╭"
-            ending = "╮"
+            ending = Symbols.hbar
         else:
             opening = "├"
             ending = "┤" if self.curses else Symbols.hbar
@@ -101,10 +101,10 @@ class DiffBuilderDown:
             received.pop()
         
         for line in received:
-                if self.curses:
-                    self.output.append(line.ljust(self.width - 1, " ").trim_end(self.width) + Symbols.vbar)
-                else:
-                    self.output.append(line)
+            if self.curses and not self.no_diff_mode:
+                self.output.append(line.ljust(self.width - 1, " ").trim_end(self.width) + Symbols.vbar)
+            else:
+                self.output.append(line)
 
 
     def insert_mismatch(self) -> bool:

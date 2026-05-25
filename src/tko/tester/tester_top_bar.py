@@ -83,7 +83,7 @@ class TesterTopBar:
         if len(done_list) > 0 and state.locked_index:
             _, index = done_list[state.focused_index]
             done_list[state.focused_index] = (
-                state.get_focused_unit(self.wdir, self._dummy_unit).result,
+                state.get_focused_unit(self.wdir).result,
                 index,
             )
 
@@ -137,7 +137,7 @@ class TesterTopBar:
     def draw_top_bar_content(self, state: TesterState, frame: Frame) -> None:
         if not self.wdir.has_tests:
             return
-        unit = state.get_focused_unit(self.wdir, self._dummy_unit)
+        unit = state.get_focused_unit(self.wdir)
         info = RT()
         if self.wdir.get_solver().has_compile_error():
             info = RT(f" {t(_TesterTopBarMsg.COMPILE_ERROR)} ", "R")

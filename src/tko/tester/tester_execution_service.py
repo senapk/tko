@@ -1,4 +1,5 @@
 from collections.abc import Callable
+import sys
 
 from tko.config.settings import Settings
 from tko.enums.execution_result import ExecutionResult
@@ -10,6 +11,7 @@ from tko.run.unit import Unit
 from tko.run.unit_runner import UnitRunner
 from tko.run.wdir import Wdir
 from tko.tester.tester_state import SeqMode, TesterState
+from pathlib import Path
 
 
 class TesterExecutionService:
@@ -26,7 +28,7 @@ class TesterExecutionService:
         self.wdir = wdir
         self.task = task
         self.store_version = store_version
-        self._dummy_unit = Unit()
+        self._dummy_unit = Unit(case="dummy", input_data="1", expected="3", source=Path("dummy.tio"))
 
     def process_one(self, state: TesterState) -> None:
         if state.mode != SeqMode.running:
@@ -67,7 +69,7 @@ class TesterExecutionService:
 
     def _run_locked_or_without_tests(self, state: TesterState) -> None:
         state.mode = SeqMode.finished
-        unit = state.get_focused_unit(self.wdir, self._dummy_unit)
+        unit = state.get_focused_unit(self.wdir)
         solver = self.wdir.solver
         if solver is None:
             return

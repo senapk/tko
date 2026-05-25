@@ -4,7 +4,6 @@ from tko.i18n import  Msg
 from tko.game.task_matcher import TaskMatcher
 from tko.run.wdir import Wdir
 from tko.config.settings import Settings
-from tko.game.task_enums import TaskType
 import logging
 
 logger = logging.getLogger(__name__)
