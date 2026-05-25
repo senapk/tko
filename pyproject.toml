@@ -28,6 +28,7 @@ dependencies = [
     "filelock>=3.25.2",
     "markdown>=3.7",
     "platformdirs>=4.9.2",
+    "prompt-toolkit>=3.0.52",
     "pygments>=2.19.1",
     "pymdown-extensions>=10.15",
     "pyyaml>=6.0.2",

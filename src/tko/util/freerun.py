@@ -13,31 +13,46 @@ import sys
 import os
 
 
+from prompt_toolkit.application import Application
+from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.layout import Layout
+from prompt_toolkit.layout.containers import Window
+
+
+def ask() -> str:
+    kb = KeyBindings()
+    result: str = ""
+
+    @kb.add("escape")
+    def _(event: Any) -> None:
+        nonlocal result
+        result = "esc"
+        event.app.exit()
+
+    @kb.add("enter")
+    def _(event: Any) -> None:
+        nonlocal result
+        result = "enter"
+        event.app.exit()
+
+    app: Any = Application(
+        layout=Layout(Window()),
+        key_bindings=kb,
+        full_screen=False,
+    )
+
+    app.run()
+
+    return result
+
 _FREERUN_PROMPT_RERUN = Msg(
-    pt="Para recompilar e reexecutar pressione enter",
+    pt="Para recompilar e reexecutar pressione ENTER",
     en="Press enter to recompile and rerun",
 )
 _FREERUN_PROMPT_BACK = Msg(
-    pt="Para voltar para tela anterior digite q e pressione enter",
-    en="To go back, type q and press enter",
+    pt="Para voltar para tela anterior pressione ESC",
+    en="To go back, press ESC",
 )
-
-if os.name == 'nt':  # Windows
-    import msvcrt
-
-    def input_available():
-        return msvcrt.kbhit()
-
-    def read_input():
-        return msvcrt.getwch()  # use getch() para byte
-else:  # Unix (Linux, macOS)
-    import select
-
-    def input_available():
-        return select.select([sys.stdin], [], [], 0)[0]
-
-    def read_input():
-        return sys.stdin.readline()
 
 class Free:
     @staticmethod
@@ -92,14 +107,12 @@ class Free:
         solver.reset()
         to_run_again = False
         if wait_input:
-            while input_available():
-                read_input()
             print(RT().center(RawTerminal.get_terminal_size(), "─"))
             print(RT.parse(t(_FREERUN_PROMPT_RERUN)))
             print(RT.parse(t(_FREERUN_PROMPT_BACK)))
 
-            valor = input()
-            if valor != "n" and valor != "q":
+            valor = ask()
+            if valor != "esc":
                 if to_clear:
                     Runner.clear_screen()
                 to_run_again = True
