@@ -148,8 +148,8 @@ class LanguagesSettings:
 
     def get_languages_with_drafts(self) -> dict[str, str]:
         dict_lang_drafts: dict[str, str] = {}
-        for lang in self.lang_settings.keys():
-            dict_lang_drafts[lang] = self.lang_settings[lang].draft
+        for lang_ext in self.lang_settings.keys():
+            dict_lang_drafts[lang_ext] = self.lang_settings[lang_ext].draft
         return dict_lang_drafts
 
     def __init__(self, path: Path):
@@ -158,13 +158,20 @@ class LanguagesSettings:
 
     def build_file_sample(self) -> str:
         output: list[str] = []
-        for lang, settings in self.default_lang_settings.copy().items():
-            output.append(f"[{lang}]")
-            for key, value in settings.to_dict().items():
-                if value == "":
-                    output.append(f"{key} = ''")
-                else:
-                    output.append(f"{key} = '''\n{value.strip()}\n'''")
+        for lang_ext, language_settings in self.default_lang_settings.copy().items():
+            output.append(f"[{lang_ext}]")
+            for key, value in language_settings.to_dict().items():
+                if isinstance(value, str):
+                    value = value.strip()
+                    if value == "":
+                        output.append(f"{key} = ''")
+                    else:
+                        output.append(f"{key} = '''\n{value}\n'''")
+                elif isinstance(value, list):
+                    if len(value) == 0: # type: ignore
+                        output.append(f"{key} = []")
+                    else:
+                        output.append(f"{key} = [" + ", ".join([f"'{item}'" for item in value]) + "]") # type: ignore
             output.append("")
         return "\n".join(output)
 
@@ -176,8 +183,8 @@ class LanguagesSettings:
             if content.strip() == "":
                 raise Exception(t(_CONFIG_LANG_EMPTY))
             data = tomllib.loads(content)
-            for lang, settings in data.items():
-                self.lang_settings[lang] = LangSettings(
+            for lang_ext, settings in data.items():
+                self.lang_settings[lang_ext] = LangSettings(
                     build_cmd=settings.get("build_cmd", []),
                     run_cmd=settings.get("run_cmd", []),
                     draft=settings.get("draft", "")
