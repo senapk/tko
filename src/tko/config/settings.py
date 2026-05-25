@@ -45,7 +45,8 @@ def singleton(class_): # type: ignore
 @singleton
 class Settings:
     CFG_FILE = "settings.yaml"
-    LANG_FILE = "languages.toml"
+    LANG_FILE = "programming-languages.toml"
+    LANG_FILE_SAMPLE = "programming-languages-sample.toml"
     class Defaults:
         alias_git = {
             "poo": "https://github.com/qxcodepoo/arcade.git",
@@ -79,6 +80,10 @@ class Settings:
 
     def get_settings_file(self) -> Path:
         return self.get_settings_dir() / self.CFG_FILE
+    
+    def get_languages_sample(self) -> Path:
+        return self.get_settings_dir() / self.LANG_FILE_SAMPLE
+
 
     def get_settings_dir(self) -> Path:
         if self.settings_dir is None:
@@ -91,7 +96,9 @@ class Settings:
         self.dict_alias_git = self.Defaults.alias_git.copy()
         self.app = AppSettings()
         self.colors = Colors()
-        self.__languages_settings = LanguagesSettings(self.get_languages_file()).reset().save_file_settings()
+        self.get_languages_file().unlink()
+        with open(self.get_languages_sample(), "w") as f:
+            f.write(LanguagesSettings(self.get_languages_file()).build_file_sample())
 
         return self
 
@@ -143,8 +150,6 @@ class Settings:
             self.__appcfg: self.app.to_dict(),
             # self.__colors: self.colors.to_dict()
         }
-
-        self.get_languages_settings().save_file_settings()
 
         # Compare with cached output instead of reading the file
         if value == self._cached_output:

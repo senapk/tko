@@ -20,27 +20,25 @@ _CONFIG_LANG_LOAD_FAILED = Msg(
 
 
 class LangSettings:
-    def __init__(self, build_cmd: str, run_cmd: str, draft: str):
-        self.build_cmd: str = build_cmd
-        self.run_cmd: str = run_cmd
+    def __init__(self, build_cmd: list[str], run_cmd: list[str], draft: str):
+        self.build_cmd: list[str] = build_cmd
+        self.run_cmd: list[str] = run_cmd
         self.draft: str = draft
 
     def to_dict(self):
         return self.__dict__
 
-    def from_dict(self, attr_dict: dict[str, str]):
-        self.build_cmd = attr_dict.get("build_cmd", self.build_cmd)
-        self.run_cmd = attr_dict.get("run_cmd", self.run_cmd)
-        self.draft = attr_dict.get("draft", self.draft)
+    def from_dict(self, attr_dict: dict[str, str | list[str]]):
+        build_cmd = attr_dict.get("build_cmd", [])
+        if isinstance(build_cmd, list):
+            self.build_cmd = build_cmd
+        run_cmd = attr_dict.get("run_cmd", [])
+        if isinstance(run_cmd, list):
+            self.run_cmd = run_cmd
+        draft = attr_dict.get("draft", "")
+        if isinstance(draft, str):
+            self.draft = draft
         return self
-
-
-draft_zip = r"""
-const std = @import("std");
-
-pub fn main() !void {
-    try std.fs.File.stdout().writeAll("hello world!\n");
-}"""[1:]
 
 draft_rust = r"""
 fn main() {
@@ -98,54 +96,49 @@ console.log("Hello, World!");
 class LanguagesSettings:
 
     default_lang_settings: dict[str, LangSettings] = {
-        "zig": LangSettings(
-            build_cmd="zig build-exe {files} -femit-bin={output}",
-            run_cmd="{output}",
-            draft=draft_zip
-        ),
         "rust": LangSettings(
-            build_cmd="rustc {files} -o {output}",
-            run_cmd="{output}",
+            build_cmd=["rustc", "{files}", "-o", "{output}"],
+            run_cmd=["{output}"],
             draft=draft_rust
         ),
         "go": LangSettings(
-            build_cmd="go build -o {output} {files}",
-            run_cmd="{output}",
+            build_cmd=["go", "build", "-o", "{output}", "{files}"],
+            run_cmd=["{output}"],
             draft=draft_go
         ),
         "py": LangSettings(
-            build_cmd="",
-            run_cmd="python3 {files}",
+            build_cmd=[],
+            run_cmd=["python3",  "{files}"],
             draft="# Escreva seu código aqui\nprint('Hello, World!')"
         ),
         "js": LangSettings(
-            build_cmd="",
-            run_cmd="node {files}",
+            build_cmd=[],
+            run_cmd=["node", "{files}"],
             draft=draft_js,
         ), 
         "hs": LangSettings(
-            build_cmd="ghc {files} -o {output}",
-            run_cmd="{output}",
+            build_cmd=["ghc", "{files}", "-o", "{output}"],
+            run_cmd=["{output}"],
             draft=haskell_draft
         ),
         "c": LangSettings(
-            build_cmd="gcc -Wall {files} -o {output} -lm",
-            run_cmd="{output}",
+            build_cmd=["gcc", "-Wall", "{files}", "-o", "{output}", "-lm"],
+            run_cmd=["{output}"],
             draft=c_draft
         ),
         "cpp": LangSettings(
-            build_cmd="g++ -std=c++17 -Wall -Wextra -Werror -Wno-deprecated {files} -o {output}",
-            run_cmd="{output}",
+            build_cmd=["g++", "-std=c++17", "-Wall", "-Wextra", "-Werror", "-Wno-deprecated", "{files}", "-o", "{output}"],
+            run_cmd=["{output}"],
             draft=cpp_draft
         ),
         "java": LangSettings(
-            build_cmd="javac {files} -d {cache}",
-            run_cmd="java -cp {cache} {main}",
+            build_cmd=["javac", "{files}", "-d", "{cache}"],
+            run_cmd=["java", "-cp", "{cache}", "{main}"],
             draft=java_draft
         ),
         "ts": LangSettings(
-            build_cmd="npx esbuild {files} --outdir={cache} --format=cjs --log-level=error",
-            run_cmd="node {entry}",
+            build_cmd=["npx", "esbuild", "{files}", "--outdir={cache}", "--format=cjs", "--log-level=error"],
+            run_cmd=["node", "{entry}"],
             draft=ts_draft
         ),
     }
@@ -159,9 +152,13 @@ class LanguagesSettings:
             dict_lang_drafts[lang] = self.lang_settings[lang].draft
         return dict_lang_drafts
 
-    def _build_file_content(self) -> str:
+    def __init__(self, path: Path):
+        self.path = path
+        self.lang_settings: dict[str, LangSettings] = self.default_lang_settings.copy()
+
+    def build_file_sample(self) -> str:
         output: list[str] = []
-        for lang, settings in self.lang_settings.items():
+        for lang, settings in self.default_lang_settings.copy().items():
             output.append(f"[{lang}]")
             for key, value in settings.to_dict().items():
                 if value == "":
@@ -171,33 +168,9 @@ class LanguagesSettings:
             output.append("")
         return "\n".join(output)
 
-    def __init__(self, path: Path):
-        self.path = path
-        self.lang_settings: dict[str, LangSettings] = {}
-        self._cached_output: str = ""  # Cache the output after loading
-
-    def reset(self):
-        self.lang_settings = self.default_lang_settings.copy()
-        return self
-
-    def save_file_settings(self):
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-
-        new_content = self._build_file_content()
-        # Compare with cached output instead of reading the file
-        if new_content == self._cached_output:
-            return self
-
-        with open(self.path, "w", encoding="utf-8", newline='\n') as f:
-            f.write(new_content)
-        # Update the cached output after saving
-        self._cached_output = new_content
-        return self
-
     def load_file_settings(self):
         if not self.path.exists():
-            self.reset()
-            self.save_file_settings()
+            return self
         try:
             content = Decoder.load(self.path)
             if content.strip() == "":
@@ -205,14 +178,10 @@ class LanguagesSettings:
             data = tomllib.loads(content)
             for lang, settings in data.items():
                 self.lang_settings[lang] = LangSettings(
-                    build_cmd=settings.get("build_cmd", ""),
-                    run_cmd=settings.get("run_cmd", ""),
+                    build_cmd=settings.get("build_cmd", []),
+                    run_cmd=settings.get("run_cmd", []),
                     draft=settings.get("draft", "")
                 )
-            # Update the cached output after loading
-            self._cached_output = self._build_file_content()
         except Exception:
             logger.exception(t(_CONFIG_LANG_LOAD_FAILED, path=self.path))
-            self.reset()
-            self.save_file_settings()
         return self

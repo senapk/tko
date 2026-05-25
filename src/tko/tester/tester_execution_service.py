@@ -1,5 +1,4 @@
 from collections.abc import Callable
-import sys
 
 from tko.config.settings import Settings
 from tko.enums.execution_result import ExecutionResult

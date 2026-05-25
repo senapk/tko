@@ -102,36 +102,37 @@ class TesterTopBar:
             and not state.is_all_right()
         )
 
-        output_buffer = RBuffer().add(self.get_fixed_arrow(state)).add(" ")
+        opening = self.get_fixed_arrow(state) + " "
+        elements : list[RT] = []
         i = 0
         for unit_result, index in done_list + todo_list:
             foco = i == state.focused_index
             token = tester_util.get_token(unit_result)
             token_style = token.runs[0][0] if token.runs else ""
             token_text  = token.plain()
-            extrap = RT(" ")
-            extras = RT(" ")
+            extrap = RT(" ", token_style.lower())
+            extras = RT(" ", token_style.lower())
             if foco and show_focused:
-                extrap = RT("▒")
-                extras = RT("▒")
+                extrap = RT("▒", token_style.lower())
+                extras = RT("▒", token_style.lower())
             if state.locked_index and not foco:
-                output_buffer.add(RT(str(index).zfill(2), token_style.lower()))
-                output_buffer.add(RT(token_text, token_style.lower()))
+                elements.append(extrap + RT(str(index).zfill(2) + token_text, token_style) + extras)
             else:
-                output_buffer.add(extrap)
-                output_buffer.add(RT(str(index).zfill(2), token_style))
-                output_buffer.add(token)
-                output_buffer.add(extras)
+                elements.append(extrap + RT(str(index).zfill(2) + token_text, token_style) + extras)
             i += 1
 
-        output = output_buffer.to_text()
 
-        size     = 6
+        rb = RBuffer().add(opening)
+        for element in elements:
+            rb.add(element)
+        output = rb.to_text()
+        opening = 10
+        size     = 5
         to_remove = 0
         dx       = frame.get_dx()
-        while (state.focused_index + 4) * size - to_remove >= dx:
+        while opening + (state.focused_index + 1) * size - to_remove >= dx:
             to_remove += size
-        output = output.slice(0, 3 * 6) + output.slice(3 * 6 + to_remove)
+        output = output[0:opening] + output[opening + to_remove:]
         return output
 
     def draw_top_bar_content(self, state: TesterState, frame: Frame) -> None:

@@ -29,12 +29,5 @@ def reset_global(ctx: typer.Context):
     sp = settings.reset().save_settings()
     print(sp.get_settings_file())
 
-@app.command("languages", help="Reset languages configuration to factory default")
-def reset_languages(ctx: typer.Context):
-    app_ctx: AppContext = AppContext.load_from_context(ctx)
-    settings = app_ctx.settings
-    settings.get_languages_settings().reset().save_file_settings()
-    print(settings.get_languages_file())
-
 if __name__ == "__main__":
     app()

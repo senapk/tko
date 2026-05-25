@@ -35,7 +35,7 @@ def ask() -> str:
         result = "enter"
         event.app.exit()
 
-    app: Any = Application(
+    app: Any = Application( # type: ignore
         layout=Layout(Window()),
         key_bindings=kb,
         full_screen=False,

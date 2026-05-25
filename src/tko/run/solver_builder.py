@@ -1,6 +1,7 @@
 import tempfile
 from collections.abc import Callable
 
+import sys
 import os
 import shutil
 from tko.util.rt import RT
@@ -9,6 +10,7 @@ from tko.config.settings import Settings
 from pathlib import Path
 from tko.run_build.ts_macro_preprocessor import TypeScriptMacroPreprocessor
 from tko.i18n import Msg, t
+import sys
 
 
 _SOLVER_COMMAND_NOT_FOUND = Msg(
@@ -82,8 +84,8 @@ class Executable:
         return self.__error_msg
 
 class SolverBuilder:
-    TS_DEFAULT_BUILD_CMD = "npx esbuild {files} --outdir={cache} --format=cjs --log-level=error"
-    TS_DEFAULT_RUN_CMD = "node {entry}"
+    TS_DEFAULT_BUILD_CMD = ["npx", "esbuild", "{files}", "--outdir={cache}", "--format=cjs", "--log-level=error"]
+    TS_DEFAULT_RUN_CMD = ["node", "{entry}"]
 
     def __init__(self, args_list: list[Path], settings: Settings):
         self.settings = settings
@@ -155,21 +157,25 @@ class SolverBuilder:
         else:
             self.__exec.set_executable([str(x) for x in self.args_list], [], Path(""), shell_mode=True)
 
-    def replace_placeholders(self, text: str) -> str:
+    def replace_placeholders(self, text: list[str]) -> list[str]:
         parent_folder = self.args_list[0].parent
         main_file_without_ext = self.args_list[0].stem
         exe_ext = ".exe" if os.name == "nt" else ""
         output_path = self.cache_dir / ("a.out" + exe_ext)
         entry_path = self.cache_dir / (main_file_without_ext + ".js")
         
-        files_str = " ".join([f'"{str(x.relative_to(parent_folder, walk_up=True))}"' for x in self.args_list])
-        text = (text.replace("{files}", files_str)
-                    .replace("{output}", f'"{str(output_path.relative_to(parent_folder, walk_up=True))}"')
-                    .replace("{main}", main_file_without_ext)
-                    .replace("{cache}", f'"{str(self.cache_dir.relative_to(parent_folder, walk_up=True))}"')
-                    .replace("{entry}", f'"{str(entry_path.relative_to(parent_folder, walk_up=True))}"')).strip()
-
-        return text
+        files_flist = [f'{str(x.relative_to(parent_folder, walk_up=True))}' for x in self.args_list]
+        output: list[str] = []
+        for t in text:
+            if t == "{files}":
+                output.extend(files_flist)
+            else:
+                data = (t.replace("{output}", f'{str(output_path.relative_to(parent_folder, walk_up=True))}')
+                            .replace("{main}", main_file_without_ext)
+                            .replace("{cache}", f'{str(self.cache_dir.relative_to(parent_folder, walk_up=True))}')
+                            .replace("{entry}", f'{str(entry_path.relative_to(parent_folder, walk_up=True))}')).strip()
+                output.append(data)
+        return output
 
     def prepare_exec_with_lang(self):
         lang = self.settings.get_languages_settings().get_languages().get(self.args_list[0].suffix[1:], None)
@@ -178,15 +184,16 @@ class SolverBuilder:
             return
         self._prepare_exec_with_commands(lang.build_cmd, lang.run_cmd)
 
-    def _prepare_exec_with_commands(self, build_cmd: str, run_cmd: str):
+    def _prepare_exec_with_commands(self, build_cmd: list[str], run_cmd: list[str]):
         parent_folder = self.args_list[0].parent
         build_cmd = self.replace_placeholders(build_cmd)
-        return_code, stdout, stderr = Runner.subprocess_run(build_cmd, folder=parent_folder, shell_mode=True)
-        if return_code != 0:
-            self.__exec.set_compile_error(stdout + stderr)
-            return
+        if len(build_cmd) > 0:
+            return_code, stdout, stderr = Runner.subprocess_run(build_cmd, folder=parent_folder, shell_mode=False)
+            if return_code != 0:
+                self.__exec.set_compile_error(stdout + stderr)
+                return
         run_cmd = self.replace_placeholders(run_cmd)
-        self.__exec.set_executable(run_cmd, [], parent_folder, shell_mode=True)
+        self.__exec.set_executable(run_cmd, [], parent_folder, shell_mode=False)
 
     def __prepare_make(self):
         self.check_tool("make")
@@ -219,11 +226,11 @@ class SolverBuilder:
             if lang is None:
                 self.__exec.set_compile_error(RT(t(_SOLVER_TS_CONFIG_NOT_FOUND), "r"))
                 return
-            build_cmd = lang.build_cmd.strip()
-            run_cmd = lang.run_cmd.strip()
-            if build_cmd == "":
+            build_cmd = lang.build_cmd
+            run_cmd = lang.run_cmd
+            if len(build_cmd) == 0:
                 build_cmd = self.TS_DEFAULT_BUILD_CMD
-            if run_cmd == "":
+            if len(run_cmd) == 0:
                 run_cmd = self.TS_DEFAULT_RUN_CMD
             self._prepare_exec_with_commands(build_cmd, run_cmd)
         finally:
