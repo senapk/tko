@@ -1,4 +1,5 @@
 import difflib
+from unittest import result
 from typer.testing import CliRunner
 from tko.__main__ import app
 import pytest
@@ -37,6 +38,8 @@ class Compare:
         runner = CliRunner()
         full_cmd = cmd_list if "--lang" in cmd_list else ["--lang", "pt-BR", *cmd_list]
         result = runner.invoke(app, full_cmd)
+        if result.exception:
+            raise result.exception
         expected, received = Compare.load_and_save(file, result.stdout)
         if expected != received:
             diff = "\n".join(difflib.unified_diff(
