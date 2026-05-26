@@ -30,21 +30,22 @@ class GuiSkillsBar:
 
     def make_xp_button(self, size: int) -> RT:
         xp_resume = XPResume(self.game.quests)
-        obtained, priority, complete = xp_resume.get_skills_resume()
+        resume = xp_resume.get_skills_resume()
+        
 
         keys_to_remove: list[str] = []
-        for skill, value in obtained.items():
+        for skill, value in resume.obtained.items():
             if value < 1:
                 keys_to_remove.append(skill)
         for key in keys_to_remove:
-            if key in obtained:
-                del obtained[key]
-            if key in priority:
-                del priority[key]
-            if key in complete:
-                del complete[key]
+            if key in resume.obtained:
+                del resume.obtained[key]
+            if key in resume.target100:
+                del resume.target100[key]
+            if key in resume.all_items:
+                del resume.all_items[key]
 
-        qtd = len(obtained)
+        qtd = len(resume.obtained)
         if qtd == 0:
             text = " Nenhuma habilidade disponível "
             percent = 0.0
@@ -53,9 +54,9 @@ class GuiSkillsBar:
         skill_size = int(size / qtd)
 
         elements: list[RT] = []
-        for skill, _ in complete.items():
+        for skill, _ in resume.all_items.items():
             text = f"{skill}"
-            perc = obtained.get(skill, 0) / priority.get(skill, 1)
+            perc = resume.obtained.get(skill, 0) / resume.target100.get(skill, 1)
             done_color = self.colors.main_bar_done
             todo_color = self.colors.main_bar_todo
             skill_bar = self.style.build_bar(
@@ -76,21 +77,21 @@ class GuiSkillsBar:
     def show(self, frame_xp: Frame) -> None:
         dy, dx = frame_xp.get_inner()
         xp_resume = XPResume(self.game.quests)
-        obtained, target, all = xp_resume.get_skills_resume()
+        resume = xp_resume.get_skills_resume()
         frame_xp.draw()
 
         elements: list[RT] = []
-        for skill, value in all.items():
+        for skill, value in resume.all_items.items():
             if self.flags.show_panel.is_true():
-                obtained_value = round(100 * obtained.get(skill, 0) / target.get(skill, 1))
-                possible_value = round(100 * value / target.get(skill, 1))
+                obtained_value = round(100 * resume.obtained.get(skill, 0) / resume.target100.get(skill, 1))
+                possible_value = round(100 * value / resume.target100.get(skill, 1))
                 text = f"{skill}: {obtained_value:03d}%  {possible_value:03d}%"
             else:
-                obtained_value = round(obtained.get(skill, 0))
-                priority_value = round(target.get(skill, 0))
+                obtained_value = round(resume.obtained.get(skill, 0))
+                target100_value = round(resume.target100.get(skill, 0))
                 complete_value = round(value)
-                text = f"{skill}:{obtained_value:03d}/{priority_value:03d}/{complete_value:03d}"
-            perc = obtained.get(skill, 0) / target.get(skill, 1)
+                text = f"{skill}:{obtained_value:03d}/{target100_value:03d}/{complete_value:03d}"
+            perc = resume.obtained.get(skill, 0) / resume.target100.get(skill, 1)
             done_color = self.colors.progress_skill_done
             todo_color = self.colors.progress_skill_todo
             skill_bar = self.style.build_bar(
@@ -103,19 +104,19 @@ class GuiSkillsBar:
             elements.append(skill_bar)
 
         # Total bar
-        total_obtained, total_priority, total_complete = xp_resume.sum_xp(obtained, target, all)
-        if total_priority == 0:
+        total_obtained, total_target100, total_complete = xp_resume.sum_xp(resume)
+        if total_target100 == 0:
             grade = 0
         else:
-            grade = total_obtained / total_priority * 10.0
+            grade = total_obtained / total_target100 * 10.0
 
         if self.flags.show_panel.is_true():
             text = f" Nota: {grade:.1f}       "
         else:
-            text = f"Nota: {grade:.1f} :{round(total_obtained):03d}/{round(total_priority):03d}/{round(total_complete):03d}"
+            text = f"Nota: {grade:.1f} :{round(total_obtained):03d}/{round(total_target100):03d}/{round(total_complete):03d}"
         done_color = self.colors.main_bar_done
         todo_color = self.colors.main_bar_todo
-        percent = total_obtained / total_priority if total_priority > 0 else 0.0
+        percent = total_obtained / total_target100 if total_target100 > 0 else 0.0
         total_bar = self.style.build_bar(text, percent, dx - 2, done_color, todo_color)
         elements.append(total_bar)
 

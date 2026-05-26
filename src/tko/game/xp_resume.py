@@ -1,6 +1,12 @@
 from tko.game.quest import Quest
 
 
+class SkillResume:
+    def __init__(self):
+        self.obtained: dict[str, float] = {}
+        self.target100: dict[str, float] = {}
+        self.all_items: dict[str, float] = {}
+
 class XPResume:
     def __init__(self, quests: dict[str, Quest]):
         self.quests = quests
@@ -14,7 +20,7 @@ class XPResume:
             obtained += o
         return obtained, total
 
-    def get_skills_resume(self) -> tuple[dict[str, float], dict[str, float], dict[str, float]]:
+    def get_skills_resume(self) -> SkillResume:
         all_available: dict[str, float] = {}
         obtained: dict[str, float] = {}
         target: dict[str, float] = {}
@@ -32,13 +38,18 @@ class XPResume:
                     obtained[skill] = obtained.get(skill, 0) + gvalue
                     all_available[skill] = all_available.get(skill, 0) + q.config.factor * t.game.xp
 
-        return obtained, target, all_available
+        resume = SkillResume()
+        resume.obtained = obtained
+        resume.target100 = target
+        resume.all_items = all_available
+        return resume
 
-    def sum_xp(self, obtained: dict[str, float], target: dict[str, float], complete: dict[str, float]) -> tuple[float, float, float]:
+    def sum_xp(self, resume: SkillResume) -> tuple[float, float, float]:
         total_obtained = 0
-        total_priority = 0
+        total_target100 = 0
         total_complete = 0
-        for key, value in complete.items():
-            total_obtained += obtained.get(key, 0)
+        for key, value in resume.all_items.items():
+            total_obtained += resume.obtained.get(key, 0)
+            total_target100 += resume.target100.get(key, 0)
             total_complete += value
-        return total_obtained, total_priority, total_complete
+        return total_obtained, total_target100, total_complete
