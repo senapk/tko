@@ -108,6 +108,7 @@ class TaskParser:
         task.resource.raw_link = tm.link
         task.resource.task_type = tm.resource_type
         task.game.xp = tm.xp
+        task.game.tier = tm.tier
         task.config.test = tm.test
         task.config.loss = tm.loss
 

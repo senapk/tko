@@ -11,7 +11,6 @@ class _GuiHelpMsg:
     CALIBRATE_LINE = Msg(pt=" Calibrar <$:r> Para calibrar os direcionais do teclado", en=" Calibrate <$:r> To calibrate the keyboard arrow keys")
 
     SECTION_SYMBOLS = Msg(pt=" Símbolos ", en=" Symbols ")
-    SYMBOL_SUGGESTED_OPTIONAL = Msg(pt=" <$:y> Tarefa sugeridas, <$> Tarefa opcional", en=" <$:y> Suggested task, <$> Optional task")
     SYMBOL_STUDY_WRITE_NOHELP = Msg(pt=" <$:g> Estudo/Consulta, <$:y> Escrever e refazer, <$:r> Fazer sem consulta", en=" <$:g> Study/Consult, <$:y> Write and redo, <$:r> Do without help")
     SYMBOL_SELF_EVAL = Msg(
         pt=" <$:g> <$:g> <$:g> Fez Autoavaliação       , <$> <$> <$> Sem Autoavaliação",
@@ -50,7 +49,6 @@ class GuiHelpPanel:
         help_lines.append(RT.parse(t(_GuiHelpMsg.CALIBRATE_LINE), GuiKeys.calibrate))
 
         help_lines.append(RT(t(_GuiHelpMsg.SECTION_SYMBOLS), "g").center(dx, RT("-")))
-        help_lines.append(RT.parse(t(_GuiHelpMsg.SYMBOL_SUGGESTED_OPTIONAL), Symbols.star_filled, Symbols.star_void))
         help_lines.append(RT.parse(t(_GuiHelpMsg.SYMBOL_STUDY_WRITE_NOHELP), Symbols.loss_free, Symbols.loss_part, Symbols.loss_zero))
         help_lines.append(RT.parse(t(_GuiHelpMsg.SYMBOL_SELF_EVAL),
                                        Symbols.diamond_filled, Symbols.circle_filled, Symbols.task_view,

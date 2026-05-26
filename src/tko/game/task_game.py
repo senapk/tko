@@ -70,16 +70,13 @@ class TaskGame:
     def tier(self, value: int):
         if value < 0:
             value = 1
-        if value > 6:
-            value = 6
+        if value > 4:
+            value = 4
         self._tier = value
 
     @property
     def tier_symbol(self) -> RT:
-        values = "▁▂▃▄▅▆▇"
-        if self.tier < 3:
-            return RT(values[self.tier], "g")
-        if self.tier < 5:
-            return RT(values[self.tier], "y")
-        return RT(values[self.tier], "r")
+        #values: list[RT] = [RT("▁", "w"), RT("▃", "g"), RT("▅", "y"), RT("▇", "r")]
+        values: list[RT] = [RT("░", "w"), RT("▒", "g"), RT("▓", "y"), RT("▇", "r")]
+        return values[self.tier - 1]
     
