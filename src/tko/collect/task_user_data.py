@@ -5,7 +5,7 @@ from tko.game.task_enums import TaskLoss
 from typing import Any
 
 
-class Resume:
+class TaskResume:
     minutes_str: str = "minutes"
     versions_str: str = "versions"
     executions_str: str = "executions"
@@ -22,33 +22,36 @@ class Resume:
     def to_dict(self) -> dict[str, Any]:
         output: dict[str, Any] = {}
         if self.minutes > 0:
-            output[Resume.minutes_str] = str(self.minutes)
+            output[TaskResume.minutes_str] = str(self.minutes)
         if self.versions > 0:
-            output[Resume.versions_str] = str(self.versions)
+            output[TaskResume.versions_str] = str(self.versions)
         if self.executions > 0:
-            output[Resume.executions_str] = str(self.executions)
+            output[TaskResume.executions_str] = str(self.executions)
         if self.lines > 0:
-            output[Resume.lines_str] = str(self.lines)
+            output[TaskResume.lines_str] = str(self.lines)
         if self.percent > 0.0:
-            output[Resume.percent_str] = f"{self.percent:.2f}"
+            output[TaskResume.percent_str] = f"{self.percent:.2f}"
         return output
     
     def from_dict(self, info: dict[str, str]) -> None:
         # print(f"Loading Resume from dict: {info}")
-        self.minutes    = int(info.get(Resume.minutes_str, 0))
-        self.versions   = int(info.get(Resume.versions_str, 0))
-        self.executions = int(info.get(Resume.executions_str, 0))
-        self.lines      = int(info.get(Resume.lines_str, 0))
-        percent_str     = info.get(Resume.percent_str, "0.0")
+        self.minutes    = int(info.get(TaskResume.minutes_str, 0))
+        self.versions   = int(info.get(TaskResume.versions_str, 0))
+        self.executions = int(info.get(TaskResume.executions_str, 0))
+        self.lines      = int(info.get(TaskResume.lines_str, 0))
+        percent_str     = info.get(TaskResume.percent_str, "0.0")
         if percent_str:
             self.percent = float(percent_str)
 
 
-class TaskResume:
+class TaskUserData:
+    key_str: str = "key"
+    quest_str: str = "quest"
+
     def __init__(self, key: str, quest_key: str):
         self.key: str = key
         self.quest: str = quest_key
-        self.resume: Resume = Resume()
+        self.resume: TaskResume = TaskResume()
         self.info: TaskSelfInfo = TaskSelfInfo()
 
     def from_log_sort(self, log_sort: LogSort):
@@ -68,14 +71,14 @@ class TaskResume:
     
     def to_dict(self) -> dict[str, Any]:
         output: dict[str, Any] = {}
-        output["key"] = self.key
-        output["quest"] = self.quest
+        output[TaskUserData.key_str] = self.key
+        output[TaskUserData.quest_str] = self.quest
         output.update(self.resume.to_dict())
         output.update(self.info.get_kv())
         return output
 
     def from_dict(self, info: dict[str, str]) -> None:
-        self.key = info.get("key", "")
-        self.quest = info.get("quest", "")
+        self.key = info.get(TaskUserData.key_str, "")
+        self.quest = info.get(TaskUserData.quest_str, "")
         self.resume.from_dict(info)
         self.info.load_from_kv(info)

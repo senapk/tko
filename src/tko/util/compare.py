@@ -1,5 +1,4 @@
 import difflib
-from unittest import result
 from typer.testing import CliRunner
 from tko.__main__ import app
 import pytest

@@ -10,15 +10,15 @@ from icecream import ic  # type: ignore
 
 from tko.__init__ import __version__
 from tko.app_context import AppContext
-from tko.cli.build import app as build_app
-from tko.cli.class_cmd import app as class_app
-from tko.cli.collect import app as collect_app
-from tko.cli.config import app as config_app
-from tko.cli.main_cmds import register_main_commands
-from tko.cli.remote_cli import app as remote_app
-from tko.cli.reset import app as reset_app
-from tko.cli.task_cli import app as task_app
-from tko.cli.tool import app as tool_app
+from tko.cli.cli_build import app as build_app
+from tko.cli.cli_class import app as class_app
+from tko.cli.cli_collect import app as collect_app
+from tko.cli.cli_config import app as config_app
+from tko.cli.cli_main import register_main_commands
+from tko.cli.cli_remote import app as remote_app
+from tko.cli.cli_reset import app as reset_app
+from tko.cli.cli_task import app as task_app
+from tko.cli.cli_tool import app as tool_app
 from tko.i18n import Msg, set_language, t
 
 

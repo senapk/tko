@@ -2,6 +2,7 @@ import typer
 import json
 
 from tko.app_context import AppContext
+from tko.collect.collect_single import CollectParams
 
 app = typer.Typer(help="Collect evaluation data")
 
@@ -36,12 +37,12 @@ def collect_repo(
     height: int = typer.Option(10, "--height", help="Daily graph height"),
     color: int = typer.Option(1, "--color", help="Daily graph color [0|1]")
 ):
-    from tko.cmds.cmd_collect import CollectSingle
+    from tko.collect.collect_single import CollectSingle
     
     app_ctx: AppContext = AppContext.load_from_context(ctx)
     changedir = app_ctx.changedir
     
-    params = CollectSingle.CollectParams()
+    params = CollectParams()
     params.folder = changedir
     params.width = width
     params.height = height

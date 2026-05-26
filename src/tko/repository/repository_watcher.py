@@ -21,7 +21,7 @@ class RepositoryWatcher:
         self.monitor.init()
         return self
     
-    def stop_watching(self) -> 'RepositoryWatcher':
+    def stop_watching(self) -> RepositoryWatcher:
         if self.monitor is not None:
             self.monitor.stop()
             self.monitor = None

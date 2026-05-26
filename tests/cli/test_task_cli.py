@@ -4,7 +4,7 @@ from _pytest.monkeypatch import MonkeyPatch
 from typer.testing import CliRunner
 
 from tko.app_context import AppContext
-from tko.cli.task_cli import app
+from tko.cli.cli_task import app
 from tko.config.settings import Settings
 from tko.repository.git_cache import UpdateMode
 from tko.repository.repository import Repository

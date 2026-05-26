@@ -1,7 +1,6 @@
 import tempfile
 from collections.abc import Callable
 
-import sys
 import os
 import shutil
 from tko.util.rt import RT
@@ -10,7 +9,6 @@ from tko.config.settings import Settings
 from pathlib import Path
 from tko.run_build.ts_macro_preprocessor import TypeScriptMacroPreprocessor
 from tko.i18n import Msg, t
-import sys
 
 
 _SOLVER_COMMAND_NOT_FOUND = Msg(

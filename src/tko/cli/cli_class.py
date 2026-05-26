@@ -10,7 +10,7 @@ def class_collect(
     csv: str | None = typer.Option(None, "--csv", "-c", help="Path to save the extracted CSV data"),
     block_prefix: str | None = typer.Option(None, "--block_prefix", "-b", help="Block prefix to insert in csv file")
 ):
-    from tko.cmds.cmd_collect import CollectMany
+    from tko.collect.collect_many import CollectMany
     git_repo_list = [Path(x) for x in path]
     CollectMany.execute(git_repo_list, json_path=json, csv_path=csv, block_prefix=block_prefix)
 
@@ -19,7 +19,7 @@ def class_pull(
     path: list[str] = typer.Argument(..., help="Paths to repos"),
     threads: int = typer.Option(10, "--threads", "-t", help="Number of threads")
 ):
-    from tko.mico.pull import Pull
+    from tko.collect.pull import Pull
     path_list = [Path(p) for p in path]
     Pull.pull_all_parallel(path_list, threads)
 
