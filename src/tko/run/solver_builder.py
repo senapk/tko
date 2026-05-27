@@ -54,9 +54,9 @@ class Executable:
     def get_command(self) -> tuple[list[str] | str, Path]:
         cmd: list[str] | str = self.__cmd_list
         if isinstance(cmd, str):
-            cmd += " " + " ".join([str(file.resolve()) for file in self.__files])
+            cmd += " " + " ".join([file.resolve().as_posix() for file in self.__files])
         else:
-            cmd += [str(file.resolve()) for file in self.__files]
+            cmd += [file.resolve().as_posix() for file in self.__files]
         return cmd, self.__folder
 
     def set_compile_error(self, error_msg: RT | str):

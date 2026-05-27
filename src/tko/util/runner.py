@@ -14,19 +14,16 @@ class Runner:
             env = os.environ.copy()
             env['NO_COLOR'] = '1'
             env['FORCE_COLOR'] = '0'
-            try:
-                answer = subprocess.run(cmd, 
-                                        cwd=folder, 
-                                        env=env, 
-                                        input=input_data, 
-                                        stdout=PIPE, 
-                                        stderr=PIPE, 
-                                        timeout=timeout, 
-                                        text=True
-                                        )
-            except FileNotFoundError as e:
-                print(cmd)
-                return 1, "", "fail: command not found: " + str(e)
+            answer = subprocess.run(cmd, 
+                                    cwd=folder, 
+                                    env=env, 
+                                    input=input_data, 
+                                    stdout=PIPE, 
+                                    stderr=PIPE, 
+                                    timeout=timeout, 
+                                    text=True
+                                    )
+
             err = ""
             if answer.returncode != 0:
                 err = answer.stderr + Runner.decode_code(answer.returncode)
