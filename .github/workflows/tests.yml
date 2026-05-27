@@ -47,7 +47,7 @@ jobs:
         run: uv sync --extra dev
 
       - name: Install JS dependencies
-        run: npm install
+        run: npm install esbuild
 
       - name: Run tests
         run: uv run pytest -q
