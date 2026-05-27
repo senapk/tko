@@ -167,20 +167,37 @@ class Links:
 
     @staticmethod
     def execute(path: Path, content: str, action: Action = Action.RUN) -> str:
-        regex = r"<!-- links (\S*?) -->\n(.*?)<!-- links -->"
+        regex = r"<!-- links (\S*?) -->\r?\n(.*?)<!-- links -->"
         matches = re.finditer(regex, content, re.MULTILINE | re.DOTALL)
-        
-        # replace content of group 2 with load_links of group 1 for each match
+
         for match in matches:
             filter_dir = match.group(1)
-            lregex = r"<!-- links " + filter_dir + r" -->\n(.*?)<!-- links -->"
+
+            lregex = (
+                r"<!-- links "
+                + re.escape(filter_dir)
+                + r" -->\r?\n(.*?)<!-- links -->"
+            )
+
             if action == Action.RUN:
                 readme_dir = path.parent.resolve()
                 new_links = Links.load_links(readme_dir, Path(filter_dir))
-                subst = r"<!-- links " + filter_dir + r" -->\n" + new_links + r"<!-- links -->"
+
+                subst = (
+                    f"<!-- links {filter_dir} -->\n"
+                    f"{new_links}"
+                    f"<!-- links -->"
+                )
             else:
-                subst = r"<!-- links " + filter_dir + r" -->\n<!-- links -->"
-            content = re.sub(lregex, subst, content, 0, re.MULTILINE | re.DOTALL)
+                subst = f"<!-- links {filter_dir} -->\n<!-- links -->"
+
+            content = re.sub(
+                lregex,
+                subst,
+                content,
+                0,
+                re.MULTILINE | re.DOTALL,
+            )
 
         return content
 
