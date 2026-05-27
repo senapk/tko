@@ -159,7 +159,7 @@ class Links:
                         output += traverse_directory(entry, depth + 1)
                     else:
                         path = entry.resolve().relative_to(readme_dir)
-                        output += "  " * depth + "- [" + entry.name + "](" + str(path) + ")\n"
+                        output += "  " * depth + "- [" + entry.name + "](" + path.as_posix() + ")\n"
             return output
         
         origin = readme_dir / filter_dir
@@ -193,10 +193,9 @@ class Links:
 
             content = re.sub(
                 lregex,
-                subst,
+                lambda _: subst,
                 content,
-                0,
-                re.MULTILINE | re.DOTALL,
+                flags=re.MULTILINE | re.DOTALL,
             )
 
         return content
