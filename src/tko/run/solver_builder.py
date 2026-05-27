@@ -42,17 +42,13 @@ class Executable:
         self.__compiled: bool = False
         self.__compile_error: bool = False
         self.__error_msg: RT = RT()
-        self.__shell_mode: bool = False # subprocess needs bash mode to process symbols like & or |
     
-    def needs_shell_mode(self):
-        return self.__shell_mode
     
-    def set_executable(self, cmd: list[str] | str, files: list[Path], folder: Path, shell_mode: bool):
+    def set_executable(self, cmd: list[str] | str, files: list[Path], folder: Path):
         self.__compiled = True
         self.__cmd_list = cmd
         self.__files: list[Path] = files
         self.__folder: Path = folder.resolve()
-        self.__shell_mode = shell_mode
         return self
     
     def get_command(self) -> tuple[list[str] | str, Path]:
@@ -153,7 +149,7 @@ class SolverBuilder:
         elif first.suffix[1:] in self.settings.get_languages_settings().get_languages().keys():
             self.prepare_exec_with_lang()
         else:
-            self.__exec.set_executable([str(x) for x in self.args_list], [], Path(""), shell_mode=True)
+            self.__exec.set_executable([str(x) for x in self.args_list], [], Path(""))
 
     def replace_placeholders(self, text: list[str]) -> list[str]:
         parent_folder = self.args_list[0].parent
@@ -186,12 +182,12 @@ class SolverBuilder:
         parent_folder = self.args_list[0].parent
         build_cmd = self.replace_placeholders(build_cmd)
         if len(build_cmd) > 0:
-            return_code, stdout, stderr = Runner.subprocess_run(build_cmd, folder=parent_folder, shell_mode=False)
+            return_code, stdout, stderr = Runner.subprocess_run(build_cmd, folder=parent_folder)
             if return_code != 0:
                 self.__exec.set_compile_error(stdout + stderr)
                 return
         run_cmd = self.replace_placeholders(run_cmd)
-        self.__exec.set_executable(run_cmd, [], parent_folder, shell_mode=False)
+        self.__exec.set_executable(run_cmd, [], parent_folder)
 
     def __prepare_make(self):
         self.check_tool("make")
@@ -202,7 +198,7 @@ class SolverBuilder:
         if return_code != 0:
             self.__exec.set_compile_error(stdout + stderr)
         else:
-            self.__exec.set_executable(cmd=["make", "-s", "-C", folder, "-f", solver, "run"], files=[], folder=Path(""), shell_mode=False)
+            self.__exec.set_executable(cmd=["make", "-s", "-C", folder, "-f", solver, "run"], files=[], folder=Path(""))
 
     def __prepare_ts(self):
         copy_dir = self.cache_dir / "src"

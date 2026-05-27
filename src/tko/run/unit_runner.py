@@ -23,8 +23,7 @@ class UnitRunner:
             cmd = cmd, 
             input_data = unit.input,
             timeout = timeout, 
-            folder = folder.resolve(),
-            shell_mode= executable.needs_shell_mode()
+            folder = folder.resolve()
         )
         if return_code != 0:
             # Keep execution errors stable across environments by avoiding

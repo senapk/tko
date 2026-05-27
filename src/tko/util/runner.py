@@ -9,22 +9,24 @@ class Runner:
         pass
 
     @staticmethod
-    def subprocess_run(cmd: str | list[str], input_data: str = "", timeout: None | float = None, folder: Path | None = None, shell_mode: bool = False) -> tuple[int, str, str]:
+    def subprocess_run(cmd: str | list[str], input_data: str = "", timeout: None | float = None, folder: Path | None = None) -> tuple[int, str, str]:
         try:
             env = os.environ.copy()
             env['NO_COLOR'] = '1'
             env['FORCE_COLOR'] = '0'
-
-            answer = subprocess.run(cmd, 
-                                    cwd=folder, 
-                                    env=env, 
-                                    shell= shell_mode, 
-                                    input=input_data, 
-                                    stdout=PIPE, 
-                                    stderr=PIPE, 
-                                    timeout=timeout, 
-                                    text=True
-                                    )
+            try:
+                answer = subprocess.run(cmd, 
+                                        cwd=folder, 
+                                        env=env, 
+                                        input=input_data, 
+                                        stdout=PIPE, 
+                                        stderr=PIPE, 
+                                        timeout=timeout, 
+                                        text=True
+                                        )
+            except FileNotFoundError as e:
+                print(cmd)
+                return 1, "", "fail: command not found: " + str(e)
             err = ""
             if answer.returncode != 0:
                 err = answer.stderr + Runner.decode_code(answer.returncode)
