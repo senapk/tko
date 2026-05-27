@@ -88,7 +88,7 @@ class TaskParser:
         Se o link não for absoluto, resolve o caminho relativo ao índice.
         """
         if not Path(link).is_absolute():
-            return str(self.index_path.parent / link)
+            return (self.index_path.parent / link).as_posix()
         return link
 
     def parse_line(self, line: str, line_num: int = 0) -> Task | None:
