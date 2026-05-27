@@ -26,7 +26,7 @@ class Runner:
 
             err = ""
             if answer.returncode != 0:
-                err = answer.stderr + Runner.decode_code(answer.returncode)
+                err = "fail: execution error"
             return answer.returncode, answer.stdout, err
         except subprocess.TimeoutExpired:
             err = "fail: processo abortado depois de {} segundos".format(timeout)
@@ -39,22 +39,22 @@ class Runner:
         else:
             os.system('clear')
 
-    @staticmethod
-    def decode_code(return_code: int | None) -> str:
-        if return_code is None:
-            return "fail: Process was killed"
+    # @staticmethod
+    # def decode_code(return_code: int | None) -> str:
+    #     if return_code is None:
+    #         return "fail: Process was killed"
         
-        # Linux shells may report signal exits as 128 + signal (e.g. 134),
-        # while subprocess may also expose them as negative signals (e.g. -6).
-        if return_code < 0:
-            signal = -return_code
-        elif return_code >= 128:
-            signal = return_code - 128
-        else:
-            signal = None
+    #     # Linux shells may report signal exits as 128 + signal (e.g. 134),
+    #     # while subprocess may also expose them as negative signals (e.g. -6).
+    #     if return_code < 0:
+    #         signal = -return_code
+    #     elif return_code >= 128:
+    #         signal = return_code - 128
+    #     else:
+    #         signal = None
 
-        if signal == 11:
-            return "fail: segmentation fault"
-        if signal == 6:
-            return "fail: runtime exception"
-        return "fail: execution error code " + str(return_code)
+    #     if signal == 11:
+    #         return "fail: segmentation fault"
+    #     if signal == 6:
+    #         return "fail: runtime exception"
+    #     return "fail: execution error code " + str(return_code)
