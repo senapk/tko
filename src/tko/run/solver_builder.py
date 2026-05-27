@@ -32,19 +32,19 @@ class CompileError(Exception):
         return self.message
 
 class Executable:
-    def __init__(self, cmd: list[str] | str | None, files: list[Path] | None, folder: Path):
+    def __init__(self, cmd: list[str] | None, files: list[Path] | None, folder: Path):
         if cmd is None:
             cmd = []
         if files is None:
             files = []
-        self.__cmd_list: list[str] | str = cmd
+        self.__cmd_list: list[str] = cmd
         self.__folder: Path = folder
         self.__compiled: bool = False
         self.__compile_error: bool = False
         self.__error_msg: RT = RT()
     
     
-    def set_executable(self, cmd: list[str] | str, files: list[Path], folder: Path):
+    def set_executable(self, cmd: list[str], files: list[Path], folder: Path):
         self.__compiled = True
         self.__cmd_list = cmd
         self.__files: list[Path] = files
@@ -52,11 +52,8 @@ class Executable:
         return self
     
     def get_command(self) -> tuple[list[str] | str, Path]:
-        cmd: list[str] | str = self.__cmd_list
-        if isinstance(cmd, str):
-            cmd += " " + " ".join([file.resolve().as_posix() for file in self.__files])
-        else:
-            cmd += [file.resolve().as_posix() for file in self.__files]
+        cmd: list[str] = self.__cmd_list
+        cmd += [file.resolve().as_posix() for file in self.__files]
         return cmd, self.__folder
 
     def set_compile_error(self, error_msg: RT | str):
@@ -149,7 +146,7 @@ class SolverBuilder:
         elif first.suffix[1:] in self.settings.get_languages_settings().get_languages().keys():
             self.prepare_exec_with_lang()
         else:
-            self.__exec.set_executable([str(x) for x in self.args_list], [], Path(""))
+            self.__exec.set_executable([x.as_posix() for x in self.args_list], [], Path(""))
 
     def replace_placeholders(self, text: list[str]) -> list[str]:
         parent_folder = self.args_list[0].parent
@@ -158,16 +155,16 @@ class SolverBuilder:
         output_path = self.cache_dir / ("a.out" + exe_ext)
         entry_path = self.cache_dir / (main_file_without_ext + ".js")
         
-        files_flist = [f'{str(x.relative_to(parent_folder, walk_up=True))}' for x in self.args_list]
+        files_flist = [f'{x.relative_to(parent_folder, walk_up=True).as_posix()}' for x in self.args_list]
         output: list[str] = []
         for t in text:
             if t == "{files}":
                 output.extend(files_flist)
             else:
-                data = (t.replace("{output}", f'{str(output_path.relative_to(parent_folder, walk_up=True))}')
+                data = (t.replace("{output}", f'{output_path.resolve().as_posix()}')
                             .replace("{main}", main_file_without_ext)
-                            .replace("{cache}", f'{str(self.cache_dir.relative_to(parent_folder, walk_up=True))}')
-                            .replace("{entry}", f'{str(entry_path.relative_to(parent_folder, walk_up=True))}')).strip()
+                            .replace("{cache}", f'{self.cache_dir.resolve().as_posix()}')
+                            .replace("{entry}", f'{entry_path.resolve().as_posix()}')).strip()
                 output.append(data)
         return output
 

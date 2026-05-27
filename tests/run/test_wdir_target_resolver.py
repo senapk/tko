@@ -6,11 +6,6 @@ import pytest
 from tko.run.wdir_target_resolver import WdirTargetResolver
 
 
-class _FakeLangSettings:
-    def get_languages_with_drafts(self) -> dict[str, str]:
-        return {"py": "", "cpp": ""}
-
-
 
 
 

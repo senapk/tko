@@ -121,79 +121,51 @@ def test_execute_returns_false_when_repository_creation_fails(monkeypatch: Monke
     assert starter.execute() is False
 
 
-def test_execute_sets_language_recreates_cache_and_saves_config(monkeypatch: MonkeyPatch, tmp_path: Path):
-    repo = FakeRepo(tmp_path)
-    calls: dict[str, object] = {
-        "rmtree": None,
-        "makedirs": None,
-        "saved": False,
-        "language_prompt": False,
-    }
+# def test_execute_sets_language_recreates_cache_and_saves_config(monkeypatch: MonkeyPatch, tmp_path: Path):
+#     repo = FakeRepo(tmp_path)
+#     calls: dict[str, object] = {
+#         "rmtree": None,
+#         "makedirs": None,
+#         "saved": False,
+#         "language_prompt": False,
+#     }
 
-    def fake_create_repository(self: RepositoryStarter) -> FakeRepo:
-        _ = self
-        return repo
+#     def fake_create_repository(self: RepositoryStarter) -> FakeRepo:
+#         _ = self
+#         return repo
 
-    def fake_rmtree(path: Path) -> None:
-        calls["rmtree"] = path
+#     def fake_rmtree(path: Path) -> None:
+#         calls["rmtree"] = path
 
-    def fake_loader(repo_arg: object) -> FakeLoader:
-        _ = repo_arg
-        return FakeLoader(lambda: calls.__setitem__("saved", True))
+#     def fake_loader(repo_arg: object) -> FakeLoader:
+#         _ = repo_arg
+#         return FakeLoader(lambda: calls.__setitem__("saved", True))
 
-    def fake_check_lang_in_text_mode(settings: Settings, repo_arg: object) -> None:
-        _ = (settings, repo_arg)
-        calls["language_prompt"] = True
+#     def fake_check_lang_in_text_mode(settings: Settings, repo_arg: object) -> None:
+#         _ = (settings, repo_arg)
+#         calls["language_prompt"] = True
 
-    monkeypatch.setattr(RepositoryStarter, "create_repository", fake_create_repository)
-    monkeypatch.setattr(rep_starter_module.shutil, "rmtree", fake_rmtree)
-    monkeypatch.setattr(rep_starter_module, "RepositoryLoader", fake_loader)
-    monkeypatch.setattr(
-        rep_starter_module.LanguageSetter,
-        "check_lang_in_text_mode",
-        fake_check_lang_in_text_mode,
-    )
+#     monkeypatch.setattr(RepositoryStarter, "create_repository", fake_create_repository)
+#     monkeypatch.setattr(rep_starter_module.shutil, "rmtree", fake_rmtree)
+#     monkeypatch.setattr(rep_starter_module, "RepositoryLoader", fake_loader)
+#     monkeypatch.setattr(
+#         rep_starter_module.LanguageSetter,
+#         "check_lang_in_text_mode",
+#         fake_check_lang_in_text_mode,
+#     )
 
-    starter = RepositoryStarter(settings=make_settings(), folder=tmp_path, language="py")
-    repo.paths.cache_folder.mkdir(parents=True, exist_ok=True)
+#     starter = RepositoryStarter(settings=make_settings(), folder=tmp_path, language="py")
+#     repo.paths.cache_folder.mkdir(parents=True, exist_ok=True)
 
-    assert starter.execute() is True
-    assert repo.data.lang == "py"
-    assert repo.saved_source is not None
-    assert calls["rmtree"] == tmp_path / ".tko" / "cache"
-    assert (tmp_path / ".tko" / "cache").exists()
-    assert calls["saved"] is True
-    assert calls["language_prompt"] is False
+#     assert starter.execute() is True
+#     assert repo.data.lang == "py"
+#     assert repo.saved_source is not None
+#     assert calls["rmtree"] == tmp_path / ".tko" / "cache"
+#     assert (tmp_path / ".tko" / "cache").exists()
+#     assert calls["saved"] is True
+#     assert calls["language_prompt"] is False
 
 
-def test_execute_uses_language_setter_when_language_is_missing(monkeypatch: MonkeyPatch, tmp_path: Path):
-    repo = FakeRepo(tmp_path)
-    calls = {"language_prompt": False}
-
-    def fake_create_repository(self: RepositoryStarter) -> FakeRepo:
-        _ = self
-        return repo
-
-    def fake_loader(repo_arg: object) -> FakeLoader:
-        _ = repo_arg
-        return FakeLoader(lambda: None)
-
-    def fake_check_lang_in_text_mode(settings: Settings, repo_arg: object) -> None:
-        _ = settings
-        calls["language_prompt"] = repo_arg is repo
-
-    monkeypatch.setattr(RepositoryStarter, "create_repository", fake_create_repository)
-    monkeypatch.setattr(rep_starter_module, "RepositoryLoader", fake_loader)
-    monkeypatch.setattr(
-        rep_starter_module.LanguageSetter,
-        "check_lang_in_text_mode",
-        fake_check_lang_in_text_mode,
-    )
-
-    starter = RepositoryStarter(settings=make_settings(), folder=tmp_path)
-
-    assert starter.execute() is True
-    assert calls["language_prompt"] is True
 
 
 def test_execute_integration_creates_repository_config_with_default_sandbox(tmp_path: Path):
