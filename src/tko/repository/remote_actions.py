@@ -2,7 +2,7 @@ import logging
 from tko.repository.remote import Remote
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
-from tko.repository.repository_loader import RepositoryLoader
+from tko.repository.repository_config import RepositoryConfig
 from tko.util.rt import RT
 from tko.i18n import Msg, t
 from pathlib import Path
@@ -116,7 +116,7 @@ class RemoteActions:
                 break
         if not found:
             raise Warning(t(_REMOTE_NOT_FOUND))
-        RepositoryLoader(self.repo).save_config()
+        RepositoryConfig(self.repo).save()
 
     def remote_set(self, alias: str, target: str | None = None, index: str | None = None) -> None:
         repo = self.repo
@@ -134,7 +134,7 @@ class RemoteActions:
         self.show_source(remote)
         if change:
             print(RT(t(_REMOTE_FILTERS_UPDATED, alias=alias), "y"))
-            RepositoryLoader(repo).save_config()
+            RepositoryConfig(repo).save()
 
     def remote_filter(self, alias: str, filter_quest: list[str] | None = None, clear: bool = False, filter_to: str | None = None) -> None:
         repo = self.repo
@@ -159,7 +159,7 @@ class RemoteActions:
         self.show_source(source)
         if change:
             print(RT(t(_REMOTE_FILTERS_UPDATED, alias=alias), "y"))
-            RepositoryLoader(repo).save_config()
+            RepositoryConfig(repo).save()
 
     def fix_filter(self, source: list[str] | None, destiny: str | None) -> dict[str, str] | None:
         if source is None:
@@ -222,7 +222,7 @@ class RemoteActions:
             except Warning:
                 logger.exception(t(_REMOTE_CLONE_ERROR))
                 raise Warning(t(_REMOTE_CLONE_FAILED))
-        RepositoryLoader(repo).save_config()
+        RepositoryConfig(repo).save()
    
     def git_clone_repository(self, link: str) -> None:
         print(RT(t(_REMOTE_CLONING, link=link), "y"))

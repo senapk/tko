@@ -10,7 +10,7 @@ from tko.repository.repository import Repository
 from tko.config.settings import Settings
 from tko.i18n import Msg, t
 from tko.util.rt import RT
-from tko.down.sandbox_drafts import SandboxDrafts
+from tko.config.sandbox_drafts import SandboxDrafts
 
 
 class _DraftMsg:

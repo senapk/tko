@@ -5,7 +5,7 @@ from tko.repository.repository import Repository
 from tko.repository.repository_paths import RepositoryPaths
 import shutil
 from tko.config.settings import Settings
-from tko.repository.repository_loader import RepositoryLoader
+from tko.repository.repository_config import RepositoryConfig
 from tko.i18n import Msg, t
 
 
@@ -73,7 +73,7 @@ class RepositoryStarter:
         else:
             LanguageSetter.check_lang_in_text_mode(self.settings, self.repo)
         
-        RepositoryLoader(repo).save_config()
+        RepositoryConfig(repo).save()
 
         return True
 

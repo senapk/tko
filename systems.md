@@ -1,0 +1,56 @@
+# Systems
+
+- Settings
+  - languages
+- Repository
+  - remote
+    - quests
+      - parsers
+    - tasks
+      - parsers
+  - GitCache
+  - history
+    - registros das ações dos usuários
+    - registros capturados pelo dos watchdog
+  - game: lista de dados dos remotes integrado ao history
+- TUI
+  - Play
+    - TreeView
+      - quests and tasks gamification
+      - inbox, dependencies, visibility
+      - grade
+    - Graph
+      - TaskExec
+      - DailyTime
+    - Log by task
+    - Skills
+  - Tester
+    - testes e diffs
+- Collect
+  - history
+  - daily
+  - game
+  - resume_by_task
+  - resume_by_quest
+  - quests
+- Run
+  - autoloads
+  - unit runners
+  - pattern_loader
+  - diff builders
+  - parsers for tio, toml, md, files e vpl
+  - paths resolvers for git tasks and copy drafts into target
+- Task
+  - list
+  - open
+  - down
+  - collect
+    - log
+    - graph
+- Tools
+  - index build
+  - tests conversion
+  - filter for drafts
+  - freerun
+  - html
+  - 

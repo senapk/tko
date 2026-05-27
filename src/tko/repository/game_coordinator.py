@@ -24,8 +24,8 @@ class GameCoordinator:
         
         remotes = self.repo.remotes
         if not remotes: # load now
-            from tko.repository.repository_loader import RepositoryLoader
-            RepositoryLoader(self.repo).load_config()
+            from tko.repository.repository_config import RepositoryConfig
+            RepositoryConfig(self.repo).load()
             remotes = self.repo.remotes
         else: # update cache if needed
             if self.repo.git_cache.update_mode == UpdateMode.ALWAYS:

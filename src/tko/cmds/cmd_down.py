@@ -95,9 +95,9 @@ class CmdLineDown:
         self.rep = rep
         self.task_key = task_key
         if game is None:
-            from tko.repository.repository_loader import RepositoryLoader
+            from tko.repository.repository_config import RepositoryConfig
             from tko.repository.game_coordinator import GameCoordinator
-            RepositoryLoader(self.rep).load_config()
+            RepositoryConfig(self.rep).load()
             GameCoordinator(self.rep).load_game(verbose=True)
             self.game = self.rep.game
         else:

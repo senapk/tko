@@ -1,11 +1,9 @@
-from tko.collect.collect_actions import CMD_COLLECT_REPO_NOT_FOUND, CollectActions
-from tko.i18n import t
+from tko.collect.collect_actions import CollectActions
 from tko.collect.collected import Collected
-from tko.repository.repository import Repository
+from tko.repository.repository_builder import RepositoryBuilder
 
 
 import json
-import os
 from pathlib import Path
 
 class CollectParams:
@@ -34,41 +32,36 @@ class CollectSingle:
 
     @staticmethod
     def collect(param: CollectParams) -> Collected:
-        rep = Repository(param.folder)
-        if not rep.found():
-            path = os.path.abspath(param.folder)
-            print(t(CMD_COLLECT_REPO_NOT_FOUND, path=path))
-            return Collected()
-        rep.set_global_cache()
-        from tko.repository.repository_loader import RepositoryLoader
-        from tko.repository.game_coordinator import GameCoordinator
-        RepositoryLoader(rep).load_config()
-        GameCoordinator(rep).load_game(verbose=True)
+        rb = RepositoryBuilder()
+        rb.dir_path(param.folder).global_cache(True).load_config_and_game().verbose()
+        repo, _ = rb.build()
         data = Collected()
+        if repo is None:
+            return data
 
         if param.daily:
-            graph = CollectActions.daily_graph(rep, param.width, param.height, param.colored == 1)
-            data.graph = graph
+            graph = CollectActions.daily_graph(repo, param.width, param.height, param.colored == 1)
+            data.daily_graph = graph
             if not param.json_output:
                 print(graph)
 
         if param.resume:
-            resume_data = CollectActions.resume(rep)
-            data.resume = resume_data
+            resume_data = CollectActions.resume(repo)
+            data.task_resume = resume_data
             if not param.json_output:
                 for key, value in resume_data.items():
                     print(f"{key}: {value.to_dict()}")
 
         if param.log:
-            log_data = rep.logger.history.get_entries()
-            data.log = [str(entry) for entry in log_data]
+            log_data = repo.logger.history.get_entries()
+            data.full_log = [str(entry) for entry in log_data]
             if not param.json_output:
                 for entry in log_data:
                     print(entry)
 
         if param.game:
-            game_data = CollectActions.load_game_as_quest_list(rep)
-            data.quests = game_data
+            game_data = CollectActions.load_game_as_quest_list(repo)
+            data.game_structure = game_data
             if not param.json_output:
                 for quest in game_data:
                     print(str(quest))

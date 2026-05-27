@@ -1,6 +1,6 @@
 import datetime as dt
 
-from tko.logger.delta import Delta
+from tko.logger.delta import Delta, DeltaMode, DeltaAction
 
 
 def make_datetime(value: str) -> dt.datetime:
@@ -38,8 +38,8 @@ class TestDeltaCreate:
         base.accumulated = dt.timedelta(minutes=10)
         base.datetime = make_datetime("2026-04-28 10:00:00")
 
-        created = Delta().create(
-            Delta.Mode(Delta.Mode.Action.without_inc_time),
+        created = Delta().create_from(
+            DeltaMode(DeltaAction.without_inc_time),
             base,
             make_datetime("2026-04-28 10:03:30"),
         )
@@ -48,8 +48,8 @@ class TestDeltaCreate:
         assert created.elapsed == dt.timedelta(minutes=3, seconds=30)
         assert created.accumulated == dt.timedelta(minutes=10)
 
-        reversed_time = Delta().create(
-            Delta.Mode(Delta.Mode.Action.without_inc_time),
+        reversed_time = Delta().create_from(
+            DeltaMode(DeltaAction.without_inc_time),
             base,
             make_datetime("2026-04-28 09:59:00"),
         )
@@ -61,8 +61,8 @@ class TestDeltaCreate:
         base.accumulated = dt.timedelta(minutes=4)
         base.datetime = make_datetime("2026-04-28 10:00:00")
 
-        created = Delta().create(
-            Delta.Mode(Delta.Mode.Action.incrementing_time),
+        created = Delta().create_from(
+            DeltaMode(DeltaAction.incrementing_time),
             base,
             make_datetime("2026-04-28 10:01:15"),
         )
@@ -74,20 +74,20 @@ class TestDeltaCreate:
         base = Delta()
         base.accumulated = dt.timedelta(minutes=7)
         base.datetime = make_datetime("2026-04-28 10:00:00")
-        mode = Delta.Mode(Delta.Mode.Action.with_time_threshold, minutes_limit=30)
+        mode = DeltaMode(DeltaAction.with_time_threshold, minutes_limit=30)
 
-        accepted = Delta().create(mode, base, make_datetime("2026-04-28 10:20:00"))
+        accepted = Delta().create_from(mode, base, make_datetime("2026-04-28 10:20:00"))
         assert accepted.accumulated == dt.timedelta(minutes=27)
 
-        rejected = Delta().create(mode, base, make_datetime("2026-04-28 10:45:00"))
+        rejected = Delta().create_from(mode, base, make_datetime("2026-04-28 10:45:00"))
         assert rejected.elapsed == dt.timedelta(minutes=45)
         assert rejected.accumulated == dt.timedelta(minutes=7)
 
     def test_create_with_no_previous_item_starts_from_zero_elapsed(self):
         moment = make_datetime("2026-04-28 10:00:00")
 
-        created = Delta().create(
-            Delta.Mode(Delta.Mode.Action.incrementing_time),
+        created = Delta().create_from(
+            DeltaMode(DeltaAction.incrementing_time),
             None,
             moment,
         )

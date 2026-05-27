@@ -37,9 +37,9 @@ class CmdOpen:
             print(RT.parse(t(_OPEN_INVALID_REPO)))
             print(RT.parse(t(_OPEN_ACTION_HINT)))
             raise Warning(RT.parse("<$:r> <$:y> não contém um repositório do tko", "Erro:", repo_dir))
-        from tko.repository.repository_loader import RepositoryLoader
+        from tko.repository.repository_config import RepositoryConfig
         from tko.repository.game_coordinator import GameCoordinator
-        RepositoryLoader(self.repo).load_config()
+        RepositoryConfig(self.repo).load()
         GameCoordinator(self.repo).load_game(verbose=True)
         return self
 

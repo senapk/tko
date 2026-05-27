@@ -2,7 +2,7 @@ from tko.game.game import Game
 from tko.widget.fmt import Fmt
 from tko.play.language_setter import LanguageSetter
 from tko.config.app_settings import ToggleOption
-from tko.repository.repository_loader import RepositoryLoader
+from tko.repository.repository_config import RepositoryConfig
 from tko.config.settings import Settings
 from tko.repository.repository import Repository
 from tko.play.keys import GuiKeys
@@ -40,7 +40,7 @@ class Play:
         self.gui = Gui(tree=self.tree, fman=self.fman)
         self.actions = PlayActions(self.gui)
         self.play_palette = PlayPalette(self.actions)
-        self.loader = RepositoryLoader(repo)
+        self.loader = RepositoryConfig(repo)
 
     def display_need_update(self):
         self.gui.set_need_update()
@@ -49,7 +49,7 @@ class Play:
     def save_to_json(self):
         self.tree.save_state()
         self.settings.save_settings()
-        self.loader.save_config(force=self.exit)
+        self.loader.save(force=self.exit)
 
     def send_quit_msg(self):
         def set_exit():

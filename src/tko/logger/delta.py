@@ -9,11 +9,25 @@ _LOGGER_UNKNOWN_ACTION = Msg(
     en="Unknown action {action}",
 )
 
+class DeltaAction(enum.Enum):
+    without_inc_time = 1
+    incrementing_time = 2
+    with_time_threshold = 3
+
+class DeltaMode:        
+    def __init__(self, action: DeltaAction, minutes_limit: int = 60):
+        self.action = action
+        self.minutes_limit = minutes_limit
+
+    def __str__(self) -> str:
+        return f'{self.action.name} {self.minutes_limit}'
+
+
 
 class Delta:
     format = '%Y-%m-%d %H:%M:%S'
     def __init__(self):
-        self.mode: Delta.Mode | None = None
+        self.mode: DeltaMode | None = None
         self.datetime: dt.datetime = dt.datetime.fromordinal(1)
         self.elapsed: dt.timedelta = dt.timedelta()
         self.accumulated: dt.timedelta = dt.timedelta()
@@ -29,14 +43,16 @@ class Delta:
         seconds = round(total_seconds) % 60
         return f'{minutes:03d}:{seconds:02d}'
     
-    def create(self, mode: Mode, last_item: Delta | None, datetime: dt.datetime) -> Delta:
-        self.mode = mode
-        if mode.action == Delta.Mode.Action.without_inc_time:
-            return self.__create_without_inc_time(last_item, datetime)
-        elif mode.action == Delta.Mode.Action.incrementing_time:
-            return self.__create_incrementing_time(last_item, datetime)
-        elif mode.action == Delta.Mode.Action.with_time_threshold:
-            return self.__create_with_time_threshold(last_item, datetime, mode.minutes_limit)
+    @staticmethod
+    def create_from(mode: DeltaMode, last_item: Delta | None, datetime: dt.datetime) -> Delta:
+        delta = Delta()
+        delta.mode = mode
+        if mode.action == DeltaAction.without_inc_time:
+            return delta.__create_without_inc_time(last_item, datetime)
+        elif mode.action == DeltaAction.incrementing_time:
+            return delta.__create_incrementing_time(last_item, datetime)
+        elif mode.action == DeltaAction.with_time_threshold:
+            return delta.__create_with_time_threshold(last_item, datetime, mode.minutes_limit)
         else:
             raise ValueError(t(_LOGGER_UNKNOWN_ACTION, action=mode.action))
 
@@ -95,15 +111,4 @@ class Delta:
         date = dt.datetime.strptime(day, '%Y-%m-%d')
         return (date + dt.timedelta(days=1)).strftime('%Y-%m-%d')
 
-    class Mode:        
-        def __init__(self, action: Action, minutes_limit: int = 60):
-            self.action = action
-            self.minutes_limit = minutes_limit
-
-        def __str__(self) -> str:
-            return f'{self.action.name} {self.minutes_limit}'
-
-        class Action(enum.Enum):
-            without_inc_time = 1
-            incrementing_time = 2
-            with_time_threshold = 3
+    

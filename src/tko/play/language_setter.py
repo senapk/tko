@@ -2,7 +2,7 @@ from tko.floating import Floating
 from tko.floating.floating_drop_down import FloatingDropDown
 from tko.floating.floating_drop_down import FloatingInputData
 from tko.floating.floating_manager import FloatingManager
-from tko.repository.repository_loader import RepositoryLoader
+from tko.repository.repository_config import RepositoryConfig
 from tko.util.rt import RT
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
@@ -35,7 +35,7 @@ class LanguageSetter:
                 if lang in options:
                     break
             repo.data.lang = lang
-            RepositoryLoader(repo).save_config()
+            RepositoryConfig(repo).save()
             
     def __init__(self, settings: Settings, repo: Repository, fman: FloatingManager):
         self.fman = fman
@@ -93,7 +93,7 @@ class SetLangFunctor:
 
     def __call__(self):
         self.rep.data.lang = self.value.strip()
-        RepositoryLoader(self.rep).save_config()
+        RepositoryConfig(self.rep).save()
         self.fman.add_input(
             Floating()
             .bottom()

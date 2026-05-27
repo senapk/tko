@@ -1,13 +1,56 @@
-import os
-from pathlib import Path
+draft_rust = r"""
+fn main() {
+    println!("Hello, World!");
+}"""[1:]
 
-class SandboxDrafts:
-    sandbox_key_prefix = "user"
+draft_go = r"""
+package main
+import "fmt"
+func main() {
+    fmt.Println("Hello, World!")
+}"""[1:]
 
-    def __init__(self):
-        pass
+draft_js = r"""
+const input=(()=>{let l,i=0,P;return()=>process.stdin.isTTY?((P=P||require("readline-sync")).question()):(l=l||require("fs").readFileSync(0,"utf-8").split(/\r?\n/),l[i++])})();
+console.log("Hello, World!");
+"""
 
-    draft_readme: str = r"""Escreva aqui as informações que você quer salvar, esse é o seu rascunho.
+haskell_draft = r"""
+main :: IO ()
+main = putStrLn "Hello, World!"
+"""
+
+c_draft = r"""
+#include <stdio.h>
+int main() {
+    printf("Hello, World!\n");
+    return 0;
+}
+"""
+
+cpp_draft = r"""
+#include <iostream>
+int main() {
+    std::cout << "Hello, World!" << std::endl;
+    return 0;
+}
+"""
+
+java_draft = r"""
+public class draft {
+    public static void main(String args[]) {
+        System.out.println("Hello, World!");
+    }
+}
+"""
+
+ts_draft = r"""
+const input = () => ""; // MACRO
+export {};
+console.log("Hello, World!");
+"""[1:]
+
+readme_draft: str = r"""Escreva aqui as informações que você quer salvar, esse é o seu rascunho.
 O texto abaixo é informativo e você pode apagar depois de aprender como usar os rascunhos.
 
 ## Como usar os rascunhos
@@ -42,29 +85,8 @@ output = '''
 
 """
 
-    md_draft = r"""
+md_draft = r"""
 # Rascunho
 
 Se a tarefa exigir um relatório, escreva ele aqui. Você pode usar markdown, imagens e o que mais quiser para criar um relatório bem completo.
 """[1:]
-
-    @staticmethod
-    def format_draft_key(draft_id: int) -> str:
-        return f"{SandboxDrafts.sandbox_key_prefix}_{draft_id:03d}"
-    
-    @staticmethod
-    def find_max_numbered_key(task_keys_only: list[str]) -> int:
-        numbered_keys: list[int] = []
-        for key in task_keys_only:
-            if key.startswith(SandboxDrafts.sandbox_key_prefix + "_"):
-                try:
-                    number = int(key[len(SandboxDrafts.sandbox_key_prefix) + 1:])
-                    numbered_keys.append(number)
-                except ValueError:
-                    continue
-        return max(numbered_keys) if numbered_keys else 0
-    
-    @staticmethod
-    def create_sandbox_draft(dir: Path, title: str):
-        with open (os.path.join(dir, "README.md"), "w", encoding="utf-8") as f:
-            f.write(f"# {title}\n\n" + SandboxDrafts.draft_readme)

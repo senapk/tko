@@ -1,7 +1,7 @@
 import yaml
 from tko.logger.log_item_base import LogItemBase
 from tko.logger.log_sort import LogSort
-from tko.logger.delta import Delta
+from tko.logger.delta import Delta, DeltaMode, DeltaAction
         
 class DayInfo:
     def __init__(self, day:str = "", week_day: str = "", elapsed_seconds: int = 0):
@@ -20,7 +20,7 @@ class DailyListener:
         if day not in self.day_actions:
             self.day_actions[day] = LogSort()
 
-        mode = Delta.Mode(Delta.Mode.Action.with_time_threshold, minutes_limit=60)
+        mode = DeltaMode(DeltaAction.with_time_threshold, minutes_limit=60)
         self.day_actions[day].add_item(mode, item)
         # delta, _ = self.day_actions[day].base_list[-1]
 

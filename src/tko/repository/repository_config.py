@@ -33,18 +33,18 @@ _REPOSITORY_LOADER_CONFIG_CORRUPTED_UNEXPECTED = Msg(
 class ConfigMergeConflictError(Exception):
     pass
 
-class RepositoryLoader:
+class RepositoryConfig:
     def __init__(self, repo: Repository):
         self.repo = repo
         self._cached_output: dict[str, Any] = {}  # Cache the output in the Repository instance
 
-    def check_for_merge_conflicts(self, content: str):
+    def _check_for_merge_conflicts(self, content: str):
         lines = content.splitlines()
         for line in lines:
             if line.startswith("<<<<<<<") or line.startswith("=======") or line.startswith(">>>>>>>"):
                 raise ConfigMergeConflictError(t(_REPOSITORY_LOADER_GIT_CONFLICT, file=self.repo.paths.config_file))
     @staticmethod
-    def length(data: Any) -> int:
+    def _length(data: Any) -> int:
         if isinstance(data, dict):
             return len(data) # type: ignore
         elif isinstance(data, list):
@@ -52,19 +52,19 @@ class RepositoryLoader:
         else:
             return 0
 
-    def load_config(self) -> RepositoryLoader:
+    def load(self) -> RepositoryConfig:
         content = Decoder.load(self.repo.paths.config_file)
-        self.check_for_merge_conflicts(content)
+        self._check_for_merge_conflicts(content)
 
         local_data: dict[str, Any] | Any = {}
         try:
             local_data = yaml.safe_load(content)
-            if local_data is None or not isinstance(local_data, dict) or self.length(local_data) == 0:
+            if local_data is None or not isinstance(local_data, dict) or self._length(local_data) == 0:
                 backup_content = Decoder.load(self.repo.paths.config_backup_file)
-                self.check_for_merge_conflicts(backup_content)
+                self._check_for_merge_conflicts(backup_content)
                 local_data = yaml.safe_load(backup_content)
 
-            if local_data is None or not isinstance(local_data, dict) or self.length(local_data) == 0:
+            if local_data is None or not isinstance(local_data, dict) or self._length(local_data) == 0:
                 raise FileNotFoundError(t(_REPOSITORY_LOADER_EMPTY_CONFIG_FILE, file=self.repo.paths.config_file))
 
         except ConfigMergeConflictError:
@@ -90,7 +90,7 @@ class RepositoryLoader:
         normalized.pop("selected_index", None)
         return normalized
 
-    def save_config(self, force: bool = False) -> RepositoryLoader:
+    def save(self, force: bool = False) -> RepositoryConfig:
         self.repo.data.version = "0.2"
         self.repo.data.flags = self.repo.flags.to_dict()
 
