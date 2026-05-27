@@ -35,11 +35,19 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
       - name: Setup uv
         uses: astral-sh/setup-uv@v4
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: uv sync --extra dev
+
+      - name: Install JS dependencies
+        run: npm install
 
       - name: Run tests
         run: uv run pytest -q

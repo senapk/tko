@@ -22,3 +22,5 @@ qa.md
 plan.md
 DOCUMENTATION_PLAN.md
 plans
+node-modules/
+package-lock.json
