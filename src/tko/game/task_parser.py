@@ -142,7 +142,7 @@ class TaskParser:
         path = Path(self.redirect_from_readme(tm.link)).resolve()
         task.resource.remote_git = self.remote_url
         task.resource.remote_dir = self.remote_dir
-        task.resource.relative_path = path.relative_to(self.remote_dir, walk_up=True)
+        task.resource.relative_path = path.resolve().relative_to(self.remote_dir.resolve(), walk_up=True)
         task.resource.editable_source = self.editable_source
 
         return task
