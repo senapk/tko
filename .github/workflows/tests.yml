@@ -2,6 +2,7 @@ name: tests
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  PYTHONUTF8: "1"
 
 on:
   push:
@@ -38,7 +39,7 @@ jobs:
         uses: astral-sh/setup-uv@v4
 
       - name: Install dependencies
-        run: uv sync --extra dev
+        run: uv sync --extra dev --frozen
 
       - name: Run tests
         run: uv run pytest -q
