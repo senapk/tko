@@ -125,7 +125,7 @@ def test_wdir_bootstrap_service_builds_chain_with_lang_from_repo():
         settings=SimpleNamespace(),
     )
     # Adiciona unit_list ao fake_wdir
-    fake_wdir.unit_list = [Unit(case="a", input_data="1", expected="1", source=a_path)]
+    fake_wdir.unit_list = [Unit(case="a", input_data="1", expected="1", source=a_path)] # type: ignore
     service = WdirBootstrapService()
 
     built = service.build(cast(Any, ctx), cast(Any, FilterModeService()))
@@ -153,7 +153,7 @@ def test_wdir_bootstrap_service_sets_compile_error_on_build_failure():
         repo=None,
         settings=SimpleNamespace(),
     )
-    fake_wdir.unit_list = [Unit(case="a", input_data="1", expected="1", source=a_path)]
+    fake_wdir.unit_list = [Unit(case="a", input_data="1", expected="1", source=a_path)] # type: ignore
     service = WdirBootstrapService()
 
     service.build(cast(Any, ctx), cast(Any, FilterModeService()))

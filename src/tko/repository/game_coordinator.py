@@ -45,12 +45,12 @@ class GameCoordinator:
                 continue
             task = self.repo.game.tasks[key]
             
-            self_list = task_log.self_list
+            self_list = task_log.self_list()
             if self_list:
                 _, self_item = self_list[-1]
                 task.info.copy_quality_from(self_item.info)
 
-            exec_list = task_log.exec_list
+            exec_list = task_log.exec_list()
             if exec_list:
                 _, exec_item = exec_list[-1]
                 task.info.rate = exec_item.rate

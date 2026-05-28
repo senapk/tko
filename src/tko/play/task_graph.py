@@ -36,9 +36,11 @@ class TaskGraph:
 
         if self.log_sort is None:
             return
-        self.versions = len(self.log_sort.diff_list)
+        diff_list = self.log_sort.diff_list()
+        exec_list = self.log_sort.exec_list()
+        self.versions = len(diff_list)
        
-        item_exec_list: list[tuple[Delta, LogItemExec]] = self.log_sort.exec_list
+        item_exec_list: list[tuple[Delta, LogItemExec]] = exec_list
         collected_rate: list[float] = [0]
         collected_elapsed: list[float] = [0]
         collected_lines_len: list[float] = [0]
@@ -85,7 +87,7 @@ class TaskGraph:
         if self.log_sort is None:
             return []
         output: list[RT] = []
-        all_entries: list[tuple[Delta, LogItemBase]] = self.log_sort.base_list
+        all_entries: list[tuple[Delta, LogItemBase]] = self.log_sort.delta_list.base_list
         for delta, item in all_entries:
             data = str(item)
             data = data.split(", ")

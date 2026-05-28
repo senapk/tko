@@ -4,7 +4,6 @@ import datetime as dt
 from tko.logger.delta import Delta
 import enum
 from tko.logger.kv import KV
-from tko.logger.delta import DeltaMode
 
 class LogItemBase(ABC):
     class Type(enum.Enum):
@@ -21,6 +20,14 @@ class LogItemBase(ABC):
         self.datetime: dt.datetime = dt.datetime.fromordinal(1)
         self.timestamp: str = ""
         self.type: LogItemBase.Type = log_type
+
+    @property
+    def label(self) -> str:
+        return self.type.value + self.timestamp
+    
+    def __str__(self) -> str:
+        return self.label
+    
 
     def set_key(self, key: str):
         self.key = key
@@ -58,9 +65,6 @@ class LogItemBase(ABC):
     def get_log_type(self) -> LogItemBase.Type:
         return self.type
 
-    def __str__(self) -> str:
-        return self.encode_line()
-
     @abstractmethod
     def identify_kv(self, kv: dict[str, str]) -> bool:
         """
@@ -84,14 +88,3 @@ class LogItemBase(ABC):
         """
         return f'{self.timestamp}, {self.type.value}, {self.version_str}:{self.vers}, {self.key_str}:{self.key}'
     
-
-    @staticmethod
-    def add_to_list(
-        mode: DeltaMode, base_list: list[tuple[Delta, LogItemBase]], item: LogItemBase
-    ) -> Delta:
-        last_delta: Delta | None = None
-        if base_list:
-            last_delta, _ = base_list[-1]
-        delta = Delta.create_from(mode, last_delta, item.get_datetime())
-        base_list.append((delta, item))
-        return delta

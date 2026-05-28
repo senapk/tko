@@ -1,41 +1,52 @@
 import sys # type: ignore
 
+from tko.logger.delta_list import DeltaList
 from tko.logger.log_item_base import LogItemBase
 from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_move import LogItemMove
 from tko.logger.log_item_self import LogItemSelf
 from tko.logger.delta import Delta, DeltaMode
-from tko.i18n import Msg, t
 from icecream import ic # type: ignore
 
 
-_LOGGER_INVALID_ITEM_TYPE = Msg(
-    pt="Tipo de item inválido",
-    en="Invalid Item Type",
-)
-
 class LogSort:
     def __init__(self):
-        self.base_list: list[tuple[Delta, LogItemBase]] = []
-        self.exec_list: list[tuple[Delta, LogItemExec]] = []
-        self.diff_list: list[tuple[Delta, LogItemExec]] = []
-        self.move_list: list[tuple[Delta, LogItemMove]] = []
-        self.self_list: list[tuple[Delta, LogItemSelf]] = []
+        self.delta_list = DeltaList()
+
+    def base_list(self) -> list[tuple[Delta, LogItemBase]]:
+        return self.delta_list.base_list
+
+    def exec_list(self) -> list[tuple[Delta, LogItemExec]]:
+        output: list[tuple[Delta, LogItemExec]] = []
+        for delta, item in self.delta_list.base_list:
+            if isinstance(item, LogItemExec):
+                output.append((delta, item))
+        return output
+
+    def diff_list(self) -> list[tuple[Delta, LogItemExec]]:
+        output: list[tuple[Delta, LogItemExec]] = []
+        for delta, item in self.delta_list.base_list:
+            if isinstance(item, LogItemExec) and item.get_size() > 0:
+                output.append((delta, item))
+        return output
+    
+    def move_list(self) -> list[tuple[Delta, LogItemMove]]:
+        output: list[tuple[Delta, LogItemMove]] = []
+        for delta, item in self.delta_list.base_list:
+            if isinstance(item, LogItemMove):
+                output.append((delta, item))
+        return output
+
+    
+    def self_list(self) -> list[tuple[Delta, LogItemSelf]]:
+        output: list[tuple[Delta, LogItemSelf]] = []
+        for delta, item in self.delta_list.base_list:
+            if isinstance(item, LogItemSelf):
+                output.append((delta, item))
+        return output
+
 
     def add_item(self, mode: DeltaMode, item: LogItemBase) -> None:
-        delta = LogItemBase.add_to_list(mode, self.base_list, item)
-        self.__sort_by_instance(delta, item)
-    
-    def __sort_by_instance(self, delta: Delta, base: LogItemBase) -> None:
-        if isinstance(base, LogItemExec):
-            self.exec_list.append((delta, base))
-            if base.get_size() > 0:
-                self.diff_list.append((delta, base))
-        elif isinstance(base, LogItemMove):
-            self.move_list.append((delta, base))
-        elif isinstance(base, LogItemSelf):
-            self.self_list.append((delta, base))
-        else:
-            raise ValueError(t(_LOGGER_INVALID_ITEM_TYPE))
-        
+        self.delta_list.add_item(mode, item)
+            
     

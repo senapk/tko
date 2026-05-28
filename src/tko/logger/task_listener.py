@@ -1,24 +1,25 @@
 from tko.logger.log_item_base import LogItemBase
 from tko.logger.log_sort import LogSort
-from tko.logger.delta import Delta, DeltaMode, DeltaAction
+from tko.logger.delta import DeltaMode, DeltaAction
+from tko.logger.delta_list import DeltaList
 import sys # type: ignore
 
 class TaskListener:
     def __init__(self):
         self.minutes_limit: int = 60
-        self.time_item: list[tuple[Delta, LogItemBase]] = []
+        self.delta_list: DeltaList = DeltaList()
         self.task_dict: dict[str, LogSort] = {}
         self.last_key: str = ""
 
     def handle_log_entry(self, item: LogItemBase, new_entry: bool = False):
         _ = new_entry
         without_inc_time = DeltaMode(DeltaAction.without_inc_time)
-        LogItemBase.add_to_list(without_inc_time, self.time_item, item)
+        self.delta_list.add_item(without_inc_time, item)
         self.add_to_task(item)
 
     def add_to_task(self, item: LogItemBase):
         cumulative = True
-        delta, _ = self.time_item[-1]
+        delta, _ = self.delta_list.base_list[-1]
         if delta.elapsed.total_seconds() / 60 > self.minutes_limit:
             cumulative = False
         

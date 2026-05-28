@@ -29,8 +29,8 @@ class Delta:
     def __init__(self):
         self.mode: DeltaMode | None = None
         self.datetime: dt.datetime = dt.datetime.fromordinal(1)
-        self.elapsed: dt.timedelta = dt.timedelta()
-        self.accumulated: dt.timedelta = dt.timedelta()
+        self.elapsed: dt.timedelta = dt.timedelta() # time elapsed since last item
+        self.accumulated: dt.timedelta = dt.timedelta() # total accumulated
 
     def __str__(self) -> str:
         return f"datetime:{Delta.encode_format(self.datetime)}, elapsed:{Delta.encode_timedelta(self.elapsed)}, acc:{Delta.encode_timedelta(self.accumulated)}"
