@@ -62,7 +62,7 @@ class Tracker:
     def unfold_files(self, log_sort: LogSort) -> tuple[str, str]:
         output = "\n"
         timestamp_rate: dict[str, str] = {}
-        exec_list = log_sort.exec_list()
+        exec_list = log_sort.exec_list
         for _, item in exec_list:
             timestamp = item.get_timestamp().replace(":", "-").replace(" ", "_")
             timestamp_rate[timestamp] = str(item.rate)

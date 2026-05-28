@@ -55,9 +55,9 @@ class TaskUserData:
         self.info: TaskSelfInfo = TaskSelfInfo()
 
     def from_log_sort(self, log_sort: LogSort):
-        base_list = log_sort.base_list()
-        diff_list = log_sort.diff_list()
-        exec_list = log_sort.exec_list()
+        base_list = log_sort.base_list
+        diff_list = log_sort.diff_list
+        exec_list = log_sort.exec_list
 
         if base_list:
             delta, _ = base_list[-1]
@@ -67,8 +67,8 @@ class TaskUserData:
         if diff_list:
             delta, last_diff = diff_list[-1]
             self.resume.lines = last_diff.get_size()
-        if log_sort.self_list():
-            delta, last_self = log_sort.self_list()[-1]
+        if log_sort.self_list:
+            delta, last_self = log_sort.self_list[-1]
             self.info = last_self.get_info()
             self.resume.percent = TaskGrader(TaskLoss.PART, self.info).get_rate_percent()
         return self

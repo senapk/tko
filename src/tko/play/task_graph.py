@@ -36,8 +36,8 @@ class TaskGraph:
 
         if self.log_sort is None:
             return
-        diff_list = self.log_sort.diff_list()
-        exec_list = self.log_sort.exec_list()
+        diff_list = self.log_sort.diff_list
+        exec_list = self.log_sort.exec_list
         self.versions = len(diff_list)
        
         item_exec_list: list[tuple[Delta, LogItemExec]] = exec_list

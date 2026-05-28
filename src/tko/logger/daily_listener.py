@@ -41,7 +41,7 @@ class DailyListener:
         output: dict[str, DayInfo] = {}
         for day, log_sort in self.day_actions.items():
             week_day = Delta.week_day(day)
-            base_list = log_sort.base_list()
+            base_list = log_sort.base_list
             if base_list:
                 delta, _ = base_list[-1]
                 elapsed = int(delta.accumulated.total_seconds())
