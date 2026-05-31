@@ -26,7 +26,7 @@ class TestDeltaHelpers:
         assert str(delta) == "datetime:2026-04-28 14:35:42, elapsed:005:07, acc:012:03"
 
     def test_format_h_min_week_day_and_next_day(self):
-        assert Delta.format_h_min(-1) == "00:00"
+        assert Delta.format_h_min(-1) == "00h 00m"
         assert Delta.format_h_min(2.5) == "02h 30m"
         assert Delta.week_day("2026-04-28") == "Tuesday"
         assert Delta.next_day("2026-04-28") == "2026-04-29"

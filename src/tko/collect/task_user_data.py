@@ -1,88 +1,65 @@
-from tko.game.task_grader import TaskGrader
+from __future__ import annotations
+
+from tko.collect.task_resume import TaskResume
 from tko.game.task_info import TaskSelfInfo
 from tko.logger.log_sort import LogSort
-from tko.game.task_enums import TaskLoss
 from typing import Any
-
-
-class TaskResume:
-    minutes_str: str = "minutes"
-    versions_str: str = "versions"
-    executions_str: str = "executions"
-    lines_str: str = "lines"
-    percent_str: str = "percent"
-
-    def __init__(self, minutes: int = 0, versions: int = 0, executions: int = 0, lines: int = 0, percent: float = 0.0):
-        self.minutes: int = minutes # elapsed time in minutes
-        self.versions: int = versions # number of versions
-        self.executions: int = executions # number of runs
-        self.lines: int = lines # lines
-        self.percent: float = percent # percent of completion
-
-    def to_dict(self) -> dict[str, Any]:
-        output: dict[str, Any] = {}
-        if self.minutes > 0:
-            output[TaskResume.minutes_str] = str(self.minutes)
-        if self.versions > 0:
-            output[TaskResume.versions_str] = str(self.versions)
-        if self.executions > 0:
-            output[TaskResume.executions_str] = str(self.executions)
-        if self.lines > 0:
-            output[TaskResume.lines_str] = str(self.lines)
-        if self.percent > 0.0:
-            output[TaskResume.percent_str] = f"{self.percent:.2f}"
-        return output
-    
-    def from_dict(self, info: dict[str, str]) -> None:
-        # print(f"Loading Resume from dict: {info}")
-        self.minutes    = int(info.get(TaskResume.minutes_str, 0))
-        self.versions   = int(info.get(TaskResume.versions_str, 0))
-        self.executions = int(info.get(TaskResume.executions_str, 0))
-        self.lines      = int(info.get(TaskResume.lines_str, 0))
-        percent_str     = info.get(TaskResume.percent_str, "0.0")
-        if percent_str:
-            self.percent = float(percent_str)
-
+from tko.game.task import Task
 
 class TaskUserData:
-    key_str: str = "key"
-    quest_str: str = "quest"
+    class Key:
+        KEY: str = "key"
+        QUEST: str = "quest"
+        GRADER: str = "grader"
 
-    def __init__(self, key: str, quest_key: str):
-        self.key: str = key
-        self.quest: str = quest_key
+
+    def __init__(self):
+        self.key: str = ""
+        self._quest: str = ""
+        self.grader: float = 0.0
         self.resume: TaskResume = TaskResume()
         self.info: TaskSelfInfo = TaskSelfInfo()
 
-    def from_log_sort(self, log_sort: LogSort):
-        base_list = log_sort.base_list
-        diff_list = log_sort.diff_list
-        exec_list = log_sort.exec_list
+    @property
+    def quest(self) -> str:
+        return self._quest
+    
+    @quest.setter
+    def quest(self, value: str):
+        self._quest = value
+        if "@" in value:
+            self._quest = value.split("@")[1]
 
-        if base_list:
-            delta, _ = base_list[-1]
-            self.resume.minutes = round(delta.accumulated.total_seconds() / 60)
-        self.resume.versions = len(diff_list)
-        self.resume.executions = len(exec_list)
-        if diff_list:
-            delta, last_diff = diff_list[-1]
-            self.resume.lines = last_diff.get_size()
+
+    def setup(self, log_sort: LogSort, task: Task | None):
+        self.key = log_sort.key if log_sort.key else ""
+        self.quest = task.quest_key if task else ""
+        self.grader = task.grader.full_percent if task else 0.0
+
+        self.resume.from_log_sort(log_sort)
         if log_sort.self_list:
-            delta, last_self = log_sort.self_list[-1]
+            _, last_self = log_sort.self_list[-1]
             self.info = last_self.get_info()
-            self.resume.percent = TaskGrader(TaskLoss.PART, self.info).get_rate_percent()
         return self
     
-    def to_dict(self) -> dict[str, Any]:
+    def get_kv(self, include_key: bool, include_quest: bool) -> dict[str, Any]:
         output: dict[str, Any] = {}
-        output[TaskUserData.key_str] = self.key
-        output[TaskUserData.quest_str] = self.quest
-        output.update(self.resume.to_dict())
+        if include_key:
+            output[TaskUserData.Key.KEY] = self.key
+        if include_quest:
+            output[TaskUserData.Key.QUEST] = self.quest
+        output[TaskUserData.Key.GRADER] = f"{round(self.grader):>3}"
+        output.update(self.resume.get_kv())
         output.update(self.info.get_kv())
         return output
 
-    def from_dict(self, info: dict[str, str]) -> None:
-        self.key = info.get(TaskUserData.key_str, "")
-        self.quest = info.get(TaskUserData.quest_str, "")
-        self.resume.from_dict(info)
-        self.info.load_from_kv(info)
+    def from_kv(self, info: dict[str, str]) -> TaskUserData:
+        self.key = info.get(TaskUserData.Key.KEY, "")
+        self.quest = info.get(TaskUserData.Key.QUEST, "")
+        self.grader = float(info.get(TaskUserData.Key.GRADER, 0.0))
+        self.resume.from_kv(info)
+        self.info.from_kv(info)
+        return self
+
+    def __str__(self) -> str:
+        return f"{self.Key.KEY}:{self.key}, {self.Key.QUEST}:{self.quest}, {self.Key.GRADER}:{self.grader}, {self.resume.get_kv()}, {self.info.get_kv()})"

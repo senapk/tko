@@ -6,7 +6,7 @@ from typing import Callable
 from tko.config.settings import Settings
 from tko.game.task import Task
 from tko.logger.log_item_exec import LogItemExec
-from tko.logger.log_item_move import LogItemMove
+from tko.logger.log_item_move import LogItemMove, LogItemMoveMode
 from tko.floating.floating import Floating
 from tko.floating.floating_manager import FloatingManager
 from tko.widget.fmt import Fmt
@@ -60,7 +60,7 @@ class Tester:
 
         if rep:
                 rep.logger.store(
-                    LogItemMove().set_mode(LogItemMove.Mode.PICK).set_key(task.basic.full_key)
+                    LogItemMove().set_mode(LogItemMoveMode.PICK).set_key(task.basic.full_key)
             )
 
     def set_opener(self, opener: Opener) -> Tester:
@@ -188,7 +188,7 @@ class Tester:
                 if self.rep:
                     self.rep.logger.store(
                         LogItemMove()
-                        .set_mode(LogItemMove.Mode.BACK)
+                        .set_mode(LogItemMoveMode.BACK)
                             .set_key(self.task.basic.full_key)
                     )
                 break

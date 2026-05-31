@@ -1,22 +1,23 @@
 from __future__ import annotations
-from tko.logger.log_item_base import LogItemBase
+from tko.logger.log_item_base import LogItemBase, LogItemBaseType
 
 import enum
 
+class LogItemMoveMode(enum.Enum):
+    NONE = "NONE"
+    DOWN = "DOWN"
+    PICK = "PICK"
+    BACK = "BACK"
+    EDIT = "EDIT"
+
 class LogItemMove(LogItemBase):
-    class Mode(enum.Enum):
-        NONE = "NONE"
-        DOWN = "DOWN"
-        PICK = "PICK"
-        BACK = "BACK"
-        EDIT = "EDIT"
 
     mode_str = "mode"
     def __init__(self):
-        super().__init__(LogItemBase.Type.MOVE)
-        self.mode: LogItemMove.Mode = LogItemMove.Mode.NONE
+        super().__init__(LogItemBaseType.MOVE)
+        self.mode: LogItemMoveMode = LogItemMoveMode.NONE
 
-    def set_mode(self, action: LogItemMove.Mode):
+    def set_mode(self, action: LogItemMoveMode):
         self.mode = action
         return self
 
@@ -25,7 +26,7 @@ class LogItemMove(LogItemBase):
 
     def identify_kv(self, kv: dict[str, str]) -> bool:
         if self.mode_str in kv:
-            self.mode = LogItemMove.Mode(kv[self.mode_str])
-        if self.mode == LogItemMove.Mode.NONE:
+            self.mode = LogItemMoveMode(kv[self.mode_str])
+        if self.mode == LogItemMoveMode.NONE:
             return False
         return True

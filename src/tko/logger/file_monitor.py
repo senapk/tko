@@ -5,7 +5,7 @@ from datetime import datetime
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler, FileSystemEvent
 from tko.logger.logger import Logger
-from tko.logger.log_item_move import LogItemMove
+from tko.logger.log_item_move import LogItemMove, LogItemMoveMode
 
 
 class _EventManipulator(PatternMatchingEventHandler):
@@ -77,7 +77,7 @@ class FileMonitor:
                 self.logger.store(
                     LogItemMove()
                     .set_datetime(stamp)
-                    .set_mode(LogItemMove.Mode.EDIT)
+                    .set_mode(LogItemMoveMode.EDIT)
                     .set_key(full_key)
                 )
             self.history.clear()

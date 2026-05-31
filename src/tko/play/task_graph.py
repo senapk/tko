@@ -159,7 +159,7 @@ class TaskGraph:
             return [], []
         
         # title = RT(f" {self.task_key} ", "C")
-        title_builder = RBuffer().add(f"Total {self.actual_rate:.0f}% ", "g")
+        title_builder = RBuffer().add(f" Total {self.actual_rate:.0f}% ", "g")
         time_h: int = int(self.total_elapsed) // 60
         time_m: int = (int(self.total_elapsed) % 60)
         time = f"{time_h:02.0f}h {time_m:.0f}min" if time_h > 0 else f"{time_m:.0f}min"

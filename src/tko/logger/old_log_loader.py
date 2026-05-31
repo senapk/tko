@@ -3,7 +3,7 @@ from pathlib import Path
 
 from tko.logger.log_item_base import LogItemBase
 from tko.logger.log_item_exec import LogItemExec
-from tko.logger.log_item_move import LogItemMove
+from tko.logger.log_item_move import LogItemMove, LogItemMoveMode
 from tko.logger.log_item_self import LogItemSelf
 from tko.logger.patch_history import PatchHistory, PatchInfo
 from tko.logger.tracker import Tracker, Track
@@ -169,11 +169,11 @@ class OldLogLoader:
 
         item: LogItemBase | None = None
         if e.action == AType.PICK.value:
-            item = LogItemMove().set_mode(LogItemMove.Mode.PICK).set_timestamp(e.timestamp).set_key(e.task)
+            item = LogItemMove().set_mode(LogItemMoveMode.PICK).set_timestamp(e.timestamp).set_key(e.task)
         elif e.action == AType.BACK.value:
-            item = LogItemMove().set_mode(LogItemMove.Mode.BACK).set_timestamp(e.timestamp).set_key(e.task)
+            item = LogItemMove().set_mode(LogItemMoveMode.BACK).set_timestamp(e.timestamp).set_key(e.task)
         elif e.action == AType.DOWN.value:
-            item = LogItemMove().set_mode(LogItemMove.Mode.DOWN).set_timestamp(e.timestamp).set_key(e.task)
+            item = LogItemMove().set_mode(LogItemMoveMode.DOWN).set_timestamp(e.timestamp).set_key(e.task)
         elif e.action == AType.TEST.value or e.action == AType.PROG.value:
             try:
                 rate = int(e.payload)

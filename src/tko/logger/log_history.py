@@ -1,5 +1,5 @@
 from __future__ import annotations
-from tko.logger.log_item_base import LogItemBase
+from tko.logger.log_item_base import LogItemBase, LogItemBaseType
 from tko.logger.log_item_self import LogItemSelf
 from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_move import LogItemMove
@@ -102,16 +102,16 @@ class LogHistory:
         parts = line.strip().split(", ")
         if len(parts) < 2:
             return None
-        item_type = LogItemBase.Type(parts[1])
-        if item_type == LogItemBase.Type.MOVE:
+        item_type = LogItemBaseType(parts[1])
+        if item_type == LogItemBaseType.MOVE:
             item = LogItemMove()
             if item.decode_line(parts):
                 return item
-        elif item_type == LogItemBase.Type.EXEC:
+        elif item_type == LogItemBaseType.EXEC:
             item = LogItemExec()
             if item.decode_line(parts):
                 return item
-        elif item_type == LogItemBase.Type.SELF:
+        elif item_type == LogItemBaseType.SELF:
             item = LogItemSelf()
             if item.decode_line(parts):
                 return item

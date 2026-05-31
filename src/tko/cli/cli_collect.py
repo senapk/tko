@@ -30,6 +30,7 @@ def collect_repo(
     ctx: typer.Context,
     json_output: bool = typer.Option(False, "--json", help="Collect as json data"),
     resume: bool = typer.Option(False, "--resume", help="Collect resume"),
+    history: bool = typer.Option(False, "--history", help="Collect compacted history"),
     log: bool = typer.Option(False, "--log", help="Collect history log"),
     game: bool = typer.Option(False, "--game", help="Collect game info"),
     daily: bool = typer.Option(False, "--daily", help="Daily graph"),
@@ -48,6 +49,7 @@ def collect_repo(
     params.height = height
     params.daily = daily
     params.resume = resume
+    params.history = history
     params.game = game
     params.log = log
     params.json_output = json_output
@@ -56,7 +58,7 @@ def collect_repo(
     data = CollectSingle.collect(params)
 
     if params.json_output:
-        print(json.dumps(data.to_dict(), indent=4, ensure_ascii=False))
+        print(json.dumps(data.get_dict(), indent=4, ensure_ascii=False))
 
 if __name__ == "__main__":
     app()

@@ -118,7 +118,7 @@ class CmdDown:
         self.repo = repo
         self.task_key = task_key
         self.settings = settings
-        self.task: Task = self.repo.game.get_task(self.task_key)
+        self.task: Task = self.repo.game.get_task_throw(self.task_key)
         self.resolver = self.task.path
         if self.task.resource.is_read:
             raise ValueError(t(_CMD_DOWN_ACTIVITY_LINK_NOT_DOWNLOADABLE, task_key=self.task_key))

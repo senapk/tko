@@ -42,7 +42,7 @@ class GuiActionResolver:
                 output = TaskAction.EXPANDIR
             return "Y", output
         elif isinstance(obj, Task):
-            tr = self.tree.game.get_task(obj.basic.full_key)
+            tr = self.tree.game.get_task_throw(obj.basic.full_key)
             color, output = self.get_task_action(tr)
             return color, output
         return "R", TaskAction.NENHUMA

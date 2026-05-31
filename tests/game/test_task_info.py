@@ -4,19 +4,19 @@ from tko.game.task_info import TaskSelfInfo
 class TestTaskInfo:
     def test_load_from_kv_and_get_kv_round_trip(self):
         kv = {
-            TaskSelfInfo.Keys.rate_str: "75",
-            TaskSelfInfo.Keys.study_str: "45",
-            TaskSelfInfo.Keys.friend_str: "monitor",
-            TaskSelfInfo.Keys.feedback_str: "1",
-            TaskSelfInfo.Keys.guided_str: "1",
-            TaskSelfInfo.Keys.ia_concept_str: "1",
-            TaskSelfInfo.Keys.ia_problem_str: "1",
-            TaskSelfInfo.Keys.ia_coding_str: "1",
-            TaskSelfInfo.Keys.ia_debug_str: "1",
-            TaskSelfInfo.Keys.ia_refactor_str: "1",
+            TaskSelfInfo.Key.RATE: "75",
+            TaskSelfInfo.Key.STUDY_TIME: "45",
+            TaskSelfInfo.Key.FRIEND: "monitor",
+            TaskSelfInfo.Key.FEEDBACK: "1",
+            TaskSelfInfo.Key.GUIDED: "1",
+            TaskSelfInfo.Key.IA_CONCEPT: "1",
+            TaskSelfInfo.Key.IA_PROBLEM: "1",
+            TaskSelfInfo.Key.IA_CODING: "1",
+            TaskSelfInfo.Key.IA_DEBUG: "1",
+            TaskSelfInfo.Key.IA_REFACTOR: "1",
         }
 
-        info = TaskSelfInfo().load_from_kv(kv)
+        info = TaskSelfInfo().from_kv(kv)
 
         assert info.rate == 75
         assert info.study == 45
@@ -53,24 +53,24 @@ class TestTaskInfo:
         assert info.rate == 0
 
     def test_copy_quality_from_and_clone(self):
-        source = TaskSelfInfo().load_from_kv(
+        source = TaskSelfInfo().from_kv(
             {
-                TaskSelfInfo.Keys.rate_str: "90",
-                TaskSelfInfo.Keys.study_str: "30",
-                TaskSelfInfo.Keys.friend_str: "dupla",
-                TaskSelfInfo.Keys.feedback_str: "1",
-                TaskSelfInfo.Keys.guided_str: "1",
-                TaskSelfInfo.Keys.ia_concept_str: "1",
-                TaskSelfInfo.Keys.ia_problem_str: "1",
-                TaskSelfInfo.Keys.ia_coding_str: "1",
-                TaskSelfInfo.Keys.ia_debug_str: "1",
-                TaskSelfInfo.Keys.ia_refactor_str: "1",
+                TaskSelfInfo.Key.RATE: "90",
+                TaskSelfInfo.Key.STUDY_TIME: "30",
+                TaskSelfInfo.Key.FRIEND: "dupla",
+                TaskSelfInfo.Key.FEEDBACK: "1",
+                TaskSelfInfo.Key.GUIDED: "1",
+                TaskSelfInfo.Key.IA_CONCEPT: "1",
+                TaskSelfInfo.Key.IA_PROBLEM: "1",
+                TaskSelfInfo.Key.IA_CODING: "1",
+                TaskSelfInfo.Key.IA_DEBUG: "1",
+                TaskSelfInfo.Key.IA_REFACTOR: "1",
             }
         )
-        target = TaskSelfInfo().load_from_kv(
+        target = TaskSelfInfo().from_kv(
             {
-                TaskSelfInfo.Keys.rate_str: "20",
-                TaskSelfInfo.Keys.study_str: "5",
+                TaskSelfInfo.Key.RATE: "20",
+                TaskSelfInfo.Key.STUDY_TIME: "5",
             }
         )
 
@@ -90,5 +90,5 @@ class TestTaskInfo:
         clone = source.clone()
         clone.friend = "outra pessoa"
 
-        assert clone.get_kv() == source.get_kv() | {TaskSelfInfo.Keys.friend_str: "outra pessoa"}
+        assert clone.get_kv() == source.get_kv() | {TaskSelfInfo.Key.FRIEND: "outra pessoa"}
         assert source.friend == "dupla"

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from tko.logger.log_item_base import LogItemBase
+from tko.logger.log_item_base import LogItemBase, LogItemBaseType
 
 import enum
 
@@ -20,7 +20,7 @@ class LogItemExec(LogItemBase):
     size_str = "size"
     fail_str = "fail"
     def __init__(self):
-        super().__init__(LogItemBase.Type.EXEC)
+        super().__init__(LogItemBaseType.EXEC)
         self.mode: LogItemExec.Mode = LogItemExec.Mode.NONE # NONE, FULL, LOCK, FREE
         self.rate: int = -1 # percentage of coverage, value from 0 to 100
         self.size: int = -1 # lines

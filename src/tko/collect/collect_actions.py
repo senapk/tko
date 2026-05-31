@@ -59,8 +59,7 @@ class CollectActions:
             for task in quest.get_tasks():
                 quest_map[task.basic.full_key] = quest.basic.full_key
         for key, log_sort in tasks.items():
-            quest_key = quest_map.get(key, "")
-            resume = TaskUserData(key, quest_key).from_log_sort(log_sort)
+            resume = TaskUserData().setup(log_sort, repo.game.get_task(key))
             resume_dict[key] = resume
         return resume_dict
 

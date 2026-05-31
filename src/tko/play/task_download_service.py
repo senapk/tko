@@ -7,7 +7,7 @@ from tko.play_tree.task_tree import TaskTree
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
 from tko.cmds.cmd_down import CmdDown
-from tko.logger.log_item_move import LogItemMove
+from tko.logger.log_item_move import LogItemMove, LogItemMoveMode
 from tko.i18n import Msg, t
 
 
@@ -65,5 +65,5 @@ class TaskDownloadService:
         result = cmd_down.execute()
         if result:
             self.repo.logger.store(
-                LogItemMove().set_key(task.basic.full_key).set_mode(LogItemMove.Mode.DOWN)
+                LogItemMove().set_key(task.basic.full_key).set_mode(LogItemMoveMode.DOWN)
             )

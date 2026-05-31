@@ -1,11 +1,11 @@
-from tko.logger.log_item_base import LogItemBase
+from tko.logger.log_item_base import LogItemBase, LogItemBaseType
 from tko.game.task_info import TaskSelfInfo
 from tko.game.task import Task
 from tko.logger.kv import KV
 
 class LogItemSelf(LogItemBase):
     def __init__(self):
-        super().__init__(LogItemBase.Type.SELF)
+        super().__init__(LogItemBaseType.SELF)
         self.info: TaskSelfInfo = TaskSelfInfo()
 
     def set_task(self, task: Task):
@@ -21,8 +21,8 @@ class LogItemSelf(LogItemBase):
         return self.info
 
     def identify_kv(self, kv: dict[str, str]) -> bool:
-        self.info.load_from_kv(kv)
-        if self.type != LogItemBase.Type.SELF:
+        self.info.from_kv(kv)
+        if self.type != LogItemBaseType.SELF:
             return False
         return True
 

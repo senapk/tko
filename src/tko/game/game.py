@@ -44,12 +44,17 @@ class Game:
         self.tasks: dict[str, Task] = {}  # tasks indexed by task key
         self.language: str = ""
 
-    def get_task(self, key: str) -> Task:
+    def get_task_throw(self, key: str) -> Task:
         if key in self.tasks:
             return self.tasks[key]
         raise Warning(t(_GAME_TASK_NOT_FOUND_IN_COURSE, task_key=key))
 
-    def get_sandbox_remote(self) -> Remote:
+    def get_task(self, key: str) -> Task | None:
+        if key in self.tasks:
+            return self.tasks[key]
+        return None
+    
+    def get_sandbox_remote_throw(self) -> Remote:
         for s in self.remotes:
             if s.is_sandbox:
                 return s

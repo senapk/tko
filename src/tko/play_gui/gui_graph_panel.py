@@ -1,3 +1,4 @@
+from tko.collect.task_user_data import TaskUserData
 from tko.config.settings import Settings
 from tko.game.quest import Quest
 from tko.game.task import Task
@@ -25,6 +26,21 @@ class GuiGraphPanel:
         if len(graph) == 0:
             return False, [], []
         return True, header, graph
+    
+    def get_history(self) -> tuple[bool, list[RT], list[RT]]:
+        history: list[TaskUserData] = self.repo.logger.tasks.mount_task_history(self.repo.game)
+        header = [RT.parse(" [r]History ")]
+        task_pad = max((len(item.key) for item in history), default=0) + 2
+        quest_pad = max((len(item.quest) for item in history), default=0) + 2
+        list_data: list[RT] = []            
+        for item in history:
+            item.resume.events = 0 # hide events for history
+            text = (str(item.get_kv(include_key=False, include_quest=False))
+                    .replace("'", "").replace("{", "").replace("}", "")
+                    .replace("grader: ", "").replace(", init: ", "%, ").replace("duration: ", "").replace("executions: ", "exec: "))
+            list_data.append(RT.parse(f"[g]{item.key:<{task_pad}}[.] {item.quest:<{quest_pad}} {text}"))
+        return True, header, list_data
+
 
     def get_daily_graph(self, width: int, height: int) -> tuple[bool, list[RT], list[RT]]:
         header, graph = DailyGraph(self.repo.logger, width, height).get_graph()
@@ -46,8 +62,11 @@ class GuiGraphPanel:
                 height = 3
             if isinstance(selected, Task):
                 made, header, list_data = self.get_task_graph(selected.basic.full_key, width, height)
-            elif isinstance(selected, Quest) and self.flags.panel.is_graph():
-                made, header, list_data = self.get_daily_graph(width, height)
+            elif isinstance(selected, Quest):
+                if self.flags.panel.is_graph():
+                    made, header, list_data = self.get_daily_graph(width, height)
+                elif self.flags.panel.is_logs():
+                    made, header, list_data = self.get_history()
         if not made:
             list_data = [RT(x).rjust(width) for x in opening["parrot"].splitlines()]
 
@@ -57,14 +76,14 @@ class GuiGraphPanel:
             self.xray_offset = len(list_data) - lines + 2
 
         offset = 0
-        if self.flags.panel.is_logs() and isinstance(selected, Task):
+        if self.flags.panel.is_logs():
             offset = self.xray_offset
 
         dy, _ = frame.get_inner()
         if self.flags.panel.is_logs():
             if header:
                 frame.set_header(RT(" Scroll Up[PageUp]  ScrollDown[PgDown] "), "^")
-                frame.set_footer(RT(" ") + header[0], "^")
+                frame.set_footer(header[0], "^")
             frame.set_scrollbar(offset, len(list_data), "right")
             count = -1
             line_count = 0
@@ -78,7 +97,7 @@ class GuiGraphPanel:
                 line_count += 1
         else:
             if header:
-                frame.set_footer(RT(" ") + header[0], "^")
+                frame.set_footer(header[0], "^")
             count = -1
             line_count = 0
             for line in list_data:

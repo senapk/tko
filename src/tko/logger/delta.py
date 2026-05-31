@@ -70,13 +70,13 @@ class Delta:
 
     def __create_incrementing_time(self, last_item: Delta | None, datetime: dt.datetime) -> Delta:
         self.__create_without_inc_time(last_item, datetime)
-        if last_item is not None and self.elapsed > dt.timedelta(seconds=0):
+        if last_item is not None and self.elapsed >= dt.timedelta(seconds=0):
             self.accumulated += self.elapsed
         return self
 
     def __create_with_time_threshold(self, last_item: Delta | None, datetime: dt.datetime, minutes_limit: int) -> Delta:
         self.__create_without_inc_time(last_item, datetime)
-        if last_item is not None and self.elapsed > dt.timedelta(seconds=0) and self.elapsed < dt.timedelta(minutes=minutes_limit):
+        if last_item is not None and self.elapsed >= dt.timedelta(seconds=0) and self.elapsed < dt.timedelta(minutes=minutes_limit):
             self.accumulated += self.elapsed
         return self
 
@@ -96,10 +96,26 @@ class Delta:
     @staticmethod
     def format_h_min(hours: float) -> str:
         if hours < 0:
-            return "00:00"
+            return "00h 00m"
         h = int(hours)
         m = int((hours - h) * 60)
         return f"{h:02d}h {m:02d}m"
+    
+    @staticmethod
+    def format_hhmmss(seconds: float) -> str:
+        h = int(seconds / 3600)
+        r = int(seconds) % 3600
+        m = int(r / 60)
+        s = int(r % 60)
+        return f"{h:02d}:{m:02d}:{s:02d}"
+    
+    @staticmethod
+    def parse_hhmmss(value: str) -> dt.timedelta:
+        parts = value.split(":")
+        if len(parts) != 3:
+            raise ValueError(f"Invalid time format: {value}")
+        h, m, s = parts
+        return dt.timedelta(hours=int(h), minutes=int(m), seconds=int(s))
 
     @staticmethod
     def week_day(day: str) -> str:

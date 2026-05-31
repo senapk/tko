@@ -5,29 +5,29 @@ from tko.logger.delta import Delta
 import enum
 from tko.logger.kv import KV
 
+class LogItemBaseType(enum.Enum):
+    EXEC = 'EXEC'  # Execution Free or With tests
+    SELF = 'SELF'  # Self evaluation
+    MOVE = 'MOVE'  # Interaction with tasks without execution 
+    GAME = 'GAME'  # Game changes or setup
+
 class LogItemBase(ABC):
-    class Type(enum.Enum):
-        EXEC = 'EXEC'  # Execution Free or With tests
-        SELF = 'SELF'  # Self evaluation
-        MOVE = 'MOVE'  # Interaction with tasks without execution 
-        GAME = 'GAME'  # Game changes or setup
 
     key_str = "k"
     version_str = "v"
-    def __init__(self, log_type: LogItemBase.Type):
+    def __init__(self, log_type: LogItemBaseType):
         self.key = ""
         self.vers: int = 1
         self.datetime: dt.datetime = dt.datetime.fromordinal(1)
         self.timestamp: str = ""
-        self.type: LogItemBase.Type = log_type
+        self.type: LogItemBaseType = log_type
 
     @property
     def label(self) -> str:
-        return self.type.value + self.timestamp
+        return f"{self.type.value}_{self.timestamp.replace(' ', '_')}"
     
     def __str__(self) -> str:
-        return self.label
-    
+        return self.encode_line()
 
     def set_key(self, key: str):
         self.key = key
@@ -62,7 +62,7 @@ class LogItemBase(ABC):
     def get_datetime(self) -> dt.datetime:
         return self.datetime
 
-    def get_log_type(self) -> LogItemBase.Type:
+    def get_log_type(self) -> LogItemBaseType:
         return self.type
 
     @abstractmethod
@@ -76,7 +76,7 @@ class LogItemBase(ABC):
     def decode_line(self, parts: list[str]) -> bool:
         kv = KV.decode_args(parts[2:])
         self.set_timestamp(parts[0])
-        self.type = LogItemBase.Type(parts[1])
+        self.type = LogItemBaseType(parts[1])
         self.vers = int(kv.get(self.version_str, 1))
         self.key = kv.get(self.key_str, "")
         return self.identify_kv(kv)

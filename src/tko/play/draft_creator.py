@@ -34,7 +34,7 @@ class DraftCreator:
         self.reload = reload_fn
 
     def create_draft(self):
-        sandbox_source = self.game.get_sandbox_remote()
+        sandbox_source = self.game.get_sandbox_remote_throw()
         sandbox_folder: Path = sandbox_source.path.work_dir
         sandbox_folder.mkdir(parents=True, exist_ok=True)
 
