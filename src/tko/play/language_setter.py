@@ -7,7 +7,8 @@ from tko.util.rt import RT
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
 from tko.i18n import Msg, set_language as set_ui_language, t
-
+from prompt_toolkit import prompt
+from prompt_toolkit.completion import WordCompleter
 
 class _LangSetterMsg:
     DEFAULT_NOT_SET = Msg(pt="Linguagem padrão ainda não foi definida.", en="Default language has not been set yet.")
@@ -20,9 +21,42 @@ class _LangSetterMsg:
 
 class LanguageSetter:
 
+    # @staticmethod
+    # def check_lang_in_text_mode(settings: Settings, repo: Repository) -> None:
+    #     lang: str = repo.data.lang
+    #     lang_drafts: dict[str, str] = (
+    #         settings.get_languages_settings().get_languages_with_drafts()
+    #     )
+
+    #     if lang == "" or lang not in lang_drafts:
+    #         options: list[str] = sorted(lang_drafts.keys())
+
+    #         completer = WordCompleter(
+    #             options,
+    #             ignore_case=True,
+    #         )
+
+    #         print(f"\n{t(_LangSetterMsg.DEFAULT_NOT_SET)}\n")
+
+    #         while True:
+    #             lang = prompt(
+    #                 f"{t(_LangSetterMsg.PROMPT)} "
+    #                 f"{t(_LangSetterMsg.OPTIONS_PREFIX)}"
+    #                 f"{', '.join(options)}"
+    #                 f"{t(_LangSetterMsg.OPTIONS_SUFFIX)}: ",
+    #                 completer=completer,
+    #                 complete_while_typing=True,
+    #             )
+
+    #             if lang in options:
+    #                 break
+
+    #         repo.data.lang = lang
+    #         RepositoryConfig(repo).save()
+
     @staticmethod
-    def check_lang_in_text_mode(settings: Settings, repo: Repository):
-        lang = repo.data.lang
+    def check_lang_in_text_mode(settings: Settings, repo: Repository, selected: str | None = None) -> str:
+        lang = repo.data.lang if selected is None else selected
         lang_drafts: dict[str, str] = settings.get_languages_settings().get_languages_with_drafts()
         if lang == "" or lang not in lang_drafts:
             options = sorted(lang_drafts.keys())
@@ -34,8 +68,9 @@ class LanguageSetter:
                 lang = input()
                 if lang in options:
                     break
-            repo.data.lang = lang
-            RepositoryConfig(repo).save()
+        RepositoryConfig(repo).save()
+        repo.data.lang = lang
+        return lang
             
     def __init__(self, settings: Settings, repo: Repository, fman: FloatingManager):
         self.fman = fman

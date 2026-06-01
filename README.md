@@ -5,9 +5,7 @@
 
 # TKO
 
-Distribuição de tarefas de programação com Git, desenvolvimento direto na IDE do aluno e feedback contínuo para professores com métricas de progresso.
-
-Plataforma para ensino prático de programação que conecta autoria de questões, execução local de testes e observabilidade pedagógica sem depender de LMS/hosting como Moodle.
+Distribuição de tarefas de programação com Git, desenvolvimento na IDE do aluno e análise contínua do processo de aprendizagem.
 
 [![Tests](https://github.com/senapk/tko/actions/workflows/tests.yml/badge.svg)](https://github.com/senapk/tko/actions/workflows/tests.yml)
 [![PyPI version](https://img.shields.io/pypi/v/tko)](https://pypi.org/project/tko/)
@@ -163,4 +161,3 @@ Se possível, mantenha mudanças pequenas, com descrição clara do problema e d
 ## Licença
 
 Este projeto está sob a licença MIT. Veja [LICENSE](LICENSE).
-

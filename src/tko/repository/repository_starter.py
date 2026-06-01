@@ -67,14 +67,11 @@ class RepositoryStarter:
         if cache_folder.exists():
             shutil.rmtree(cache_folder)
         cache_folder.mkdir(parents=True, exist_ok=True)
-        if self.language is not None:
-            repo.data.lang = self.language
-            print(RT.parse(t(_REPO_STARTER_LANGUAGE_SET, language=self.language)))
-        else:
-            LanguageSetter.check_lang_in_text_mode(self.settings, self.repo)
+        self.language = LanguageSetter.check_lang_in_text_mode(self.settings, self.repo, selected=self.language)
+        print(RT.parse(t(_REPO_STARTER_LANGUAGE_SET, language=self.language)))
         
         RepositoryConfig(repo).save()
-
+        self.print_end_msg()
         return True
 
     def print_end_msg(self):
@@ -113,5 +110,5 @@ class RepositoryStarter:
     def create_empty_repo(self):
         source = self.repo.create_default_sandbox_source()
         self.repo.data.set_remote(source)
-        print(t(_REPO_STARTER_EMPTY_REPO))
+        print(RT.parse(t(_REPO_STARTER_EMPTY_REPO)))
     
