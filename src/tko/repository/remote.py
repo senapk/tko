@@ -8,8 +8,8 @@ from tko.i18n import Msg, t
 from typing import Any
 
 STUDENT_SANDBOX_NAME: str = "sandbox"
-STUDENT_SANDBOX_TARGET: str = "base"
-STUDENT_SANDBOX_INDEX: str = "../README.md"
+STUDENT_SANDBOX_TARGET: str = "sandbox"
+STUDENT_SANDBOX_INDEX: str = "../sandbox.md"
 
 _REMOTE_GIT_CACHE_ROOT_REQUIRED = Msg(
     pt="Git cache and root dir must be set to resolve the path",

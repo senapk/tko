@@ -93,8 +93,8 @@ class GameBuilder:
             return
         if not filename.exists():
             # print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}, criando arquivo")
-            if self.verbose:
-                logger.warning(t(_GAME_BUILDER_SOURCE_NOT_FOUND_CREATING, filename=filename, name=self.remote.data.name))
+            # if self.verbose:
+            #     logger.warning(t(_GAME_BUILDER_SOURCE_NOT_FOUND_CREATING, filename=filename, name=self.remote.data.name))
             filename.parent.mkdir(parents=True, exist_ok=True)
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(f"# {self.remote.data.name}\n\n")
