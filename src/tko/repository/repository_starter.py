@@ -46,9 +46,40 @@ _REPO_STARTER_EMPTY_REPO = Msg(
     en="Creating empty repository, as a folder for local activities",
 )
 
+_REPO_ASK_DEFAULT_REMOTES = Msg(
+    pt="Você deseja adicionar algum dos repositório padrão de atividades?",
+    en="Do you want to add any of the default activity repositories?",
+)
+_REPO_ASK_DEFAULT_REMOTES_OP1 = Msg(
+    pt="Sim, <FUP:g>  - Fundamentos de Programação",
+    en="Yes, <FUP:g>  - Programming Fundamentals",
+)
+_REPO_ASK_DEFAULT_REMOTES_OP2 = Msg(
+    pt="Sim, <POO:g>  - Programação Orientada a Objetos",
+    en="Yes, <POO:g>  - Object Oriented Programming",
+)
+_REPO_ASK_DEFAULT_REMOTES_OP3 = Msg(
+    pt="Sim, <ED :g>  - Estruturas de Dados",
+    en="Yes, <ED :g>  - Data Structures",
+)
+_REPO_ASK_DEFAULT_REMOTES_OP4 = Msg(
+    pt="<Não:g> desejo adicionar nenhum repositório agora, vou adicionar manualmente depois",
+    en="<No:g> I don't want to add any repository now, I'll add manually later",
+)
+_REPO_NONE_ADDED = Msg(
+    pt="Nenhum repositório adicionado. Você pode adicionar repositórios depois com o comando ",
+    en="No repository added.",
+)
+
+_REPO_INVALID_OPTION = Msg(
+    pt="Opção inválida. Por favor, escolha uma opção válida.",
+    en="Invalid option. Please, choose a valid option.",
+)
+
 class RepositoryStarter:
-    def __init__(self, settings: Settings, folder: Path | None, language: str | None = None):
+    def __init__(self, settings: Settings, folder: Path | None, language: str | None, skip: bool):
         self.settings = settings
+        self.skip = skip
         # if folder is set, use folder, else use local folder.
         self.folder: Path = Path.cwd()
         if folder is not None:
@@ -70,9 +101,44 @@ class RepositoryStarter:
         self.language = LanguageSetter.check_lang_in_text_mode(self.settings, self.repo, selected=self.language)
         print(RT.parse(t(_REPO_STARTER_LANGUAGE_SET, language=self.language)))
         
+        if not self.skip:
+            self.ask_about_default_remotes()
+
         RepositoryConfig(repo).save()
         self.print_end_msg()
         return True
+
+    def ask_about_default_remotes(self):
+        print("\n" + t(_REPO_ASK_DEFAULT_REMOTES))
+        print(RT.parse("<1, y>."), RT.parse(t(_REPO_ASK_DEFAULT_REMOTES_OP1)))
+        print(RT.parse("<2, y>."), RT.parse(t(_REPO_ASK_DEFAULT_REMOTES_OP2)))
+        print(RT.parse("<3, y>."), RT.parse(t(_REPO_ASK_DEFAULT_REMOTES_OP3)))
+        print(RT.parse("<4, y>."), RT.parse(t(_REPO_ASK_DEFAULT_REMOTES_OP4)))
+        while True: 
+            op = input("Escolha uma opção: ")
+            if op == "1":
+                self.add_remote("fup")
+                return
+            elif op == "2":
+                self.add_remote("poo")
+                return
+            elif op == "3":
+                self.add_remote("ed")
+                return
+            elif op == "4":
+                print(RT.parse(t(_REPO_NONE_ADDED)) + RT.parse(" <$:y>", "tko remote add <label> <url>"))
+                return
+            else:
+                print(RT.parse(t(_REPO_INVALID_OPTION)))
+
+    def add_remote(self, target: str):
+        from tko.repository.remote_actions import RemoteActions
+        rep_actions = RemoteActions(self.settings, self.repo)
+        rep_actions.remote_add(
+            name=target,
+            remote_default=target, 
+        )
+        rep_actions.print_end_msg()
 
     def print_end_msg(self):
         print(RT.parse(t(_REPO_STARTER_OPEN_HINT)))
@@ -111,4 +177,3 @@ class RepositoryStarter:
         source = self.repo.create_default_sandbox_source()
         self.repo.data.set_remote(source)
         print(RT.parse(t(_REPO_STARTER_EMPTY_REPO)))
-    

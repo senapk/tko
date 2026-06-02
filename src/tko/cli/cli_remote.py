@@ -26,7 +26,7 @@ _CLI_REMOTE_CLEAR_WITH_QUEST_ERROR = Msg(
 def remote_list(ctx: typer.Context):
     app_ctx: AppContext = AppContext.load_from_context(ctx)
     settings = app_ctx.settings
-    repo, _, _ = load_repo(app_ctx.changedir)
+    repo, _, _ = load_repo(app_ctx.changedir, force_offline=True)
     if repo is None:
         return
     rep_actions = RemoteActions(settings, repo)
@@ -37,7 +37,7 @@ def remote_list(ctx: typer.Context):
 def remote_rm(ctx: typer.Context, name: str = typer.Argument(..., help="Name of the remote to be removed")):
     app_ctx: AppContext = AppContext.load_from_context(ctx)
     settings = app_ctx.settings
-    repo, _, _ = load_repo(app_ctx.changedir)
+    repo, _, _ = load_repo(app_ctx.changedir, force_offline=True)
     if repo is None:
         return
     rep_actions = RemoteActions(settings, repo)
@@ -63,7 +63,7 @@ def remote_add(
     try:
         app_ctx: AppContext = AppContext.load_from_context(ctx)
         settings = app_ctx.settings
-        repo, _, _ = load_repo(app_ctx.changedir)
+        repo, _, _ = load_repo(app_ctx.changedir, force_offline=True)
         if repo is None:
             return
         rep_actions = RemoteActions(settings, repo)
@@ -75,7 +75,6 @@ def remote_add(
             remote_dir=local_source_dir,
             index=index,
             filter_quest=quest,
-            filter_task=None,
             filter_to=to,
             writeable=write,
         )
@@ -89,7 +88,6 @@ def remote_filter(
     ctx: typer.Context,
     name: str = typer.Argument(..., help="Name of the remote"),
     quest: Optional[list[str]] = typer.Option(None, "--quest", "-q", help="Load all tasks only from selected quests"),
-    setup: Optional[str] = typer.Option(None, "--setup", "-s", help="SETUP JSON string to configure the remote source"),
     clear: bool = typer.Option(False, "--clear", help="Clear all filters"),
     to: Optional[str] = typer.Option(None, "--to", "-t", help="Quest destination for filtered tasks added with this source"),
 ):
@@ -100,7 +98,7 @@ def remote_filter(
     app_ctx: AppContext = AppContext.load_from_context(ctx)
     settings = app_ctx.settings
     changedir = app_ctx.changedir
-    repo, _, _ = load_repo(changedir)
+    repo, _, _ = load_repo(changedir, force_offline=True)
     if repo is None:
         return
     rep_actions = RemoteActions(settings, repo)
@@ -117,7 +115,7 @@ def remote_set(
     app_ctx: AppContext = AppContext.load_from_context(ctx)
     settings = app_ctx.settings
     changedir = app_ctx.changedir
-    repo, _, _ = load_repo(changedir)
+    repo, _, _ = load_repo(changedir, force_offline=True)
     if repo is None:
         return
     rep_actions = RemoteActions(settings, repo)

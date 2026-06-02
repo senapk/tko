@@ -95,7 +95,8 @@ def register_main_commands(app: typer.Typer):
     @app.command("init", help="Initialize empty TKO repository")
     def init_cmd( # type: ignore
         ctx: typer.Context,
-        language: Optional[str] = typer.Option(None, "--language", "-l", help="Default repository language (e.g. py, cpp, java, go)")
+        language: Optional[str] = typer.Option(None, "--language", "-l", help="Default repository language (e.g. py, cpp, java, go)"),
+        skip: bool = typer.Option(False, "--skip-remotes", "-s", help="Skip asking about default remotes")
     ):
         from tko.repository.repository_starter import RepositoryStarter
         
@@ -103,5 +104,5 @@ def register_main_commands(app: typer.Typer):
         settings = app_ctx.settings
         changedir = app_ctx.changedir
         
-        rep_starter = RepositoryStarter(settings=settings, folder=changedir, language=language)
+        rep_starter = RepositoryStarter(settings=settings, folder=changedir, language=language, skip=skip)
         rep_starter.execute()

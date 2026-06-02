@@ -169,14 +169,14 @@ class RemoteActions:
     def remote_add(
             self, 
             name: str, 
-            remote_default: str | None, 
-            remote_url: str | None, 
-            remote_dir: str | None, 
-            index: str | None,
-            filter_quest: list[str] | None, 
-            filter_task: list[str] | None, 
-            filter_to: str | None,
-            writeable: bool, branch: str = "main"
+            remote_default: str | None = None, 
+            remote_url: str | None = None, 
+            remote_dir: str | None = None, 
+            index: str | None = None,
+            filter_quest: list[str] | None = None, 
+            filter_to: str | None = None,
+            writeable: bool = False, 
+            branch: str = "main"
             ) -> None:
         
         remotes = self.repo.remotes

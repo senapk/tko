@@ -7,8 +7,7 @@ from tko.util.rt import RT
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
 from tko.i18n import Msg, set_language as set_ui_language, t
-from prompt_toolkit import prompt
-from prompt_toolkit.completion import WordCompleter
+
 
 class _LangSetterMsg:
     DEFAULT_NOT_SET = Msg(pt="Linguagem padrão ainda não foi definida.", en="Default language has not been set yet.")

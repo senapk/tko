@@ -58,8 +58,8 @@ def test_create_default_sandbox_source_binds_workspace_and_cache(tmp_path: Path)
 
     assert source.is_sandbox is True
     assert source.data.name == "sandbox"
-    assert source.data.target == "base"
-    assert source.path.work_dir == (tmp_path / "base").resolve()
+    assert source.data.target == "sandbox"
+    assert source.path.work_dir == (tmp_path / "sandbox").resolve()
 
 
 def test_set_global_cache_uses_user_cache_folder(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:

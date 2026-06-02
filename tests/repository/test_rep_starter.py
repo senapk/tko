@@ -53,7 +53,7 @@ def test_create_repository_returns_none_when_user_cancels_reset(monkeypatch: Mon
     monkeypatch.setattr(rep_starter_module.RepositoryPaths, "rec_search_for_repo_parents", fake_parent_search)
     monkeypatch.setattr("builtins.input", lambda: "n")
 
-    starter = RepositoryStarter(settings=make_settings(), folder=tmp_path)
+    starter = RepositoryStarter(settings=make_settings(), folder=tmp_path, language=None, skip=True)
 
     repo = starter.create_repository()
 
@@ -79,7 +79,7 @@ def test_create_repository_uses_parent_repo_when_user_accepts_overwrite(monkeypa
 
     monkeypatch.setattr(rep_starter_module, "Repository", fake_repository)
 
-    starter = RepositoryStarter(settings=make_settings(), folder=child_folder)
+    starter = RepositoryStarter(settings=make_settings(), folder=child_folder, language=None, skip=True)
 
     repo = starter.create_repository()
 
@@ -102,7 +102,7 @@ def test_create_repository_returns_none_when_sub_repositories_exist(monkeypatch:
     monkeypatch.setattr(rep_starter_module.RepositoryPaths, "rec_search_for_repo_parents", fake_parent_search)
     monkeypatch.setattr(rep_starter_module.RepositoryPaths, "rec_search_for_repo_subdir", fake_subdir_search)
 
-    starter = RepositoryStarter(settings=make_settings(), folder=tmp_path)
+    starter = RepositoryStarter(settings=make_settings(), folder=tmp_path, language=None, skip=True)
 
     repo = starter.create_repository()
 
@@ -116,7 +116,7 @@ def test_execute_returns_false_when_repository_creation_fails(monkeypatch: Monke
 
     monkeypatch.setattr(RepositoryStarter, "create_repository", fake_create_repository)
 
-    starter = RepositoryStarter(settings=make_settings(), folder=tmp_path, language="py")
+    starter = RepositoryStarter(settings=make_settings(), folder=tmp_path, language="py", skip=True)
 
     assert starter.execute() is False
 
@@ -172,7 +172,7 @@ def test_execute_integration_creates_repository_config_with_default_sandbox(tmp_
     repo_folder = tmp_path / "repo"
     repo_folder.mkdir()
 
-    starter = RepositoryStarter(settings=make_settings(), folder=repo_folder, language="py")
+    starter = RepositoryStarter(settings=make_settings(), folder=repo_folder, language="py", skip=True)
 
     assert starter.execute() is True
 
