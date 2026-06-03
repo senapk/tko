@@ -21,8 +21,8 @@ No fluxo moodle (opcional), ele tambem:
 
 - Gera README rebaseado para remoto/local.
 - Gera HTML do enunciado.
-- Gera arquivo de testes VPL.
-- Monta mapi.json.
+- Gera arquivo de testes.
+- Monta mapi.json para uso com o VPL do Moodle
 
 ## Comando e opcoes
 

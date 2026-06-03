@@ -57,33 +57,11 @@ A arquitetura segue um modelo **local-first e distribuído**.
 5.  Sistema de logs e analytics
 6.  Integração com Git e GitHub Classroom
 
-Não existe dependência obrigatória de servidores centrais.
-
-O fluxo básico:
-
-    aluno recebe repositório
-    ↓
-    abre workspace
-    ↓
-    inicia TUI
-    ↓
-    seleciona tarefa
-    ↓
-    edita código no seu editor
-    ↓
-    executa testes
-    ↓
-    analisa feedback
-    ↓
-    repete até solução
-
 ------------------------------------------------------------------------
 
-# 4. Fluxo do Aluno
+# 4. Fluxo do Aluno / Professor
 
-O aluno trabalha em um **workspace local**.
-
-### Etapas principais
+### Fluxo do aluno trabalhando na sua máquina ou via Codespaces
 
 1.  Criar pasta de trabalho
 2.  Adicionar repositório de tarefas
@@ -95,8 +73,20 @@ O aluno trabalha em um **workspace local**.
 8.  Visualizar diffs e progresso
 9.  Executar testes personalizados
 10. Concluir tarefa e registrar autoavaliação
+11. Sincronizar progresso com repositório remoto
 
 Durante esse processo, o sistema registra eventos relevantes.
+
+### Fluxo do professor criando e distribuindo tarefas
+
+1. Professor cria uma turma no GitHub Classroom para gerenciar os repositórios dos alunos
+1. Professor cria um repositório Git para definir tarefas e gamificação.
+2. Copia as tarefas dos servidores oficiais ou cria suas próprias tarefas localmente.
+3. Envia o link do repositório para os alunos configurarem no TKO.
+4. Alunos adicionam o repositório e começam a resolver as tarefas.
+5. Sempre que o professor atualiza o repositório, os alunos recebem as atualizações na próxima sincronização.
+6. Após os alunos resolverem as tarefas e realizarem o push, o professor usa ferramentas de coleta de dados do TKO ou abre os repositórios dos alunos para analisar o processo de resolução.
+
 
 ------------------------------------------------------------------------
 
@@ -166,25 +156,17 @@ Registrados quando o aluno executa intencionalmente o código.
 
 Incluem:
 
--   diff do código
+-   diffs do código
 -   número de testes que passaram
 -   número de testes que falharam
-
-Exemplo:
-
-    run
-    diff_id: 3
-    tests_passed: 5
-    tests_failed: 3
 
 ## Eventos de atividade
 
 Registram apenas interação, sem salvar código.
 
-Exemplo:
-
-    edit_activity
-    lines_changed: 4
+- Entrar na atividade
+- Registrar alteração em arquivos
+- Sair da atividade
 
 Essa separação permite:
 
@@ -205,35 +187,9 @@ Isso permite criar:
 -   replay da resolução da tarefa
 -   análise pedagógica da trajetória
 
-Exemplo de progressão:
-
-    execução 1 → 0/10 testes
-    execução 2 → 3/10 testes
-    execução 3 → 7/10 testes
-    execução 4 → 10/10 testes
-
 ------------------------------------------------------------------------
 
-# 9. Replay da Resolução
-
-Com os eventos registrados, é possível gerar uma linha do tempo da
-solução.
-
-Exemplo:
-
-    00:00 tarefa iniciada
-    00:02 edição detectada
-    00:05 execução → 0/10
-    00:08 edição detectada
-    00:10 execução → 3/10
-    00:14 execução → 7/10
-    00:18 execução → 10/10
-
-Isso permite que professores analisem o processo de aprendizagem.
-
-------------------------------------------------------------------------
-
-# 10. Integração com GitHub
+# 9. Integração com GitHub
 
 O sistema se integra naturalmente com:
 
@@ -257,7 +213,7 @@ Essa integração fornece rastreabilidade adicional do processo.
 
 ------------------------------------------------------------------------
 
-# 11. Compatibilidade com Ambientes de Desenvolvimento
+# 10. Compatibilidade com Ambientes de Desenvolvimento
 
 Uma das decisões arquiteturais principais é permitir que o aluno utilize
 seu **ambiente de desenvolvimento nativo**.
@@ -276,7 +232,7 @@ não como editor.
 
 ------------------------------------------------------------------------
 
-# 12. Compatibilidade com Cloud Development
+# 11. Compatibilidade com Cloud Development
 
 A ferramenta funciona bem com ambientes como:
 
@@ -290,7 +246,7 @@ Isso permite criar laboratórios prontos com:
 
 ------------------------------------------------------------------------
 
-# 13. Vantagens em Relação a Plataformas Web
+# 12. Vantagens em Relação a Plataformas Web
 
 Muitas plataformas educacionais usam editores em navegador.
 
@@ -311,7 +267,7 @@ Arquitetura típica da ferramenta:
 
 ------------------------------------------------------------------------
 
-# 14. Acessibilidade e Custo
+# 13. Acessibilidade e Custo
 
 A proposta também tem um objetivo social importante.
 
@@ -332,7 +288,7 @@ Isso torna possível:
 
 ------------------------------------------------------------------------
 
-# 15. Posicionamento de Mercado
+# 14. Posicionamento de Mercado
 
 A ferramenta ocupa um espaço pouco explorado entre:
 
@@ -360,7 +316,7 @@ Comparação simplificada:
 
 ------------------------------------------------------------------------
 
-# 16. Diferencial Principal
+# 15. Diferencial Principal
 
 O diferencial mais importante é que o sistema captura:
 
@@ -375,7 +331,7 @@ Isso permite:
 
 ------------------------------------------------------------------------
 
-# 17. Potencial Futuro
+# 16. Potencial Futuro
 
 O modelo abre caminho para evoluções como:
 
@@ -386,7 +342,7 @@ O modelo abre caminho para evoluções como:
 
 ------------------------------------------------------------------------
 
-# 18. Conclusão
+# 17. Conclusão
 
 A ferramenta combina:
 

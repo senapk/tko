@@ -8,12 +8,12 @@ No fluxo atual, o TKO usa configuração declarativa para build/run e geração 
 
 Estratégias principais:
 
-1. Configuração global via `languages.toml`.
+1. Configuração global via `programming-languages.toml`.
 2. Fluxo específico por tarefa via markdown e artefatos locais da atividade.
 
 ## Quando usar cada estratégia
 
-Use `languages.toml` quando:
+Use `programming-languages.toml` quando:
 
 - a linguagem segue fluxo padrão de compilação e execução
 - você quer suporte reaproveitável em várias tarefas
@@ -23,7 +23,7 @@ Use fluxo por tarefa quando:
 - a atividade exige pipeline customizado
 - há etapas não triviais de build, preparação ou validação
 
-## Estrutura de entrada em languages.toml
+## Estrutura de entrada em programming-languages.toml
 
 Exemplo mínimo:
 
@@ -52,7 +52,7 @@ Placeholders comuns:
 
 ## Fluxo recomendado para adicionar linguagem
 
-1. Definir entrada da linguagem em `languages.toml`.
+1. Definir entrada da linguagem em `programming-languages.toml`.
 2. Validar build e run com exemplo mínimo.
 3. Validar geração de rascunho (`draft`).
 4. Criar ou ajustar testes cobrindo o novo fluxo.

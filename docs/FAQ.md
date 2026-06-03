@@ -46,13 +46,13 @@ Fluxo recomendado:
 
 Guias:
 
-- `wiki/Classroom.md`
-- `wiki/Criando-Atividades.md`
-- `wiki/Criando-Tarefas-e-Testes.md`
+- [Classrooom](../wiki/Classroom.md)
+- [wiki/Criando-Atividades.md](../wiki/Criando-Atividades.md)
+- [wiki/Criando-Tarefas-e-Testes.md](../wiki/Criando-Tarefas-e-Testes.md)
 
 ## 6) Qual a diferença entre `cases.tio` e testes em pasta?
 
-- `cases.tio`: formato compacto, comum no fluxo do TKO.
+- `tests.toml`: formato compacto, comum no fluxo do TKO.
 - Pasta: arquivos separados (`.in` e `.sol`) úteis para edição manual.
 
 Conversões e exemplos:
@@ -64,16 +64,16 @@ Conversões e exemplos:
 Exemplos:
 
 ```bash
-tko build tests t.vpl testes.tio
+tko build tests t.vpl tests.toml
 tko build tests t.tio README.md extra.tio
-tko build tests pasta cases.tio
+tko build tests pasta tests.toml
 ```
 
 Para padrões de nome personalizados, use `-p`.
 
 ## 8) Como adicionar suporte a linguagem no fluxo atual?
 
-Use `languages.toml` quando o fluxo é build/run padrão.
+Use `programming-languages.toml` quando o fluxo é build/run padrão.
 
 Guia:
 

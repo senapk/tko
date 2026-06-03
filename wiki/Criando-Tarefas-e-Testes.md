@@ -33,7 +33,7 @@ Com o comando de filtro, voce pode aplicar marcacoes no codigo e gerar versoes/d
 tko tool filter
 ```
 
-Consulte tambem: [Filtragem e Rascunhos](filter.md).
+Consulte tambem: [Filtragem e Rascunhos](tools/filter.md).
 
 ## Ferramenta de markdown
 
@@ -49,60 +49,60 @@ Ela oferece funcionalidades como:
 - Inclusao de conteudo carregado por diretivas.
 - Insercao de testes a partir de arquivo TOML (ex.: `tests.toml`) em blocos gerados.
 
-Consulte: [Markdown Preprocessor](mdpp.md).
+Consulte: [Markdown Preprocessor](tools/mdpp.md).
 
 ## Formato da linha de tarefa
 
 Exemplo:
 
 ```md
-- [ ]`@tres :1:main`[Soma de tres inteiros](base/tres/README.md)
+- [ ]`@tres xp:1 type:make`[Soma de tres inteiros](base/tres/README.md)
 ```
 
 Partes:
 
 - `@tres`: chave da tarefa.
-- `:1`: XP da tarefa.
-- `:main`: trilha principal.
-- Texto do link: titulo da tarefa.
-- Link: caminho relativo para o enunciado.
+- `xp:1`: XP da tarefa.
+- `type:make`: tipo da tarefa (consumo ou producao).
+- `[Soma de tres inteiros]`: texto do link.
+- `(base/tres/README.md)`: link para o enunciado.
+
 
 Regra importante da chave:
 
 - A chave inicia com `@`.
-- O tipo da atividade e indicado por `:read` ou `:do`.
+- O tipo da atividade e indicado por `type=read` ou `type=make`.
 
 Exemplo de tarefa de consumo:
 
 ```md
-- [ ]`@video_intro :1:read:self`[Video de introducao](https://exemplo.com/video)
+- [ ]`@video_intro xp:1 type=read`[Video de introducao](https://exemplo.com/video)
 ```
 
 ## Tipos e marcadores
 
 Consulte a referencia completa em:
 
-- [Marcadores e Tipos](Marcadores-e-Tipos.md)
+- [Marcadores e Tipos](game/tasks.md)
 
 Resumo util:
 
-- Trilhas: `main`, `side`, `perk`.
-- Politica de perda: `free`, `part`, `zero`.
-- Modo de teste: `test`, `self`.
+- Politica de perda: `loss:free`, `loss:part`, `loss:zero`.
+- Modo de avaliacao: `eval:test`, `eval:self`.
 
 ## Como criar uma nova tarefa (passo a passo)
 
 1. Crie a pasta da tarefa, por exemplo `base/minha_tarefa/`.
 2. Crie o enunciado em `base/minha_tarefa/README.md`.
-3. Adicione testes em `cases.tio` (ou em `tests.toml`, quando apropriado).
-4. No arquivo indice da trilha, adicione a linha da tarefa com chave e tags.
+3. Adicione testes em `tests.toml` se for uma tarefa com testes.
 5. Rode localmente com TKO para validar enunciado e testes.
 
 Exemplo de execucao local:
 
 ```bash
-tko task list
-tko task open fup.tres
+mkdir base/minha_tarefa
+# adicionar elementos na pasta, como README.md e tests.toml
+cd base/minha_tarefa
 tko task run
 ```
 
@@ -110,7 +110,6 @@ tko task run
 
 Voce pode usar:
 
-- `cases.tio` (fluxo mais comum no projeto).
 - Bloco `toml` no `README.md` da tarefa.
 - Arquivo `tests.toml` na pasta da tarefa.
 
@@ -133,13 +132,13 @@ output = '''
 
 ## Trabalhando com `cases.tio` e pastas
 
-Se preferir trabalhar com os testes em arquivos separados, voce pode descompactar um `cases.tio` para uma pasta com pares de entrada/saida.
+Se preferir trabalhar com os testes em arquivos separados, voce pode descompactar um arquivo de testes `cases.tio` ou `tests.toml` para uma pasta com pares de entrada/saida.
 
 Exemplo:
 
 ```bash
 mkdir pasta
-tko build pasta cases.tio
+tko build pasta tests.toml
 ls pasta
 ```
 
@@ -215,5 +214,5 @@ Para formatos de maratona, voce pode adaptar para o padrao esperado:
 ## Guias relacionados
 
 - [Gamificação e progressão](Gamificacao-e-Progressao.md)
-- [Build all: pipeline de mdpp, filter e drafts](build-all.md)
-- [Build index: manter e atualizar índices](build-index.md)
+- [Build all: pipeline de mdpp, filter e drafts](tools/build-all.md)
+- [Build index: manter e atualizar índices](tools/build-index.md)

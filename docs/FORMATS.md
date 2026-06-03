@@ -6,12 +6,12 @@ Este documento descreve os formatos de arquivo usados com mais frequência no TK
 
 Formatos principais:
 
-1. `cases.tio` para casos de teste compactados.
+1. `tests.toml` para casos de teste compactados.
 2. pasta de testes com pares `*.in` e `*.sol`.
-3. `languages.toml` para configuração de linguagens.
+3. `programming-languages.toml` para configuração de linguagens.
 4. `README.md` de índice/trilha com metadados de quests e tasks.
 
-## Formato `cases.tio`
+## Formato `tests.toml`
 
 Uso recomendado:
 
@@ -22,8 +22,8 @@ Uso recomendado:
 Operações comuns:
 
 ```bash
-tko build tests pasta cases.tio
-tko build tests t.vpl cases.tio
+tko build tests pasta tests.toml
+tko build tests t.vpl tests.toml
 ```
 
 Observação:
@@ -39,16 +39,16 @@ Estrutura esperada:
 - `01.in`, `01.sol`
 - ...
 
-Conversão a partir de `cases.tio`:
+Conversão a partir de `tests.toml`:
 
 ```bash
-tko build tests pasta cases.tio
+tko build tests pasta tests.toml
 ```
 
 Personalização de nomes com `-p`:
 
 ```bash
-tko build tests pasta cases.tio -p "in.@ out.@"
+tko build tests pasta tests.toml -p "in.@ out.@"
 ```
 
 Exemplos de padrão:
@@ -56,7 +56,7 @@ Exemplos de padrão:
 - `@.in @.out`
 - `in@ out@`
 
-## `languages.toml`
+## `programming-languages.toml`
 
 Define build/run/draft por linguagem.
 
@@ -103,8 +103,7 @@ Exemplo de linha:
 Semântica resumida:
 
 - `@chave` identifica task
-- `:1` define XP
-- `:main` define trilha
+- `xp:1` define XP
 
 ## Referências relacionadas
 

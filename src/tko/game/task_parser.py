@@ -27,38 +27,36 @@ class TaskParser:
     Faz o parsing de linhas de tarefas no formato markdown, suportando tanto o modelo chave-valor quanto o modelo antigo.
 
     Formato recomendado (chave-valor):
-        - [ ] key=@t1 xp=10 type=task path=main eval=test loss=part
-        - [ ] @t2 xp=5 type=read path=side eval=self loss=free
+        - [ ] `@t1 xp=10 tier=3 type=make eval=test loss=part` [Título](t1/README.md)
+        - [ ] `@t2 xp=5 type=read` [Material](https://exemplo.com/material)
 
     Campos suportados:
-        - key=@chave ou @chave: identificador único da task
+        - @chave: identificador único da task
         - xp=valor: valor em pontos/XP da tarefa
         - tier=valor: nível de dificuldade da tarefa
-        - type=task ou type=read: tipo da tarefa (produção ou consumo)
-        - path=main ou path=side: categoria/trilha da tarefa
+        - type=make ou type=read: tipo da tarefa (produção ou consumo)
         - eval=test ou eval=self: modo de avaliação (test: automática por testes, self: autoavaliação)
         - loss=zero, loss=part, loss=free: política de penalidade por consulta (zero: perde tudo, part: perde parte, free: sem penalidade)
 
     Valores padrão:
-        - type: task
-        - path: main
+        - type: make
         - eval: test para tarefas de produção, self para tarefas de consumo
         - loss: part para tarefas de produção, free para tarefas de consumo
         - xp: 1
         - tier: 1
 
     Notas:
-        - Apenas key é obrigatória.
-        - Campos podem aparecer em qualquer ordem.
+        - Apenas @chave é obrigatória.
+        - Campos podem aparecer antes do link, no título ou depois do link.
         - Campos não obrigatórios assumem valores padrão.
-        - Sintaxe antiga (:main, :side, :test, etc) ainda é suportada por compatibilidade, mas recomenda-se o novo formato.
-        - tier vai de 1 até 5
+        - Sintaxe antiga (:15, :make, :read, :test, :self, :zero, :part, :free) ainda é suportada por compatibilidade.
+        - Para links externos http/https: type=read vira URL externa; type=make aceita URLs do GitHub e converte outras URLs externas para leitura.
 
     Exemplos:
-        - [ ] key=@t1 xp=10 type=task path=main eval=test loss=part tier=3
-        - [ ] @t2 xp=5 type=read path=side eval=self loss=free
-        - [ ] @foo :main:free [Tarefa de exemplo](exemplo/README.md)
-        - [ ] @bar :side:perk [Outra tarefa](https://exemplo.com/material)
+        - [ ] `@t1 xp=10 type=make eval=test loss=part tier=3` [Implementar soma](t1/README.md)
+        - [ ] `@t2 xp=5 type=read` [Ler artigo](https://exemplo.com/material)
+        - [ ] `@foo :15:test:zero` [Tarefa de exemplo](exemplo/README.md)
+        - [ ] [@bar :read Material externo](https://exemplo.com/material)
     """
 
     def __init__(self, index_path: Path, remote_dir_root: Path, remote_name: str, remote_git_url: str | None = None, editable_source: bool = False):
@@ -69,11 +67,10 @@ class TaskParser:
         self.remote_dir = remote_dir_root
         self.remote_url = remote_git_url
 
-    
     def __remove_tags_from_title(self, text: str) -> str:
         """
         Remove tags (prefixos começando com : ou @) do título extraído do índice.
-        Exemplo: ':main @foo Título' -> 'Título'
+        Exemplo: ':read @foo Título' -> 'Título'
         """
         words: list[str] = [w for w in text.split()]
         output: list[str] = []
@@ -146,4 +143,3 @@ class TaskParser:
         task.resource.editable_source = self.editable_source
 
         return task
-    

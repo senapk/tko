@@ -25,9 +25,10 @@ Objetivo: criar tarefa local e publicar para alunos.
 Passos:
 
 1. Criar pasta da tarefa e README com enunciado.
-2. Adicionar casos de teste (`cases.tio` ou pasta).
-3. Atualizar README de índice da trilha.
-4. Commit e push no repositório da disciplina.
+2. Adicionar casos de teste (`tests.toml` ou pasta).
+3. Se tiver rascunhos a serem gerados para essa tarefa, ou links a serem atualizados, rodar `tko build all` na pasta da tarefa. 
+4. Atualizar README de índice da trilha rodando no root do projeto `tko build index README.md <pasta>`.
+5. Commit e push no repositório da disciplina.
 
 Após publicação:
 
@@ -53,10 +54,10 @@ Objetivo: alternar entre formato compacto e pasta.
 
 ```bash
 # extrair para pasta
-tko build tests pasta cases.tio
+tko build tests pasta tests.toml
 
 # converter para vpl
-tko build tests t.vpl cases.tio
+tko build tests t.vpl tests.toml
 
 # gerar t.tio a partir de README + extra
 tko build tests t.tio README.md extra.tio
@@ -73,7 +74,7 @@ uv run pytest -q
 
 ## Referências relacionadas
 
-- docs/TASK_LIFECYCLE.md
-- docs/REFERENCE.md
-- docs/FORMATS.md
-- CONTRIBUTING.md
+- [docs/TASK_LIFECYCLE.md](../docs/TASK_LIFECYCLE.md)
+- [docs/REFERENCE.md](../docs/REFERENCE.md)
+- [docs/FORMATS.md](../docs/FORMATS.md)
+- [CONTRIBUTING.md](../CONTRIBUTING.md)

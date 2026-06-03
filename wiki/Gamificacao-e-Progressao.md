@@ -12,7 +12,7 @@ O repositorio de tarefas funciona como um banco de tarefas:
 No indice, ha dois niveis:
 
 - Quests: cabecalhos `##` ou `###`.
-- Tasks: linhas markdown de tarefa (`- [ ]...`).
+- Tasks: linhas markdown de tarefa (`- [ ]...`) ou (`- [x]...`).
 
 ## Quests: como sao definidas
 
@@ -39,15 +39,9 @@ Comportamento no codigo:
 
 Nas linhas de tarefa, o parser extrai:
 
-- XP numerico (`:1`, `:2`, ...).
-- Tipo de trilha (`main`, `perk`, `side`).
-- Politica de perda (`free`, `part`, `zero`).
-- Modo de avaliacao (`test`, `self`).
-
-Regra importante:
-
-- A chave sempre começa com `@`.
-- `:read` marca tarefa de consumo e `:do` marca tarefa de producao.
+- XP numerico (`xp:1`, `xp:2`, ...).
+- Politica de perda (`loss:free`, `loss:part`, `loss:zero`).
+- Modo de avaliacao (`eval:test`, `eval:self`).
 
 Comportamento no codigo:
 
@@ -97,8 +91,6 @@ A quest soma XP obtido e total, e deriva percentuais.
 
 Pontos importantes:
 
-- `main` e `perk` entram no percentual principal.
-- `side` entra como adicional.
 - Quest completa depende de `min_percent_completion` (padrao 50%).
 
 Comportamento no codigo:
@@ -140,14 +132,15 @@ Esse comando ajuda a:
 
 - adicionar tarefas faltantes no indice;
 - remover linhas com README local inexistente.
+- atualizar e normalizar a sintaxe de tags e campos nas tarefas
 
 Guia detalhado:
 
-- [Build index: manter e atualizar índices](build-index.md)
+- [Build index: manter e atualizar índices](tools/build-index.md)
 
 ## Onde documentar cada coisa
 
 - Regras de gamificação e progressão: este arquivo.
-- Sintaxe de tags por linha de tarefa: [Marcadores-e-Tipos.md](Marcadores-e-Tipos.md).
+- Sintaxe de tags por linha de tarefa: [Marcadores-e-Tipos.md](game/tasks.md).
 - Operacao de autoria para professores: [Criando-Tarefas-e-Testes.md](Criando-Tarefas-e-Testes.md).
 - Detalhes tecnicos de parser/engine: [Desenvolvimento-de-Tarefas.md](Desenvolvimento-de-Tarefas.md).

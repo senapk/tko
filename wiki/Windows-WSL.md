@@ -11,7 +11,7 @@ O Visual Studio Code (VS Code) é um editor de código fonte utilizado por progr
 
 **Atenção!:** certifique-se de que as duas últimas opções estão marcadas, elas te pouparão muito trabalho no futuro.
 
-![vsc](Images/VSC.jpg)
+![vsc](images/VSC.jpg)
 
 Abra o PowerShell para testar a instalação e instalar a extensão do WSL para o VS Code. Digite o comando abaixo:
 

@@ -108,7 +108,7 @@ Repositórios de referência:
 
 - [Trabalhando com o GitHub Classroom](wiki/Classroom.md)
 - [Repositórios e quests](wiki/Criando-Atividades.md)
-- [Marcadores e tipos de atividades](wiki/Marcadores-e-Tipos.md)
+- [Marcadores e tipos de atividades](wiki/game/tasks.md)
 - [Criando tarefas e testes](wiki/Criando-Tarefas-e-Testes.md)
 - [Gamificação e progressão](wiki/Gamificacao-e-Progressao.md)
 
@@ -119,11 +119,11 @@ Repositórios de referência:
 
 ## Ferramentas
 
-- [Filtragem e Rascunhos](wiki/filter.md)
-- [Markdown Preprocessor](wiki/mdpp.md)
-- [Rebase de links markdown](wiki/rebase-links.md)
-- [Build all: pipeline de mdpp, filter e drafts](wiki/build-all.md)
-- [Build index: manter e atualizar índices](wiki/build-index.md)
+- [Filtragem e Rascunhos](wiki/tools/filter.md)
+- [Markdown Preprocessor](wiki/tools/mdpp.md)
+- [Rebase de links markdown](wiki/tools/rebase-links.md)
+- [Build all: pipeline de mdpp, filter e drafts](wiki/tools/build-all.md)
+- [Build index: manter e atualizar índices](wiki/tools/build-index.md)
 
 ## Referência e suporte
 
