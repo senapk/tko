@@ -29,7 +29,9 @@ class QuestFormatter:
         output = RT(quest.basic.remote_name, "c") + RT(":") + RT(quest.basic.title)
         if show_skills:
             for skill in quest.config.skills:
-                output += RT.run("b", f" +{skill}*{quest.config.factor}")
+                output += RT.run("g", f" +{skill}")
+                if quest.config.factor != 1:
+                    output += RT.run("g", f"*{quest.config.factor}")
         return output
 
     def get_focus_color_quest(self, quest: Quest) -> str:

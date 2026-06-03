@@ -154,41 +154,41 @@ def test_center():
 def test_buffer_add_string():
     buf = RBuffer()
     buf.add("Hello", "r")
-    assert buf.to_text().runs == (("r", "Hello"),)
+    assert buf.to_rt().runs == (("r", "Hello"),)
 
 
 def test_buffer_rb_renders_blue_foreground_red_background():
     buf = RBuffer()
     buf.add("Hello", "Rb")
 
-    assert buf.to_text().runs == (("bR", "Hello"),)
-    assert buf.to_text().render(RenderMode.ANSI) == "\033[34m\033[41mHello\033[0m"
+    assert buf.to_rt().runs == (("bR", "Hello"),)
+    assert buf.to_rt().render(RenderMode.ANSI) == "\033[34m\033[41mHello\033[0m"
 
 
 def test_buffer_add_text():
     buf = RBuffer()
     buf.add(RT("Hello", "r"))
-    assert buf.to_text().runs == (("r", "Hello"),)
+    assert buf.to_rt().runs == (("r", "Hello"),)
 
 
 def test_buffer_add_run():
     buf = RBuffer()
     buf.run("r", "Hello")
-    assert buf.to_text().runs == (("r", "Hello"),)
+    assert buf.to_rt().runs == (("r", "Hello"),)
 
 
 def test_buffer_merge_runs():
     buf = RBuffer()
     buf.add("A", "r")
     buf.add("B", "r")
-    assert buf.to_text().runs == (("r", "AB"),)
+    assert buf.to_rt().runs == (("r", "AB"),)
 
 
 def test_buffer_iadd():
     buf = RBuffer()
     buf += RT("Hello", "r")
     buf += " World"
-    assert buf.to_text().plain() == "Hello World"
+    assert buf.to_rt().plain() == "Hello World"
 
 
 def test_buffer_extend_buffer():
@@ -199,7 +199,7 @@ def test_buffer_extend_buffer():
     buf2.add("World", "g")
 
     buf1.add(buf2)
-    assert buf1.to_text().plain() == "HelloWorld"
+    assert buf1.to_rt().plain() == "HelloWorld"
 
 
 # =========================================================

@@ -17,8 +17,8 @@ _GIT_CACHE_CLEARING = Msg(
     en="Clearing git cache at {cache_dir}...",
 )
 _GIT_CACHE_CLONING = Msg(
-    pt="Clonando {url} para o cache...",
-    en="Cloning {url} into cache...",
+    pt="Repositório não encontrado. Clonando {url} para o cache...",
+    en="Repository not found. Cloning {url} into cache...",
 )
 _GIT_CACHE_CLONE_FAILED = Msg(
     pt="Falha ao clonar {url}. Removendo diretório de cache...",
@@ -29,8 +29,8 @@ _GIT_CACHE_UPDATING = Msg(
     en="Updating cache for {url}...",
 )
 _GIT_CACHE_UPDATE_FAILED_RECLONE = Msg(
-    pt="Falha ao atualizar cache para {url}. Removendo e clonando novamente...",
-    en="Failed to update cache for {url}. Removing and re-cloning...",
+    pt="Falha ao atualizar cache para {url}. Use 'tko reset cache' se os problemas persistirem.",
+    en="Failed to update cache for {url}. Use 'tko reset cache' if problems persist.",
 )
 
 class UpdateMode(enum.Enum):
@@ -109,13 +109,12 @@ class GitCache:
         lock_path: Path = self._lock_path(repo)
         with self._acquire_lock(lock_path):
             if not repo.exists():
-                if verbose:
-                    self.logger.info(t(_GIT_CACHE_CLONING, url=url))
+                self.logger.info(t(_GIT_CACHE_CLONING, url=url))
                 ok = self._clone(url, repo)
                 if not ok:
                     if verbose:
                         self.logger.warning(t(_GIT_CACHE_CLONE_FAILED, url=url))
-                    shutil.rmtree(repo, ignore_errors=True)
+                    # shutil.rmtree(repo, ignore_errors=True)
                     return None
 
             if self._is_expired(repo) or (self.update_mode == UpdateMode.ALWAYS) and not self.updated.get(str(repo), False):
@@ -128,6 +127,6 @@ class GitCache:
                         pass
                     if verbose:
                         self.logger.warning(t(_GIT_CACHE_UPDATE_FAILED_RECLONE, url=url))
-                    shutil.rmtree(repo, ignore_errors=True)
+                    # shutil.rmtree(repo, ignore_errors=True)
                     self._clone(url, repo)
         return repo

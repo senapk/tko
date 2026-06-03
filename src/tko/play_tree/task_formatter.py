@@ -40,7 +40,7 @@ class TaskFormatter:
         if key_pad is None:
             key_pad = len(basic.key)
         if not f"@{basic.key}" in basic.title:
-            key = f"{remote_name}@{basic.key}".ljust(key_pad, pad_char) + " "
+            key = f"{remote_name}@{basic.key}".ljust(key_pad + 1, pad_char) + " "
             title = basic.title
             return key + title, key, title
         return basic.title, "", basic.title

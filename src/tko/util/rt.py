@@ -778,14 +778,14 @@ class RBuffer:
         self.runs.clear()
         return self
 
-    def to_text(self) -> RT:
+    def to_rt(self) -> RT:
         return RT(runs=self.runs)
 
     def __iadd__(self, other: Any):
         return self.add(other)
     
     def __str__(self) -> str:
-        return self.to_text().render()
+        return self.to_rt().render()
 
 if __name__ == "__main__":
     # Example usage
@@ -808,5 +808,5 @@ if __name__ == "__main__":
     # Exemplo 5: uso do RBuffer permanece igual
     b = RBuffer()
     b.add("Hello ", "r").add("World", "R").add(" ").add(RT("oi", "bR"))
-    print(b.to_text().render())
-    print(b.to_text().plain())
+    print(b.to_rt().render())
+    print(b.to_rt().plain())

@@ -32,7 +32,7 @@ class TesterTopBar:
         buffer.add(" ", "B")
         symbol = Symbols.locked_locked if state.locked_index else Symbols.locked_free
         buffer.add(f" {GuiKeys.lock} {symbol} ", color)
-        return buffer.to_text()
+        return buffer.to_rt()
 
     def build_top_line_header(self, state: TesterState, frame_dx: int) -> RT:
         activity_color = "C"
@@ -52,7 +52,7 @@ class TesterTopBar:
                 solvers_buffer.add(" ")
             color = "G" if i == self.task.main_idx else solver_color
             solvers_buffer.add(f" {solver} ", color)
-        solvers = solvers_buffer.to_text()
+        solvers = solvers_buffer.to_rt()
 
         done = len(state.results)
         full = len(self.wdir.unit_list)
@@ -76,7 +76,7 @@ class TesterTopBar:
             left  = max(1, delta_left - activity.len())
             right = max(1, (delta - delta_left) - sources.len())
         filler = "─" if self.wdir.has_tests else " "
-        return RBuffer().add(activity).add(filler * left).add(solvers).add(filler * right).add(sources).to_text()
+        return RBuffer().add(activity).add(filler * left).add(solvers).add(filler * right).add(sources).to_rt()
 
     def build_unit_list(self, state: TesterState, frame: Frame) -> RT:
         done_list = state.results
@@ -125,7 +125,7 @@ class TesterTopBar:
         rb = RBuffer().add(opening)
         for element in elements:
             rb.add(element)
-        output = rb.to_text()
+        output = rb.to_rt()
         opening = 10
         size     = 5
         to_remove = 0

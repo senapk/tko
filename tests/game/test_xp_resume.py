@@ -8,6 +8,8 @@ class DummyProgress:
         self.t: float = t
     def get_xp(self) -> tuple[float, float]:
         return self.o, self.t
+    def get_obtained_goal_available(self) -> tuple[float, float, float]:
+        return self.o, self.t, self.t
 
 class DummyTask:
     def __init__(self, skills: list[str], xp: float, ratio: float) -> None:

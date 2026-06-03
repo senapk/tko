@@ -166,7 +166,7 @@ class TaskGraph:
         title_builder.add(f"Tempo {time} ", "b")
         title_builder.add(f"Linhas {self.max_lines:.0f} ", "m")
         title_builder.add(f"Versões {self.versions} ", "r")
-        title = title_builder.to_text()
+        title = title_builder.to_rt()
 
         header: list[RT] = []
         # title = title.center(self.width)

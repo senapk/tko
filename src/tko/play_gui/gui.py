@@ -39,7 +39,7 @@ class Gui:
         self.left_panel      = GuiLeftPanel(self.tree, self.search, lambda: self._need_update)
         self.bottom_bar      = GuiBottomBar(self.tree, self.action_resolver)
         self.top_bar         = GuiTopBar(self.flags, self.app)
-        self.skills_bar      = GuiSkillsBar(self.game, self.colors, self.flags)
+        self.skills_bar      = GuiSkillsBar(self.game, self.colors, self.flags, lambda: self.tree.get_selected_throw().basic.remote_name)
         self.help_panel      = GuiHelpPanel()
         self.graph_panel     = GuiGraphPanel(self.settings, self.repo, self.flags)
 

@@ -5,8 +5,8 @@ import pytest
 
 from tko.repository.git_cache import GitCache
 from tko.repository.remote import (
-    STUDENT_SANDBOX_INDEX,
-    STUDENT_SANDBOX_TARGET,
+    REMOTE_SANDBOX_INDEX,
+    REMOTE_SANDBOX_TARGET,
     Remote,
 )
 from tko.repository.remote_data import SourceType
@@ -28,8 +28,8 @@ def test_set_is_sandbox_updates_remote_data_fields() -> None:
     remote.is_sandbox = True
 
     assert remote.data.name == "sandbox"
-    assert remote.data.target == STUDENT_SANDBOX_TARGET
-    assert remote.data.index == STUDENT_SANDBOX_INDEX
+    assert remote.data.target == REMOTE_SANDBOX_TARGET
+    assert remote.data.index == REMOTE_SANDBOX_INDEX
     assert remote.data.source_type == SourceType.LOCAL_FILE
     assert remote.data.is_editable is True
 

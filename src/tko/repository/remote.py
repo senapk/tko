@@ -7,9 +7,7 @@ from tko.repository.git_cache import GitCache
 from tko.i18n import Msg, t
 from typing import Any
 
-STUDENT_SANDBOX_NAME: str = "sandbox"
-STUDENT_SANDBOX_TARGET: str = "sandbox"
-STUDENT_SANDBOX_INDEX: str = "../sandbox.md"
+from tko.repository.remote_sandbox import REMOTE_SANDBOX_INDEX, REMOTE_SANDBOX_NAME, REMOTE_SANDBOX_TARGET
 
 _REMOTE_GIT_CACHE_ROOT_REQUIRED = Msg(
     pt="Git cache and root dir must be set to resolve the path",
@@ -42,12 +40,12 @@ class Remote:
 
     @property
     def is_sandbox(self) -> bool:
-        return self.data.name == STUDENT_SANDBOX_NAME
+        return self.data.name == REMOTE_SANDBOX_NAME
 
     @is_sandbox.setter
     def is_sandbox(self, value: bool):
         if value:
-            self.data.name = STUDENT_SANDBOX_NAME
-            self.data.set_local_source(target=Path(STUDENT_SANDBOX_TARGET), is_editable=True, index=STUDENT_SANDBOX_INDEX)
+            self.data.name = REMOTE_SANDBOX_NAME
+            self.data.set_local_source(target=Path(REMOTE_SANDBOX_TARGET), is_editable=True, index=REMOTE_SANDBOX_INDEX)
         else:
             raise ValueError(t(_REMOTE_SANDBOX_ONLY_TRUE))

@@ -63,7 +63,7 @@ class QuestMatcher:
         for w in words:
             if w.startswith(QuestMatcher.FACTOR):
                 try:
-                    multiplier = int(w[len(QuestMatcher.FACTOR):])
+                    multiplier = float(w[len(QuestMatcher.FACTOR):])
                     self.quest.config.factor = multiplier
                 except Exception:
                     self.warnings.append(f"Valor de factor inválido na linha {self.quest.source.line_number} do arquivo {self.quest.source.file}: {w[len(QuestMatcher.FACTOR):]}. Ignorando factor.")
@@ -143,7 +143,7 @@ class QuestMatcher:
             return (
                 w.startswith(QuestMatcher.KEY) or w.startswith(QuestMatcher.SKILL) or w.startswith(QuestMatcher.REQUIRES) or
                 w.startswith(QuestMatcher.FACTOR) or w.startswith(QuestMatcher.GOAL) or w.startswith(QuestMatcher.MIN) or
-                w.startswith(QuestMatcher.ACTIVE) or (w[0] in ["@", "%", "=", "+", "!"])
+                w.startswith(QuestMatcher.ACTIVE) or w.startswith(QuestMatcher.LANG) or (w[0] in ["@", "%", "=", "+", "!"])
             )
         words_title = [w for w in words if not is_field(w)]
         return " ".join(words_title)

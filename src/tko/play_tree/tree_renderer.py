@@ -54,16 +54,18 @@ class TreeRenderer:
     def render_task(self, t: Task, focused: bool) -> RT:
         head = RBuffer()
         head.add(" ")
-        head.add(str(t.game.xp), "y").add(" ")
-
+        head.add(str(t.game.xp), "y")
+        head.add(" ")
         down_style, down_text = self.task_formatter.get_task_down_symbol(t)
+        head.add(down_text, down_style)
+        head.add(" ")
         help_style, help_text = self.task_formatter.get_task_help_symbol(t)
+        head.add(help_text, help_style)
+        head.add(" ")
+        head.add(t.game.tier_symbol)
+        head.add(">" if focused else " ")
 
-        head.add(down_text, down_style).add(" ")
-        head.add(help_text, help_style).add(" ")
-        head.add(t.game.tier_symbol).add(" ")
-
-        output = head.to_text()
+        output = head.to_rt()
         remote_name: str = ""
         if self.layout.use_full_key:
             remote_name = t.basic.remote_name
@@ -75,6 +77,7 @@ class TreeRenderer:
         title = self.task_formatter.color_task_title(_key, _title)
 
         focus_color = self.settings.colors.focused_item if focused else ""
+        # focus_color = ""
         if focused:
             title = title.add_style(focus_color)
         output += title
@@ -90,15 +93,17 @@ class TreeRenderer:
         if self.flags.show_time.is_true():
             h, m = self.time_formatter.get_task_hours_minutes(t)
             tail.add(" ").add(self.time_formatter.format_hours_minutes("g", h, m))
-        return tail.to_text()
+        return tail.to_rt()
 
     def render_quest(self, q: Quest, focused: bool) -> RT:
         color = "g" if QuestVisibilityService.is_reachable(q) else "y"
         body = RBuffer().add(q.ui.ligature.set_style(color))
-        done, total = q.progress.get_completion()
-        body.add(f" {done:02}/{total:02}")
-        percent_text = self.quest_formatter.get_percent_text(q)
-        body.add(" ")
+        done, goal, _ = q.progress.get_obtained_goal_available()
+        done = round(done)
+        goal = round(goal)
+        body.add(f" {done:02}/{goal:02}")
+        
+        body.add(">" if focused else " ")
 
         color = q.ui.is_requirement_color
 
@@ -109,15 +114,17 @@ class TreeRenderer:
         if focused:
             color = self.settings.colors.focused_item
             title = title.add_style(color)
-        output = body.add(title).to_text()
+        output = body.add(title).to_rt()
+        
         if len(output) > self.layout.sentence_cut_size:
             output = output.slice(0, self.layout.sentence_cut_size - 1) + "…"
         else:
             output = output.ljust(self.layout.sentence_cut_size, RT(self.filler, color))
         tail = RBuffer().add(output).add("   ")
+        percent_text = self.quest_formatter.get_percent_text(q)
         tail.add(percent_text)
         if self.flags.show_time.is_true():
             h, m = self.time_formatter.get_quest_time(q)
             tail.add(" ").add(self.time_formatter.format_hours_minutes("g", h, m))
 
-        return tail.to_text()
+        return tail.to_rt()

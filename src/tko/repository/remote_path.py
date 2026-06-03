@@ -35,7 +35,7 @@ class RemotePath:
     def index_file(self) -> Path:
         source_dir = self.source_dir
         if source_dir is None:
-            raise ValueError(t(_REMOTE_PATH_SOURCE_DIR_NOT_EXISTS))
+            raise ValueError(t(_REMOTE_PATH_SOURCE_DIR_NOT_EXISTS) )
         index_path = source_dir / self.data.index
         return index_path.resolve()
 

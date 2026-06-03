@@ -1,6 +1,5 @@
 from tko.game.quest import Quest
 
-
 class SkillResume:
     def __init__(self):
         self.obtained: dict[str, float] = {}
@@ -8,14 +7,21 @@ class SkillResume:
         self.all_items: dict[str, float] = {}
 
 class XPResume:
-    def __init__(self, quests: dict[str, Quest]):
-        self.quests = quests
+    def __init__(self, quests: dict[str, Quest], remote: str | None = None):
+        self.remote = remote
+        if remote is not None:
+            self.quests: dict[str, Quest] = {}
+            for k, q in quests.items():
+                if q.basic.remote_name == remote:
+                    self.quests[k] =  q
+        else:
+            self.quests = quests
 
     def get_xp_resume(self):
         total = 0
         obtained = 0
         for q in self.quests.values():
-            o, t = q.progress.get_xp()
+            o, _, t = q.progress.get_obtained_goal_available()
             total += t
             obtained += o
         return obtained, total

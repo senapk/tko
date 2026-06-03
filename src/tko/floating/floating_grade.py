@@ -131,7 +131,7 @@ class InputSlide(InputLine):
         for i, c in enumerate(self.opt_msgs):
             opt, _ = c
             text_buffer.add(opt, self.CHOOSEN_COLOR if i == self.index else "")
-        text = text_buffer.to_text()
+        text = text_buffer.to_rt()
         text = text.ljust(pad)
         text += "├" + self.opt_msgs[self.index][1]
         return text
@@ -203,12 +203,12 @@ class InputBoolean(InputLine):
             text_buffer.add(self.prefix.set_style(color))
         else:
             text_buffer.add(self.prefix)
-        text = text_buffer.to_text().ljust(pad)
+        text = text_buffer.to_rt().ljust(pad)
         text_buffer = RBuffer().add(text).add("│ ")
         text_buffer.add(t(_GradeMsg.NO), self.CHOOSEN_COLOR if self.value == "0" else "")
         text_buffer.add(" ")
         text_buffer.add(t(_GradeMsg.YES), self.CHOOSEN_COLOR if self.value == "1" else "")
-        return text_buffer.to_text()
+        return text_buffer.to_rt()
 
 
 class FloatingGrade(FloatingABC):
