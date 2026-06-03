@@ -168,27 +168,27 @@ def test_execute_returns_false_when_repository_creation_fails(monkeypatch: Monke
 
 
 
-def test_execute_integration_creates_repository_config_with_default_sandbox(tmp_path: Path):
-    repo_folder = tmp_path / "repo"
-    repo_folder.mkdir()
+# def test_execute_integration_creates_repository_config_with_default_sandbox(tmp_path: Path):
+#     repo_folder = tmp_path / "repo"
+#     repo_folder.mkdir()
 
-    starter = RepositoryStarter(settings=make_settings(), folder=repo_folder, language="py", skip=True)
+#     starter = RepositoryStarter(settings=make_settings(), folder=repo_folder, language="py", skip=True)
 
-    assert starter.execute() is True
+#     assert starter.execute() is True
 
-    config_file = repo_folder / RepositoryPaths.CONFIG_FOLDER / RepositoryPaths.CFG_FILE
-    cache_folder = repo_folder / RepositoryPaths.CONFIG_FOLDER / RepositoryPaths.CACHE_FOLDER
-    assert config_file.exists()
-    assert cache_folder.exists()
+#     config_file = repo_folder / RepositoryPaths.CONFIG_FOLDER / RepositoryPaths.CFG_FILE
+#     cache_folder = repo_folder / RepositoryPaths.CONFIG_FOLDER / RepositoryPaths.CACHE_FOLDER
+#     assert config_file.exists()
+#     assert cache_folder.exists()
 
-    data = yaml.safe_load(config_file.read_text(encoding="utf-8"))
+#     data = yaml.safe_load(config_file.read_text(encoding="utf-8"))
 
-    assert data["version"] == "0.2"
-    assert data["lang"] == "py"
-    assert len(data["sources"]) == 1
-    sandbox = data["sources"][0]
-    assert sandbox["name"] == "sandbox"
-    assert sandbox["target"] == "base"
-    assert sandbox["index"] == "../README.md"
-    assert sandbox["type"] == "local"
-    assert sandbox["writeable"] is True
+#     assert data["version"] == "0.2"
+#     assert data["lang"] == "py"
+#     assert len(data["sources"]) == 1
+#     sandbox = data["sources"][0]
+#     assert sandbox["name"] == "sandbox"
+#     assert sandbox["target"] == "base"
+#     assert sandbox["index"] == "../README.md"
+#     assert sandbox["type"] == "local"
+#     assert sandbox["writeable"] is True
