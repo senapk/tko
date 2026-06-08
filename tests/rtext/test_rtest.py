@@ -119,7 +119,7 @@ def test_ljust():
     t = RT("A", "r")
     t2 = t.ljust(3, RT(".", "g"))
     assert t2.plain() == "A.."
-    assert t2.runs[1][0] == "g"
+    assert t2.runs == ((RTStyle.parse("r"), "A"), (RTStyle.parse("g"), ".."))
 
 
 def test_rjust():

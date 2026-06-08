@@ -7,6 +7,7 @@ from _pytest.monkeypatch import MonkeyPatch
 import tko.repository.repository_starter as rep_starter_module
 from tko.config.settings import Settings
 from tko.repository.repository_starter import RepositoryStarter
+from tko.util.console import Console
 
 
 class FakeSource:
@@ -31,11 +32,11 @@ class FakeRepo:
         return FakeSource(self.root / "base")
 
 
-class FakeLoader:
+class FakeRepositoryConfig:
     def __init__(self, on_save: Callable[[], None]):
         self.on_save = on_save
 
-    def save_config(self) -> None:
+    def save(self) -> None:
         self.on_save()
 
 
@@ -43,7 +44,7 @@ def make_settings() -> Settings:
     return cast(Settings, SimpleNamespace())
 
 
-def test_create_repository_returns_none_when_user_cancels_reset(monkeypatch: MonkeyPatch, tmp_path: Path):
+def test_validate_path_returns_false_when_user_cancels_reset(monkeypatch: MonkeyPatch, tmp_path: Path):
     def fake_parent_search(folder: Path) -> Path:
         _ = folder
         return tmp_path
@@ -51,42 +52,34 @@ def test_create_repository_returns_none_when_user_cancels_reset(monkeypatch: Mon
     monkeypatch.setattr(rep_starter_module.RepositoryPaths, "rec_search_for_repo_parents", fake_parent_search)
     monkeypatch.setattr("builtins.input", lambda: "n")
 
-    starter = RepositoryStarter(settings=make_settings(), folder=tmp_path, language=None, skip=True)
+    starter = RepositoryStarter(settings=make_settings(), folder=tmp_path, language=None, skip_add_remote=True)
 
-    repo = starter.create_repository()
+    is_valid = starter.validate_path()
 
-    assert repo is None
+    assert is_valid is False
 
 
-def test_create_repository_uses_parent_repo_when_user_accepts_overwrite(monkeypatch: MonkeyPatch, tmp_path: Path):
+def test_validate_path_uses_parent_repo_when_user_accepts_overwrite(monkeypatch: MonkeyPatch, tmp_path: Path):
     parent_repo = tmp_path / "parent"
     child_folder = parent_repo / "child"
     child_folder.mkdir(parents=True)
-    created_folders: list[Path] = []
 
     def fake_parent_search(folder: Path) -> Path:
         _ = folder
         return parent_repo
 
     monkeypatch.setattr(rep_starter_module.RepositoryPaths, "rec_search_for_repo_parents", fake_parent_search)
-    monkeypatch.setattr("builtins.input", lambda: "s")
+    monkeypatch.setattr("builtins.input", lambda: "y")
 
-    def fake_repository(folder: Path) -> SimpleNamespace:
-        created_folders.append(folder)
-        return SimpleNamespace(folder=folder)
+    with Console.capture() as _:
+        starter = RepositoryStarter(settings=make_settings(), folder=child_folder, language=None, skip_add_remote=True, force_location=True)
+        is_valid = starter.validate_path()
 
-    monkeypatch.setattr(rep_starter_module, "Repository", fake_repository)
-
-    starter = RepositoryStarter(settings=make_settings(), folder=child_folder, language=None, skip=True)
-
-    repo = starter.create_repository()
-
-    assert repo is not None
+    assert is_valid is True
     assert starter.folder == parent_repo
-    assert created_folders == [parent_repo]
 
 
-def test_create_repository_returns_none_when_sub_repositories_exist(monkeypatch: MonkeyPatch, tmp_path: Path):
+def test_validate_path_returns_false_when_sub_repositories_exist(monkeypatch: MonkeyPatch, tmp_path: Path):
     nested_repo = tmp_path / "discipline"
 
     def fake_parent_search(folder: Path) -> None:
@@ -100,68 +93,80 @@ def test_create_repository_returns_none_when_sub_repositories_exist(monkeypatch:
     monkeypatch.setattr(rep_starter_module.RepositoryPaths, "rec_search_for_repo_parents", fake_parent_search)
     monkeypatch.setattr(rep_starter_module.RepositoryPaths, "rec_search_for_repo_subdir", fake_subdir_search)
 
-    starter = RepositoryStarter(settings=make_settings(), folder=tmp_path, language=None, skip=True)
+    starter = RepositoryStarter(settings=make_settings(), folder=tmp_path, language=None, skip_add_remote=True)
 
-    repo = starter.create_repository()
+    is_valid = starter.validate_path()
 
-    assert repo is None
+    assert is_valid is False
 
 
-def test_execute_returns_false_when_repository_creation_fails(monkeypatch: MonkeyPatch, tmp_path: Path):
-    def fake_create_repository(self: RepositoryStarter) -> None:
+def test_execute_returns_false_when_path_is_not_valid(monkeypatch: MonkeyPatch, tmp_path: Path):
+    def fake_validate_path(self: RepositoryStarter) -> bool:
         _ = self
-        return None
+        return False
 
-    monkeypatch.setattr(RepositoryStarter, "create_repository", fake_create_repository)
+    monkeypatch.setattr(RepositoryStarter, "validate_path", fake_validate_path)
 
-    starter = RepositoryStarter(settings=make_settings(), folder=tmp_path, language="py", skip=True)
+    starter = RepositoryStarter(settings=make_settings(), folder=tmp_path, language="py", skip_add_remote=True)
 
     assert starter.execute() is False
 
 
-# def test_execute_sets_language_recreates_cache_and_saves_config(monkeypatch: MonkeyPatch, tmp_path: Path):
-#     repo = FakeRepo(tmp_path)
-#     calls: dict[str, object] = {
-#         "rmtree": None,
-#         "makedirs": None,
-#         "saved": False,
-#         "language_prompt": False,
-#     }
+def test_execute_sets_language_recreates_cache_and_saves_config(monkeypatch: MonkeyPatch, tmp_path: Path):
+    repo = FakeRepo(tmp_path)
+    created_folders: list[Path] = []
+    calls: dict[str, object] = {
+        "rmtree": None,
+        "saved": False,
+        "language_prompt": False,
+        "printed_end": False,
+    }
 
-#     def fake_create_repository(self: RepositoryStarter) -> FakeRepo:
-#         _ = self
-#         return repo
+    def fake_repository(folder: Path) -> FakeRepo:
+        created_folders.append(folder)
+        return repo
 
-#     def fake_rmtree(path: Path) -> None:
-#         calls["rmtree"] = path
+    def fake_rmtree(path: Path) -> None:
+        calls["rmtree"] = path
 
-#     def fake_loader(repo_arg: object) -> FakeLoader:
-#         _ = repo_arg
-#         return FakeLoader(lambda: calls.__setitem__("saved", True))
+    def fake_repository_config(repo_arg: object) -> FakeRepositoryConfig:
+        _ = repo_arg
+        return FakeRepositoryConfig(lambda: calls.__setitem__("saved", True))
 
-#     def fake_check_lang_in_text_mode(settings: Settings, repo_arg: object) -> None:
-#         _ = (settings, repo_arg)
-#         calls["language_prompt"] = True
+    def fake_check_lang_in_text_mode(settings: Settings, repo_arg: object, selected: str | None = None) -> str:
+        _ = (settings, repo_arg)
+        calls["language_prompt"] = True
+        return selected or "py"
 
-#     monkeypatch.setattr(RepositoryStarter, "create_repository", fake_create_repository)
-#     monkeypatch.setattr(rep_starter_module.shutil, "rmtree", fake_rmtree)
-#     monkeypatch.setattr(rep_starter_module, "RepositoryLoader", fake_loader)
-#     monkeypatch.setattr(
-#         rep_starter_module.LanguageSetter,
-#         "check_lang_in_text_mode",
-#         fake_check_lang_in_text_mode,
-#     )
+    monkeypatch.setattr(rep_starter_module, "Repository", fake_repository)
+    monkeypatch.setattr(rep_starter_module.shutil, "rmtree", fake_rmtree)
+    monkeypatch.setattr(rep_starter_module, "RepositoryConfig", fake_repository_config)
+    monkeypatch.setattr(
+        rep_starter_module.LanguageSetter,
+        "check_prog_lang_in_text_mode",
+        fake_check_lang_in_text_mode,
+    )
+    monkeypatch.setattr(
+        RepositoryStarter,
+        "print_end_msg",
+        lambda self: calls.__setitem__("printed_end", True),
+    )
 
-#     starter = RepositoryStarter(settings=make_settings(), folder=tmp_path, language="py")
-#     repo.paths.cache_folder.mkdir(parents=True, exist_ok=True)
+    starter = RepositoryStarter(settings=make_settings(), folder=tmp_path, language="py", skip_add_remote=True, force_location=True)
+    repo.paths.cache_folder.mkdir(parents=True, exist_ok=True)
 
-#     assert starter.execute() is True
-#     assert repo.data.lang == "py"
-#     assert repo.saved_source is not None
-#     assert calls["rmtree"] == tmp_path / ".tko" / "cache"
-#     assert (tmp_path / ".tko" / "cache").exists()
-#     assert calls["saved"] is True
-#     assert calls["language_prompt"] is False
+    with Console.capture() as _:
+        assert starter.execute() is True
+
+    assert starter.repo is repo
+    assert starter.language == "py"
+    assert repo.saved_source is not None
+    assert created_folders == [tmp_path]
+    assert calls["rmtree"] == tmp_path / ".tko" / "cache"
+    assert (tmp_path / ".tko" / "cache").exists()
+    assert calls["saved"] is True
+    assert calls["language_prompt"] is True
+    assert calls["printed_end"] is True
 
 
 

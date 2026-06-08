@@ -79,9 +79,10 @@ _WITCH_REPO = Msg(
 )
 
 class RepositoryStarter:
-    def __init__(self, settings: Settings, folder: Path | None, language: str | None, skip: bool):
+    def __init__(self, settings: Settings, folder: Path | None, language: str | None, skip_add_remote: bool, force_location: bool = False):
         self.settings = settings
-        self.skip = skip
+        self.skip = skip_add_remote
+        self.force_location = force_location
         # if folder is set, use folder, else use local folder.
         self.folder: Path = Path.cwd()
         if folder is not None:
@@ -89,10 +90,10 @@ class RepositoryStarter:
         self.language = language
 
     def execute(self) -> bool:
-        repo = self.create_repository()
-        if repo is None:
-            return False
-        
+        if not self.force_location:
+            if not self.validate_path():
+                return False
+        repo = Repository(self.folder)        
         self.repo = repo
         self.create_empty_repo()
         # erase cache folder to avoid conflicts
@@ -140,15 +141,15 @@ class RepositoryStarter:
     def print_end_msg(self):
         Console.print(_REPO_STARTER_OPEN_HINT)
     
-    def create_repository(self) -> Repository | None:
+    def validate_path(self) -> bool:
         path_parents = RepositoryPaths.rec_search_for_repo_parents(self.folder)
 
         if path_parents is not None and path_parents.resolve() == self.folder.resolve():
-            Console.print(_REPO_STARTER_EXISTS, folder=self.folder.resolve())
+            Console.print(_REPO_STARTER_EXISTS, folder=self.folder.resolve())                
             Console.print(_REPO_STARTER_RESET_PROMPT, end="")
-            op = input()
+            op = input().lower()
             if op != "y":
-                return None
+                return False
 
         elif path_parents is not None:
             if self.folder != path_parents:
@@ -156,9 +157,9 @@ class RepositoryStarter:
                 Console.print(_REPO_STARTER_DEEP_REPO_WARN_2)
             self.folder = path_parents
             Console.print(_REPO_STARTER_OVERWRITE_PROMPT, folder=self.folder, end="")
-            op = input()
+            op = input().lower()
             if op != "y":
-                return None
+                return False
         else:
             path_subdir_list = RepositoryPaths.rec_search_for_repo_subdir(self.folder)
             if len(path_subdir_list) > 0:
@@ -166,9 +167,9 @@ class RepositoryStarter:
                 Console.print(_REPO_STARTER_DEEP_REPO_WARN_2)
                 for path in path_subdir_list:
                     Console.print(f"- [r]{path}")
-                return None
+                return False
 
-        return Repository(self.folder)
+        return True
     
     def create_empty_repo(self):
         source = self.repo.create_default_sandbox_source()

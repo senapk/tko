@@ -74,8 +74,8 @@ class RTStyle:
     @staticmethod
     @cache
     def parse(style: str) -> RTStyle:
-        fg: str = "d"
-        bg: str = "D"
+        fg: str | None = None
+        bg: str | None = None
         attrs: set[str] = set()
 
         for ch in style:
@@ -87,6 +87,11 @@ class RTStyle:
 
             elif ch in ATTRS_KEYS:
                 attrs.add(ch)
+
+        if fg == "d":
+            fg = None
+        if bg == "D":
+            bg = None
 
         return RTStyle(
             fg=fg,
@@ -183,7 +188,7 @@ class RTStyle:
         for attr in sorted(self.attrs):
             codes.append(CODES[attr])
 
-        return f"\033[{';'.join(codes)}m" if codes else ""    
+        return "".join(f"\033[{code}m" for code in codes)
 
     def __str__(self) -> str:
         return self.to_tag()

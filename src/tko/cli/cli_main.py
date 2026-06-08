@@ -104,5 +104,5 @@ def register_main_commands(app: typer.Typer):
         settings = app_ctx.settings
         changedir = app_ctx.changedir
         
-        rep_starter = RepositoryStarter(settings=settings, folder=changedir, language=language, skip=skip)
+        rep_starter = RepositoryStarter(settings=settings, folder=changedir, language=language, skip_add_remote=skip)
         rep_starter.execute()
