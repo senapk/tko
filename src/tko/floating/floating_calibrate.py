@@ -21,7 +21,7 @@ class FloatingCalibrate(FloatingABC):
         self.floating = Floating()
         self.settings = settings
         self.floating.set_header(" Calibrar teclas direcionais ")
-        self.floating.set_footer_text(RT.parse(" Use <Enter:y> para salvar, <q:y> para cancelar e <r:y> para reiniciar. "))
+        self.floating.set_footer_text(RT.parse(" Use [y]Enter[] para salvar, [y]q[] para cancelar e [y]r[] para reiniciar. "))
         self._index = 0
         self._options = [settings.app.get_key(app.AppKeys.LEFT),
                          settings.app.get_key(app.AppKeys.RIGHT),

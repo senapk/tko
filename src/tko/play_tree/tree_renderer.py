@@ -9,7 +9,8 @@ from tko.play_tree.tree_layout import TreeLayout
 from tko.play_tree.tree_state import TreeState
 from tko.play.quest_visibility_service import QuestVisibilityService
 from tko.config.settings import Settings
-from tko.util.rt import RT, RBuffer
+from tko.util.rbuffer import RBuffer
+from tko.util.rt import RT
 from tko.util.to_asc import SearchAsc
 
 

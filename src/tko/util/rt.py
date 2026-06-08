@@ -1,72 +1,78 @@
 from __future__ import annotations
+from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Iterable, Any
+from typing import Iterable
 from wcwidth import wcwidth
 import enum
 import re
+from tko.util.rt_style import RTStyle, ANSI_RESET
 
-Run = tuple[str, str]  # (style, text)
-
-ATTR = {
-    ".": "\033[0m",  # reset
-    "*": "\033[1m",  # bold
-    "_": "\033[4m",  # underline
-    "/": "\033[3m",  # italic
-    "X": "\033[7m",  # reverse
-    "!": "\033[9m",  # strikethrough
-}
-FG = {
-    "k": "\033[30m",  # black
-    "r": "\033[31m",  # red
-    "g": "\033[32m",  # green
-    "y": "\033[33m",  # yellow
-    "b": "\033[34m",  # blue
-    "m": "\033[35m",  # magenta
-    "c": "\033[36m",  # cyan
-    "w": "\033[37m",  # white
-}
-
-BG = {
-    "K": "\033[40m",  # black
-    "R": "\033[41m",  # red
-    "G": "\033[42m",  # green
-    "Y": "\033[43m",  # yellow
-    "B": "\033[44m",  # blue
-    "M": "\033[45m",  # magenta
-    "C": "\033[46m",  # cyan
-    "W": "\033[47m",  # white
-}
-
-ANSI = {**ATTR, **FG, **BG}
-
-def ansi(style: str) -> str:
-    return "".join(ANSI.get(s, "") for s in style)
-
-def normalize_style(style: str) -> str:
-    fg: list[str] = []
-    bg: list[str] = []
-    attr: list[str] = []
-    for c in style:
-        if c in FG:
-            fg = [c]
-        elif c in BG:
-            bg = [c]
-        elif c in ATTR and c not in attr:
-            attr.append(c)
-    return "".join(attr + fg + bg)
+Run = tuple[RTStyle, str]  # (style, text)
 
 class RenderMode(enum.Enum):
     ANSI = "ansi"
     PLAIN = "plain"
-    DEBUG = "debug"
+    FLAT = "flat"
 
 class RenderConfig:
     mode: RenderMode = RenderMode.ANSI
     enabled: bool = True
 
-
 class ParseError(ValueError):
     pass
+
+class SafeDict(dict[str, object]):
+    def __missing__(self, key: str) -> str:
+        return "{" + key + "}"
+
+
+def _append_run(runs: list[Run], style: RTStyle, text: str) -> None:
+    if not text:
+        return
+    if runs and runs[-1][0] == style:
+        s, t = runs[-1]
+        runs[-1] = (s, t + text)
+    else:
+        runs.append((style, text))
+
+def _merge(runs: Iterable[Run]) -> list[Run]:
+    merged: list[Run] = []
+    for style, text in runs:
+        _append_run(merged, style, text)
+    return merged
+
+def _char_width(ch: str) -> int:
+    w = wcwidth(ch)
+    return max(w, 0)
+
+class RunBuilder:
+    def __init__(self) -> None:
+        self._runs: list[Run] = []
+
+    def append(self, style: RTStyle, text: str) -> None:
+        _append_run(self._runs, style, text)
+
+    def extend(self, runs: Iterable[Run]) -> None:
+        for style, text in runs:
+            _append_run(self._runs, style, text)
+
+    @property
+    def empty(self) -> bool:
+        return not self._runs
+
+    def clear(self) -> None:
+        self._runs.clear()
+
+    def snapshot(self) -> list[Run]:
+        return self._runs.copy()
+
+    def __iter__(self):
+        return iter(self._runs)
+
+    def copy(self) -> RunBuilder:
+        builder = RunBuilder()
+        builder._runs = self._runs.copy()
+        return builder
 
 
 @dataclass(frozen=True)
@@ -82,35 +88,32 @@ class RT:
     - A estrutura interna é imutável (dataclass frozen).
     - Runs com texto vazio são descartados durante normalização/merge.
     - Runs adjacentes com o mesmo estilo são mesclados.
-    - Todo estilo é normalizado por normalize_style.
+    - Todo estilo é normalizado pela class Style.
 
     Modelo de estilo:
     - O estilo corrente do parse é cumulativo por overlay.
-    - [] e [.] resetam o estilo corrente para vazio.
+    - [] faz pop do estilo atual, retornando ao anterior.
     - [x] aplica overlay do estilo literal x no estilo corrente.
     - [.x] faz reset + apply do estilo literal x.
-    - [$] e [$nome] aplicam overlay de estilo dinâmico (posicional/nomeado).
 
     Contrato de parse:
-    - Delimitadores são "[ ]" (controle de estilo) e "< >" (inserção).
-    - Tokens de variável usam prefixo "$" dentro de "< >".
-    - "<<", ">>", "[[" e "]]" são escapes literais.
-    - Placeholders de valor aceitam estilo inline com ":".
-    - Estilo inline malformado não lança erro: é ignorado (equivale a estilo vazio).
+    - Delimitadores são "[ ]" (controle de estilo).
+    - "[[" e "]]" são escapes literais.
     - Erros de fechamento e variáveis ausentes lançam ParseError.
 
     Renderização:
     - ANSI: aplica códigos de estilo em cada run com reset ao fim do run.
     - PLAIN: retorna apenas o conteúdo textual.
-    - DEBUG: expõe runs no formato [style]text.
+    - FLAT: expõe runs no formato [style]text[].
     """
     runs: tuple[Run, ...] = ()
+    ANSI_RE = re.compile(r"\033\[([0-9;]*)m")
 
     def __init__(self, text: str = "", style: str = "", runs: Iterable[Run] | None = None):
         if runs is not None:
-            object.__setattr__(self, "runs", tuple(self._merge(runs)))
+            object.__setattr__(self, "runs", tuple(_merge(runs)))
         elif text:
-            object.__setattr__(self, "runs", ((normalize_style(style), text),))
+            object.__setattr__(self, "runs", ((RTStyle.parse(style), text),))
         else:
             object.__setattr__(self, "runs", ())
 
@@ -123,326 +126,214 @@ class RT:
         return RT(runs=runs)
 
     @staticmethod
-    def decode_raw(data: str) -> RT:
-        ansi_to_style = {
-            "\033[30m": "k",
-            "\033[31m": "r",
-            "\033[32m": "g",
-            "\033[33m": "y",
-            "\033[34m": "b",
-            "\033[35m": "m",
-            "\033[36m": "c",
-            "\033[37m": "w",
-            "\033[40m": "K",
-            "\033[41m": "R",
-            "\033[42m": "G",
-            "\033[43m": "Y",
-            "\033[44m": "B",
-            "\033[45m": "M",
-            "\033[46m": "C",
-            "\033[47m": "W",
-            "\033[0m": "",
-        }
-        pattern = "|".join(re.escape(key) for key in ansi_to_style)
-        if not pattern:
-            return RT(data)
+    def from_ansi(data: str) -> RT:
+        rb = RunBuilder()
 
-        runs: list[Run] = []
-        style = ""
-        last_idx = 0
-        for match in re.finditer(pattern, data):
-            if match.start() > last_idx:
-                runs.append((style, data[last_idx:match.start()]))
-            style = ansi_to_style[match.group(0)]
-            last_idx = match.end()
-        if last_idx < len(data):
-            runs.append((style, data[last_idx:]))
-        return RT.from_runs(runs)
+        style = RTStyle()
+
+        last = 0
+
+        for match in RT.ANSI_RE.finditer(data):
+            start, end = match.span()
+
+            if start > last:
+                rb.append(
+                    style,
+                    data[last:start],
+                )
+
+            raw = match.group(1)
+
+            codes = raw.split(";") if raw else ["0"]
+
+            style = RTStyle.from_ansi_codes(
+                codes,
+                style,
+            )
+
+            last = end
+
+        if last < len(data):
+            rb.append(style, data[last:])
+
+        return RT.from_runs(rb)
+
 
     @staticmethod
-    def concat(*texts: RT) -> RT:
-        runs: list[Run] = []
-        for t in texts:
-            runs.extend(t.runs)
-        return RT(runs=runs)
-
-    @staticmethod
-    def join(texts: Iterable[RT], sep: RT) -> RT:
-        texts = list(texts)
-        if not texts:
-            return RT()
-        out = texts[0]
-        for t in texts[1:]:
-            out = out + sep + t
-        return out
-
-    @staticmethod
-    def _combine_styles(base: str, overlay: str) -> str:
-        fg: None | str = None
-        bg: None | str = None
-        attr: set[str] = set()
-
-        for c in base:
-            if c in FG.keys():
-                fg = c
-            elif c in BG.keys():
-                bg = c
-            elif c in ATTR.keys():
-                attr.add(c)
-
-        for c in overlay:
-            if c in FG.keys():
-                fg = c
-            elif c in BG.keys():
-                bg = c
-            elif c in ATTR.keys():
-                attr.add(c)
-
-        return normalize_style("".join(sorted(attr)) + (fg or "") + (bg or ""))
-
-    @staticmethod
-    def parse(template: str, *args: Any, **kwargs: Any) -> RT:
+    def parse(template: str) -> RT:
         """
-        Gramática do parser.
+        Gramática simplificada do parser RT.
 
-        Controle de estilo (delimitador [ ]):
-        - [estilo]       overlay de estilo literal.
-        - []             reset do estilo corrente.
-        - [.]            reset do estilo corrente.
-        - [.estilo]      reset + apply do estilo literal.
-        - [$]            overlay com estilo posicional de args.
-        - [$nome]        overlay com estilo nomeado de kwargs.
+        Objetivo:
+        - Converter markup inline baseado em [style] em uma sequência
+        imutável de runs (style, text).
 
-        Inserção (delimitador < >):
-        - <$>            valor posicional de args.
-        - <$nome>        valor nomeado de kwargs.
-        - <$:estilo>     valor posicional com estilo inline extra.
-        - <$nome:estilo> valor nomeado com estilo inline extra.
-        - <texto>        texto literal.
-        - <texto:estilo> texto literal com estilo inline.
+        Controle de estilo:
+        - [style]   faz push de um novo estilo combinado com o atual.
+        - [.style] faz reset + apply do estilo literal, ignorando o atual.
+        - []        faz pop do estilo atual.
+        - [[        escape literal para "[".
+        - ]]        escape literal para "]".
 
-        Regras de estilo inline (após ':'):
-        - Se o estilo for válido, ele é normalizado e aplicado.
-        - Se for vazio ou malformado, é ignorado (estilo vazio).
+        Regras:
+        - Os estilos são mantidos em uma pilha.
+        - Cada [style] faz overlay sobre o topo atual da pilha.
+        - [] restaura o estilo anterior.
+        - Cores foreground/background substituem anteriores.
+        - Attributes (*, _, etc.) são acumulativos.
+
+        Exemplos:
+        - [r]erro[]
+        - [R]fundo vermelho [g]verde sobre vermelho[] vermelho[]
+        - [r*]erro em negrito[]
+        - [.r]erro em vermelho[]
+        - [[texto]] -> [texto]
 
         Regras de erro:
-        - Delimitador sem fechamento gera ParseError.
-        - Placeholder nomeado ausente em kwargs gera ParseError.
-        - Placeholder posicional sem argumento disponível gera ParseError.
+        - Tags "[" sem fechamento "]" geram ParseError.
+        - [] em pilha vazia é ignorado.
+
+        Renderização:
+        - O parser apenas produz runs estruturados.
+        - A renderização ANSI/plain/flat é responsabilidade de render().
         """
-        runs: list[Run] = []
+        run_builder = RunBuilder()
         buf = ""
-        style = ""
-        arg_i = 0
         i = 0
 
-        ident_re = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+        style_stack: list[RTStyle] = [RTStyle()]
 
-        def flush():
+        def flush() -> None:
             nonlocal buf
+
             if buf:
-                runs.append((style, buf))
+                run_builder.append(style_stack[-1], buf)
                 buf = ""
 
         def parse_error(message: str) -> ParseError:
             return ParseError(f"{message} at pos {i}")
 
-        def parse_inline_style(style_token: str) -> str:
-            if not style_token:
-                return ""
-            if any(ch not in ANSI for ch in style_token):
-                return ""
-            return normalize_style(style_token)
-
-        def append_value(value: Any, extra_style: str = "") -> None:
-            if isinstance(value, RT):
-                for s, t in value.runs:
-                    base_style = RT._combine_styles(style, s)
-                    final_style = RT._combine_styles(base_style, extra_style) if extra_style else base_style
-                    runs.append((final_style, t))
-                return
-
-            if isinstance(value, tuple) and len(value) == 2: # type: ignore
-                s, t = value # type: ignore
-                base_style = RT._combine_styles(style, str(s)) # type: ignore
-                final_style = RT._combine_styles(base_style, extra_style) if extra_style else base_style
-                runs.append((final_style, str(t))) # type: ignore
-                return
-
-            final_style = RT._combine_styles(style, extra_style) if extra_style else style
-            runs.append((final_style, str(value))) # type: ignore
-
         while i < len(template):
             c = template[i]
 
             # Escapes
-            if c == "[" and i + 1 < len(template) and template[i+1] == "[":
+            if c == "[" and i + 1 < len(template) and template[i + 1] == "[":
                 buf += "["
                 i += 2
                 continue
-            if c == "]" and i + 1 < len(template) and template[i+1] == "]":
+
+            if c == "]" and i + 1 < len(template) and template[i + 1] == "]":
                 buf += "]"
                 i += 2
                 continue
-            if c == "<" and i + 1 < len(template) and template[i+1] == "<":
-                buf += "<"
-                i += 2
-                continue
-            if c == ">" and i + 1 < len(template) and template[i+1] == ">":
-                buf += ">"
-                i += 2
-                continue
 
-            # Estilo
+            # Style tag
             if c == "[":
                 j = template.find("]", i)
+
                 if j == -1:
                     raise parse_error("missing closing ]")
-                token = template[i+1:j]
+
+                token = template[i + 1:j]
+
                 flush()
-                if token == "" or token == ".":
-                    style = ""
+
+                # Pop
+                if token == "":
+                    if len(style_stack) > 1:
+                        style_stack.pop()
+
+                    style = style_stack[-1]
+
                 elif token.startswith("."):
-                    # Reset + apply style (literal, positional or named).
-                    rest = token[1:]
-                    if rest == "":
-                        style = ""
-                    elif rest == "$":
-                        if arg_i >= len(args):
-                            raise parse_error("missing positional style for [.$]")
-                        style = normalize_style(str(args[arg_i]))
-                        arg_i += 1
-                    elif ident_re.match(rest) and rest in kwargs:
-                        style = normalize_style(str(kwargs[rest]))
-                    else:
-                        style = normalize_style(rest)
-                elif token.startswith("$"):
-                    # Overlay de estilo posicional ou nomeado.
-                    if token == "$":
-                        if arg_i >= len(args):
-                            raise parse_error("missing positional style for [$]")
-                        style = RT._combine_styles(style, str(args[arg_i]))
-                        arg_i += 1
-                    else:
-                        key = token[1:]
-                        if key not in kwargs:
-                            raise parse_error(f"missing named style: {key}")
-                        style = RT._combine_styles(style, str(kwargs[key]))
+                    style = RTStyle.parse(token[1:])
+                    style_stack.append(style)
+
+                # Push
                 else:
-                    # Overlay de estilo literal.
-                    style = RT._combine_styles(style, token)
+                    style = style_stack[-1].overlay(token)
+                    style_stack.append(style)
+
                 i = j + 1
                 continue
 
-            # Variáveis e texto estilizado
-            if c == "<":
-                j = template.find(">", i)
-                if j == -1:
-                    raise parse_error("missing closing >")
-                token = template[i+1:j]
-                flush()
-                # <$> ou <$nome>
-                if token.startswith("$"):
-                    value_token = token
-                    value_extra_style = ""
-                    if ":" in token:
-                        value_token, raw_style = token.split(":", 1)
-                        value_extra_style = parse_inline_style(raw_style)
-
-                    if value_token == "$":
-                        if arg_i >= len(args):
-                            raise parse_error("missing positional value for <$>")
-                        value = args[arg_i]
-                        arg_i += 1
-                        append_value(value, value_extra_style)
-                    else:
-                        key = value_token[1:]
-                        if key not in kwargs:
-                            raise parse_error(f"missing named value: {key}")
-                        value = kwargs[key]
-                        append_value(value, value_extra_style)
-                    i = j + 1
-                    continue
-                # <texto:estilo>
-                if ":" in token:
-                    txt, sty = token.split(":", 1)
-                    runs.append((parse_inline_style(sty), txt))
-                    i = j + 1
-                    continue
-                # <texto> literal
-                runs.append((style, token))
-                i = j + 1
-                continue
-
-            # Normal
+            # Normal text
             buf += c
             i += 1
 
-        if buf:
-            runs.append((style, buf))
-        return RT.from_runs(runs)
+        flush()
 
-    def _merge(self, runs: Iterable[Run]) -> list[Run]:
-        merged: list[Run] = []
-        for style, text in runs:
-            if not text:
-                continue
-            style = normalize_style(style)
-            if merged and merged[-1][0] == style:
-                merged[-1] = (style, merged[-1][1] + text)
-            else:
-                merged.append((style, text))
-        return merged
-
-    def _chars(self):
-        for style, text in self.runs:
-            for ch in text:
-                yield ch, style
-
-    def width(self) -> int:
-        total: int = 0
-        for _, text in self.runs:
-            for ch in text:
-                w: int = wcwidth(ch) # type: ignore
-                if w > 0:
-                    total += w # type: ignore
-        return total # type: ignore
+        return RT.from_runs(run_builder)
 
     def plain(self) -> str:
         return "".join(text for _, text in self.runs)
-
-    def get_str(self) -> str:
-        return self.plain()
+    
+    def flat(self) -> str:
+        output: list[str] = []
+        for s, t in self.runs:
+            if not s.is_plain():
+                output.append(f"[{s}]{t}[]")
+            else:
+                output.append(t)
+        return "".join(output)
+    
+    def ansi(self) -> str:
+        out = ""
+        for style, text in self.runs:
+            if style:
+                out += style.ansi() + text + ANSI_RESET
+            else:
+                out += text
+        return out
 
     def render(self, mode: RenderMode | None = None) -> str:
         mode = mode or RenderConfig.mode
         if not RenderConfig.enabled or mode == RenderMode.PLAIN:
             return self.plain()
-        if mode == RenderMode.DEBUG:
-            return "".join(f"[{s}]{t}" for s, t in self.runs)
-        out = ""
-        for style, text in self.runs:
-            if style:
-                out += ansi(style) + text + ANSI["."]
-            else:
-                out += text
-        return out
-
+        if mode == RenderMode.FLAT:
+            return self.flat()
+        return self.ansi()
+    
+    def __iter__(self) -> Iterator[Run]:
+        return iter(self.runs)
+    
     def __str__(self) -> str:
         return self.render()
 
     def __len__(self) -> int:
-        return len(self.plain())
+        return sum(_char_width(ch) for ch, _ in self.iter_chars())
+    
+    def set_style(self, style: str | RTStyle) -> RT:
+        if isinstance(style, str):
+            style = RTStyle.parse(style)
 
-    def len(self) -> int:
-        return len(self)
+        return RT.from_runs(
+            runs=[(style, t) for _, t in self.runs]
+        )
+    
+    def add_style(self, style: str | RTStyle) -> RT:
+        if isinstance(style, str):
+            style = RTStyle.parse(style)
 
-    def __add__(self, other: "RT | str") -> RT:
+        return RT.from_runs(
+            runs=[
+                (s.overlay(style), t)
+                for s, t in self.runs
+            ]
+        )
+
+    def strip_style(self) -> RT:
+        return RT.from_runs(
+            runs=[(RTStyle(), t) for _, t in self.runs]
+        )
+
+
+    def __add__(self, other: RT | str) -> RT:
         if isinstance(other, str):
             other = RT(other)
         return RT(runs=self.runs + other.runs)
 
-    def __radd__(self, other: "RT | str") -> RT:
+    def __radd__(self, other: RT | str) -> RT:
         if isinstance(other, str):
             other = RT(other)
         return RT(runs=other.runs + self.runs)
@@ -456,44 +347,59 @@ class RT:
         if key < 0:
             key += len(self)
         return self.slice(key, key + 1)
+    
+    def iter_chars(self) -> Iterator[tuple[str, RTStyle]]:
+        for style, text in self.runs:
+            for ch in text:
+                yield ch, style
 
-    def wrap(self, max_width: int) -> list["RT"]:
+    # Align and truncation methods
+
+    @staticmethod
+    def join(texts: Iterable[RT], sep: RT | str = "") -> RT:
+        if isinstance(sep, str):
+            sep = RT(sep)
+        builder = RunBuilder()
+        first = True
+        for text in texts:
+            if not first:
+                builder.extend(sep.runs)
+            builder.extend(text.runs)
+            first = False
+        return RT.from_runs(builder)
+
+    def wrap(self, max_width: int) -> list[RT]:
+        """
+        Breaks the RT into multiple lines, each with a maximum width of max_width.
+        """
         lines: list[RT] = []
-        current_runs: list[Run] = []
+        rb = RunBuilder()
         current_width = 0
 
         def push_line():
-            nonlocal current_runs
-            if current_runs:
-                lines.append(RT.from_runs(current_runs))
-                current_runs = []
+            nonlocal rb
+            if not rb.empty:
+                lines.append(RT.from_runs(rb))
+                rb = RunBuilder()
 
-        for style, text in self.runs:
-            for ch in text:
-                if ch == "\n":
-                    push_line()
-                    current_width = 0
-                    continue
+        for ch, style in self.iter_chars():
+            if ch == "\n":
+                push_line()
+                current_width = 0
+                continue
 
-                w = wcwidth(ch) # type: ignore
-                if w < 0:
-                    w = 0
+            w = _char_width(ch)
 
-                if current_width + w > max_width:
-                    push_line()
-                    current_width = 0
-
-                if current_runs and current_runs[-1][0] == style:
-                    current_runs[-1] = (style, current_runs[-1][1] + ch)
-                else:
-                    current_runs.append((style, ch))
-
-                current_width += w # type: ignore
+            if current_width + w > max_width:
+                push_line()
+                current_width = 0
+            rb.append(style, ch)
+            current_width += w # type: ignore
 
         push_line()
         return lines
 
-    def truncate(self, max_width: int) -> "RT":
+    def truncate(self, max_width: int) -> RT:
         if max_width <= 0:
             return RT()
 
@@ -571,7 +477,7 @@ class RT:
             new = RT(new, style)
 
         # explode em caracteres com estilo
-        chars: list[tuple[str, str]] = []
+        chars: list[tuple[str, RTStyle]] = []
         for s, t in self.runs:
             for c in t:
                 chars.append((c, s))
@@ -581,7 +487,7 @@ class RT:
         replaced = 0
         n = len(old)
 
-        def append_run(style: str, text: str):
+        def append_run(style: RTStyle, text: str):
             if not text:
                 return
             if result and result[-1][0] == style:
@@ -609,7 +515,10 @@ class RT:
         return RT.from_runs(result)
 
     def repeat(self, n: int) -> RT:
-        return RT.concat(*([self] * n))
+        if n <= 0:
+            return RT()
+
+        return RT.from_runs(self.runs * n)
 
     def split(self, sep: str) -> list[RT]:
         parts: list[list[Run]] = [[]]
@@ -618,7 +527,7 @@ class RT:
         i = 0
 
         # explode runs em (char, style)
-        chars: list[tuple[str, str]] = []
+        chars: list[tuple[str, RTStyle]] = []
         for style, text in self.runs:
             for c in text:
                 chars.append((c, style))
@@ -643,20 +552,20 @@ class RT:
     def center(self, width: int, fill: RT | str = " ") -> RT:
         if isinstance(fill, str):
             fill = RT(fill)
+        if len(fill) != 1:
+            raise ValueError("fill must be a single character")
 
         missing = width - len(self)
+
         if missing <= 0:
             return self
 
         left = missing // 2
         right = missing - left
 
-        left_fill = RT.concat(*([fill] * left))
-        right_fill = RT.concat(*([fill] * right))
+        return ( fill.repeat(left) + self + fill.repeat(right) )
 
-        return left_fill + self + right_fill
-
-    def fold_in(
+    def center_in(
         self,
         width: int,
         sep: RT | str = " ",
@@ -665,6 +574,8 @@ class RT:
     ) -> RT:
         if isinstance(sep, str):
             sep = RT(sep)
+        if len(sep) != 1:
+            raise ValueError("sep must be a single character")
         if isinstance(left_border, str):
             left_border = RT(left_border)
         if isinstance(right_border, str):
@@ -680,133 +591,28 @@ class RT:
     def ljust(self, width: int, fill: RT | str = " ") -> RT:
         if isinstance(fill, str):
             fill = RT(fill)
+        if len(fill) != 1:
+            raise ValueError("fill must be a single character")
 
         missing = width - len(self)
         if missing <= 0:
             return self
 
-        filler = RT.concat(*([fill] * missing))
+        filler = fill.repeat(missing)
         return self + filler
 
     def rjust(self, width: int, fill: RT | str = " ") -> RT:
         if isinstance(fill, str):
             fill = RT(fill)
+        if len(fill) != 1:
+            raise ValueError("fill must be a single character")
 
         missing = width - len(self)
         if missing <= 0:
             return self
 
-        filler = RT.concat(*([fill] * missing))
+        filler = fill.repeat(missing)
         return filler + self
 
-    def set_style(self, style: str) -> RT:
-        return RT(runs=[(style, t) for _, t in self.runs])
-
-    def add_style(self, style: str) -> RT:
-        return RT(runs=[(s + style, t) for s, t in self.runs])
-
-    def clear_style(self) -> RT:
-        return RT(runs=[("", t) for _, t in self.runs])
-
-
-class RBuffer:
-    def __init__(self):
-        self.runs: list[Run] = []
-
-    def add(self, value: Any, style: str = ""):
-        if value is None:
-            return self
-
-        # Text
-        if isinstance(value, RT):
-            for s, t in value.runs:
-                self._add_run(s, t)
-            return self
-
-        # TextBuffer
-        if isinstance(value, RBuffer):
-            for s, t in value.runs:
-                self._add_run(s, t)
-            return self
-
-        # Run tuple
-        if isinstance(value, tuple) and len(value) == 2: # type: ignore
-            s, t = value # type: ignore
-            self._add_run(s, t) # type: ignore
-            return self
-
-        # Iterable[Run]
-        if isinstance(value, list):
-            for s, t in value: # type: ignore
-                self._add_run(s, t) # type: ignore
-            return self
-
-        # string
-        if isinstance(value, str):
-            self._add_run(style, value)
-            return self
-
-        # fallback
-        self._add_run(style, str(value)) # type: ignore
-        return self
-
-    def run(self, style: str, text: str):
-        self._add_run(style, text)
-        return self
-
-    def extend(self, text: RT):
-        for s, t in text.runs:
-            self._add_run(s, t)
-        return self
-
-    def extend_runs(self, runs: Iterable[Run]):
-        for s, t in runs:
-            self._add_run(s, t)
-        return self
-
-    def _add_run(self, style: str, text: str):
-        if not text:
-            return
-        style = normalize_style(style)
-        if self.runs and self.runs[-1][0] == style:
-            s, t = self.runs[-1]
-            self.runs[-1] = (s, t + text)
-        else:
-            self.runs.append((style, text))
-
-    def clear(self):
-        self.runs.clear()
-        return self
-
-    def to_rt(self) -> RT:
-        return RT(runs=self.runs)
-
-    def __iadd__(self, other: Any):
-        return self.add(other)
-    
-    def __str__(self) -> str:
-        return self.to_rt().render()
-
 if __name__ == "__main__":
-    # Example usage
-    # Exemplo 1: estilo nomeado e valor nomeado
-    t = RT.parse("[$name]Hello <$who>[$]!", who=("r", "Red"), name="b")
-    print(t)
-
-    # Exemplo 2: texto literal com estilo
-    t2 = RT.parse("<Aviso:y> <$>", "atenção!")
-    print(t2)
-
-    # Exemplo 3: estilo posicional
-    t3 = RT.parse("[$]Título", "_b")
-    print(t3)
-
-    # Exemplo 4: valor posicional
-    t4 = RT.parse("Olá, <$>", "mundo")
-    print(t4)
-
-    # Exemplo 5: uso do RBuffer permanece igual
-    b = RBuffer()
-    b.add("Hello ", "r").add("World", "R").add(" ").add(RT("oi", "bR"))
-    print(b.to_rt().render())
-    print(b.to_rt().plain())
+    print(RT.parse("[R]red [Kg]green [b]blue[][]red[]"))

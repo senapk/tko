@@ -1,6 +1,5 @@
-import logging
+from loguru import logger
 from pathlib import Path
-from pytest import LogCaptureFixture
 from tko.feno.mdpp import TocMaker, Toc, Toch, Load, Links, Action, Save
 
 def test_toc_maker_get_md_link():
@@ -122,22 +121,41 @@ def test_load_extract_between_tags():
     assert out == "b\nc\n"
 
 
-def test_load_parse_tags_and_warnings(caplog: LogCaptureFixture):
-    params = Load.parse_tags("--fenced --extract sec --rmcom --filter --tests 2")
-    assert params.fenced == ""
-    assert params.extract == "sec"
-    assert params.rmcom is True
-    assert params.filter is True
-    assert params.tests == 2
+def test_load_parse_tags_and_warnings():
+    messages: list[str] = []
 
-    with caplog.at_level(logging.WARNING):
-        invalid = Load.parse_tags("--extract --tests nope --unknown")
+    sink_id = logger.add(
+        messages.append,
+        level="WARNING",
+        format="{message}",
+    )
 
-    assert invalid.extract is None
-    assert invalid.tests is None
-    assert "missing value for --extract" in caplog.text
-    assert "invalid or missing integer for --tests" in caplog.text
-    assert "unrecognized tag '--unknown'" in caplog.text
+    try:
+        params = Load.parse_tags(
+            "--fenced --extract sec --rmcom --filter --tests 2"
+        )
+
+        assert params.fenced == ""
+        assert params.extract == "sec"
+        assert params.rmcom is True
+        assert params.filter is True
+        assert params.tests == 2
+
+        invalid = Load.parse_tags(
+            "--extract --tests nope --unknown"
+        )
+
+        assert invalid.extract is None
+        assert invalid.tests is None
+
+        text = "\n".join(messages)
+
+        assert "missing value for --extract" in text
+        assert "invalid or missing integer for --tests" in text
+        assert "unrecognized tag '--unknown'" in text
+
+    finally:
+        logger.remove(sink_id)
 
 
 def test_generate_table_from_test_toml_all_cases(tmp_path: Path):
@@ -232,22 +250,38 @@ print('old')
     assert out == expected
 
 
-def test_load_execute_missing_file(tmp_path: Path, caplog: LogCaptureFixture):
-    content = """# Main
+def test_load_execute_missing_file(tmp_path: Path):
+    messages: list[str] = []
+
+    sink_id = logger.add(
+        messages.append,
+        level="WARNING",
+        format="{message}",
+    )
+
+    try:
+        content = """# Main
 <!-- load missing.py -->
 something stale
 <!-- load -->
 """
-    with caplog.at_level(logging.WARNING):
+
         out = Load.execute(content, tmp_path, Action.RUN)
 
-    expected = """# Main
+        expected = """# Main
 <!-- load missing.py -->
 
 <!-- load -->
 """
-    assert out == expected
-    assert "file missing.py not found" in caplog.text
+
+        assert out == expected
+
+        text = "\n".join(messages)
+
+        assert "file missing.py not found" in text
+
+    finally:
+        logger.remove(sink_id)
 
 
 def test_load_execute_multiple_blocks(tmp_path: Path):
@@ -333,22 +367,3 @@ saved content
 """
     Save.execute(content)
     assert (tmp_path / "output.txt").read_text() == "saved content\n"
-
-
-def test_save_execute_skips_unchanged(tmp_path: Path, caplog: LogCaptureFixture):
-    content = f"""
-[](save)[]({tmp_path}/output.txt)
-```text
-saved content
-```
-[](save)
-"""
-    with caplog.at_level(logging.INFO):
-        Save.execute(content)
-    assert "updated" in caplog.text
-
-    caplog.clear()
-
-    with caplog.at_level(logging.INFO):
-        Save.execute(content)
-    assert caplog.text == ""

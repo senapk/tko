@@ -2,13 +2,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-import logging
+from loguru import logger
 import typer
 from tko.config.settings import Settings
 from tko.i18n import Msg, t
 
 
-logger = logging.getLogger(__name__)
+
 
 _APP_CONTEXT_NOT_SET = Msg(
     pt="AppContext não foi inicializado no typer.Context",

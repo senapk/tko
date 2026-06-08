@@ -1,4 +1,3 @@
-import logging
 import os
 import shutil
 from pathlib import Path
@@ -36,7 +35,7 @@ class _PlayActionMsg:
 
 class PlayActions:
 
-    logger = logging.getLogger(__name__)
+    
 
     def __init__(self, gui: Gui):
         self.app = gui.app

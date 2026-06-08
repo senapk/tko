@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import logging
+from loguru import logger
 import time
 from pathlib import Path
 from datetime import  timedelta
@@ -39,9 +39,6 @@ class UpdateMode(enum.Enum):
     IF_OLDER = "if_older"
 
 class GitCache:
-
-    logger = logging.getLogger(__name__)
-
     def __init__(self, cache_dir: str | Path, max_age: timedelta = timedelta(hours=1), update_mode: UpdateMode = UpdateMode.IF_OLDER) -> None:
         self.cache_dir: Path = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -51,7 +48,7 @@ class GitCache:
 
     def clear_cache(self):
         if self.cache_dir.exists():
-            self.logger.info(t(_GIT_CACHE_CLEARING, cache_dir=self.cache_dir))
+            logger.info(t(_GIT_CACHE_CLEARING, cache_dir=self.cache_dir))
             shutil.rmtree(self.cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
@@ -109,24 +106,24 @@ class GitCache:
         lock_path: Path = self._lock_path(repo)
         with self._acquire_lock(lock_path):
             if not repo.exists():
-                self.logger.info(t(_GIT_CACHE_CLONING, url=url))
+                logger.info(t(_GIT_CACHE_CLONING, url=url))
                 ok = self._clone(url, repo)
                 if not ok:
                     if verbose:
-                        self.logger.warning(t(_GIT_CACHE_CLONE_FAILED, url=url))
+                        logger.warning(t(_GIT_CACHE_CLONE_FAILED, url=url))
                     # shutil.rmtree(repo, ignore_errors=True)
                     return None
 
             if self._is_expired(repo) or (self.update_mode == UpdateMode.ALWAYS) and not self.updated.get(str(repo), False):
                 try:
                     if verbose:
-                        self.logger.info(t(_GIT_CACHE_UPDATING, url=url))
+                        logger.info(t(_GIT_CACHE_UPDATING, url=url))
                     self._update(repo)
                 except subprocess.CalledProcessError:
                     if self.update_mode == UpdateMode.IF_OLDER:
                         pass
                     if verbose:
-                        self.logger.warning(t(_GIT_CACHE_UPDATE_FAILED_RECLONE, url=url))
+                        logger.warning(t(_GIT_CACHE_UPDATE_FAILED_RECLONE, url=url))
                     # shutil.rmtree(repo, ignore_errors=True)
                     self._clone(url, repo)
         return repo

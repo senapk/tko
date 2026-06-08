@@ -1,10 +1,10 @@
 from __future__ import annotations
-import logging
+from loguru import logger
 import re
 from tko.i18n import Msg, t
 
 
-logger = logging.getLogger(__name__)
+
 
 _PATTERN_WILDCARD_ONLY_ONCE = Msg(
     pt="  fail: o curinga @ deve ser usado apenas uma vez por padrão",

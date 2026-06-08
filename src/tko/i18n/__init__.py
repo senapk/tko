@@ -1,15 +1,12 @@
 from __future__ import annotations
 
 import os
-import re
 from enum import Enum
 from typing import Any
 
-from tko.i18n.message import Msg, MsgRT
-from tko.util.rt import RT
+from tko.i18n.message import Msg
 
-
-_SUPPORTED_LANGUAGES = {"pt-BR", "en"}
+SUPPORTED_LANGUAGES = {"pt-BR", "en"}
 _LANGUAGE_ALIASES = {
     "pt": "pt-BR",
     "pt-br": "pt-BR",
@@ -32,7 +29,7 @@ def normalize_language(language: str | None) -> str:
         return "pt-BR"
     if normalized in {"en", "en-us", "en-uk"}:
         return "en"
-    if normalized in _SUPPORTED_LANGUAGES:
+    if normalized in SUPPORTED_LANGUAGES:
         return normalized
     return "pt-BR"
 
@@ -49,9 +46,13 @@ def set_language(language: str | None) -> str:
     _current_language = normalize_language(language)
     return _current_language
 
+class SafeDict(dict[str, object]):
+    def __missing__(self, key: str) -> str:
+        return "{" + key + "}"
 
 def t(key: Enum | str | Msg, **params: Any) -> str:
     language = get_language()
+
     if isinstance(key, Msg):
         template = key.for_language(language)
     else:
@@ -61,17 +62,8 @@ def t(key: Enum | str | Msg, **params: Any) -> str:
     if not params:
         return template
 
-    def replace(match: re.Match[str]) -> str:
-        name = match.group(1)
-        if name in params:
-            return str(params[name])
-        return match.group(0)
-
-    return re.sub(r"\{([A-Za-z_][A-Za-z0-9_]*)\}", replace, template)
+    return template.format_map(SafeDict(params))
 
 
-def tr(msg: MsgRT) -> RT:
-    return msg.for_language(get_language())
 
-
-__all__ = ["Msg", "MsgRT", "normalize_language", "get_language", "set_language", "t", "tr"]
+__all__ = ["Msg", "normalize_language", "get_language", "set_language", "t", "SUPPORTED_LANGUAGES"]

@@ -1,10 +1,10 @@
-import logging
+from loguru import logger
 from tko.i18n import Msg, t
 from tko.repository.remote import Remote
 
 from typing import Any
 
-logger = logging.getLogger(__name__)
+
 
 _REPOSITORY_DATA_LOAD_ERROR = Msg(
     pt="Error loading data from dictionary",

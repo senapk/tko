@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import logging
+from loguru import logger
 import subprocess
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -10,7 +10,7 @@ from tko.util.rt import RT
 from tko.i18n import Msg, t
 
 
-logger = logging.getLogger(__name__)
+
 
 _PULL_UNEXPECTED_ERROR = Msg(
     pt="Erro inesperado ao executar comando git em {directory}",

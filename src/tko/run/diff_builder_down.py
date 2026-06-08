@@ -46,16 +46,16 @@ class DiffBuilderDown:
         return output
 
     def insert_header(self):
-        self.output.append(RT().fold_in(self.width, Symbols.hbar, "╭", "╮"))
-        self.output.append(self.unit.str().fold_in(self.width, " ", Symbols.vbar, Symbols.vbar))
+        self.output.append(RT().center_in(self.width, Symbols.hbar, "╭", "╮"))
+        self.output.append(self.unit.str().center_in(self.width, " ", Symbols.vbar, Symbols.vbar))
 
     def insert_input(self):
         color = "g" if self.unit.get_expected() == self.unit.get_received() else "b"
         # header
         if self.__to_insert_header:
-            self.output.append(RT(DiffBuilder.vinput, color).fold_in(self.width, Symbols.hbar, "├", "┤"))
+            self.output.append(RT(DiffBuilder.vinput, color).center_in(self.width, Symbols.hbar, "├", "┤"))
         else:
-            self.output.append(RT(DiffBuilder.vinput, color).fold_in(self.width, Symbols.hbar, "╭", "╮"))
+            self.output.append(RT(DiffBuilder.vinput, color).center_in(self.width, Symbols.hbar, "╭", "╮"))
         # lines
         for line in self.unit.input.splitlines():
             self.output.append((RT(Symbols.vbar) + " " + line).ljust(self.width - 1, " ") + Symbols.vbar)
@@ -72,7 +72,7 @@ class DiffBuilderDown:
         else:
             opening = "├"
             ending = "┤" if self.curses else "╯"
-        self.output.append(RT(DiffBuilder.vexpected, color).fold_in(self.width, Symbols.hbar, opening, ending))
+        self.output.append(RT(DiffBuilder.vexpected, color).center_in(self.width, Symbols.hbar, opening, ending))
         for line, _ in self.expected_received:
             if line is not None:
                 if self.curses:
@@ -90,7 +90,7 @@ class DiffBuilderDown:
         else:
             opening = "├"
             ending = "┤" if self.curses else Symbols.hbar
-        self.output.append(RT(DiffBuilder.vreceived, color).fold_in(self.width, Symbols.hbar, opening, ending))
+        self.output.append(RT(DiffBuilder.vreceived, color).center_in(self.width, Symbols.hbar, opening, ending))
 
         # lines
         received: list[RT] = []
@@ -117,14 +117,14 @@ class DiffBuilderDown:
         if not include_rendering:
             return False
         ending = "┤" if self.curses else "╮"
-        self.output.append(RT(DiffBuilder.vunequal, "b").fold_in(self.width, Symbols.hbar, "├", ending))
+        self.output.append(RT(DiffBuilder.vunequal, "b").center_in(self.width, Symbols.hbar, "├", ending))
         for line in self.db.first_failure_diff(self.unit.get_expected(), self.unit.get_received(), self.first_failure):
             self.output.append((RT("│") + line).ljust(self.width - 1, " ") + "│")
         return True
 
     def end_frame(self, mistatch_inserted: bool):
         end = "╯" if mistatch_inserted else Symbols.hbar
-        self.output.append(RT().fold_in(self.width, Symbols.hbar, "╰", end))
+        self.output.append(RT().center_in(self.width, Symbols.hbar, "╰", end))
 
     def build_diff(self) -> list[RT]:
         if self.__to_insert_header:

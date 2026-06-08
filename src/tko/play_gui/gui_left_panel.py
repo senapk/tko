@@ -58,7 +58,7 @@ class GuiLeftPanel:
         dirname: Path = self.tree.repo.paths.root_dir
         dirname_str = dirname.name.upper()
 
-        text = RT.parse(" <$>-<$> ", dirname_str, self.tree.repo.data.lang.upper())
+        text = RT.parse(" {}-{} ".format(dirname_str, self.tree.repo.data.lang.upper()))
         if self._need_update_fn():
             text = (
                 RT(t(_LeftPanelMsg.OUTDATED), "r")
@@ -75,7 +75,7 @@ class GuiLeftPanel:
 
         
         for y, (sentence, _) in enumerate(sentences):
-            if sentence.len() > dx:
+            if len(sentence) > dx:
                 sentence = sentence.trim_end(dx - 1) + RT("…", "r")
             frame.write(y, 0, sentence)
         

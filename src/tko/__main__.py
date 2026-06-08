@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-import logging
-import os
+from loguru import logger
+from tko.logger.loguru_settings import configure_loguru
+    
 import sys
+import os
 from pathlib import Path
-
 import typer
 from icecream import ic  # type: ignore
 
@@ -37,7 +38,7 @@ if os.name != "nt":
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 app = typer.Typer(name="tko", help=f"tko {__version__}", no_args_is_help=True, context_settings={"help_option_names": ["-h", "--help"]})
-logger = logging.getLogger(__name__)
+
 
 app.add_typer(build_app, name="build")
 app.add_typer(task_app, name="task")
@@ -86,12 +87,17 @@ def main_callback(
     if mono:
         RenderConfig.mode = RenderMode.PLAIN
 
+
+    configure_loguru(sett.get_log_file())
+    
     if debug:
         ic.configureOutput(includeContext=True, outputFunction=print)
         ic.enable()
         ic("Debug mode enabled")
+        logger.level("DEBUG")
     else:
         ic.disable()
+        
 
     ctx.ensure_object(dict)
     ctx.obj = AppContext(

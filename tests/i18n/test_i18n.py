@@ -1,6 +1,5 @@
 from tko.config.app_settings import AppSettings
-from tko.i18n import Msg, MsgRT, normalize_language, set_language, t, tr
-from tko.util.rt import RT
+from tko.i18n import Msg, normalize_language, set_language, t
 
 
 _CLI_COMMON_NO_REPO = Msg(
@@ -33,13 +32,3 @@ class TestI18N:
         settings = AppSettings(ui_language="en")
         restored = AppSettings.from_dict(settings.to_dict())
         assert restored.ui_language == "en"
-
-    def test_translate_rt_pt_and_en(self):
-        msg = MsgRT(pt=RT("Ola", "g"), en=RT("Hello", "y"))
-        set_language("en")
-        assert tr(msg).plain() == "Hello"
-        assert tr(msg).runs[0][0] == "y"
-
-        set_language("pt-BR")
-        assert tr(msg).plain() == "Ola"
-        assert tr(msg).runs[0][0] == "g"

@@ -3,11 +3,9 @@ from types import SimpleNamespace
 from typing import Callable, cast
 
 from _pytest.monkeypatch import MonkeyPatch
-import yaml
 
 import tko.repository.repository_starter as rep_starter_module
 from tko.config.settings import Settings
-from tko.repository.repository_paths import RepositoryPaths
 from tko.repository.repository_starter import RepositoryStarter
 
 

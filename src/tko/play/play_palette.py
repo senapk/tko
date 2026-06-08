@@ -11,19 +11,19 @@ from tko.util.symbols import Symbols
 
 
 class _PaletteMsg:
-    DOWN_TASK            = Msg(pt=" <$> Tarefa: <Baixar tarefa:y> para o repositório",   en=" <$> Task: <Download task:y> to repository")
-    EVALUATE             = Msg(pt=" <$> Tarefa: <Avaliar tarefa:y>",                     en=" <$> Task: <Evaluate task:y>")
-    DELETE               = Msg(pt=" <$> Tarefa: <Excluir tarefa:y>",                     en=" <$> Task: <Delete task:y>")
-    DRAFT                = Msg(pt=" <$> Tarefa: <Criar rascunho:y>",                     en=" <$> Task: <Create draft:y>")
-    IMAGES               = Msg(pt=" <$> Mostrar: <Imagens:y> após passar nos testes",    en=" <$> Show: <Images:y> after passing tests")
-    TIME                 = Msg(pt=" <$> Mostrar: <Tempo:y> gasto nas tarefas",           en=" <$> Show: <Time:y> spent on tasks")
-    VERSIONS             = Msg(pt=" <$> Mostrar: <Ver versões:y> da tarefa",             en=" <$> Show: <Show task versions:y>")
-    LANGUAGE             = Msg(pt=" <$> Config: Mudar <linguagem:y> de programação",     en=" <$> Config: Change <programming language:y>")
-    UI_LANGUAGE          = Msg(pt=" <$> Config: Alternar <idioma:y> da interface PT/EN", en=" <$> Config: <Toggle UI language:y> PT/EN")
-    CALIBRATE            = Msg(pt=" <$> Config: Calibrar <teclas:y> do teclado",         en=" <$> Config: Calibrate <keyboard keys:y>")
-    RELOAD               = Msg(pt=" <$> Config: <Recarregar TKO:y>",                     en=" <$> Config: <Reload TKO:y>")
-    INCREASE_PANEL_SIZE  = Msg(pt=" <$> Mostrar: <Aumentar:y> tamanho do painel",        en=" <$> Show: <Increase:y> panel size")
-    DECREASE_PANEL_SIZE  = Msg(pt=" <$> Mostrar: <Diminuir:y> tamanho do painel",        en=" <$> Show: <Decrease:y> panel size")
+    DOWN_TASK            = Msg(pt=" {symbol} Tarefa: [y]Baixar tarefa[] para o repositório",    en=" {symbol} Task: [y]Download task[] to repository")
+    EVALUATE             = Msg(pt=" {symbol} Tarefa: [y]Avaliar tarefa[]",                      en=" {symbol} Task: [y]Evaluate task[]")
+    DELETE               = Msg(pt=" {symbol} Tarefa: [y]Excluir tarefa[]",                      en=" {symbol} Task: [y]Delete task[]")
+    DRAFT                = Msg(pt=" {symbol} Tarefa: [y]Criar rascunho[]",                      en=" {symbol} Task: [y]Create draft[]")
+    IMAGES               = Msg(pt=" {symbol} Mostrar: [y]Imagens[] após passar nos testes",     en=" {symbol} Show: [y]Images[] after passing tests")
+    TIME                 = Msg(pt=" {symbol} Mostrar: [y]Tempo[] gasto nas tarefas",            en=" {symbol} Show: [y]Time[] spent on tasks")
+    VERSIONS             = Msg(pt=" {symbol} Mostrar: [y]Ver versões[] da tarefa",              en=" {symbol} Show: [y]Show task versions[]")
+    LANGUAGE             = Msg(pt=" {symbol} Config: [y]Mudar <linguagem[] de programação",     en=" {symbol} Config: Change [y]programming language[]")
+    UI_LANGUAGE          = Msg(pt=" {symbol} Config: [y]Alternar <idioma[] da interface PT/EN", en=" {symbol} Config: [y]Toggle UI language[] PT/EN")
+    CALIBRATE            = Msg(pt=" {symbol} Config: [y]Calibrar <teclas[] do teclado",         en=" {symbol} Config: Calibrate [y]keyboard keys[]")
+    RELOAD               = Msg(pt=" {symbol} Config: [y]Recarregar TKO[]",                      en=" {symbol} Config: [y]Reload TKO[]")
+    INCREASE_PANEL_SIZE  = Msg(pt=" {symbol} Mostrar: [y]Aumentar[] tamanho do painel",         en=" {symbol} Show: [y]Increase[] panel size")
+    DECREASE_PANEL_SIZE  = Msg(pt=" {symbol} Mostrar: [y]Diminuir[] tamanho do painel",         en=" {symbol} Show: [y]Decrease[] panel size")
 
 class PlayPalette:
     def __init__(self, actions: PlayActions):
@@ -41,7 +41,7 @@ class PlayPalette:
                 
         options.append(
             FloatingInputData(
-                lambda: RT.parse(t(_PaletteMsg.DOWN_TASK), Symbols.action,),
+                lambda: RT.parse(t(_PaletteMsg.DOWN_TASK).format(Symbols.action)),
                 self.actions.downloader.down_remote_task,
                 GuiKeys.down_task
             ).set_exit_on_action(True)
@@ -50,7 +50,7 @@ class PlayPalette:
         # self evaluate
         options.append(
             FloatingInputData(
-                lambda: RT.parse(t(_PaletteMsg.EVALUATE), Symbols.action,),
+                lambda: RT.parse(t(_PaletteMsg.EVALUATE).format(Symbols.action)),
                 self.actions.evaluator.self_evaluate,
                 GuiKeys.self_evaluate
             ).set_exit_on_action(True)
@@ -58,7 +58,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: RT.parse(t(_PaletteMsg.DELETE), Symbols.action,),
+                lambda: RT.parse(t(_PaletteMsg.DELETE).format(Symbols.action)),
                 self.actions.delete_folder_ask,
                 GuiKeys.delete_folder
             ).set_exit_on_action(True)
@@ -66,7 +66,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: RT.parse(t(_PaletteMsg.DRAFT), Symbols.action,),
+                lambda: RT.parse(t(_PaletteMsg.DRAFT).format(Symbols.action)),
                 self.actions.draft_creator.create_draft,
                 GuiKeys.create_draft
             ).set_exit_on_action(True)
@@ -74,7 +74,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: RT.parse(t(_PaletteMsg.LANGUAGE), Symbols.action,),
+                lambda: RT.parse(t(_PaletteMsg.LANGUAGE).format(Symbols.action)),
                 self.gui.language.set_language,
                 GuiKeys.set_lang_drafts
             ).set_exit_on_action(True)
@@ -82,7 +82,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: RT.parse(t(_PaletteMsg.UI_LANGUAGE), Symbols.action,),
+                lambda: RT.parse(t(_PaletteMsg.UI_LANGUAGE).format(Symbols.action)),
                 self.gui.language.toggle_ui_language,
                 GuiKeys.toggle_ui_language
             ).set_exit_on_action(True)
@@ -90,7 +90,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: RT.parse(t(_PaletteMsg.CALIBRATE), Symbols.action,),
+                lambda: RT.parse(t(_PaletteMsg.CALIBRATE).format(Symbols.action)),
                 lambda: self.fman.add_input(FloatingCalibrate(self.actions.settings)),
                 GuiKeys.calibrate
             ).set_exit_on_action(True)
@@ -100,7 +100,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: RT.parse(t(_PaletteMsg.RELOAD), Symbols.action,),
+                lambda: RT.parse(t(_PaletteMsg.RELOAD).format(Symbols.action)),
                 self.actions.reload,
                 GuiKeys.reload_game
             ).set_exit_on_action(True)
@@ -108,7 +108,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: RT.parse(t(_PaletteMsg.IMAGES), icon(self.app.use_images),),
+                lambda: RT.parse(t(_PaletteMsg.IMAGES).format(Symbols.action, icon(self.app.use_images))),
                 lambda: self.app.toggle(ToggleOption.IMAGES),
                 GuiKeys.images
             )
@@ -116,7 +116,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: RT.parse(t(_PaletteMsg.TIME), icon(self.flags.show_time.is_true()),),
+                lambda: RT.parse(t(_PaletteMsg.TIME).format(Symbols.action, icon(self.flags.show_time.is_true()))),
                 lambda: self.flags.show_time.toggle(),
                 GuiKeys.show_duration
             )
@@ -124,7 +124,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: RT.parse(t(_PaletteMsg.VERSIONS), Symbols.action,),
+                lambda: RT.parse(t(_PaletteMsg.VERSIONS).format(symbol=Symbols.action)),
                 self.actions.editor.open_versions,
                 GuiKeys.unfold_patch
             ).set_exit_on_action(True)
@@ -132,7 +132,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: RT.parse(t(_PaletteMsg.INCREASE_PANEL_SIZE), Symbols.action,),
+                lambda: RT.parse(t(_PaletteMsg.INCREASE_PANEL_SIZE).format(symbol=Symbols.action)),
                 lambda: self.actions.resize_panels(10),
                 GuiKeys.panel_resize_inc
             )
@@ -140,7 +140,7 @@ class PlayPalette:
 
         options.append(
             FloatingInputData(
-                lambda: RT.parse(t(_PaletteMsg.DECREASE_PANEL_SIZE), Symbols.action,),
+                lambda: RT.parse(t(_PaletteMsg.DECREASE_PANEL_SIZE).format(symbol=Symbols.action)),
                 lambda: self.actions.resize_panels(-10),
                 GuiKeys.panel_resize_dec
             )

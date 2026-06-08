@@ -218,7 +218,7 @@ class Play:
 
             
     def play(self):
-        LanguageSetter.check_lang_in_text_mode(self.settings, self.repo)
+        LanguageSetter.check_prog_lang_in_text_mode(self.settings, self.repo)
 
         while True:
             output = curses.wrapper(self.main)

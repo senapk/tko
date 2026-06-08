@@ -1,14 +1,43 @@
-from tko.collect.collect_actions import CMD_COLLECT_ERROR, CMD_COLLECT_JSON_PARSE_FAILED, CMD_COLLECT_MULTIPLE_REPOS_FOUND, CMD_COLLECT_RUNNING_IN, CMD_COLLECT_SAVING_EXTRACTED_DATA, CMD_COLLECT_TKO_REPO_NOT_FOUND, logger
 from tko.collect.collect_single import CollectSingle
 from tko.i18n import t
 from tko.repository.repository_paths import RepositoryPaths
 from tko.util.rt import RT
-
+from loguru import logger
+from tko.i18n import Msg
 
 import csv
 import json
 from pathlib import Path
 from typing import Any
+
+CMD_COLLECT_REPO_NOT_FOUND = Msg(
+    pt="Repositório não encontrado em {path}",
+    en="Repository not found in {path}",
+)
+CMD_COLLECT_TKO_REPO_NOT_FOUND = Msg(
+    pt="Repositório TKO não encontrado em {path}",
+    en="TKO repo not found in {path}",
+)
+CMD_COLLECT_MULTIPLE_REPOS_FOUND = Msg(
+    pt=" - Múltiplos repositórios TKO encontrados, usando o primeiro.",
+    en=" - Multiple TKO repos found, using the first one.",
+)
+CMD_COLLECT_RUNNING_IN = Msg(
+    pt="Executando tko collect em {folder}",
+    en="Running tko collect in {folder}",
+)
+CMD_COLLECT_JSON_PARSE_FAILED = Msg(
+    pt="Erro: Falha ao analisar saída JSON para {username}",
+    en="Error: Failed to parse JSON output for {username}",
+)
+CMD_COLLECT_ERROR = Msg(
+    pt="Erro: {error}",
+    en="Error: {error}",
+)
+CMD_COLLECT_SAVING_EXTRACTED_DATA = Msg(
+    pt="Salvando dados extraídos em {path}",
+    en="Saving extracted data to {path}",
+)
 
 
 class CollectMany:

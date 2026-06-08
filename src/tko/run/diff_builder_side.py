@@ -83,8 +83,8 @@ class DiffBuilderSide:
         return self
 
     def _insert_header(self):
-        self.output.append(RT().fold_in(self.width, Symbols.hbar, "╭", "╮"))
-        self.output.append(self.unit.str().fold_in(self.width, " ", "│", "│"))
+        self.output.append(RT().center_in(self.width, Symbols.hbar, "╭", "╮"))
+        self.output.append(self.unit.str().center_in(self.width, " ", "│", "│"))
 
     def _insert_input(self):
         # input header
@@ -94,7 +94,7 @@ class DiffBuilderSide:
         if self.__to_insert_header:
             self.output.append(self.title_side_by_side(input_headera, input_headerb, Symbols.hbar, "┬", "├", "┤"))
         else:
-            self.output.append(RT(DiffBuilder.vinput, input_color).fold_in(self.width, Symbols.hbar, "╭", "╮"))
+            self.output.append(RT(DiffBuilder.vinput, input_color).center_in(self.width, Symbols.hbar, "╭", "╮"))
 
         # input lines
         if self.unit.input != "":
@@ -122,16 +122,16 @@ class DiffBuilderSide:
     def _insert_first_line_diff(self):
         if self.unit.get_expected() == self.unit.get_received() or self.unit.get_expected() == "":
             return
-        self.output.append(RT(DiffBuilder.vunequal, "b").fold_in(self.width, Symbols.hbar, "├", "┤"))
+        self.output.append(RT(DiffBuilder.vunequal, "b").center_in(self.width, Symbols.hbar, "├", "┤"))
         for line in self.db.first_failure_diff(self.unit.get_expected(), self.unit.get_received(), self.first_failure):
             width = self.width - 1
             self.output.append((RT("│") + line).ljust(width, " ") + "│")
         
     def _finish(self):
         if self.unit.get_expected() == self.unit.get_received() or self.unit.get_expected() == "":
-            self.output.append(RT("┴").fold_in(self.width, Symbols.hbar, "╰", "╯"))
+            self.output.append(RT("┴").center_in(self.width, Symbols.hbar, "╰", "╯"))
         else:
-            self.output.append(RT().fold_in(self.width, Symbols.hbar, "╰", "╯"))
+            self.output.append(RT().center_in(self.width, Symbols.hbar, "╰", "╯"))
 
     def build_diff(self) -> list[RT]:
         self.output = []

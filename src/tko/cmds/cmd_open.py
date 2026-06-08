@@ -2,21 +2,27 @@ from tko.play_tree.task_tree import TaskTree
 from tko.config.settings import Settings
 from tko.repository.repository import Repository
 from tko.play.play import Play
-from tko.util.rt import RT
 from pathlib import Path
 from tko.repository.git_cache import UpdateMode
 from tko.play_tree.task_formatter import TaskFormatter
 from tko.game.task import Task
-from tko.i18n import Msg, t
+from tko.i18n import Msg 
+# from tko.i18n import t
+# from tko.util.rt import RT
+# from tko.util.console import Console
 
 
 _OPEN_INVALID_REPO = Msg(
-    pt="<Erro:r>: O comando <tko open:g> deve ser executado na pasta onde o repositório foi iniciado.",
-    en="<Error:r>: The <tko open:g> command must run in the folder where the repository was initialized.",
+    pt="[r]Erro[]: O comando [g]tko open[] deve ser executado na pasta onde o repositório foi iniciado.",
+    en="[r]Error[]: The [g]tko open[] command must run in the folder where the repository was initialized.",
 )
 _OPEN_ACTION_HINT = Msg(
-    pt="<Ação:g>: Navegue ou passe o caminho até a pasta do repositório e tente novamente.",
-    en="<Action:g>: Navigate to that folder or pass its path and try again.",
+    pt="[g]Ação[]: Navegue ou passe o caminho até a pasta do repositório e tente novamente.",
+    en="[g]Action[]: Navigate to that folder or pass its path and try again.",
+)
+_NOT_FOUND_HINT = Msg(
+    pt="[r]Erro:[] [y]{repo_dir}[] não contém um repositório do tko",
+    en="[r]Error:[] [y]{repo_dir}[] does not contain a tko repository",
 )
 
 class CmdOpen:
@@ -30,18 +36,18 @@ class CmdOpen:
     def display_need_update(self):
         self.need_update = True
 
-    def load_folder(self, repo_dir: Path):
-        self.repo_dir = repo_dir
-        self.repo = Repository(repo_dir, self.update_mode)
-        if not self.repo.paths.config_file.exists():
-            print(RT.parse(t(_OPEN_INVALID_REPO)))
-            print(RT.parse(t(_OPEN_ACTION_HINT)))
-            raise Warning(RT.parse("<$:r> <$:y> não contém um repositório do tko", "Erro:", repo_dir))
-        from tko.repository.repository_config import RepositoryConfig
-        from tko.repository.game_coordinator import GameCoordinator
-        RepositoryConfig(self.repo).load()
-        GameCoordinator(self.repo).load_game(verbose=True)
-        return self
+    # def load_folder(self, repo_dir: Path):
+    #     self.repo_dir = repo_dir
+    #     self.repo = Repository(repo_dir, self.update_mode)
+    #     if not self.repo.paths.config_file.exists():
+    #         Console.print(_OPEN_INVALID_REPO)
+    #         Console.print(_OPEN_ACTION_HINT)
+    #         raise RuntimeError(Console.format(_NOT_FOUND_HINT, repo_dir=repo_dir))
+    #     from tko.repository.repository_config import RepositoryConfig
+    #     from tko.repository.game_coordinator import GameCoordinator
+    #     RepositoryConfig(self.repo).load()
+    #     GameCoordinator(self.repo).load_game(verbose=True)
+    #     return self
 
     def execute(self):
         play = Play(self.settings, self.repo)

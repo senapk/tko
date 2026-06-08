@@ -13,7 +13,7 @@ class UnitRunner:
     def run_unit(solver: SolverBuilder, unit: Unit, timeout: None | float = None) -> ExecutionResult:
         executable, _ = solver.get_executable()
         if solver.has_compile_error():
-            unit.set_received(executable.get_error_msg().get_str())
+            unit.set_received(executable.get_error_msg().plain())
             return ExecutionResult.COMPILATION_ERROR
         cmd, folder = executable.get_command()
         if timeout == 0:

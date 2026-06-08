@@ -52,7 +52,7 @@ class TesterRenderer:
         for i, line in enumerate(lines):
             info = RT(line, color).center(dx - 2, " ")
             if clear:
-                Fmt.write(i + init_y, 1, RT(" " * info.len()))
+                Fmt.write(i + init_y, 1, RT(" " * len(info)))
             else:
                 Fmt.write(i + init_y, 1, info)
 
@@ -120,7 +120,7 @@ class TesterRenderer:
 
         if self.wdir.get_solver().has_compile_error():
             executable, _ = self.wdir.get_solver().get_executable()
-            received = executable.get_error_msg().get_str()
+            received = executable.get_error_msg().plain()
             line_list = [RT(line) for line in received.splitlines()]
         elif self.settings.app.diff_mode == DiffMode.DOWN or not self.wdir.has_tests:
             line_list = DiffBuilderDown(cols, unit).build_diff()

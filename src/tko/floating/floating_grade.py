@@ -1,7 +1,8 @@
 from __future__ import annotations
 from tko.floating.floating import FloatingABC, Floating
 from tko.game.task import Task
-from tko.util.rt import RT, RBuffer
+from tko.util.rbuffer import RBuffer
+from tko.util.rt import RT
 from tko.util.symbols import Symbols
 from tko.i18n import Msg, t
 

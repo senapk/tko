@@ -1,11 +1,11 @@
-import logging
+from loguru import logger
 
 from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.i18n import Msg, t
 
 
-logger = logging.getLogger(__name__)
+
 
 _GAME_VALIDATOR_DUPLICATE_KEY = Msg(
     pt="Chave repetida: {task_key}",

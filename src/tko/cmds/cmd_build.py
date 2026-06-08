@@ -1,4 +1,4 @@
-import logging
+from loguru import logger
 from pathlib import Path
 
 from tko.util.param import Param
@@ -8,7 +8,7 @@ from tko.config.settings import Settings
 from tko.i18n import Msg, t
 
 
-logger = logging.getLogger(__name__)
+
 
 _CMD_BUILD_EXECUTE_FAILED = Msg(
     pt="Falha ao executar o build para {target}",

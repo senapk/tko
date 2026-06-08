@@ -6,69 +6,59 @@ from tko.repository.repository_config import RepositoryConfig
 from tko.util.rt import RT
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
-from tko.i18n import Msg, set_language as set_ui_language, t
-
+from tko.i18n import Msg, set_language as set_ui_language, SUPPORTED_LANGUAGES, t
+from tko.util.console import Console
 
 class _LangSetterMsg:
-    DEFAULT_NOT_SET = Msg(pt="Linguagem padrão ainda não foi definida.", en="Default language has not been set yet.")
-    OPTIONS_PREFIX = Msg(pt="[", en="[")
-    OPTIONS_SUFFIX = Msg(pt="]", en="]")
-    PROMPT = Msg(pt="Escolha entre as opções a seguir", en="Choose from the following options")
     UI_LANGUAGE_CHANGED = Msg(pt="Idioma da interface alterado para {language}", en="Interface language changed to {language}")
     LANGUAGE_CHANGED = Msg(pt="Linguagem alterada para {language}", en="Language changed to {language}")
-
+    LANG_CHOOSE = Msg(pt="Escolha a extensão default para os rascunhos", en="Choose the default extension for drafts")
+    RESET_TKO = Msg(pt="Reinicie o tko para aplicar as mudanças", 
+                    en="Restart tko to apply changes")
+    PROMPT = Msg(pt="Escolha entre as opções a seguir [[[y]{options}[]]]: ", 
+                 en="Choose from the following options [[[y]{options}[]]]: ")
+    UI_NOT_SET = Msg(pt="[g]Idioma[] padrão da UI ainda não foi definida.", 
+                     en="Default [g]UI language[] has not been set yet.")
+    PROG_LANGUAGE_NOT_SET = Msg(pt="[g]Linguagem de programação[] padrão ainda não foi definida.", 
+                                en="Default [g]programming language[] has not been set yet.")
 
 class LanguageSetter:
-
-    # @staticmethod
-    # def check_lang_in_text_mode(settings: Settings, repo: Repository) -> None:
-    #     lang: str = repo.data.lang
-    #     lang_drafts: dict[str, str] = (
-    #         settings.get_languages_settings().get_languages_with_drafts()
-    #     )
-
-    #     if lang == "" or lang not in lang_drafts:
-    #         options: list[str] = sorted(lang_drafts.keys())
-
-    #         completer = WordCompleter(
-    #             options,
-    #             ignore_case=True,
-    #         )
-
-    #         print(f"\n{t(_LangSetterMsg.DEFAULT_NOT_SET)}\n")
-
-    #         while True:
-    #             lang = prompt(
-    #                 f"{t(_LangSetterMsg.PROMPT)} "
-    #                 f"{t(_LangSetterMsg.OPTIONS_PREFIX)}"
-    #                 f"{', '.join(options)}"
-    #                 f"{t(_LangSetterMsg.OPTIONS_SUFFIX)}: ",
-    #                 completer=completer,
-    #                 complete_while_typing=True,
-    #             )
-
-    #             if lang in options:
-    #                 break
-
-    #         repo.data.lang = lang
-    #         RepositoryConfig(repo).save()
-
     @staticmethod
-    def check_lang_in_text_mode(settings: Settings, repo: Repository, selected: str | None = None) -> str:
+    def check_prog_lang_in_text_mode(settings: Settings, repo: Repository, selected: str | None = None) -> str:
         lang = repo.data.lang if selected is None else selected
         lang_drafts: dict[str, str] = settings.get_languages_settings().get_languages_with_drafts()
+        changed = False
         if lang == "" or lang not in lang_drafts:
             options = sorted(lang_drafts.keys())
-            print(f"\n{t(_LangSetterMsg.DEFAULT_NOT_SET)}\n")
+            Console.print(_LangSetterMsg.PROG_LANGUAGE_NOT_SET)
             while True:
-                print(t(_LangSetterMsg.PROMPT) + " ", end="")
-                print(t(_LangSetterMsg.OPTIONS_PREFIX) + ", ".join(options) + t(_LangSetterMsg.OPTIONS_SUFFIX), end="", flush=True)
-                print(":", end=" ")
+                Console.print(_LangSetterMsg.PROMPT, options=", ".join(options), flush=True, end="")
                 lang = input()
                 if lang in options:
+                    changed = True
                     break
-        RepositoryConfig(repo).save()
-        repo.data.lang = lang
+        if changed:
+            RepositoryConfig(repo).save()
+            repo.data.lang = lang
+        return lang
+    
+    @staticmethod
+    def check_ui_lang_in_text_mode(settings: Settings, selected: str | None = None) -> str:
+        lang_options: list[str] = list(SUPPORTED_LANGUAGES)
+        lang = settings.app.ui_language if selected is None else selected
+        changed = False
+        if lang == "" or lang not in lang_options:
+            options = sorted(lang_options)
+            Console.print(_LangSetterMsg.UI_NOT_SET)
+            while True:
+                Console.print(_LangSetterMsg.PROMPT, options=", ".join(options), flush=True, end="")
+                lang = input()
+                if lang in options:
+                    changed = True
+                    break
+        if changed:
+            settings.app.ui_language = lang
+            settings.save_settings()
         return lang
             
     def __init__(self, settings: Settings, repo: Repository, fman: FloatingManager):
@@ -87,8 +77,8 @@ class LanguageSetter:
             FloatingDropDown().set_floating(
                 Floating()
                 .top()
-                .set_header(" Escolha a extensão default para os rascunhos ")
-                .set_footer(" Escolha e reinicie o tko para aplicar!!!!! ")
+                .set_header(t(_LangSetterMsg.LANG_CHOOSE))
+                .set_footer(t(_LangSetterMsg.RESET_TKO))
                 .set_text_ljust()
             )
             .set_options(options)

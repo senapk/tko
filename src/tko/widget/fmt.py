@@ -156,7 +156,7 @@ class Fmt:
             x = text_pos.x
             line = text_pos.text
             for style, text in line.runs:
-                output.append(TokenPosition(y, x, style, text))
+                output.append(TokenPosition(y, x, style.to_tag(), text))
                 x += len(text)
         return output
 

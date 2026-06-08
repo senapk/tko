@@ -1,5 +1,5 @@
 from __future__ import annotations
-import logging
+from loguru import logger
 import curses
 from typing import Callable
 
@@ -26,7 +26,7 @@ from tko.run.wdir import Wdir
 from tko.i18n import Msg, t
 
 
-logger = logging.getLogger(__name__)
+
 
 _TESTER_COMPILE_ERROR_DURING_RUN = Msg(
     pt="CompileError durante execução do tester",

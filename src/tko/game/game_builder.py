@@ -1,5 +1,5 @@
 from pathlib import Path
-import logging
+from loguru import logger
 
 from tko.game.quest_parser import QuestParser
 from tko.game.task_parser import TaskParser
@@ -12,7 +12,7 @@ from tko.i18n import Msg, t
 from icecream import ic  # type: ignore
 
 
-logger = logging.getLogger(__name__)
+
 
 _GAME_BUILDER_README_FETCH_ERROR = Msg(
     pt="Erro ao obter o arquivo README da fonte {name}",

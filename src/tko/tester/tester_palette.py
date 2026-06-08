@@ -6,68 +6,23 @@ from tko.play.keys import GuiKeys
 from tko.tester.tester_navigator import TesterNavigator
 from tko.tester.tester_state import TesterState
 from tko.tester import tester_util
-from tko.i18n import MsgRT, tr
+from tko.i18n import Msg, t
 from tko.util.rt import RT
 from tko.util.symbols import Symbols
 
 
-class _PaletteMsg:
-    MAIN_FILE = MsgRT(pt=RT("principal", "y"), en=RT("main", "y"))
-    DIFF = MsgRT(pt=RT("Diff", "y"), en=RT("Diff", "y"))
-    LIMIT = MsgRT(pt=RT("Limite", "y"), en=RT("Limit", "y"))
-    ALL = MsgRT(pt=RT("Todos", "y"), en=RT("All", "y"))
-    IMAGES_LABEL = MsgRT(pt=RT("Imagens", "y"), en=RT("Images", "y"))
-    EVALUATE_LABEL = MsgRT(pt=RT("Avaliar", "y"), en=RT("Evaluate", "y"))
-    HEADER = MsgRT(
-        pt=RT(" Selecione uma ação da lista "),
-        en=RT(" Select an action from the list "),
-    )
-    FOOTER = MsgRT(
-        pt=RT(" Use Enter para aplicar e Esc para Sair "),
-        en=RT(" Use Enter to apply and Esc to exit "),
-    )
-    @staticmethod
-    def change_main(action: str) -> MsgRT:
-        return MsgRT(
-            pt=RT.parse(" <$> Mudar arquivo <$> de execução", action, _PaletteMsg.MAIN_FILE.pt),
-            en=RT.parse(" <$> Change <$> execution file", action, _PaletteMsg.MAIN_FILE.en),
-        )
 
-    @staticmethod
-    def diff_mode(symbol: str) -> MsgRT:
-        return MsgRT(
-            pt=RT.parse(" <$> Mudar modo <$>", symbol, _PaletteMsg.DIFF.pt),
-            en=RT.parse(" <$> Change mode <$>", symbol, _PaletteMsg.DIFF.en),
-        )
-
-    @staticmethod
-    def time_limit(action: str, value: RT) -> MsgRT:
-        return MsgRT(
-            pt=RT.parse(" <$> Mudar <$> de tempo de execução: <$>", action, _PaletteMsg.LIMIT.pt, value),
-            en=RT.parse(" <$> Change <$> execution time limit: <$>", action, _PaletteMsg.LIMIT.en, value),
-        )
-
-    @staticmethod
-    def test_scope(icon_value: str) -> MsgRT:
-        return MsgRT(
-            pt=RT.parse(" <$> Testar <$:y> os casos ou apenas o selecionado", icon_value, _PaletteMsg.ALL.pt),
-            en=RT.parse(" <$> Test <$:y> all cases or only the selected one", icon_value, _PaletteMsg.ALL.en),
-        )
-
-    @staticmethod
-    def images(icon_value: str) -> MsgRT:
-        return MsgRT(
-            pt=RT.parse(" <$> Mostrar <$:y>", icon_value, _PaletteMsg.IMAGES_LABEL.pt),
-            en=RT.parse(" <$> Show <$:y>", icon_value, _PaletteMsg.IMAGES_LABEL.en),
-        )
-
-    @staticmethod
-    def self_evaluate(action: str) -> MsgRT:
-        return MsgRT(
-            pt=RT.parse(" <$> Tarefa: Auto <$> método de estudo", action, _PaletteMsg.EVALUATE_LABEL.pt),
-            en=RT.parse(" <$> Task: Self-<$> study method", action, _PaletteMsg.EVALUATE_LABEL.en),
-        )
-
+_ALL = Msg(pt="[y]Todos[]", en="[y]All[]")
+_IMAGES_LABEL = Msg(pt="[y]Imagens[]", en="[y]Images[]")
+_EVALUATE_LABEL = Msg(pt="[y]Avaliar[]", en="[y]Evaluate[]")
+_HEADER = Msg( pt=" Selecione uma ação da lista ", en=" Select an action from the list ")
+_FOOTER = Msg( pt=" Use Enter para aplicar e Esc para Sair ", en=" Use Enter to apply and Esc to exit " )
+_CHANGE_MAIN = Msg( pt=" {icon} Mudar arquivo [y]principal[]", en=" {icon} Change [y]main[] execution file" )
+_DIFF_MODE = Msg( pt=" {icon} Mudar modo [y]Diff[]", en=" {icon} Change mode [y]Diff[]" )
+_LIMIT = Msg( pt=" {icon} Mudar limite de tempo de execução para [y]{valor}[]", en=" {icon} Change execution time limit to [y]{valor}[]" )
+_TEST_SCOPE = Msg( pt=" {icon} Testar casos ou apenas o selecionado", en=" {icon} Test all cases or only the selected one" )
+_SHOW_IMAGES = Msg( pt=" {icon} Mostrar imagens após passar nos testes", en=" {icon} Show images after passing tests" )
+_EVALUATE = Msg( pt=" {icon} Auto [y]avaliar[] método de estudo", en=" {icon} Self [y]evaluate[] study method" )
 
 class TesterPalette:
 
@@ -82,52 +37,49 @@ class TesterPalette:
         self.navigator = navigator
 
     def open(self, state: TesterState) -> None:
-        def icon(value: bool) -> str:
+        def mark(value: bool) -> str:
             return "✓" if value else "✗"
 
-        options: list[FloatingInputData] = [
-            FloatingInputData(
-                lambda: tr(_PaletteMsg.change_main(Symbols.action)),
+        options: list[FloatingInputData] = []
+        options.append(FloatingInputData(
+                lambda: RT.parse(t(_CHANGE_MAIN).format(icon=Symbols.action)),
                 lambda: self.navigator.change_main(state),
                 "TAB",
-            ),
-            FloatingInputData(
-                lambda: tr(_PaletteMsg.diff_mode(tester_util.get_diff_symbol(self.app.diff_mode))),
+            ))
+        options.append(FloatingInputData(
+                lambda: RT.parse(t(_DIFF_MODE).format(icon=tester_util.get_diff_symbol(self.app.diff_mode))),
                 self.app.toggle_diff,
                 GuiKeys.diff,
-            ),
-            FloatingInputData(
-                lambda: tr(_PaletteMsg.time_limit(
-                    Symbols.action,
-                    RT.run("r", tester_util.get_time_limit_symbol(self.app.timeout)),
-                )),
+            ))
+        options.append(FloatingInputData(
+                lambda: RT.parse(t(_LIMIT).format(icon=Symbols.action, valor=tester_util.get_time_limit_symbol(self.app.timeout))),
                 lambda: self.navigator.change_limit(state),
                 GuiKeys.limite,
-            ),
-            FloatingInputData(
-                lambda: tr(_PaletteMsg.test_scope(icon(not state.locked_index))),
+            ))
+        options.append(FloatingInputData(
+                lambda: RT.parse(t(_TEST_SCOPE).format(icon=mark(not state.locked_index))),
                 lambda: self.navigator.lock_unit(state),
                 GuiKeys.lock,
-            ),
-            FloatingInputData(
-                lambda: tr(_PaletteMsg.images(icon(self.app.use_images))),
+            ))
+        options.append(FloatingInputData(
+                lambda: RT.parse(t(_IMAGES_LABEL).format(icon=mark(self.app.use_images))),
                 lambda: self.app.toggle(ToggleOption.IMAGES),
                 GuiKeys.images,
-            ),
-            FloatingInputData(
-                lambda: tr(_PaletteMsg.self_evaluate(Symbols.action)),
+            ))
+        options.append(FloatingInputData(
+                lambda: RT.parse(t(_EVALUATE).format(icon=Symbols.action)),
                 lambda: self.navigator.self_evaluate(state),
                 GuiKeys.self_evaluate,
-            ).set_exit_on_action(True),
-        ]
+            ).set_exit_on_action(True)
+            )
 
         self.fman.add_input(
             FloatingDropDown()
             .set_floating(
                 Floating()
                 .set_text_ljust()
-                .set_header_text(tr(_PaletteMsg.HEADER))
-                .set_footer_text(tr(_PaletteMsg.FOOTER))
+                .set_header_text(RT.parse(t(_HEADER)))
+                .set_footer_text(RT.parse(t(_FOOTER)))
             )
             .set_options(options)
             .set_exit_on_enter(False)

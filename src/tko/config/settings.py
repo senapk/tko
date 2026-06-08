@@ -47,6 +47,8 @@ class Settings:
     CFG_FILE = "settings.yaml"
     LANG_FILE = "programming-languages.toml"
     LANG_FILE_SAMPLE = "programming-languages-sample.toml"
+    LOG_FILE = "tko.log"
+    
     class Defaults:
         alias_git = {
             "poo": "https://github.com/qxcodepoo/arcade.git",
@@ -84,6 +86,8 @@ class Settings:
     def get_languages_sample(self) -> Path:
         return self.get_settings_dir() / self.LANG_FILE_SAMPLE
 
+    def get_log_file(self) -> Path:
+        return self.get_settings_dir() / self.LOG_FILE
 
     def get_settings_dir(self) -> Path:
         if self.settings_dir is None:

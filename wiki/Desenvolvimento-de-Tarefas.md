@@ -114,7 +114,7 @@ Casos minimos para parser:
 
 ## Convenções
 
-- Preferir `logging` em vez de `print`.
+- Preferir `loguru` em vez de `print` para erros
 - Usar `Path` para caminhos.
 - Manter comportamento backward-compatible da sintaxe de tarefa.
 - Evitar efeitos colaterais no parser (apenas interpretar e preencher `Task`).

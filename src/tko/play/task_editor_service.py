@@ -1,4 +1,4 @@
-import logging
+from loguru import logger
 import os
 import subprocess
 import tempfile
@@ -31,7 +31,7 @@ class _TaskEditorMsg:
 
 
 class TaskEditorService:
-    logger = logging.getLogger(__name__)
+    
 
     def __init__(self, repo: Repository, settings: Settings, fman: FloatingManager, tree: TaskTree):
         self.repo = repo
@@ -78,8 +78,8 @@ class TaskEditorService:
             task: Task = obj
             url = task.resource.external_url
             target = task.path.origin_target
-            self.logger.info(t(_TaskEditorMsg.OPENING_LINK_LOG, task_key=task.basic.key, url=url))
-            self.logger.info(t(_TaskEditorMsg.TARGET_LOG, target=target))
+            logger.info(t(_TaskEditorMsg.OPENING_LINK_LOG, task_key=task.basic.key, url=url))
+            logger.info(t(_TaskEditorMsg.TARGET_LOG, target=target))
             if url is not None:
                 try:
                     self._open_link_without_stdout_stderr(url)

@@ -1,4 +1,4 @@
-import logging
+from loguru import logger
 import os
 
 from tko.util.pattern_loader import PatternLoader
@@ -9,7 +9,7 @@ from tko.i18n import Msg, t
 from pathlib import Path
 
 
-logger = logging.getLogger(__name__)
+
 
 _WRITER_NO_CHANGES_TEST_FILE = Msg(
     pt="no changes in test file",

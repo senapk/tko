@@ -1,9 +1,9 @@
 from pathlib import Path
 from tko.i18n import Msg, t
-import logging
+from loguru import logger
 import re
 
-logger = logging.getLogger(__name__)
+
 
 _INDEXER_REPLACE_TITLE_README_MISSING = Msg(
     pt="Error: README file '{readme}' does not exist, cannot replace title.",

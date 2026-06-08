@@ -1,11 +1,11 @@
-import logging
+from loguru import logger
 
 from tko.game.quest_matcher import QuestMatcher
 from tko.game.quest import Quest
 from tko.util.get_md_link import get_md_link
 from pathlib import Path
 
-logger = logging.getLogger(__name__)
+
 
 class QuestParser:
     def __init__(self, source_alias: str):

@@ -1,4 +1,5 @@
-from tko.util.rt import RT, RBuffer
+from tko.util.rbuffer import RBuffer
+from tko.util.rt import RT
 
 class BarBuilder:
     def __init__(self) -> None:

@@ -1,7 +1,3 @@
-import logging
-
-logger = logging.getLogger(__name__)
-
 
 class LanguageSetup:
     def __init__(self, build_cmd: list[str], run_cmd: list[str], draft: str):

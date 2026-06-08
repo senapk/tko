@@ -4,9 +4,6 @@ from tko.i18n import  Msg
 from tko.game.task_matcher import TaskMatcher
 from tko.run.wdir import Wdir
 from tko.config.settings import Settings
-import logging
-
-logger = logging.getLogger(__name__)
 
 _INDEXER_INVALID_LABEL = Msg(
     pt="Rótulo inválido na linha: {label}",

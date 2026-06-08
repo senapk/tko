@@ -1,4 +1,4 @@
-import logging
+from loguru import logger
 import os
 from pathlib import Path
 
@@ -8,7 +8,7 @@ from tko.util.pattern_loader import PatternLoader
 from tko.i18n import Msg, t
 
 
-logger = logging.getLogger(__name__)
+
 
 _LOADER_FAILED_TO_LOAD = Msg(
     pt="fail: falha ao carregar {folder}",

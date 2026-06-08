@@ -178,7 +178,7 @@ class Frame:
                 if x_abs + len(text) >= x_max:
                     cut_point = x_max - x_abs + 1
                     text = text[:cut_point]
-                Fmt.stroke(y_abs, x_abs, fmt, text)
+                Fmt.stroke(y_abs, x_abs, fmt.to_tag(), text)
                 count += 1
             x_abs += len(text)
         return count != 0
@@ -225,7 +225,7 @@ class Frame:
         above = RT(up_left, color) + header + RT(up_right, color)
         below = RT(down_left, color) + footer + RT(down_right, color)
 
-        if header.len() and self._border != "none":
+        if len(header) and self._border != "none":
             Fmt.write(y, x, above)
         if dy >= 0:
             Fmt.write(y + dy + 1, x, below)

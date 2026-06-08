@@ -23,19 +23,6 @@ class GuiSkillsBar:
         self.target_cut = 3
         self.available_cut = 3
 
-    def build_list_sentence(self, items: list[RT]) -> list[RT]:
-        out: list[RT] = []
-        for x in items:
-            color_ini = x[0].runs[0][0] if x[0].runs else ""
-            color_end = x[-1].runs[0][0] if x[-1].runs else ""
-            left = RT(" ", color_ini)
-            right = RT(" ", color_end)
-            middle = x
-            if x.plain().startswith("!"):
-                middle = x.slice(1)
-            out.append(left + middle + right)
-        return out
-
     def get_remote(self):
         try:
             return self.remote()

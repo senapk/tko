@@ -3,7 +3,7 @@
 
 import re
 import enum
-import logging
+from loguru import logger
 from tko.feno.filter import Filter
 from tko.i18n import Msg, t
 from tko.util.decoder import Decoder
@@ -11,7 +11,7 @@ from pathlib import Path
 from dataclasses import dataclass
 from tko.loader.unit_data import UnitData
 
-logger = logging.getLogger(__name__)
+
 
 _MDPP_MISSING_EXTRACT_VALUE = Msg(
     pt="missing value for --extract",

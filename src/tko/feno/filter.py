@@ -1,4 +1,4 @@
-import logging
+from loguru import logger
 from pathlib import Path
 import shutil
 from tko.i18n import Msg, t
@@ -7,15 +7,15 @@ from tko.util.decoder import Decoder
 from typing import Any
 
 
-logger = logging.getLogger(__name__)
+
 
 _FILTER_ACTION_DISABLED_PATH = Msg(
     pt="action: disabled, path: {path}",
     en="action: disabled, path: {path}",
 )
 _FILTER_ACTION_PATH = Msg(
-    pt="action: {action}, path: {path}",
-    en="action: {action}, path: {path}",
+    pt="action: [g]{action}[], path: {path}",
+    en="action: [g]{action}[], path: {path}",
 )
 _FILTER_FILE_NOT_FOUND = Msg(
     pt="Aviso: Arquivo {path} não encontrado",
@@ -263,7 +263,7 @@ class DeepFilter:
         #     return
         for path, action in actions:
             if (run_actions or path.suffix[1:] in DeepFilter.include) and action.name in [Action.FILTERED, Action.COMCLEAN, Action.ORIGINAL] :
-                print(RT.parse(t(_FILTER_ACTION_PATH, action=f"<{action.name}:g>", path=path.resolve())))
+                print(RT.parse(t(_FILTER_ACTION_PATH, action=action.name, path=path.resolve())))
                 path.parent.mkdir(parents=True, exist_ok=True)
                 with open(path, "w") as f:
                     f.write(action.content) 

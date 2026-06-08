@@ -1,4 +1,4 @@
-import logging
+from loguru import logger
 import re
 from pathlib import Path
 
@@ -14,7 +14,7 @@ from tko.i18n import Msg, t
 # from typing import override
 
 
-logger = logging.getLogger(__name__)
+
 
 _GAME_TASK_NOT_FOUND_IN_COURSE = Msg(
     pt="fail: tarefa '{task_key}' não encontrada no curso",

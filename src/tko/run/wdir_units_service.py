@@ -1,4 +1,4 @@
-import logging
+from loguru import logger
 import math
 from pathlib import Path
 
@@ -7,7 +7,7 @@ from tko.i18n import Msg, t
 from tko.run.unit import Unit
 
 
-logger = logging.getLogger(__name__)
+
 
 _RUN_PACK_LOAD_FAILED = Msg(
     pt="Falha ao carregar pacote de unidades em {source}",

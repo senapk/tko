@@ -1,5 +1,4 @@
 from __future__ import annotations
-import logging
 from tko.game.task import Task
 from tko.game.task_enums import TaskType
 from tko.game.task_matcher import TaskMatcher
@@ -9,7 +8,7 @@ from icecream import ic # type: ignore
 from pathlib import Path
 
 
-logger = logging.getLogger(__name__)
+
 
 _TASK_PARSER_VIEW_EXTERNAL_URL = Msg(
     pt="Parseando tarefa de leitura com URL externa: {url}",

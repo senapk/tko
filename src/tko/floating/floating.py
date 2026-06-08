@@ -130,9 +130,9 @@ class Floating(FloatingABC):
         return self.enable
 
     def calc_dy_dx(self):
-        header_len = self.frame.get_header().len()
-        footer_len = self.frame.get_footer().len()
-        data = [x.len() for x in self.content] + [header_len, footer_len]
+        header_len = len(self.frame.get_header())
+        footer_len = len(self.frame.get_footer())
+        data = [len(x) for x in self.content] + [header_len, footer_len]
         max_dx = max(data)
         dx = max_dx
         dy = len(self.content)
@@ -160,13 +160,13 @@ class Floating(FloatingABC):
         return self
 
     def set_default_footer(self):
-        if self.frame.get_footer().len() == 0:
+        if len(self.frame.get_footer()) == 0:
             label = RT(" Pressione espaço ", "/")
             self.frame.set_footer(label, "", "─", "─")
         return self
 
     def set_default_header(self):
-        if self.frame.get_header().len() == 0:
+        if len(self.frame.get_header()) == 0:
             if self.type == FloatingType.WARNING:
                 self.set_header(" Aviso ")
             elif self.type == FloatingType.ERROR:
@@ -194,7 +194,7 @@ class Floating(FloatingABC):
         for line in self.content:
             x = 0
             if self.centralize_text:
-                x = (self.frame.get_dx() - line.len()) // 2
+                x = (self.frame.get_dx() - len(line)) // 2
             self.frame.write(y, x, line)
             y += 1
         return self

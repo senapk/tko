@@ -1,4 +1,4 @@
-import logging
+from loguru import logger
 from typing import Optional
 
 import typer
@@ -10,7 +10,7 @@ from tko.repository.remote_actions import RemoteActions
 
 
 app = typer.Typer(help="Manage remote task sources")
-logger = logging.getLogger(__name__)
+
 
 _CLI_REMOTE_ADD_SOURCE_ERROR = Msg(
     pt="Erro ao adicionar fonte",
@@ -78,7 +78,7 @@ def remote_add(
             filter_to=to,
             writeable=write,
         )
-        rep_actions.print_end_msg()
+
     except ValueError:
         logger.exception(t(_CLI_REMOTE_ADD_SOURCE_ERROR))
 

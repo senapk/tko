@@ -3,11 +3,11 @@ from tko.i18n import t
 from tko.util.decoder import Decoder
 from tko.config.languages_setup import LanguageSetup
 from tko.i18n import Msg
-import logging
+from loguru import logger
 import tomllib
 from pathlib import Path
 
-logger = logging.getLogger(__name__)
+
 
 _CONFIG_LANG_EMPTY = Msg(
     pt="Configurações de linguagem vazias",

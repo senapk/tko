@@ -1,5 +1,5 @@
 from __future__ import annotations
-import logging
+from loguru import logger
 from tko.repository.git_cache import UpdateMode
 from tko.i18n import Msg, t
 from tko.logger.log_sort import LogSort
@@ -13,14 +13,14 @@ _GAME_COORDINATOR_LOADING_REPOSITORY = Msg(
 
 class GameCoordinator:
 
-    logger = logging.getLogger(__name__)
+    
 
     def __init__(self, repo: Repository): 
         self.repo = repo
 
     def load_game(self, verbose: bool) -> GameCoordinator:
         if verbose:
-            self.logger.info(t(_GAME_COORDINATOR_LOADING_REPOSITORY, root=self.repo.paths.root_dir))
+            logger.info(t(_GAME_COORDINATOR_LOADING_REPOSITORY, root=self.repo.paths.root_dir))
         
         remotes = self.repo.remotes
         if not remotes: # load now

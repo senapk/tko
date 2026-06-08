@@ -1,7 +1,8 @@
 from tko.config.settings import Settings
 from tko.repository.repository import Repository
 from uniplot import plot_to_string # type: ignore
-from tko.util.rt import RT, RBuffer
+from tko.util.rbuffer import RBuffer
+from tko.util.rt import RT
 from tko.logger.log_sort import LogSort
 from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_base import LogItemBase
@@ -140,7 +141,7 @@ class TaskGraph:
             result = result.splitlines()
         output: list[RT] = []
         for line in result:
-            output.append(RT.decode_raw(line))
+            output.append(RT.from_ansi(line))
         fixed: list[RT] = []
         size = len(output)
         for i, line in enumerate(output):

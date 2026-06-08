@@ -1,12 +1,13 @@
 from tko.config.app_settings import AppSettings
 from tko.game.task import Task
+from tko.util.rbuffer import RBuffer
 from tko.widget.frame import Frame
 from tko.play.keys import GuiActions, GuiKeys
 from tko.tester.tester_state import TesterState, SeqMode
 from tko.tester import tester_util
 from tko.run.unit import Unit
 from tko.run.wdir import Wdir
-from tko.util.rt import RT, RBuffer
+from tko.util.rt import RT
 from tko.util.symbols import Symbols
 from tko.enums.execution_result import ExecutionResult
 from tko.i18n import Msg, t
@@ -69,12 +70,12 @@ class TesterTopBar:
         else:
             sources = RT(f" {t(_TesterTopBarMsg.NO_TESTS_REGISTERED)} ", "R")
 
-        delta = frame_dx - solvers.len()
+        delta = frame_dx - len(solvers)
         left, right = 1, 1
         if delta > 0:
             delta_left = delta // 2
-            left  = max(1, delta_left - activity.len())
-            right = max(1, (delta - delta_left) - sources.len())
+            left  = max(1, delta_left - len(activity))
+            right = max(1, (delta - delta_left) - len(sources))
         filler = "─" if self.wdir.has_tests else " "
         return RBuffer().add(activity).add(filler * left).add(solvers).add(filler * right).add(sources).to_rt()
 
@@ -108,7 +109,7 @@ class TesterTopBar:
         for unit_result, index in done_list + todo_list:
             foco = i == state.focused_index
             token = tester_util.get_token(unit_result)
-            token_style = token.runs[0][0] if token.runs else ""
+            token_style = token.runs[0][0].to_tag() if token.runs else ""
             token_text  = token.plain()
             extrap = RT(" ", token_style.lower())
             extras = RT(" ", token_style.lower())

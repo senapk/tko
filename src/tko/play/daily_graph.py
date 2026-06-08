@@ -89,7 +89,7 @@ class DailyGraph:
         
         decoded: list[RT] = []
         for line in result:
-            decoded.append(RT.decode_raw(line))
+            decoded.append(RT.from_ansi(line))
 
         fixed: list[RT] = []
         qtd = len(decoded)

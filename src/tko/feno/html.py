@@ -1,4 +1,4 @@
-import logging
+from loguru import logger
 from pathlib import Path
 
 import markdown
@@ -6,7 +6,7 @@ from typing import Any
 from tko.i18n import Msg, t
 
 
-logger = logging.getLogger(__name__)
+
 
 _FENO_HTML_MARKDOWN_NOT_FOUND = Msg(
     pt="Erro: Arquivo Markdown não encontrado em '{path}'",
