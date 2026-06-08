@@ -72,7 +72,7 @@ def build_drafts(ctx: typer.Context):
     
     # get changedir from globals
     settings = ctx.obj
-    changedir = settings.run.change_dir
+    changedir = settings.rs.changedir
     here = Path(changedir).resolve()
     
     print(t(_CLI_BUILD_UPDATING_DRAFTS, folder=here))

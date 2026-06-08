@@ -5,6 +5,7 @@ from typing import Callable, cast
 from _pytest.monkeypatch import MonkeyPatch
 
 import tko.repository.repository_starter as rep_starter_module
+from tko.config.run_settings import RunSettings
 from tko.config.settings import Settings
 from tko.repository.repository_starter import RepositoryStarter
 from tko.util.console import Console
@@ -40,8 +41,8 @@ class FakeRepositoryConfig:
         self.on_save()
 
 
-def make_settings() -> Settings:
-    return cast(Settings, SimpleNamespace())
+def make_settings(tmp_path: Path) -> Settings:
+    return cast(Settings, SimpleNamespace(rs=RunSettings(changedir=tmp_path, local_cache=True)))
 
 
 def test_validate_path_returns_false_when_user_cancels_reset(monkeypatch: MonkeyPatch, tmp_path: Path):
@@ -52,7 +53,7 @@ def test_validate_path_returns_false_when_user_cancels_reset(monkeypatch: Monkey
     monkeypatch.setattr(rep_starter_module.RepositoryPaths, "rec_search_for_repo_parents", fake_parent_search)
     monkeypatch.setattr("builtins.input", lambda: "n")
 
-    starter = RepositoryStarter(settings=make_settings(), folder=tmp_path, language=None, skip_add_remote=True)
+    starter = RepositoryStarter(settings=make_settings(tmp_path), language=None, skip_add_remote=True)
 
     is_valid = starter.validate_path()
 
@@ -72,7 +73,7 @@ def test_validate_path_uses_parent_repo_when_user_accepts_overwrite(monkeypatch:
     monkeypatch.setattr("builtins.input", lambda: "y")
 
     with Console.capture() as _:
-        starter = RepositoryStarter(settings=make_settings(), folder=child_folder, language=None, skip_add_remote=True, force_location=True)
+        starter = RepositoryStarter(settings=make_settings(child_folder), language=None, skip_add_remote=True, force_location=True)
         is_valid = starter.validate_path()
 
     assert is_valid is True
@@ -93,7 +94,7 @@ def test_validate_path_returns_false_when_sub_repositories_exist(monkeypatch: Mo
     monkeypatch.setattr(rep_starter_module.RepositoryPaths, "rec_search_for_repo_parents", fake_parent_search)
     monkeypatch.setattr(rep_starter_module.RepositoryPaths, "rec_search_for_repo_subdir", fake_subdir_search)
 
-    starter = RepositoryStarter(settings=make_settings(), folder=tmp_path, language=None, skip_add_remote=True)
+    starter = RepositoryStarter(settings=make_settings(tmp_path), language=None, skip_add_remote=True)
 
     is_valid = starter.validate_path()
 
@@ -107,7 +108,7 @@ def test_execute_returns_false_when_path_is_not_valid(monkeypatch: MonkeyPatch, 
 
     monkeypatch.setattr(RepositoryStarter, "validate_path", fake_validate_path)
 
-    starter = RepositoryStarter(settings=make_settings(), folder=tmp_path, language="py", skip_add_remote=True)
+    starter = RepositoryStarter(settings=make_settings(tmp_path), language="py", skip_add_remote=True)
 
     assert starter.execute() is False
 
@@ -122,7 +123,8 @@ def test_execute_sets_language_recreates_cache_and_saves_config(monkeypatch: Mon
         "printed_end": False,
     }
 
-    def fake_repository(folder: Path) -> FakeRepo:
+    def fake_repository(folder: Path, rs: RunSettings) -> FakeRepo:
+        _ = rs
         created_folders.append(folder)
         return repo
 
@@ -147,7 +149,7 @@ def test_execute_sets_language_recreates_cache_and_saves_config(monkeypatch: Mon
         fake_check_lang_in_text_mode,
     )
 
-    starter = RepositoryStarter(settings=make_settings(), folder=tmp_path, language="py", skip_add_remote=True, force_location=True)
+    starter = RepositoryStarter(settings=make_settings(tmp_path), language="py", skip_add_remote=True, force_location=True)
     repo.paths.cache_folder.mkdir(parents=True, exist_ok=True)
 
     with Console.capture() as _:

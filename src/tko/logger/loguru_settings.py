@@ -8,11 +8,15 @@ def configure_loguru(log_file: Path) -> None:
         sys.stderr,
         level="WARNING",
     )
-    logger.add(
-        log_file,
-        level="DEBUG",
-        rotation="50 MB",
-        retention="14 days",
-        compression="gz",
-    )
+    try:
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        logger.add(
+            log_file,
+            level="DEBUG",
+            rotation="50 MB",
+            retention="14 days",
+            compression="gz",
+        )
+    except OSError:
+        pass
     

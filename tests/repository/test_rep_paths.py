@@ -2,8 +2,13 @@ from pathlib import Path
 
 from _pytest.monkeypatch import MonkeyPatch
 
-import tko.repository.repository_paths as rep_paths_module
+from tko.config.run_settings import RunSettings
+from tko.config.user_data import UserData
 from tko.repository.repository_paths import RepositoryPaths
+
+
+def make_run_settings(tmp_path: Path, local_cache: bool = False) -> RunSettings:
+    return RunSettings(changedir=tmp_path, local_cache=local_cache)
 
 
 def test_rec_search_for_repo_parents_returns_none_when_no_repository_exists(tmp_path: Path):
@@ -42,7 +47,7 @@ def test_rec_search_for_repo_subdir_finds_nested_repositories(tmp_path: Path):
 
 
 def test_path_helpers_return_expected_locations(tmp_path: Path):
-    paths = RepositoryPaths(tmp_path)
+    paths = RepositoryPaths(tmp_path, make_run_settings(tmp_path, local_cache=True))
 
     assert paths.root_dir == tmp_path
     assert paths.track_folder == tmp_path / ".tko" / "track"
@@ -55,24 +60,23 @@ def test_path_helpers_return_expected_locations(tmp_path: Path):
     assert paths.root_dir == tmp_path
 
 
-def test_get_cache_folder_uses_global_cache_when_enabled(monkeypatch: MonkeyPatch, tmp_path: Path):
-    paths = RepositoryPaths(tmp_path)
+def test_cache_folder_uses_global_cache_when_local_cache_is_disabled(monkeypatch: MonkeyPatch, tmp_path: Path):
+    paths = RepositoryPaths(tmp_path, make_run_settings(tmp_path, local_cache=False))
+    global_cache = tmp_path / "global-cache"
 
-    def fake_user_cache_dir(app_name: str) -> str:
-        _ = app_name
-        return "/tmp/tko-cache-home"
+    monkeypatch.setattr(UserData, "global_cache_dir", lambda: global_cache)
 
-    monkeypatch.setattr(rep_paths_module, "user_cache_dir", fake_user_cache_dir)
-    original = RepositoryPaths.use_local_cache_folder
-    RepositoryPaths.use_local_cache_folder = True
-    try:
-        assert paths.cache_folder == Path("/tmp/tko-cache-home") / "cache"
-    finally:
-        RepositoryPaths.use_local_cache_folder = original
+    assert paths.cache_folder == global_cache
+
+
+def test_cache_folder_uses_repository_cache_when_local_cache_is_enabled(tmp_path: Path):
+    paths = RepositoryPaths(tmp_path, make_run_settings(tmp_path, local_cache=True))
+
+    assert paths.cache_folder == tmp_path / ".tko" / "cache"
 
 
 def test_config_file_presence_can_be_checked_from_property(tmp_path: Path):
-    paths = RepositoryPaths(tmp_path)
+    paths = RepositoryPaths(tmp_path, make_run_settings(tmp_path, local_cache=True))
     assert paths.config_file.exists() is False
 
     config_file = paths.config_file

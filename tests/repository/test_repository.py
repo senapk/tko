@@ -2,10 +2,14 @@ from pathlib import Path
 
 from _pytest.monkeypatch import MonkeyPatch
 
-import tko.repository.repository_paths as rep_paths_module
 import tko.repository.repository as repository_module
-from tko.repository.repository_paths import RepositoryPaths
+from tko.config.run_settings import RunSettings
+from tko.config.user_data import UserData
 from tko.repository.repository import Repository
+
+
+def make_run_settings(tmp_path: Path, local_cache: bool = True) -> RunSettings:
+    return RunSettings(changedir=tmp_path, local_cache=local_cache)
 
 
 def test_repository_uses_recursive_parent_when_found(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
@@ -19,14 +23,14 @@ def test_repository_uses_recursive_parent_when_found(monkeypatch: MonkeyPatch, t
 
     monkeypatch.setattr(repository_module.RepositoryPaths, "rec_search_for_repo_parents", fake_search)
 
-    repo = Repository(child)
+    repo = Repository(child, make_run_settings(child))
 
     assert repo.paths.root_dir == parent_repo
     assert repo.logger.history.get_log_folder() == parent_repo / ".tko" / "log"
 
 
 def test_found_and_inside_repo_checks(tmp_path: Path) -> None:
-    repo = Repository(tmp_path, recursive_search=False)
+    repo = Repository(tmp_path, make_run_settings(tmp_path), recursive_search=False)
 
     assert repo.found() is False
     assert repo.root_dir == tmp_path
@@ -39,7 +43,7 @@ def test_found_and_inside_repo_checks(tmp_path: Path) -> None:
 
 
 def test_task_folder_helpers_handle_prefixed_and_plain_labels(tmp_path: Path) -> None:
-    repo = Repository(tmp_path, recursive_search=False)
+    repo = Repository(tmp_path, make_run_settings(tmp_path), recursive_search=False)
     task_folder = tmp_path / "disc" / "task1"
     task_folder.mkdir(parents=True)
 
@@ -50,7 +54,7 @@ def test_task_folder_helpers_handle_prefixed_and_plain_labels(tmp_path: Path) ->
 
 
 def test_create_default_sandbox_source_binds_workspace_and_cache(tmp_path: Path) -> None:
-    repo = Repository(tmp_path, recursive_search=False)
+    repo = Repository(tmp_path, make_run_settings(tmp_path), recursive_search=False)
 
     source = repo.create_default_sandbox_source()
     source.git_cache = repo.git_cache
@@ -62,19 +66,11 @@ def test_create_default_sandbox_source_binds_workspace_and_cache(tmp_path: Path)
     assert source.path.work_dir == (tmp_path / "sandbox").resolve()
 
 
-def test_set_global_cache_uses_user_cache_folder(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
-    repo = Repository(tmp_path, recursive_search=False)
-    original = RepositoryPaths.use_local_cache_folder
+def test_repository_uses_global_cache_when_local_cache_is_disabled(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    global_cache = tmp_path / "global-cache"
 
-    def fake_user_cache_dir(app_name: str) -> str:
-        _ = app_name
-        return "/tmp/global-tko"
+    monkeypatch.setattr(UserData, "global_cache_dir", lambda: global_cache)
 
-    monkeypatch.setattr(rep_paths_module, "user_cache_dir", fake_user_cache_dir)
-    monkeypatch.setattr(repository_module.RepositoryPaths, "use_global_cache_folder", False)
-    try:
-        repo.set_global_cache()
-        assert repository_module.RepositoryPaths.use_local_cache_folder is True
-        assert repo.git_cache.cache_dir == Path("/tmp/global-tko") / "cache"
-    finally:
-        repository_module.RepositoryPaths.use_local_cache_folder = original
+    repo = Repository(tmp_path, make_run_settings(tmp_path, local_cache=False), recursive_search=False)
+
+    assert repo.git_cache.cache_dir == global_cache

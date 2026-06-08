@@ -4,9 +4,15 @@ from _pytest.monkeypatch import MonkeyPatch
 from typer.testing import CliRunner
 
 from tko.cli.cli_task import app
+from tko.config.run_settings import RunSettings
 from tko.config.settings import Settings
-from tko.repository.git_cache import UpdateMode
 from tko.repository.repository import Repository
+
+
+def _make_app_context(tmp_path: Path) -> Settings:
+    settings = Settings(tmp_path / "settings")
+    settings.rs = RunSettings(changedir=tmp_path, local_cache=True)
+    return settings
 
 
 def test_task_down_requires_full_key(tmp_path: Path) -> None:
@@ -25,8 +31,8 @@ def test_task_down_invokes_cmd_down_with_full_key(monkeypatch: MonkeyPatch, tmp_
     repo_obj = object()
     calls: dict[str, object] = {"execute": False}
 
-    def fake_load_repo(*_args: object, **_kwargs: object) -> tuple[object, Path, UpdateMode]:
-        return repo_obj, tmp_path, UpdateMode.IF_OLDER
+    def fake_load_repo(*_args: object, **_kwargs: object) -> tuple[object, Path]:
+        return repo_obj, tmp_path
 
     class DummyCmdDown:
         def __init__(self, repo: Repository, task_key: str, settings: Settings):
@@ -46,7 +52,7 @@ def test_task_down_invokes_cmd_down_with_full_key(monkeypatch: MonkeyPatch, tmp_
     assert result.exit_code == 0
     assert calls["repo"] is repo_obj
     assert calls["task_key"] == "fup@mumia"
-    assert calls["settings"] is ctx.settings
+    assert calls["settings"] is ctx
     assert calls["execute"] is True
 
 
@@ -54,8 +60,8 @@ def test_task_down_returns_when_repo_not_found(monkeypatch: MonkeyPatch, tmp_pat
     runner = CliRunner()
     ctx = _make_app_context(tmp_path)
 
-    def fake_load_repo(*_args: object, **_kwargs: object) -> tuple[None, None, UpdateMode]:
-        return None, None, UpdateMode.IF_OLDER
+    def fake_load_repo(*_args: object, **_kwargs: object) -> tuple[None, None]:
+        return None, None
 
     monkeypatch.setattr("tko.cli.common.load_repo", fake_load_repo)
 
@@ -69,8 +75,8 @@ def test_task_down_handles_domain_errors(monkeypatch: MonkeyPatch, tmp_path: Pat
     ctx = _make_app_context(tmp_path)
     repo_obj = object()
 
-    def fake_load_repo(*_args: object, **_kwargs: object) -> tuple[object, Path, UpdateMode]:
-        return repo_obj, tmp_path, UpdateMode.IF_OLDER
+    def fake_load_repo(*_args: object, **_kwargs: object) -> tuple[object, Path]:
+        return repo_obj, tmp_path
 
     class DummyCmdDown:
         def __init__(self, _repo: Repository, _task_key: str, _settings: Settings):
