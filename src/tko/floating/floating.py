@@ -144,10 +144,12 @@ class Floating(FloatingABC):
         self._set_xy(dy, dx)
         self.frame.set_fill()
 
-    def put_text(self, text: str):
+    def put_text(self, text: str | RT):
+        if isinstance(text, str):
+            text = RT(text)
         lines = text.splitlines()
         for line in lines:
-            self.content.append(RT(line))
+            self.content.append(line)
         return self
 
     def put_sentence(self, sentence: RT):

@@ -146,11 +146,6 @@ def test_execute_sets_language_recreates_cache_and_saves_config(monkeypatch: Mon
         "check_prog_lang_in_text_mode",
         fake_check_lang_in_text_mode,
     )
-    monkeypatch.setattr(
-        RepositoryStarter,
-        "print_end_msg",
-        lambda self: calls.__setitem__("printed_end", True),
-    )
 
     starter = RepositoryStarter(settings=make_settings(), folder=tmp_path, language="py", skip_add_remote=True, force_location=True)
     repo.paths.cache_folder.mkdir(parents=True, exist_ok=True)
@@ -166,7 +161,6 @@ def test_execute_sets_language_recreates_cache_and_saves_config(monkeypatch: Mon
     assert (tmp_path / ".tko" / "cache").exists()
     assert calls["saved"] is True
     assert calls["language_prompt"] is True
-    assert calls["printed_end"] is True
 
 
 

@@ -549,6 +549,9 @@ class RT:
 
         return [RT.from_runs(p) for p in parts]
 
+    def splitlines(self) -> list[RT]:
+        return self.split("\n")
+
     def center(self, width: int, fill: RT | str = " ") -> RT:
         if isinstance(fill, str):
             fill = RT(fill)

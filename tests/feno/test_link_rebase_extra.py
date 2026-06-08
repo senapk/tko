@@ -16,11 +16,11 @@ def test_rebase_rewrites_image_file_and_folder_links() -> None:
 
     content = "![img](pic.png)\n[folder](sub/)\n[file](readme.md)"
 
-    result = LinkRebase.rebase(content, structure)
+    result = LinkRebase.rebase(content, structure).splitlines()
 
-    assert "![img](https://raw.githubusercontent.com/user/repo/main/docs/pic.png)" in result
-    assert "[folder](https://github.com/user/repo/tree/main/docs/sub)" in result
-    assert "[file](https://github.com/user/repo/blob/main/docs/readme.md)" in result
+    assert "![img](https://raw.githubusercontent.com/user/repo/main/docs/pic.png)" == result[0]
+    assert "[folder](https://github.com/user/repo/tree/main/docs/sub/)" == result[1]
+    assert "[file](https://github.com/user/repo/blob/main/docs/readme.md)" == result[2]
 
 
 def test_rebase_task_markdown_link_from_github_downloaded_file() -> None:

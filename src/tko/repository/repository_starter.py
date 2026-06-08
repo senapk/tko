@@ -108,7 +108,7 @@ class RepositoryStarter:
             self.ask_about_default_remotes()
 
         RepositoryConfig(repo).save()
-        self.print_end_msg()
+        Console.print(_REPO_STARTER_OPEN_HINT)
         return True
 
     def ask_about_default_remotes(self):
@@ -138,8 +138,6 @@ class RepositoryStarter:
             remote_default=target, 
         )
 
-    def print_end_msg(self):
-        Console.print(_REPO_STARTER_OPEN_HINT)
     
     def validate_path(self) -> bool:
         path_parents = RepositoryPaths.rec_search_for_repo_parents(self.folder)

@@ -1,5 +1,6 @@
 from tko.game.task import Task
 from tko.game.quest import Quest
+from tko.util.rt import RT
 from tko.widget.fmt import Fmt
 from tko.floating import Floating
 from tko.floating.floating_manager import FloatingManager
@@ -45,7 +46,7 @@ class TaskDownloadService:
         self.down_task(obj)
 
     def down_task(self, task: Task) -> None:
-        if not task.resource.is_import_type:
+        if task.resource.is_static_type:
             self.fman.add_input(
                 Floating().bottom().right().put_text(f"\n{t(_TaskDownloadMsg.NOT_IMPORTABLE)}\n").set_error()
             )
@@ -55,7 +56,7 @@ class TaskDownloadService:
         )
         self.fman.add_input(down_frame)
 
-        def fnprint(text: str):
+        def fnprint(text : str | RT):
             down_frame.put_text(" " + text)
             down_frame.draw()
             Fmt.refresh()

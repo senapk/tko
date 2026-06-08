@@ -1,6 +1,5 @@
 from typing import Callable
 import os
-import shutil
 
 from tko.cmds.drafts_finder_cached import DraftsFinderCached
 from tko.repository.repository import Repository
@@ -14,6 +13,8 @@ from tko.feno.filter import CodeFilter
 from pathlib import Path
 from tko.loader.toml_parser import TomlParser
 from tko.i18n import Msg, t
+from tko.util.rt import RT
+from typing import Any
 
 
 _DOWN_INVALID_REPO_ARG = Msg(
@@ -48,18 +49,6 @@ _DOWN_CREATING_NEW_DRAFT_FOLDER = Msg(
     pt="Criando nova pasta de rascunhos: {folder}",
     en="Creating new drafts folder: {folder}",
 )
-_DOWN_COPY_NEW_DRAFTS_MANUALLY = Msg(
-    pt="Se quiser utilizar os novos rascunhos, copie manualmente",
-    en="If you want to use the new drafts, copy them manually",
-)
-_DOWN_COPY_NEW_DRAFTS_TO_LANG = Msg(
-    pt="os novos rascunhos para a pasta {lang}",
-    en="the new drafts to folder {lang}",
-)
-_DOWN_LATEST_DRAFT = Msg(
-    pt="Último rascunho em {name}",
-    en="Latest draft in {name}",
-)
 _DOWN_ACTIVITY_DOWNLOADED_SUCCESS = Msg(
     pt="Atividade baixada com sucesso",
     en="Activity downloaded successfully",
@@ -69,24 +58,25 @@ _DOWN_CHOOSE_DRAFT_EXTENSION = Msg(
     en="Choose a draft extension: [{options}]: ",
 )
 _DOWN_FILE_NEW = Msg(
-    pt="{path} (Novo)",
-    en="{path} (New)",
+    pt="[g](   Novo   )[] {path}",
+    en="[g](    New   )[] {path}",
 )
 _DOWN_FILE_UPDATED = Msg(
-    pt="{path} (Atualizado)",
-    en="{path} (Updated)",
+    pt="[y](Atualizado)[] {path}",
+    en="[y]( Updated  )[] {path}",
 )
 _DOWN_FILE_UNCHANGED = Msg(
-    pt="{path} (Inalterado)",
-    en="{path} (Unchanged)",
+    pt="[b](Inalterado)[] {path}",
+    en="[b](Unchanged )[] {path}",
 )
 _DOWN_FILE_EMPTY = Msg(
-    pt="{path} (Vazio)",
-    en="{path} (Empty)",
+    pt="[r](  Vazio   )[] {path}",
+    en="[r](  Empty   )[] {path}",
 )
-_DOWN_FILE_NOT_OVERWRITTEN = Msg(
-    pt="{path} (Não sobrescrito)",
-    en="{path} (Not overwritten)",
+
+_DRAFTS_FOUND = Msg(
+    pt="Códigos de resposta encontrados na pasta:\n   {folder}\n Rascunhos não criados. Apague os código antigos\n caso queira baixar novos rascunhos.",
+    en="Response codes found in folder:\n   {folder}\n Drafts not created. Delete the old codes\n if you want to download new drafts.",
 )
 
 class CmdLineDown:
@@ -139,15 +129,16 @@ class CmdDown:
         
     def execute(self) -> bool:
         if self.task.resource.is_import_type:
-            return self.download_from_external_remote()
+            self.download_from_external_remote()
+            return True
         if self.task.resource.is_static_type:
             if not self.copy_drafts():
-                self.actions.send_to_print(t(_DOWN_ACTIVITY_ALREADY_PRESENT))
+                self.actions.fnprint(t(_DOWN_ACTIVITY_ALREADY_PRESENT))
             return False
-        self.actions.send_to_print(t(_DOWN_LINK_HAS_NO_DOWNLOAD))
+        self.actions.fnprint(t(_DOWN_LINK_HAS_NO_DOWNLOAD))
         return False
 
-    def set_fnprint(self, fnprint: Callable[[str], None]):
+    def set_fnprint(self, fnprint: Callable[[str| RT], None]):
         self.actions.fnprint = fnprint
         return self
 
@@ -156,72 +147,56 @@ class CmdDown:
             if len(os.listdir(self.destiny_folder)) == 0:
                 os.rmdir(self.destiny_folder)
 
-    def find_and_create_folder_for_drafts(self, force: bool = False) -> Path:
-        lang = self.language
-        finder = DraftsFinderCached(self.destiny_folder, lang)
-        drafts_folder = finder.find_dir_for_drafts()
-        if not drafts_folder.exists():
-            drafts_folder.mkdir(parents=True, exist_ok=True)
-            return drafts_folder
-        elif force:
-            shutil.rmtree(drafts_folder)
-            drafts_folder.mkdir(parents=True, exist_ok=True)
-            return drafts_folder
-        
-        drafts_folder = finder.find_dir_for_drafts_secondary()
-        self.actions.send_to_print("")
-        self.actions.send_to_print(t(_DOWN_CREATING_NEW_DRAFT_FOLDER, folder=drafts_folder.name))
-        self.actions.send_to_print("")
-        self.actions.send_to_print(t(_DOWN_COPY_NEW_DRAFTS_MANUALLY))
-        self.actions.send_to_print(t(_DOWN_COPY_NEW_DRAFTS_TO_LANG, lang=lang))
-        return Path(drafts_folder)
-
-    def download_from_external_remote(self) -> bool:
+    def download_from_external_remote(self) -> None:
         self.destiny_folder.mkdir(exist_ok=True, parents=True)
         self.copy_readme()
+        self.copy_assets()
         self.copy_tests()
-        return self.copy_drafts()
+        self.copy_drafts()
+        self.actions.fnprint("")
+        self.actions.fnprint(t(_DOWN_ACTIVITY_DOWNLOADED_SUCCESS))
 
     def copy_drafts(self):
-        self.actions.cached = True
         finder = DraftsFinderCached(self.destiny_folder, self.language)
-        if not self.task.resource.is_import_type:
-            destiny_drafts_folder: Path = finder.find_dir_for_drafts()
+        found, destiny_drafts_folder = finder.search_for_solvers()
+        if found:
+            relative = destiny_drafts_folder.relative_to(Path.cwd(), walk_up=True).as_posix()
+            self.actions.fnprint(t(_DRAFTS_FOUND, folder=relative))
+            return True
+        
+        if self.task.resource.is_static_type: # working in local remote source, creating only default draft if not found
             destiny_drafts_folder.mkdir(exist_ok=True, parents=True)
             self.actions.create_default_draft(destiny_drafts_folder, self.language)
             return True
 
-        destiny_drafts_folder: Path = self.find_and_create_folder_for_drafts()
         origin_drafts_source: Path = CodeFilter.get_source_drafts_dir(self.origin_folder, self.language)
         if not self.copy_drafts_from(origin_drafts_source, destiny_drafts_folder):
             self.actions.create_default_draft(destiny_drafts_folder, self.language)
         if self.task.config.test == TaskEval.SELF:
             self.actions.create_default_draft(destiny_drafts_folder, "md")
-        removed, last_path = finder.remove_secondary_dir_if_duplicated()
-        self.actions.cached = False
-        if not removed:
-            for msg in self.actions.cache_msgs:
-                self.actions.send_to_print(msg)
-            self.actions.cache_msgs.clear()
-        else:
-            self.actions.send_to_print(t(_DOWN_LATEST_DRAFT, name=os.path.basename(last_path)))
-        self.actions.send_to_print("")
-        self.actions.send_to_print(t(_DOWN_ACTIVITY_DOWNLOADED_SUCCESS))
         return True
     
     def copy_readme(self):
         origin_readme  = self.origin_folder /"README.md"
         destiny_readme = self.destiny_folder/ "README.md"
-
         source_folder_rel = self.origin_folder.resolve().relative_to(self.destiny_folder.resolve(), walk_up=True)
         content = Decoder.load(origin_readme)
-        content = LinkRebase.change_to_relative_folder(content, source_folder_rel)
+        content = LinkRebase.change_to_relative_folder(content, source_folder_rel, preserve_assets=True)
         self.actions.compare_and_save_to(content, destiny_readme)
+
+    def copy_assets(self):
+        origin_assets  = self.origin_folder /"assets"
+        destiny_assets = self.destiny_folder/ "assets"
+        if origin_assets.exists():
+            destiny_assets.mkdir(exist_ok=True, parents=True)
+            for asset in origin_assets.iterdir():
+                destiny_asset = destiny_assets / asset.name
+                self.actions.compare_and_save_to(Decoder.load(asset), destiny_asset)
     
     def copy_drafts_from(self, origin_drafts_folder: Path, destiny_draft_folder: Path) -> bool:
         if not os.path.exists(origin_drafts_folder):
             return False
-        destiny_draft_folder.mkdir(exist_ok=True)
+        destiny_draft_folder.mkdir(exist_ok=True, parents=True)
         if self.copy_drafts_from_cache(origin_drafts_folder, destiny_draft_folder):
             return True
         return False
@@ -264,15 +239,8 @@ class CmdDown:
 class DownActions:
     def __init__(self, settings: Settings):
         self.settings = settings
-        self.fnprint: Callable[[str], None] = print
+        self.fnprint: Callable[[Any], None] = print
         self.cache_msgs: list[str] = []
-        self.cached: bool = False
-
-    def send_to_print(self, text: str):
-        if self.cached:
-            self.cache_msgs.append(text)
-        else:
-            self.fnprint(text)
 
     @staticmethod
     def folder_and_file(path: Path, parts: int = 3) -> str:
@@ -285,14 +253,14 @@ class DownActions:
     def compare_and_save_to(self, content: str, path: Path):
         if not os.path.exists(path):
             Decoder.save(path, content)
-            self.send_to_print(t(_DOWN_FILE_NEW, path=self.folder_and_file(path)))
+            self.fnprint(RT.parse(t(_DOWN_FILE_NEW, path=self.folder_and_file(path))))
         else:
             path_content = Decoder.load(path)
             if path_content != content:
-                self.send_to_print(t(_DOWN_FILE_UPDATED, path=self.folder_and_file(path)))
+                self.fnprint(RT.parse(t(_DOWN_FILE_UPDATED, path=self.folder_and_file(path))))
                 Decoder.save(path, content)
             else:
-                self.send_to_print(t(_DOWN_FILE_UNCHANGED, path=self.folder_and_file(path)))
+                self.fnprint(RT.parse(t(_DOWN_FILE_UNCHANGED, path=self.folder_and_file(path))))
 
     def create_default_draft(self, destiny: Path, language: str):
         filename = "draft."
@@ -305,7 +273,5 @@ class DownActions:
                     f.write(lang_drafts[language])
                 else:
                     f.write("")
-            self.send_to_print(t(_DOWN_FILE_EMPTY, path=self.folder_and_file(draft_path, 3)))
-        else:
-            self.send_to_print(t(_DOWN_FILE_NOT_OVERWRITTEN, path=self.folder_and_file(draft_path, 3)))
+            self.fnprint(RT.parse(t(_DOWN_FILE_EMPTY, path=self.folder_and_file(draft_path, 3))))
         return draft_path
