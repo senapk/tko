@@ -1,12 +1,6 @@
 import typer
-from tko.app_context import AppContext
-from tko.i18n import Msg, t
 
-
-_CLI_CONFIG_SETTINGS_FILE = Msg(
-    pt="SettingsFile\n- {settings_dir}",
-    en="SettingsFile\n- {settings_dir}",
-)
+from tko.config.settings import Settings
 
 app = typer.Typer(help="Configure settings")
 
@@ -20,8 +14,7 @@ def config_set(
     timeout: None | int = typer.Option(None, "--timeout", help="Set timeout in sec")
 ):
     from tko.cmds.cmd_config import CmdConfig, ConfigParams
-    app_ctx: AppContext = AppContext.load_from_context(ctx)
-    settings = app_ctx.settings
+    settings: Settings = ctx.obj
     param = ConfigParams()
     param.side = side
     param.down = down
@@ -34,9 +27,7 @@ def config_set(
 
 @app.command("list", help="List default configuration values")
 def config_list(ctx: typer.Context):
-    app_ctx: AppContext = AppContext.load_from_context(ctx)
-    settings = app_ctx.settings
-    print(t(_CLI_CONFIG_SETTINGS_FILE, settings_dir=settings.settings_dir))
+    settings: Settings = ctx.obj
     print(str(settings))
 
 if __name__ == "__main__":

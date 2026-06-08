@@ -1,5 +1,6 @@
 from tko.collect.collect_actions import CollectActions
 from tko.collect.collected import Collected
+from tko.config.run_settings import RunSettings
 from tko.repository.repository_builder import RepositoryBuilder
 
 
@@ -21,7 +22,7 @@ class CollectParams:
 
 class CollectSingle:
     @staticmethod
-    def collect_to_json(repo_folder: Path, daily: bool = True, resume: bool = True, history: bool = True, game: bool = True) -> str:
+    def collect_to_json(rs: RunSettings, repo_folder: Path, daily: bool = True, resume: bool = True, history: bool = True, game: bool = True) -> str:
         params = CollectParams()
         params.folder = repo_folder
         params.daily = daily
@@ -29,13 +30,14 @@ class CollectSingle:
         params.history = history
         params.game = game
         params.json_output = True # dont echo
-        results: Collected = CollectSingle.collect(params)
+        results: Collected = CollectSingle.collect(rs, params)
         return json.dumps(results.get_dict(), indent=4, ensure_ascii=False)
 
     @staticmethod
-    def collect(param: CollectParams) -> Collected:
-        rb = RepositoryBuilder()
-        rb.dir_path(param.folder).global_cache(True).load_config_and_game().verbose()
+    def collect(rs: RunSettings, param: CollectParams) -> Collected:
+        rs.changedir = param.folder
+        rb = RepositoryBuilder(rs)
+        rb.load_config_and_game().verbose()
         repo, _ = rb.build()
         data = Collected()
         if repo is None:

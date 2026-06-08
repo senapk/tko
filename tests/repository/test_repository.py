@@ -64,7 +64,7 @@ def test_create_default_sandbox_source_binds_workspace_and_cache(tmp_path: Path)
 
 def test_set_global_cache_uses_user_cache_folder(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
     repo = Repository(tmp_path, recursive_search=False)
-    original = RepositoryPaths.use_global_cache_folder
+    original = RepositoryPaths.use_local_cache_folder
 
     def fake_user_cache_dir(app_name: str) -> str:
         _ = app_name
@@ -74,7 +74,7 @@ def test_set_global_cache_uses_user_cache_folder(monkeypatch: MonkeyPatch, tmp_p
     monkeypatch.setattr(repository_module.RepositoryPaths, "use_global_cache_folder", False)
     try:
         repo.set_global_cache()
-        assert repository_module.RepositoryPaths.use_global_cache_folder is True
+        assert repository_module.RepositoryPaths.use_local_cache_folder is True
         assert repo.git_cache.cache_dir == Path("/tmp/global-tko") / "cache"
     finally:
-        repository_module.RepositoryPaths.use_global_cache_folder = original
+        repository_module.RepositoryPaths.use_local_cache_folder = original

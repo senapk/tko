@@ -1,10 +1,13 @@
 import typer
 from pathlib import Path
 
+from tko.config.settings import Settings
+
 app = typer.Typer(help="Manage class tasks")
 
 @app.command("collect", help="Colect and merge data from many repos")
 def class_collect(
+    ctx: typer.Context,
     path: list[str] = typer.Argument(..., help="Paths to repos"),
     json: str | None = typer.Option(None, "--json", "-j", help="Path to save the extracted JSON data"),
     csv: str | None = typer.Option(None, "--csv", "-c", help="Path to save the extracted CSV data"),
@@ -12,7 +15,8 @@ def class_collect(
 ):
     from tko.collect.collect_many import CollectMany
     git_repo_list = [Path(x) for x in path]
-    CollectMany.execute(git_repo_list, json_path=json, csv_path=csv, block_prefix=block_prefix)
+    settings: Settings = ctx.obj
+    CollectMany.execute(settings.rs, git_repo_list, json_path=json, csv_path=csv, block_prefix=block_prefix)
 
 @app.command("pull", help="Perform git pull in many repos using threads")
 def class_pull(

@@ -2,7 +2,7 @@ import typer
 from pathlib import Path
 from typing import Optional
 
-from tko.app_context import AppContext
+from tko.config.settings import Settings
 
 app = typer.Typer(help="Manage individual tasks")
 
@@ -18,9 +18,7 @@ def task_open(
     from tko.util.pattern_loader import PatternLoader
     from tko.cmds.cmd_run import Run
     
-    app_ctx: AppContext = AppContext.load_from_context(ctx)
-    settings = app_ctx.settings
-    
+    settings: Settings = ctx.obj    
     PatternLoader.pattern = pattern
     param = Param.Basic().set_index(index)
     if settings:
@@ -43,17 +41,12 @@ def task_list(
     from tko.cli.common import load_repo
     from tko.cmds.cmd_open import CmdOpen
     
-    app_ctx: AppContext = AppContext.load_from_context(ctx)
-    settings = app_ctx.settings
-    changedir = app_ctx.changedir
-    global_cache = app_ctx.global_cache
-    update = app_ctx.update
-    
-    repo, _, update_mode = load_repo(changedir, show_warnings=True, auto_load=True, global_cache=global_cache, force_update=update)
+    settings: Settings = ctx.obj
+    repo, _ = load_repo(settings.rs)
     if repo is None:
         return
         
-    action = CmdOpen(settings, repo, update_mode)
+    action = CmdOpen(settings, repo)
     action.list(show_all=all, only_down=down, show_quests=quests)
 
 
@@ -65,13 +58,8 @@ def task_down(
     from tko.cli.common import load_repo
     from tko.cmds.cmd_down import CmdDown
 
-    app_ctx: AppContext = AppContext.load_from_context(ctx)
-    settings = app_ctx.settings
-    changedir = app_ctx.changedir
-    global_cache = app_ctx.global_cache
-    update = app_ctx.update
-
-    repo, _, _ = load_repo(changedir, show_warnings=True, auto_load=True, global_cache=global_cache, force_update=update)
+    settings: Settings = ctx.obj
+    repo, _ = load_repo(settings.rs)
     if repo is None:
         return
 

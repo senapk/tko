@@ -3,23 +3,10 @@ from _pytest.monkeypatch import MonkeyPatch
 
 from typer.testing import CliRunner
 
-from tko.app_context import AppContext
 from tko.cli.cli_task import app
 from tko.config.settings import Settings
 from tko.repository.git_cache import UpdateMode
 from tko.repository.repository import Repository
-
-
-def _make_app_context(tmp_path: Path) -> AppContext:
-    settings = Settings(tmp_path / "settings")
-    return AppContext(
-        settings=settings,
-        changedir=tmp_path,
-        width=None,
-        global_cache=False,
-        update=False,
-        offline=False,
-    )
 
 
 def test_task_down_requires_full_key(tmp_path: Path) -> None:

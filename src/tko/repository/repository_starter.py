@@ -79,21 +79,18 @@ _WITCH_REPO = Msg(
 )
 
 class RepositoryStarter:
-    def __init__(self, settings: Settings, folder: Path | None, language: str | None, skip_add_remote: bool, force_location: bool = False):
+    def __init__(self, settings: Settings, language: str | None, skip_add_remote: bool, force_location: bool = False):
         self.settings = settings
         self.skip = skip_add_remote
         self.force_location = force_location
-        # if folder is set, use folder, else use local folder.
-        self.folder: Path = Path.cwd()
-        if folder is not None:
-            self.folder = folder
+        self.folder: Path = settings.rs.changedir
         self.language = language
 
     def execute(self) -> bool:
         if not self.force_location:
             if not self.validate_path():
                 return False
-        repo = Repository(self.folder)        
+        repo = Repository(self.folder, self.settings.rs)        
         self.repo = repo
         self.create_empty_repo()
         # erase cache folder to avoid conflicts

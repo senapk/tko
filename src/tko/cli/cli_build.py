@@ -2,7 +2,6 @@ import typer
 from pathlib import Path
 from typing import Optional
 
-from tko.app_context import AppContext
 from tko.i18n import Msg, t
 
 
@@ -28,8 +27,7 @@ def build_tests(
     from tko.util.pattern_loader import PatternLoader
     from tko.cmds.cmd_build import CmdBuild
     
-    app_ctx: AppContext = AppContext.load_from_context(ctx)
-    settings = app_ctx.settings
+    settings = ctx.obj
 
     PatternLoader.pattern = pattern
     manip = Param.Manip().set_unlabel(unlabel).set_to_sort(sort).set_to_number(number)
@@ -73,8 +71,8 @@ def build_drafts(ctx: typer.Context):
     from tko.feno.filter import CodeFilter, DeepFilter
     
     # get changedir from globals
-    app_ctx = AppContext.load_from_context(ctx)  # Ensure context is loaded
-    changedir = app_ctx.changedir
+    settings = ctx.obj
+    changedir = settings.run.change_dir
     here = Path(changedir).resolve()
     
     print(t(_CLI_BUILD_UPDATING_DRAFTS, folder=here))

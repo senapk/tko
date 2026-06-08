@@ -2,7 +2,7 @@ import typer
 from typing import Optional
 from pathlib import Path
 
-from tko.app_context import AppContext
+from tko.config.settings import Settings
 
 # This file contains the root commands that don't belong to a Typer sub-app 
 # but will be added directly to the main Typer app.
@@ -30,10 +30,8 @@ def register_main_commands(app: typer.Typer):
         from tko.enums.diff_mode import DiffMode
         from tko.cmds.cmd_run import Run
         
+        settings: Settings = ctx.obj
 
-        app_ctx: AppContext = AppContext.load_from_context(ctx)
-        settings = app_ctx.settings
-        
         PatternLoader.pattern = pattern
         param = Param.Basic().set_index(index)
         if none:
@@ -55,8 +53,7 @@ def register_main_commands(app: typer.Typer):
         elif down:
             param.set_diff_mode(DiffMode.DOWN)
 
-        changedir = app_ctx.changedir
-        repo, _, _ = load_repo(changedir, show_warnings=False, force_offline=True)
+        repo, _ = load_repo(settings.rs, show_warnings=False)
         targets = [Path(target) for target in target_list] if target_list else []
         cmd_run = Run(settings, targets, param, language, repo)
         if eval:
@@ -70,22 +67,21 @@ def register_main_commands(app: typer.Typer):
         from tko.cmds.cmd_open import CmdOpen
         from tko.config.check_version import CheckVersion
 
-        app_ctx: AppContext = AppContext.load_from_context(ctx)
-        settings = app_ctx.settings
-        changedir = app_ctx.changedir
-        global_cache = app_ctx.global_cache
-        update = app_ctx.update
-        offline = app_ctx.offline
+        # app_ctx: AppContext = AppContext.load_from_context(ctx)
+        settings: Settings = ctx.obj
+        # changedir = app_ctx.changedir
+        # update = app_ctx.update
+        # offline = app_ctx.offline
         
-        repo, _, update_mode = load_repo(changedir, show_warnings=True, auto_load=True, global_cache=global_cache, force_update=update)
+        repo, _ = load_repo(settings.rs, show_warnings=True, auto_load=True)
         if repo is None:
             return
             
         from tko.repository.repository_watcher import RepositoryWatcher
         watcher = RepositoryWatcher(repo).start_watching()
-        action = CmdOpen(settings, repo, update_mode)
+        action = CmdOpen(settings, repo)
         
-        if not offline:
+        if not settings.rs.force_offline:
             if not CheckVersion(settings).is_updated():
                 action.display_need_update()
                 
@@ -100,9 +96,8 @@ def register_main_commands(app: typer.Typer):
     ):
         from tko.repository.repository_starter import RepositoryStarter
         
-        app_ctx: AppContext = AppContext.load_from_context(ctx)
-        settings = app_ctx.settings
-        changedir = app_ctx.changedir
+
+        settings: Settings = ctx.obj
         
-        rep_starter = RepositoryStarter(settings=settings, folder=changedir, language=language, skip_add_remote=skip)
+        rep_starter = RepositoryStarter(settings=settings, language=language, skip_add_remote=skip)
         rep_starter.execute()

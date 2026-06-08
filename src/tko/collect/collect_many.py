@@ -1,4 +1,5 @@
 from tko.collect.collect_single import CollectSingle
+from tko.config.run_settings import RunSettings
 from tko.i18n import t
 from tko.repository.repository_paths import RepositoryPaths
 from tko.util.rt import RT
@@ -55,7 +56,7 @@ class CollectMany:
 
 
     @staticmethod
-    def execute(git_dir_list: list[Path], json_path: str | None = None, csv_path: str | None = None, block_prefix: str | None = None):
+    def execute(rs: RunSettings, git_dir_list: list[Path], json_path: str | None = None, csv_path: str | None = None, block_prefix: str | None = None):
         git_dir_list = [git_dir for git_dir in git_dir_list if git_dir.is_dir()]
         common_prefix = CollectMany.find_common_prefix([str(folder.name) for folder in git_dir_list])
 
@@ -71,7 +72,7 @@ class CollectMany:
             tko_folder = tko_rep_folder_list[0]
             multiple_found = RT(t(CMD_COLLECT_MULTIPLE_REPOS_FOUND), "r") if len(tko_rep_folder_list) > 1 else RT()
             print(RT(f"{username: <{padding}}", "y" if multiple_found else "g") + t(CMD_COLLECT_RUNNING_IN, folder=tko_folder) + multiple_found)
-            output = CollectSingle.collect_to_json(tko_folder, daily=False, resume=True, game=False)
+            output = CollectSingle.collect_to_json(rs, tko_folder, daily=False, resume=True, game=False)
 
             try:
                 json_output: dict[str, Any] = json.loads(output) if output != "" else {}

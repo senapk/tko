@@ -1,7 +1,7 @@
 from __future__ import annotations
 from typing import Any
 from tko.config.app_settings import AppSettings
-from platformdirs import user_data_dir
+from tko.config.run_settings import RunSettings
 from pathlib import Path
 import yaml #type: ignore
 
@@ -10,6 +10,7 @@ from tko.i18n import Msg, t
 from tko.util.rt import RT
 from tko.widget.colors import Colors
 from tko.util.decoder import Decoder
+from tko.config.user_data import UserData
 
 
 _SETTINGS_GIT_LABEL_NOT_FOUND = Msg(
@@ -20,9 +21,13 @@ _SETTINGS_EMPTY_CONFIG_FILE = Msg(
     pt="Arquivo de configuração vazio: {path}",
     en="Empty config file: {path}",
 )
-_RESET_SETTINGS_PATH = Msg(
+_SETTINGS_PATH = Msg(
     pt="Arquivo global configuração:",
     en="Global settings file:",
+)
+_CACHE_PATH = Msg(
+    pt="Diretório global de cache:",
+    en="Global cache directory:",
 )
 _RESET_LANGUAGES_PATH = Msg(
     pt="Configurações de linguagem:",
@@ -33,16 +38,6 @@ _SETTINGS_REMOTE_SOURCES_REGISTERED = Msg(
     en="Registered remote task sources:",
 )
 
-
-def singleton(class_): # type: ignore
-    instances = {}
-    def getinstance(*args, **kwargs): # type: ignore
-        if class_ not in instances:
-            instances[class_] = class_(*args, **kwargs)
-        return instances[class_] # type: ignore
-    return getinstance # type: ignore
-
-@singleton
 class Settings:
     CFG_FILE = "settings.yaml"
     LANG_FILE = "programming-languages.toml"
@@ -61,10 +56,9 @@ class Settings:
         self.__gitrepos = "gitrepos"
         self.__appcfg = "appcfg"
         self.__colors = "colors"
-
-        self.package_name = 'tko'
         self.dict_alias_git: dict[str, str] = self.Defaults.alias_git.copy()  # Explicitly initialize as dict[str, str]
         self.app = AppSettings()
+        self.rs = RunSettings()
         self.__languages_settings: LanguagesSettings | None = None
         self.colors = Colors()
 
@@ -88,12 +82,10 @@ class Settings:
 
     def get_log_file(self) -> Path:
         return self.get_settings_dir() / self.LOG_FILE
-
+    
     def get_settings_dir(self) -> Path:
         if self.settings_dir is None:
-            self.settings_dir = Path(user_data_dir(self.package_name))
-        if not self.settings_dir.exists():
-            self.settings_dir.mkdir(parents=True, exist_ok=True)
+            self.settings_dir = UserData.settings_dir()
         return self.settings_dir
 
     def reset(self):
@@ -106,9 +98,7 @@ class Settings:
         sample_file = self.get_languages_sample()
         with open(sample_file, "w") as f:
             f.write(LanguagesSettings(self.get_languages_file()).build_file_sample())
-
         return self
-
 
     def set_alias_git(self, alias: str, git_url: str):
         self.dict_alias_git[alias] = git_url
@@ -172,17 +162,18 @@ class Settings:
 
     def __str__(self):
         output: list[str] = []
-        output.append(str(RT(t(_RESET_SETTINGS_PATH), "g")))
-        output.append("    " + self.get_settings_file().resolve().as_posix())
+        output.append(str(RT(t(_SETTINGS_PATH), "g")))
+        output.append("- " + self.get_settings_file().resolve().as_posix())
+        output.append(str(RT(t(_CACHE_PATH), "g")))
+        output.append("- " + UserData.global_cache_dir().resolve().as_posix())
         output.append(str(RT(t(_RESET_LANGUAGES_PATH), "g")))
-        output.append("    " + self.get_languages_file().resolve().as_posix())
-        output.append("")
+        output.append("- user  : " + self.get_languages_file().resolve().as_posix())
+        output.append("- sample: " + self.get_languages_sample().resolve().as_posix())
         
         output.append(str(RT(t(_SETTINGS_REMOTE_SOURCES_REGISTERED), "g")))
         max_alias = max([len(key) for key in self.dict_alias_git])
         for key in self.dict_alias_git:
             output.append("- @{} : {}".format(key.ljust(max_alias), self.dict_alias_git[key]))
-        output.append("")
         
         app_str = str(self.app)
-        return "\n".join(output) + "\n\n" + app_str
+        return "\n".join(output) + "\n" + app_str

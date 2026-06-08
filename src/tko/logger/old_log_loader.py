@@ -1,6 +1,7 @@
 import io
 from pathlib import Path
 
+from tko.config.run_settings import RunSettings
 from tko.logger.log_item_base import LogItemBase
 from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_move import LogItemMove, LogItemMoveMode
@@ -94,9 +95,9 @@ class TrackerLoader: # deprecated
         return output
 
 class OldLogLoader:
-    def __init__(self, rep_folder: Path):
+    def __init__(self, rep_folder: Path, rs: RunSettings):
         self.rep_folder: Path = rep_folder
-        self.paths = RepositoryPaths(rep_folder)
+        self.paths = RepositoryPaths(rep_folder, rs)
         self.base_dict: dict[dt.datetime, LogItemBase] = {}
 
         self.merge_old_log_into_base()

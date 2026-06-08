@@ -1,8 +1,8 @@
 import typer
 import json
 
-from tko.app_context import AppContext
 from tko.collect.collect_single import CollectParams
+from tko.config.settings import Settings
 
 app = typer.Typer(help="Collect evaluation data")
 
@@ -15,10 +15,8 @@ def collect_task(
     from tko.cli.common import load_repo
     from tko.cmds.cmd_task import CmdTask
     
-    app_ctx: AppContext = AppContext.load_from_context(ctx)
-    settings = app_ctx.settings
-    changedir = app_ctx.changedir
-    repo, _, _ = load_repo(changedir, force_update=False)
+    settings: Settings = ctx.obj
+    repo, _ = load_repo(settings.rs)
     if repo is None:
         return
         
@@ -40,11 +38,10 @@ def collect_repo(
 ):
     from tko.collect.collect_single import CollectSingle
     
-    app_ctx: AppContext = AppContext.load_from_context(ctx)
-    changedir = app_ctx.changedir
+    settings: Settings = ctx.obj
     
     params = CollectParams()
-    params.folder = changedir
+    params.folder = settings.rs.changedir
     params.width = width
     params.height = height
     params.daily = daily
@@ -55,7 +52,7 @@ def collect_repo(
     params.json_output = json_output
     params.colored = color
     
-    data = CollectSingle.collect(params)
+    data = CollectSingle.collect(settings.rs, params)
 
     if params.json_output:
         print(json.dumps(data.get_dict(), indent=4, ensure_ascii=False))

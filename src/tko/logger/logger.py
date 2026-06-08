@@ -1,4 +1,5 @@
 from __future__ import annotations
+from tko.config.run_settings import RunSettings
 from tko.logger.task_listener import TaskListener
 from tko.logger.daily_listener import DailyListener
 from tko.logger.log_history import LogHistory
@@ -9,10 +10,10 @@ import sys # type: ignore
 
 class Logger:
 
-    def __init__(self, rep_folder: Path):
+    def __init__(self, rep_folder: Path, rs: RunSettings):
         self.tasks = TaskListener()
         self.daily = DailyListener()
-        self.history = LogHistory(rep_folder, [self.tasks.handle_log_entry, self.daily.handle_entry_incoming])
+        self.history = LogHistory(rep_folder, rs, [self.tasks.handle_log_entry, self.daily.handle_entry_incoming])
     
     def store(self, action: LogItemBase):
         self.history.append_new_action(action)

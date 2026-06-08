@@ -1,4 +1,5 @@
 from __future__ import annotations
+from tko.config.run_settings import RunSettings
 from tko.logger.log_item_base import LogItemBase, LogItemBaseType
 from tko.logger.log_item_self import LogItemSelf
 from tko.logger.log_item_exec import LogItemExec
@@ -21,10 +22,10 @@ _LOGGER_LOG_FOLDER_NOT_DIR = Msg(
 
 class LogHistory:
 
-    def __init__(self, rep_folder: Path, listeners: list[Callable[[LogItemBase, bool], None]] | None = None):
+    def __init__(self, rep_folder: Path, rs: RunSettings, listeners: list[Callable[[LogItemBase, bool], None]] | None = None):
         if listeners is None:
             listeners = []
-        self.paths = RepositoryPaths(rep_folder)
+        self.paths = RepositoryPaths(rep_folder, rs)
         self.log_folder: Path = self.paths.log_folder
         self.listeners: list[Callable[[LogItemBase, bool], None]] = listeners
         self.entries: dict[str, LogItemBase] = {}

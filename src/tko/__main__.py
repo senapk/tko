@@ -10,7 +10,6 @@ import typer
 from icecream import ic  # type: ignore
 
 from tko.__init__ import __version__
-from tko.app_context import AppContext
 from tko.cli.cli_build import app as build_app
 from tko.cli.cli_class import app as class_app
 from tko.cli.cli_collect import app as collect_app
@@ -62,7 +61,7 @@ def main_callback(
     version: bool = typer.Option(False, "-v", "--version", help="Show version and exit"),
     mono: bool = typer.Option(False, "-m", "--mono", help="Disable colors"),
     debug: bool = typer.Option(False, "-D", "--debug", help="Enable debug mode"),
-    global_cache: bool = typer.Option(False, "-G", "--global-cache", help="Use global cache for remote URL sources"),
+    local_cache: bool = typer.Option(False, "-L", "--local-cache", help="Use local cache for remote URL sources"),
     update: bool = typer.Option(False, "-U", "--update", help="Force update remote URL sources"),
     offline: bool = typer.Option(False, "-O", "--offline", help="Disable any update attempts (Offline mode)"),
 ):
@@ -79,6 +78,12 @@ def main_callback(
 
     sett = Settings(settings)
     sett.load_settings()
+    sett.rs.debug_mode = debug
+    sett.rs.local_cache = local_cache
+    sett.rs.force_update = update
+    sett.rs.force_offline = offline
+    sett.rs.width = width
+
     if lang is not None:
         sett.app.ui_language = lang
         sett.save_settings()
@@ -87,27 +92,15 @@ def main_callback(
     if mono:
         RenderConfig.mode = RenderMode.PLAIN
 
-
     configure_loguru(sett.get_log_file())
     
     if debug:
         ic.configureOutput(includeContext=True, outputFunction=print)
-        ic.enable()
-        ic("Debug mode enabled")
         logger.level("DEBUG")
     else:
         ic.disable()
-        
 
-    ctx.ensure_object(dict)
-    ctx.obj = AppContext(
-        settings=sett,
-        changedir=changedir,
-        width=width,
-        global_cache=global_cache,
-        update=update,
-        offline=offline,
-    )
+    ctx.obj = sett
 
 
 def main():

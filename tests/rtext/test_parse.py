@@ -18,7 +18,7 @@ def test_simple_style():
 
 
 # ---------- reset ----------
-def test_reset():
+def test_reset4():
     t = RT.parse("[r]hello[.] world")
     assert t.plain() == "hello world"
     assert t.runs[0][0].fg == "r"

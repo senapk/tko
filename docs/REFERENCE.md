@@ -35,7 +35,7 @@ Opções globais úteis:
 - `-w, --width`: largura de terminal
 - `-m, --mono`: desativa cores
 - `-D, --debug`: ativa debug
-- `-G, --global-cache`: usa cache global para fontes remotas
+- `-L, --local-cache`: usa cache local para fontes remotas
 - `-U, --update`: força atualização de fontes remotas
 - `-O, --offline`: desativa tentativas de atualização
 

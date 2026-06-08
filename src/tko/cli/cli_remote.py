@@ -3,8 +3,8 @@ from typing import Optional
 
 import typer
 
-from tko.app_context import AppContext
 from tko.cli.common import load_repo
+from tko.config.settings import Settings
 from tko.i18n import Msg, t
 from tko.repository.remote_actions import RemoteActions
 
@@ -24,9 +24,8 @@ _CLI_REMOTE_CLEAR_WITH_QUEST_ERROR = Msg(
 
 @app.command("list", help="List remote task sources")
 def remote_list(ctx: typer.Context):
-    app_ctx: AppContext = AppContext.load_from_context(ctx)
-    settings = app_ctx.settings
-    repo, _, _ = load_repo(app_ctx.changedir, force_offline=True)
+    settings: Settings = ctx.obj
+    repo, _ = load_repo(settings.rs)
     if repo is None:
         return
     rep_actions = RemoteActions(settings, repo)
@@ -35,9 +34,8 @@ def remote_list(ctx: typer.Context):
 
 @app.command("rm", help="Remove a remote task source")
 def remote_rm(ctx: typer.Context, name: str = typer.Argument(..., help="Name of the remote to be removed")):
-    app_ctx: AppContext = AppContext.load_from_context(ctx)
-    settings = app_ctx.settings
-    repo, _, _ = load_repo(app_ctx.changedir, force_offline=True)
+    settings: Settings = ctx.obj
+    repo, _ = load_repo(settings.rs)
     if repo is None:
         return
     rep_actions = RemoteActions(settings, repo)
@@ -61,9 +59,8 @@ def remote_add(
     local_source_dir = target if not (default_git_alias or git_repository_url) else None
 
     try:
-        app_ctx: AppContext = AppContext.load_from_context(ctx)
-        settings = app_ctx.settings
-        repo, _, _ = load_repo(app_ctx.changedir, force_offline=True)
+        settings: Settings = ctx.obj
+        repo, _ = load_repo(settings.rs)
         if repo is None:
             return
         rep_actions = RemoteActions(settings, repo)
@@ -95,10 +92,8 @@ def remote_filter(
         logger.error(t(_CLI_REMOTE_CLEAR_WITH_QUEST_ERROR))
         return
 
-    app_ctx: AppContext = AppContext.load_from_context(ctx)
-    settings = app_ctx.settings
-    changedir = app_ctx.changedir
-    repo, _, _ = load_repo(changedir, force_offline=True)
+    settings: Settings = ctx.obj
+    repo, _ = load_repo(settings.rs)
     if repo is None:
         return
     rep_actions = RemoteActions(settings, repo)
@@ -112,10 +107,8 @@ def remote_set(
     target: Optional[str] = typer.Option(None, "--target", "-t", help="Set a new target for the remote source"),
     index: Optional[str] = typer.Option(None, "--index", "-i", help="Set a new index for the remote source"),
 ):
-    app_ctx: AppContext = AppContext.load_from_context(ctx)
-    settings = app_ctx.settings
-    changedir = app_ctx.changedir
-    repo, _, _ = load_repo(changedir, force_offline=True)
+    settings: Settings = ctx.obj
+    repo, _ = load_repo(settings.rs)
     if repo is None:
         return
     rep_actions = RemoteActions(settings, repo)

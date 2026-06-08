@@ -1,6 +1,7 @@
 import typer
 from pathlib import Path
 from typing import Optional
+from tko.config.settings import Settings
 from tko.i18n import Msg, t
 
 
@@ -98,7 +99,6 @@ def tool_rebase_links(
     from tko.util.decoder import Decoder
     from tko.util.github_url import GitHubUrl
     from tko.feno.link_rebase import LinkRebase
-    from tko.app_context import AppContext
 
     # Determine output filename and path
     if output is None:
@@ -115,8 +115,7 @@ def tool_rebase_links(
 
     if target.startswith("@"):
         alias: str = target[1:]
-        app_ctx: AppContext = AppContext.load_from_context(ctx)
-        settings = app_ctx.settings
+        settings: Settings = ctx.obj
         repo_url: str = settings.get_alias_git(alias)
         candidates: list[str] = _build_readme_candidates_from_repo_url(repo_url)
 

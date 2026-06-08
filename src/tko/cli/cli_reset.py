@@ -1,7 +1,6 @@
 import typer
-
-from tko.app_context import AppContext
 from tko.i18n import Msg, t
+from tko.config.settings import Settings
 
 
 _RESET_NO_REPO = Msg(
@@ -14,9 +13,8 @@ app = typer.Typer(help="Reset configuration")
 @app.command("cache", help="Clear configuration cache")
 def reset_cache(ctx: typer.Context):
     from tko.cli.common import load_repo
-    app_ctx: AppContext = AppContext.load_from_context(ctx)
-    changedir = app_ctx.changedir
-    repo, _, _ = load_repo(changedir)
+    settings: Settings = ctx.obj
+    repo, _ = load_repo(settings.rs)
     if repo is None:
         print(t(_RESET_NO_REPO))
         return
@@ -24,8 +22,7 @@ def reset_cache(ctx: typer.Context):
 
 @app.command("global", help="Reset global configuration to factory default")
 def reset_global(ctx: typer.Context):
-    app_ctx: AppContext = AppContext.load_from_context(ctx)
-    settings = app_ctx.settings
+    settings: Settings = ctx.obj    
     sp = settings.reset().save_settings()
     print(sp.get_settings_file())
 

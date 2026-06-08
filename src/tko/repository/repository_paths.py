@@ -1,5 +1,6 @@
 from pathlib import Path
-from platformdirs import user_cache_dir
+from tko.config.run_settings import RunSettings
+from tko.config.user_data import UserData
 
 class RepositoryPaths:
     CFG_FILE = "repository.yaml"
@@ -9,10 +10,10 @@ class RepositoryPaths:
     LOG_FOLDER = "log"
     CACHE_FOLDER = "cache"
     CONFIG_FOLDER = ".tko"
-    use_global_cache_folder: bool =  False # teacher tools, to avoid rewrite cache in student repos
 
-    def __init__(self, repo_dir: Path | str):
+    def __init__(self, repo_dir: Path | str, run_settings: RunSettings):
         self.root_dir: Path = Path(repo_dir) if isinstance(repo_dir, str) else repo_dir
+        self.run_settings = run_settings
 
     @staticmethod
     def __walk_to_root(start: Path):
@@ -49,10 +50,10 @@ class RepositoryPaths:
 
     @property
     def cache_folder(self) -> Path:
-        if RepositoryPaths.use_global_cache_folder:
-            return Path(user_cache_dir("tko")) / RepositoryPaths.CACHE_FOLDER
-        return self.root_dir / RepositoryPaths.CONFIG_FOLDER / RepositoryPaths.CACHE_FOLDER
-
+        if self.run_settings.local_cache:
+            return self.root_dir / RepositoryPaths.CONFIG_FOLDER / RepositoryPaths.CACHE_FOLDER
+        return UserData.global_cache_dir()
+        
     @property
     def config_folder(self) -> Path:
         return self.root_dir / RepositoryPaths.CONFIG_FOLDER
