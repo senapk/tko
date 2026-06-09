@@ -68,5 +68,3 @@ class GuiKeys:
     toggle_main = "\t"
     lock = "u"
     limite  = "l"
-    expand = ">"
-    collapse = "<"

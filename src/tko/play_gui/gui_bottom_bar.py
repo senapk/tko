@@ -13,7 +13,7 @@ class GuiBottomBar:
         self.action_resolver = action_resolver
 
     def show(self) -> None:
-        lines, cols = Fmt.get_size()
+        lines, cols = Fmt.get_lines_cols()
         self_color = "X"
         try:
             selected = self.tree.get_selected_throw()

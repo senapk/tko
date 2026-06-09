@@ -149,7 +149,7 @@ class TesterTopBar:
 
     def draw(self, state: TesterState) -> None:
         from tko.widget.fmt import Fmt
-        _, cols = Fmt.get_size()
+        _, cols = Fmt.get_lines_cols()
         size = 3 if self.wdir.has_tests else 1
         frame = Frame(0, 0).set_size(size, cols)
         if not self.wdir.has_tests:

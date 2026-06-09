@@ -36,7 +36,6 @@ class _PlayActionMsg:
 class PlayActions:
 
     
-
     def __init__(self, gui: Gui):
         self.app = gui.app
         self.settings = gui.settings
@@ -60,6 +59,7 @@ class PlayActions:
         if new_value != value:
             self.settings.app.panel_size_percent = new_value
             self.settings.save_settings()
+
 
     def reload(self):
         DraftsFinderCached.reset_cache()

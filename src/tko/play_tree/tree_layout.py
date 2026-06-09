@@ -2,48 +2,51 @@ from tko.game.game import Game
 from tko.config.flags import Flags
 from tko.play_tree.task_formatter import TaskFormatter
 from tko.play_tree.quest_formatter import QuestFormatter
+from typing import Callable
 
 
 class TreeLayout:
-    def __init__(self, task_formatter: TaskFormatter, quest_formatter: QuestFormatter):
+    def __init__(self, task_formatter: TaskFormatter, quest_formatter: QuestFormatter, game: Game, flags: Flags):
         self.task_formatter = task_formatter
         self.quest_formatter = quest_formatter
+        self.game = game
+        self.flags = flags
+        self.get_tree_size_fn: Callable[[], int] | None = None
+
         self.key_size_min = 20
         self.sentence_cut_min_size = 30
-        self.sentence_cut_max_size = 80
 
-        self.fixed_task_itens_size = 12
-        self.fixed_quest_itens_size = 10
-        
+        self.fixed_task_itens_size = 10
         self.use_full_key: bool = False
 
-        self.key_size: int = 0
-        self.sentence_cut_size: int = 0  # 0 if not calculated yet
+        self.__key_size: int | None = None
 
     def reset(self):
-        self.key_size = 0
-        self.sentence_cut_size = 0
+        self.__key_size = None
 
-    def calculate(self, game: Game, flags: Flags, expanded: set[str]):
-        if self.sentence_cut_size != 0:
-            return
+    @property
+    def key_size(self) -> int:
+        # if self.__key_size is None:
+        self.__calculate()
+        if self.__key_size is None:
+            return self.key_size_min
+        return self.__key_size
+    
+    @property
+    def sentence_cut_size(self) -> int:
+        if self.get_tree_size_fn is None:
+            return 100
+        size = self.get_tree_size_fn() - self.fixed_task_itens_size
+        if self.flags.show_time.is_true():
+            size -= 7
+        return size
+        
+    def __calculate(self):
+        game = self.game
         key_sizes: list[int] = []
-        sentence_cut: list[int] = []
 
         for q in game.quests.values():
             for t in q.get_tasks():
                 key = t.basic.full_key if self.use_full_key else t.basic.key
                 key_sizes.append(len(key))
-        self.key_size = max(key_sizes) if key_sizes else self.key_size_min
-
-        for q in game.quests.values():
-            sentence_cut.append(
-                len(self.quest_formatter.get_quest_full_title(q, flags.panel.is_skills())) + self.fixed_quest_itens_size
-            )
-            for t in q.get_tasks():
-                _full, _, _ = self.task_formatter.get_task_full_title(t, self.key_size)
-                sentence_cut.append(len(_full) + self.fixed_task_itens_size)
-
-        self.sentence_cut_size = max(max(sentence_cut), self.sentence_cut_min_size) if sentence_cut else self.sentence_cut_min_size
-        if self.sentence_cut_size > self.sentence_cut_max_size:
-            self.sentence_cut_size = self.sentence_cut_max_size
+        self.__key_size = max(key_sizes) if key_sizes else self.key_size_min

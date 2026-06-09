@@ -109,7 +109,7 @@ class Floating(FloatingABC):
             if c not in valid:
                 raise ValueError(t(_FLOATING_INVALID_ALIGN, align=c))
 
-        lines, cols = Fmt.get_size()
+        lines, cols = Fmt.get_lines_cols()
 
         x = (cols - dx) // 2
         if "<" in self.floating_align:

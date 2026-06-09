@@ -55,7 +55,7 @@ class CmdOpen:
         play.play()
 
     def list(self, show_all: bool, only_down: bool, show_quests: bool):
-        tree = TaskTree(self.settings, self.repo)
+        tree = TaskTree(self.settings, self.repo, None)
         if not show_quests:
             tree.layout.use_full_key = True
         tree.expand_all()

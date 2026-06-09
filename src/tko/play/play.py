@@ -18,6 +18,8 @@ from tko.play.play_actions import PlayActions
 from tko.play.flag_functors import FlagFunctor
 from tko.i18n import Msg, t
 from icecream import ic # type: ignore
+from tko.widget.fmt import Fmt
+from loguru import logger
 
 import curses
 
@@ -36,11 +38,17 @@ class Play:
         self.exit = False
         self.flags = repo.flags
         self.fman: FloatingManager = FloatingManager()
-        self.tree = TaskTree(self.settings, repo)
+        self.tree = TaskTree(self.settings, repo) # type: ignore
         self.gui = Gui(tree=self.tree, fman=self.fman)
         self.actions = PlayActions(self.gui)
         self.play_palette = PlayPalette(self.actions)
         self.loader = RepositoryConfig(repo)
+
+    def get_left_frame_size(self) -> int:
+        _, cols = Fmt.get_lines_cols()
+        left_width = int(cols * self.settings.app.panel_size_percent / 100)
+        logger.debug(f"Calculated left frame size: {left_width} (cols: {cols}, percent: {self.settings.app.panel_size_percent})")
+        return left_width
 
     def display_need_update(self):
         self.gui.set_need_update()
@@ -144,6 +152,7 @@ class Play:
         cman.add_str(GuiKeys.palette, self.play_palette.command_pallete)
         cman.add_str(GuiKeys.panel_resize_inc, lambda: self.actions.resize_panels(5))
         cman.add_str(GuiKeys.panel_resize_dec, lambda: self.actions.resize_panels(-5))
+ 
 
         return cman
 
@@ -187,6 +196,7 @@ class Play:
         scr.keypad(True)
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global
+        self.tree.layout.get_tree_size_fn = lambda: self.get_left_frame_size()
 
         while not self.exit:
             self.tree.update()

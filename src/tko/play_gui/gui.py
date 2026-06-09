@@ -82,7 +82,7 @@ class Gui:
     def show_items(self) -> None:
         border_color = self._get_frame_color()
         Fmt.clear()
-        lines, cols = Fmt.get_size()
+        lines, cols = Fmt.get_lines_cols()
         main_sx = cols
         main_sy = lines
 

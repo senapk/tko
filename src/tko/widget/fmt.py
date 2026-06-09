@@ -113,7 +113,7 @@ class Fmt:
         try:
             stdscr.addstr(y, x, text)
         except curses.error as _e:
-            lines, cols = Fmt.get_size()
+            lines, cols = Fmt.get_lines_cols()
             if y == lines - 1:
                 if x + len(text) <= cols:
                     pass
@@ -167,7 +167,7 @@ class Fmt:
         else:
             data = sentence
 
-        lines, cols = Fmt.get_size()
+        lines, cols = Fmt.get_lines_cols()
         text_lines = Fmt.cut_box(y, x, lines, cols, data)
         token_list = Fmt.split_in_tokens(text_lines)
         for token_pos in token_list:
@@ -206,7 +206,7 @@ class Fmt:
         Fmt.get_screen().refresh()
 
     @staticmethod
-    def get_size() -> tuple[int, int]:
+    def get_lines_cols() -> tuple[int, int]:
         return Fmt.get_screen().getmaxyx()
 
 

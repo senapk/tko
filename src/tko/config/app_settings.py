@@ -31,7 +31,6 @@ class AppSettings:
     last_tko_check_update: str = ""
     last_version: str = ""
     panel_size_percent: float = 60.0
-    tasktree_size = 50
 
     keys: dict[AppKeys, int] = field(default_factory=lambda: {
         AppKeys.LEFT: curses.KEY_LEFT,

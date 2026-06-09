@@ -89,8 +89,8 @@ class GuiSkillsBar:
             length=dx - (self.target_cut + self.available_cut + self.obtained_cut + 3 + self.name_size + 3),
             styles=("Y", "G", "")
         )
-        text = RT(f"{skill[:self.name_size]:<{self.name_size}}:{round(obtained_value):>{self.obtained_cut}}/{round(target100_value):>{self.target_cut}}/{round(available_value):>{self.available_cut}}", "W")
-        return skill_bar + " " + text
+        text = RT(f"{skill[:self.name_size]:<{self.name_size}}:{round(obtained_value):>{self.obtained_cut}}/{round(target100_value):>{self.target_cut}}/{round(available_value):>{self.available_cut}}", "X")
+        return text + " " + skill_bar
 
     def get_entry_perc(self, resume: SkillResume, skill: str, value: float, dx: int, cut: int, name_size: int) -> RT:
         obtained_value = round(resume.obtained.get(skill, 0))

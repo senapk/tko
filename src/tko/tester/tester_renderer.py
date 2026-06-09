@@ -44,7 +44,7 @@ class TesterRenderer:
 
     @staticmethod
     def print_centered_image(image: str, color: str, clear: bool = False, align: str = ".") -> None:
-        dy, dx = Fmt.get_size()
+        dy, dx = Fmt.get_lines_cols()
         lines = image.splitlines()[1:]
         init_y = 4
         if align == "v":
@@ -93,7 +93,7 @@ class TesterRenderer:
         return cmds
 
     def show_bottom_line(self, state: TesterState) -> None:
-        lines, cols = Fmt.get_size()
+        lines, cols = Fmt.get_lines_cols()
         out = RT.join(self.make_bottom_line(state), RT(" "))
         Fmt.write(lines - 1, 0, out.center(cols, " "))
 
@@ -103,7 +103,7 @@ class TesterRenderer:
 
     def draw_main(self, state: TesterState) -> None:
         unit = state.get_focused_unit(self.wdir)
-        lines, cols = Fmt.get_size()
+        lines, cols = Fmt.get_lines_cols()
         if self.wdir.has_tests:
             y_out = 2
             state.space = lines - 4

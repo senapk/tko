@@ -16,6 +16,7 @@ from tko.config.settings import Settings
 from tko.repository.repository import Repository
 from tko.util.rt import RT
 from tko.util.to_asc import SearchAsc
+from typing import Callable
 
 
 class TaskTree:
@@ -30,7 +31,7 @@ class TaskTree:
         self.filter_policy = TreeFilterPolicy(self.task_formatter)
         self.visibility_service = TreeVisibilityService()
         self.presentation_service = TreePresentationService()
-        self.layout = TreeLayout(self.task_formatter, self.quest_formatter)
+        self.layout = TreeLayout(self.task_formatter, self.quest_formatter, self.game, repo.flags)
         self.builder = TreeBuilder(self.filter_policy, self.visibility_service, self.presentation_service)
         self.renderer = TreeRenderer(
             self.task_formatter,
@@ -96,7 +97,6 @@ class TaskTree:
             inbox_mode=self.repo.flags.task_view_mode.is_inbox() and not force_view_all,
             search_text=self.state.search
         )
-        self.layout.calculate(self.game, self.repo.flags, self.state.expanded)
         self.items = self.builder.build(self.game, self.state, tree_filter)
         self.selection.ensure_valid_selection(self.items)
 

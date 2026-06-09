@@ -156,7 +156,7 @@ class Frame:
         return self
 
     def write(self, y: int, x: int, sentence: RT) -> bool:
-        lines, cols = Fmt.get_size()
+        lines, cols = Fmt.get_lines_cols()
 
         x_min = max(-1, self._x)
         y_min = max(-1, self._y)
