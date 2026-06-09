@@ -23,7 +23,11 @@ class FakeRepo:
     def __init__(self, root: Path):
         self.root = root
         self.saved_source = None
-        self.data = SimpleNamespace(lang="", set_remote=self._set_source)
+        self.data = SimpleNamespace(
+            lang="",
+            set_remote=self._set_source,
+            audit=SimpleNamespace(enabled=False),
+        )
         self.paths = SimpleNamespace(cache_folder=root / ".tko" / "cache")
 
     def _set_source(self, source: FakeSource):
@@ -144,7 +148,13 @@ def test_execute_sets_language_recreates_cache_and_saves_config(monkeypatch: Mon
         fake_check_lang_in_text_mode,
     )
 
-    starter = RepositoryStarter(settings=make_settings(tmp_path), language="py", skip_add_remote=True, force_location=True)
+    starter = RepositoryStarter(
+        settings=make_settings(tmp_path),
+        language="py",
+        skip_add_remote=True,
+        force_location=True,
+        audit_enabled=True,
+    )
     repo.paths.cache_folder.mkdir(parents=True, exist_ok=True)
 
     with Console.capture() as _:
@@ -156,6 +166,7 @@ def test_execute_sets_language_recreates_cache_and_saves_config(monkeypatch: Mon
     assert created_folders == [tmp_path]
     assert calls["saved"] is True
     assert calls["language_prompt"] is True
+    assert repo.data.audit.enabled is True
 
 
 

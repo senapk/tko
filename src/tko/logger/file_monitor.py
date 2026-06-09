@@ -2,6 +2,7 @@ from pathlib import Path
 import threading
 import time
 from datetime import datetime
+from typing import Callable
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler, FileSystemEvent
 from tko.logger.logger import Logger
@@ -39,7 +40,8 @@ class FileMonitor:
         sources_dir_list: dict[Path, str],
         ignore_patterns: list[str] | None, 
         second_interval: int, 
-        logger: Logger
+        logger: Logger,
+        on_flush_events: Callable[[dict[str, list[Path]], datetime], None] | None = None,
     ) -> None:
         self.root_directory: Path = root_directory
         self.sources_dir_list: dict[Path, str] = {s.resolve(): source_name for s, source_name in sources_dir_list.items()}
@@ -47,6 +49,7 @@ class FileMonitor:
         self.ignore_patterns: list[str] = ignore_patterns or []
         self.seconds_interval: int = second_interval
         self.logger: Logger = logger
+        self.on_flush_events = on_flush_events
         self._last_update: datetime = datetime.now()
         self._observer = Observer()
         self._thread: threading.Thread | None = None
@@ -70,16 +73,22 @@ class FileMonitor:
             if (now - self._last_update).total_seconds() < self.seconds_interval:
                 return
             self._last_update = now
+            task_files: dict[str, list[Path]] = {}
             for path, stamp in self.history.items():
                 full_key = self.find_source_key_task_key(path)
                 if full_key is None:
                     continue
+                if full_key not in task_files:
+                    task_files[full_key] = []
+                task_files[full_key].append(path)
                 self.logger.store(
                     LogItemMove()
                     .set_datetime(stamp)
                     .set_mode(LogItemMoveMode.EDIT)
                     .set_key(full_key)
                 )
+            if self.on_flush_events is not None and task_files:
+                self.on_flush_events(task_files, now)
             self.history.clear()
             
 

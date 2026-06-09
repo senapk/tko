@@ -52,6 +52,7 @@ def test_load_from_dict_loads_simple_fields_and_sources(tmp_path: Path) -> None:
         "version": "0.2",
         "expanded": ["q1", "q2"],
         "flags": {"show_time": "true"},
+        "audit": {"enabled": True, "interval_seconds": 45},
         "lang": "py",
         "selected": "repo@task",
         "selected_index": 4,
@@ -71,6 +72,8 @@ def test_load_from_dict_loads_simple_fields_and_sources(tmp_path: Path) -> None:
     assert data.version == "0.2"
     assert data.expanded == ["q1", "q2"]
     assert data.flags == {"show_time": "true"}
+    assert data.audit.enabled is True
+    assert data.audit.interval_seconds == 45
     assert data.lang == "py"
     assert data.selected == "repo@task"
     assert data.selected_index == 4
@@ -83,9 +86,11 @@ def test_load_from_dict_ignores_wrong_types_and_does_not_raise(tmp_path: Path) -
     _ = tmp_path
     data = RepositoryData()
     data.version = "1.0"
-    data.load_from_dict({"version": 123, "sources": "invalid"})
+    data.load_from_dict({"version": 123, "sources": "invalid", "audit": {"enabled": "true", "interval_seconds": 0}})
 
     assert data.version == "1.0"
+    assert data.audit.enabled is False
+    assert data.audit.interval_seconds == 60
     assert data.get_remote("sandbox") is None
 
 
@@ -97,6 +102,8 @@ def test_save_to_dict_exports_current_state(tmp_path: Path) -> None:
     data.version = "0.2"
     data.expanded = ["q1"]
     data.flags = {"panel": "logs"}
+    data.audit.enabled = True
+    data.audit.interval_seconds = 30
     data.lang = "cpp"
     data.selected = "disc@task1"
     data.selected_index = 2
@@ -106,6 +113,7 @@ def test_save_to_dict_exports_current_state(tmp_path: Path) -> None:
     assert saved["version"] == "0.2"
     assert saved["expanded"] == ["q1"]
     assert saved["flags"] == {"panel": "logs"}
+    assert saved["audit"] == {"enabled": True, "interval_seconds": 30}
     assert saved["lang"] == "cpp"
     assert saved["selected"] == "disc@task1"
     assert saved["selected_index"] == 2

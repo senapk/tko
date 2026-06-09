@@ -78,10 +78,11 @@ _WITCH_REPO = Msg(
 )
 
 class RepositoryStarter:
-    def __init__(self, settings: Settings, language: str | None, skip_add_remote: bool, force_location: bool = False):
+    def __init__(self, settings: Settings, language: str | None, skip_add_remote: bool, force_location: bool = False, audit_enabled: bool = False):
         self.settings = settings
         self.skip = skip_add_remote
         self.force_location = force_location
+        self.audit_enabled = audit_enabled
         self.folder: Path = settings.rs.changedir
         self.language = language
 
@@ -97,6 +98,8 @@ class RepositoryStarter:
         
         if not self.skip:
             self.ask_about_default_remotes()
+
+        self.repo.data.audit.enabled = self.audit_enabled
 
         RepositoryConfig(repo).save()
         Console.print(_REPO_STARTER_OPEN_HINT)

@@ -111,6 +111,7 @@ Repositórios de referência:
 - [Marcadores e tipos de atividades](wiki/game/tasks.md)
 - [Criando tarefas e testes](wiki/Criando-Tarefas-e-Testes.md)
 - [Gamificação e progressão](wiki/Gamificacao-e-Progressao.md)
+- [Relizando provas com modo auditoria](wiki/audit.md)
 
 ## Uso pelos desenvolvedores
 

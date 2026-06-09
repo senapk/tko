@@ -19,7 +19,7 @@ class UnitRunner:
         if timeout == 0:
             timeout = None
 
-        return_code, stdout, _ = Runner.subprocess_run(
+        return_code, stdout, stderr = Runner.subprocess_run(
             cmd = cmd, 
             input_data = unit.input,
             timeout = timeout, 
@@ -28,7 +28,7 @@ class UnitRunner:
         if return_code != 0:
             # Keep execution errors stable across environments by avoiding
             # shell/runtime specific stderr noise in snapshot comparisons.
-            unit.set_received(Runner.decode_code(return_code))
+            unit.set_received(f"{Runner.decode_code(return_code)}\n{stdout}\n{stderr}")
             return ExecutionResult.EXECUTION_ERROR
         unit.set_received(stdout)
         if unit.get_received() == unit.get_expected():

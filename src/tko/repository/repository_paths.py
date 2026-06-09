@@ -7,6 +7,7 @@ class RepositoryPaths:
     OLD_HISTORY_FILE = "history.csv"
     TASK_LOG_FILE = "task_log.csv"
     TRACK_FOLDER = "track"
+    AUDIT_FOLDER = "audit"
     LOG_FOLDER = "log"
     CACHE_FOLDER = "cache"
     CONFIG_FOLDER = ".tko"
@@ -49,6 +50,10 @@ class RepositoryPaths:
         return self.root_dir / RepositoryPaths.CONFIG_FOLDER / RepositoryPaths.LOG_FOLDER
 
     @property
+    def audit_folder(self) -> Path:
+        return self.root_dir / RepositoryPaths.CONFIG_FOLDER / RepositoryPaths.AUDIT_FOLDER
+
+    @property
     def cache_folder(self) -> Path:
         if self.run_settings.local_cache:
             return self.root_dir / RepositoryPaths.CONFIG_FOLDER / RepositoryPaths.CACHE_FOLDER
@@ -72,3 +77,6 @@ class RepositoryPaths:
 
     def get_track_task_folder(self, label: str) -> Path:
         return self.root_dir / RepositoryPaths.CONFIG_FOLDER / RepositoryPaths.TRACK_FOLDER / label
+
+    def get_audit_task_folder(self, label: str) -> Path:
+        return self.root_dir / RepositoryPaths.CONFIG_FOLDER / RepositoryPaths.AUDIT_FOLDER / label

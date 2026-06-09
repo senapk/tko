@@ -51,8 +51,10 @@ def test_path_helpers_return_expected_locations(tmp_path: Path):
 
     assert paths.root_dir == tmp_path
     assert paths.track_folder == tmp_path / ".tko" / "track"
+    assert paths.audit_folder == tmp_path / ".tko" / "audit"
     assert paths.log_folder == tmp_path / ".tko" / "log"
     assert paths.get_track_task_folder("repo@task") == tmp_path / ".tko" / "track" / "repo@task"
+    assert paths.get_audit_task_folder("repo@task") == tmp_path / ".tko" / "audit" / "repo@task"
     assert paths.config_folder == tmp_path / ".tko"
     assert paths.config_file == tmp_path / ".tko" / "repository.yaml"
     assert paths.config_backup_file == tmp_path / ".tko" / "repository.yaml.backup"

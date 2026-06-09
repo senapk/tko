@@ -9,6 +9,11 @@ blue=$'\033[34m'
 reset=$'\033[0m'
 
 build_snapshot() {
+  if (( $# > 0 )); then
+    printf '%s\n' "$@" > "$index_file"
+    return 0
+  fi
+
   find . -type f | sort > "$index_file"
 }
 
@@ -42,7 +47,7 @@ extract_epoch_from_snapshot_name() {
   local stamp
 
   base_name="$(basename -- "$file_path")"
-  if [[ "$base_name" =~ ^([0-9]{4})-([0-9]{2})-([0-9]{2})_([0-9]{2})-([0-9]{2})-([0-9]{2})__ ]]; then
+  if [[ "$base_name" =~ ^([0-9]{4})-([0-9]{2})-([0-9]{2})_([0-9]{2})-([0-9]{2})-([0-9]{2})_ ]]; then
     yyyy="${BASH_REMATCH[1]}"
     mm="${BASH_REMATCH[2]}"
     dd="${BASH_REMATCH[3]}"
@@ -156,7 +161,7 @@ render_preview() {
 }
 
 run_fzf() {
-  build_snapshot
+  build_snapshot "$@"
 
   nl -ba "$index_file" | \
     fzf \
@@ -184,7 +189,7 @@ main() {
     return 0
   fi
 
-  run_fzf
+  run_fzf "$@"
 }
 
 main "$@"

@@ -1,6 +1,7 @@
 import json
 from diff_match_patch import diff_match_patch # type: ignore
 import os
+from pathlib import Path
 
 class PatchInfo:
     def __init__(self, label: str, content: str, lines: int | None = None):
@@ -20,10 +21,10 @@ class PatchHistory:
         # the last element is the integral last version
         # all the other elements are patches to be applied
         self.patches: list[PatchInfo] = [] 
-        self.json_file: str | None = None
+        self.json_file: Path | None = None
 
-    def set_json_file(self, path: str):
-        self.json_file = path
+    def set_json_file(self, path: str | Path):
+        self.json_file = Path(path)
         return self
 
     def load_json(self):
