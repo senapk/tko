@@ -35,7 +35,7 @@ class Compare:
     @staticmethod
     def list(capsys: pytest.CaptureFixture[str], file: str, cmd_list: list[str]):
         runner = CliRunner()
-        full_cmd = cmd_list if "--lang" in cmd_list else ["--lang", "pt-BR", *cmd_list]
+        full_cmd = cmd_list if "--lang" in cmd_list else ["--lang", "pt", *cmd_list]
         result = runner.invoke(app, full_cmd)
         if result.exception:
             raise result.exception

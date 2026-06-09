@@ -58,6 +58,7 @@ def test_repo_and_lock_paths_are_derived_from_url(tmp_path: Path) -> None:
 
 def test_clear_cache_removes_contents_and_recreates_folder(tmp_path: Path) -> None:
     cache = GitCache(tmp_path / "cache")
+    cache.cache_dir.mkdir(parents=True)
     stale_file = cache.cache_dir / "old.txt"
     stale_file.write_text("stale", encoding="utf-8")
 
@@ -121,9 +122,10 @@ def test_get_repo_dir_updates_when_repository_is_expired(monkeypatch: MonkeyPatc
     monkeypatch.setattr(cache, "_acquire_lock", no_lock)
     monkeypatch.setattr(cache, "_is_expired", always_true)
 
-    def fake_update(repo_path: Path) -> None:
+    def fake_update(repo_path: Path) -> bool:
         _ = repo_path
         called["update"] = True
+        return True
 
     monkeypatch.setattr(cache, "_update", fake_update)
 
@@ -143,9 +145,10 @@ def test_get_repo_dir_always_mode_updates_once_per_repo(monkeypatch: MonkeyPatch
     monkeypatch.setattr(cache, "_acquire_lock", no_lock)
     monkeypatch.setattr(cache, "_is_expired", always_false)
 
-    def fake_update(repo_path: Path) -> None:
-        cache.updated[str(repo_path)] = True
+    def fake_update(repo_path: Path) -> bool:
+        _ = repo_path
         calls["count"] += 1
+        return True
 
     monkeypatch.setattr(cache, "_update", fake_update)
 
@@ -167,8 +170,9 @@ def test_get_repo_dir_reclones_when_update_fails(monkeypatch: MonkeyPatch, tmp_p
     monkeypatch.setattr(cache, "_acquire_lock", no_lock)
     monkeypatch.setattr(cache, "_is_expired", always_true)
 
-    def fake_update(repo_path: Path) -> None:
-        raise subprocess.CalledProcessError(returncode=1, cmd=["git", "fetch"])
+    def fake_update(repo_path: Path) -> bool:
+        _ = repo_path
+        return False
 
     def fake_clone(clone_url: str, clone_path: Path) -> bool:
         _ = clone_url
@@ -182,4 +186,5 @@ def test_get_repo_dir_reclones_when_update_fails(monkeypatch: MonkeyPatch, tmp_p
     result = cache.get_remote_dir(url)
 
     assert result == repo
-    assert calls["clone"] == 1
+    assert calls["clone"] == 0
+    assert url in cache.avoid

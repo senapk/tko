@@ -15,10 +15,10 @@ from tko.repository.remote_data import SourceType
 class FakeGitCache:
     def __init__(self, repo_dir: Path | None):
         self.repo_dir = repo_dir
-        self.calls: list[tuple[str, bool]] = []
+        self.calls: list[str] = []
 
-    def get_remote_dir(self, url: str, verbose: bool) -> Path | None:
-        self.calls.append((url, verbose))
+    def get_remote_dir(self, url: str) -> Path | None:
+        self.calls.append(url)
         return self.repo_dir
 
 
@@ -60,7 +60,7 @@ def test_remote_path_source_dir_for_git_source_uses_git_cache(tmp_path: Path) ->
     source_dir = remote.path.source_dir
 
     assert source_dir == (tmp_path / "cache" / "repo")
-    assert cache.calls == [("https://example.com/repo.git", False)]
+    assert cache.calls == ["https://example.com/repo.git"]
 
 
 def test_remote_path_work_dir_depends_on_editable_flag(tmp_path: Path) -> None:
