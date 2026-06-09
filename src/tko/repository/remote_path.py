@@ -25,7 +25,7 @@ class RemotePath:
     @property
     def source_dir(self) -> Path | None:
         if self.data.source_type == SourceType.GIT_SOURCE:
-            return self.git_cache.get_remote_dir(self.data.target, verbose=False)
+            return self.git_cache.get_remote_dir(self.data.target)
         path = Path(self.data.target)
         if path.is_absolute():
             return path.resolve()

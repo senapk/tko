@@ -39,5 +39,5 @@ class RepositoryBuilder:
             from tko.repository.repository_config import RepositoryConfig
             from tko.repository.game_coordinator import GameCoordinator
             RepositoryConfig(repo).load()
-            GameCoordinator(repo).load_game(verbose=self._verbose)
+            GameCoordinator(repo).load_game()
         return repo, root_dir

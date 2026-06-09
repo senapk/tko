@@ -45,46 +45,48 @@ _GAME_BUILDER_NO_QUEST_TITLE = Msg(
 
 
 class GameBuilder:
-    def __init__(self, remote: Remote, verbose: bool):
+    def __init__(self, remote: Remote):
         self.remote: Remote = remote
         self.ordered_quests: list[str] = []  # ordered quests keys
         self.quests: dict[str, Quest] = {}
         self.active_quest: Quest | None = None
         self.interactive: bool = False
-        self.verbose: bool = verbose
 
     def set_interactive(self, interactive: bool):
         self.interactive = interactive
         return self
 
-    def build_from(self, language: str):
+    def build_from(self, language: str) -> bool:
         try:
             filename: Path = self.remote.path.index_file
-            if self.verbose and not self.remote.is_sandbox and not filename.exists():
-                logger.exception(t(_GAME_BUILDER_README_FETCH_ERROR, name=self.remote.data.name))
+            if not self.remote.is_sandbox and not filename.exists():
+                logger.warning(t(_GAME_BUILDER_README_FETCH_ERROR, name=self.remote.data.name))
+                return False
         except ValueError:
-            if self.verbose and not self.remote.is_sandbox:
-                logger.exception(t(_GAME_BUILDER_SOURCE_NO_ORIGIN_DIR, name=self.remote.data.name))
-            return self
+            if not self.remote.is_sandbox:
+                logger.warning(t(_GAME_BUILDER_SOURCE_NO_ORIGIN_DIR, name=self.remote.data.name))
+            return False
         self.__ensure_sandbox_readme_fixed(filename)
-        content: str = self.load_content(filename)
+        ok, content = self.load_content(filename)
+        if not ok:
+            return False
         self.__parse_file_content(content)
         quest_filters = self.remote.data.quest_filters
         self.__remove_empty_and_other_language_and_filtered(language, quest_filters)
         self.__calculate_total_xp()
         self.__create_requirements_pointers()
         self.__create_cross_references()
-        return self
+        return True
 
-    def load_content(self, filename: Path) -> str:
+    def load_content(self, filename: Path) -> tuple[bool, str]:
         content: str = ""
         if not filename.exists():
             if not self.remote.is_sandbox:
-                if self.verbose:
-                    logger.warning(t(_GAME_BUILDER_SOURCE_NOT_FOUND, filename=filename, name=self.remote.data.name))
+                logger.warning(t(_GAME_BUILDER_SOURCE_NOT_FOUND, filename=filename, name=self.remote.data.name))
+                return False, content
         else:
             content = Decoder.load(filename)
-        return content
+        return True, content
 
     def __ensure_sandbox_readme_fixed(self, filename: Path):
         if not self.remote.is_sandbox:
@@ -92,9 +94,6 @@ class GameBuilder:
         if not filename.parent.exists():
             return
         if not filename.exists():
-            # print(f"Aviso: fonte {filename} não encontrada no source {self.source.name}, criando arquivo")
-            # if self.verbose:
-            #     logger.warning(t(_GAME_BUILDER_SOURCE_NOT_FOUND_CREATING, filename=filename, name=self.remote.data.name))
             filename.parent.mkdir(parents=True, exist_ok=True)
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(f"# {self.remote.data.name}\n\n")
@@ -143,16 +142,15 @@ class GameBuilder:
                     q.requirements.requires_ptr.append(quests[r])
                     quests[r].requirements.required_by_ptr.append(q)
                 else:
-                    if self.verbose:
-                        logger.warning(
-                            t(
-                                _GAME_BUILDER_QUEST_REQUIRES_MISSING,
-                                filename=filename,
-                                line=q.source.line_number,
-                                quest=str(q),
-                                required=r,
-                            )
+                    logger.warning(
+                        t(
+                            _GAME_BUILDER_QUEST_REQUIRES_MISSING,
+                            filename=filename,
+                            line=q.source.line_number,
+                            quest=str(q),
+                            required=r,
                         )
+                    )
                     exit(1)
 
     def __parse_file_content(self, content: str):
@@ -161,15 +159,14 @@ class GameBuilder:
         editable_source: bool = self.remote.data.is_editable
         source_dir_root: Path | None = self.remote.path.source_dir
         if source_dir_root is None:
-            if self.verbose:
-                logger.warning(t(_GAME_BUILDER_SOURCE_NO_ORIGIN_DIR, name=alias))
+            logger.warning(t(_GAME_BUILDER_SOURCE_NO_ORIGIN_DIR, name=alias))
             return
         git_url: str | None = self.remote.data.git_url
 
         try:
             filename = self.remote.path.index_file
         except ValueError:
-            if self.verbose and not self.remote.is_sandbox:
+            if not self.remote.is_sandbox:
                 logger.exception(t(_GAME_BUILDER_INDEX_FETCH_ERROR, name=alias))
             return
         for line_num, line in enumerate(lines):

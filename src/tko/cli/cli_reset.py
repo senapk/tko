@@ -14,7 +14,7 @@ app = typer.Typer(help="Reset configuration")
 def reset_cache(ctx: typer.Context):
     from tko.cli.common import load_repo
     settings: Settings = ctx.obj
-    repo, _ = load_repo(settings.rs)
+    repo, _ = load_repo(settings.rs, auto_load=False)
     if repo is None:
         print(t(_RESET_NO_REPO))
         return

@@ -8,7 +8,7 @@ from tko.logger.logger import Logger
 from tko.repository.repository_paths import RepositoryPaths
 from icecream import ic # type: ignore
 from datetime import timedelta
-from tko.repository.git_cache import GitCache, UpdateMode
+from tko.repository.git_cache import GitCache
 from tko.config.flags import Flags
 from tko.game.task import Task
 
@@ -26,14 +26,14 @@ class Repository:
         "*/.venv/*",
     ]
 
-    def __init__(self, folder: Path, rs: RunSettings, update_mode: UpdateMode = UpdateMode.IF_OLDER, recursive_search: bool = True):
+    def __init__(self, folder: Path, rs: RunSettings, recursive_search: bool = True):
         rep_folder: Path = folder
         if recursive_search:
             recursive_folder = RepositoryPaths.rec_search_for_repo_parents(folder)
             if recursive_folder is not None:
                 rep_folder = recursive_folder
         self.paths = RepositoryPaths(rep_folder, rs)
-        self.git_cache = GitCache(cache_dir=self.paths.cache_folder, max_age=timedelta(seconds=self.cache_time_for_remote_source), update_mode=update_mode)
+        self.git_cache = GitCache(cache_dir=self.paths.cache_folder, max_age=timedelta(seconds=self.cache_time_for_remote_source), update_mode=rs.update_mode)
         self.data: RepositoryData = RepositoryData()
         self.game = Game()
         self.flags = Flags()

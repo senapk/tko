@@ -11,7 +11,6 @@ import shutil
 import enum
 from tko.i18n import Msg, t
 
-
 _GIT_CACHE_CLEARING = Msg(
     pt="Limpando cache git em {cache_dir}...",
     en="Clearing git cache at {cache_dir}...",
@@ -21,16 +20,16 @@ _GIT_CACHE_CLONING = Msg(
     en="Repository not found. Cloning {url} into cache...",
 )
 _GIT_CACHE_CLONE_FAILED = Msg(
-    pt="Falha ao clonar {url}. Removendo diretório de cache...",
-    en="Failed to clone {url}. Removing cache directory...",
+    pt="Falha ao clonar.",
+    en="Failed to clone.",
 )
 _GIT_CACHE_UPDATING = Msg(
     pt="Atualizando cache para {url}...",
     en="Updating cache for {url}...",
 )
-_GIT_CACHE_UPDATE_FAILED_RECLONE = Msg(
-    pt="Falha ao atualizar cache para {url}. Use 'tko reset cache' se os problemas persistirem.",
-    en="Failed to update cache for {url}. Use 'tko reset cache' if problems persist.",
+_GIT_CACHE_UPDATE_FAILED_UPDATE = Msg(
+    pt="Falha ao atualizar cache para {url}. Use 'tko reset cache' se estiver com problemas.",
+    en="Failed to update cache for {url}. Use 'tko reset cache' if you are having issues.",
 )
 
 class UpdateMode(enum.Enum):
@@ -40,10 +39,11 @@ class UpdateMode(enum.Enum):
 
 class GitCache:
     def __init__(self, cache_dir: str | Path, max_age: timedelta = timedelta(hours=1), update_mode: UpdateMode = UpdateMode.IF_OLDER) -> None:
+        logger.debug(f"Initializing GitCache with cache_dir={cache_dir}, update_mode={update_mode}")
         self.cache_dir: Path = Path(cache_dir)
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.update_mode: UpdateMode = update_mode
         self.updated: dict[str, bool] = {}
+        self.avoid: dict[str, bool] = {} # repos that failed to update, to avoid retrying them in the same session
         self.max_age: timedelta = max_age
 
     def clear_cache(self):
@@ -79,15 +79,19 @@ class GitCache:
                 url,
                 str(path),
             )
+            self._git("fetch", "--prune", "origin", cwd=path)
             return True
         except subprocess.CalledProcessError as _:
             return False
 
-    def _update(self, repo: Path) -> None:
-        self._git("fetch", "--prune", "origin", cwd=repo)
-        self._git("reset", "--hard", "origin/HEAD", cwd=repo)
-        self._git("clean", "-fd", cwd=repo)
-        self.updated[str(repo)] = True
+    def _update(self, repo: Path) -> bool:
+        try:
+            self._git("fetch", "--prune", "origin", cwd=repo)
+            self._git("reset", "--hard", "origin/HEAD", cwd=repo)
+            self._git("clean", "-fd", cwd=repo)
+            return True
+        except subprocess.CalledProcessError as _:
+            return False
 
     def _is_expired(self, repo: Path) -> bool:
         fetch_head: Path = repo / ".git" / "FETCH_HEAD"
@@ -101,29 +105,45 @@ class GitCache:
     def _acquire_lock(self, lock_path: Path):
         return FileLock(str(lock_path))
 
-    def get_remote_dir(self, url: str, verbose: bool) -> Path | None:
-        repo: Path = self._repo_dir(url)
-        lock_path: Path = self._lock_path(repo)
+    def get_remote_dir(self, url: str) -> Path | None:
+        target_path: Path = self._repo_dir(url)
+        if url in self.avoid:
+            logger.debug(f"Skipping cache for {url} due to previous failure.")
+            return None
+        
+        if url in self.updated:
+            logger.debug(f"Using cached repository for {url} at {target_path}")
+            return target_path
+
+        lock_path: Path = self._lock_path(target_path)
         with self._acquire_lock(lock_path):
-            if not repo.exists():
-                logger.info(t(_GIT_CACHE_CLONING, url=url))
-                ok = self._clone(url, repo)
-                if not ok:
-                    if verbose:
-                        logger.warning(t(_GIT_CACHE_CLONE_FAILED, url=url))
-                    # shutil.rmtree(repo, ignore_errors=True)
+            if not target_path.exists():
+                logger.warning(f"Repository not found in cache. Cloning {url}...")
+                ok = self._clone(url, target_path)
+                if ok:
+                    self.updated[url] = True
+                    return target_path
+                else:
+                    self.avoid[url] = True
+                    logger.warning(f"Clone failed for {url}")
                     return None
 
-            if self._is_expired(repo) or (self.update_mode == UpdateMode.ALWAYS) and not self.updated.get(str(repo), False):
-                try:
-                    if verbose:
-                        logger.info(t(_GIT_CACHE_UPDATING, url=url))
-                    self._update(repo)
-                except subprocess.CalledProcessError:
-                    if self.update_mode == UpdateMode.IF_OLDER:
-                        pass
-                    if verbose:
-                        logger.warning(t(_GIT_CACHE_UPDATE_FAILED_RECLONE, url=url))
-                    # shutil.rmtree(repo, ignore_errors=True)
-                    self._clone(url, repo)
-        return repo
+            need_update = False
+            if self.update_mode == UpdateMode.IF_OLDER and self._is_expired(target_path):
+                logger.warning(f"Updating expired repository {url}...")
+                need_update = True
+
+            if  self.update_mode == UpdateMode.ALWAYS:
+                logger.warning(f"Forcing update of repository {url}")
+                need_update = True
+
+            if need_update:
+                ok = self._update(target_path)
+                if ok:
+                    self.updated[url] = True
+                    return target_path
+                else:
+                    logger.warning(f"Updating repository {url} failed.")
+                    self.avoid[url] = True
+                    return target_path
+        return target_path

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Literal
 
 from loguru import logger
 from tko.logger.loguru_settings import configure_loguru
@@ -57,7 +58,7 @@ def main_callback(
     settings: Path = typer.Option(None, "-S", "--settings", help="Global Settings config directory"),
     changedir: Path = typer.Option(Path("."), "-C", "--changedir", help="Repository directory"),
     width: int | None = typer.Option(None, "-w", "--width", help="Terminal width"),
-    lang: str | None = typer.Option(None, "--lang", help="Interface language (pt-BR or en)"),
+    lang: Literal["pt", "en"] | None = typer.Option(None, "--lang", help="Interface language"),
     version: bool = typer.Option(False, "-v", "--version", help="Show version and exit"),
     mono: bool = typer.Option(False, "-m", "--mono", help="Disable colors"),
     debug: bool = typer.Option(False, "-D", "--debug", help="Enable debug mode"),
@@ -93,14 +94,8 @@ def main_callback(
     if mono:
         RenderConfig.mode = RenderMode.PLAIN
 
-    configure_loguru(sett.get_log_file())
+    configure_loguru(sett.get_log_file(), debug)
     
-    if debug:
-        ic.configureOutput(includeContext=True, outputFunction=print)
-        logger.level("DEBUG")
-    else:
-        ic.disable()
-
     ctx.obj = sett
 
 

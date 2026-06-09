@@ -23,7 +23,7 @@ class AppKeys(enum.Enum):
 
 @dataclass
 class AppSettings:
-    ui_language: str = "pt-BR"
+    _ui_language: str = "pt-BR"
     diff_mode: DiffMode = DiffMode.SIDE
     use_images: bool = True
     editor: str = "code"
@@ -43,6 +43,19 @@ class AppSettings:
         AppKeys.ESC: 27,
     })
 
+    @property
+    def ui_language(self) -> str:
+        return self._ui_language
+    
+    @ui_language.setter
+    def ui_language(self, value: str) -> None:
+        if value.lower() not in ["pt", "pt-br", "en"]:
+            self._ui_language = "pt-BR"
+        elif value.lower() in ["pt", "pt-br"]:
+            self._ui_language = "pt-BR"
+        else:
+            self._ui_language = value
+            
     # -------- toggles --------
     def toggle(self, attr: ToggleOption) -> None:
         if hasattr(self, attr.value):

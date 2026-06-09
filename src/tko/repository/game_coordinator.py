@@ -18,9 +18,8 @@ class GameCoordinator:
     def __init__(self, repo: Repository): 
         self.repo = repo
 
-    def load_game(self, verbose: bool) -> GameCoordinator:
-        if verbose:
-            logger.info(t(_GAME_COORDINATOR_LOADING_REPOSITORY, root=self.repo.paths.root_dir))
+    def load_game(self) -> GameCoordinator:
+        logger.debug(t(_GAME_COORDINATOR_LOADING_REPOSITORY, root=self.repo.paths.root_dir))
         
         remotes = self.repo.remotes
         if not remotes: # load now
@@ -33,7 +32,7 @@ class GameCoordinator:
                     _ = remote.path.index_file
                 
         self.repo.game.set_remotes(remotes, self.repo.data.lang)
-        self.repo.game.build(verbose, git_cache=self.repo.git_cache, root_dir=self.repo.root_dir)
+        self.repo.game.build(git_cache=self.repo.git_cache, root_dir=self.repo.root_dir)
         self._load_tasks_from_log_into_game()
         
         return self

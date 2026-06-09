@@ -6,8 +6,11 @@ class UserData:
 
     @staticmethod
     def global_cache_dir() -> Path:
-        return Path(user_cache_dir(UserData.PACKAGE_NAME)) / "cache"
-    
+        folder = Path(user_cache_dir(appname=UserData.PACKAGE_NAME)) / "cache"
+        if not folder.exists():
+            folder.mkdir(parents=True, exist_ok=True)
+        return folder
+
     @staticmethod
     def settings_dir() -> Path:
         dir = Path(user_data_dir(UserData.PACKAGE_NAME))

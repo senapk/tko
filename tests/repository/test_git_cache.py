@@ -107,7 +107,7 @@ def test_get_repo_dir_returns_none_when_initial_clone_fails(monkeypatch: MonkeyP
     monkeypatch.setattr(cache, "_acquire_lock", no_lock)
     monkeypatch.setattr(cache, "_clone", clone_fails)
 
-    result = cache.get_remote_dir("https://example.com/repo.git", verbose=False)
+    result = cache.get_remote_dir("https://example.com/repo.git")
 
     assert result is None
 
@@ -127,7 +127,7 @@ def test_get_repo_dir_updates_when_repository_is_expired(monkeypatch: MonkeyPatc
 
     monkeypatch.setattr(cache, "_update", fake_update)
 
-    result = cache.get_remote_dir("https://example.com/repo.git", verbose=False)
+    result = cache.get_remote_dir("https://example.com/repo.git")
 
     assert result == repo
     assert called["update"] is True
@@ -149,8 +149,8 @@ def test_get_repo_dir_always_mode_updates_once_per_repo(monkeypatch: MonkeyPatch
 
     monkeypatch.setattr(cache, "_update", fake_update)
 
-    first = cache.get_remote_dir(url, verbose=False)
-    second = cache.get_remote_dir(url, verbose=False)
+    first = cache.get_remote_dir(url)
+    second = cache.get_remote_dir(url)
 
     assert first == repo
     assert second == repo
@@ -179,7 +179,7 @@ def test_get_repo_dir_reclones_when_update_fails(monkeypatch: MonkeyPatch, tmp_p
     monkeypatch.setattr(cache, "_update", fake_update)
     monkeypatch.setattr(cache, "_clone", fake_clone)
 
-    result = cache.get_remote_dir(url, verbose=False)
+    result = cache.get_remote_dir(url)
 
     assert result == repo
     assert calls["clone"] == 1

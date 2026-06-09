@@ -25,6 +25,10 @@ _SETTINGS_PATH = Msg(
     pt="Arquivo global configuração:",
     en="Global settings file:",
 )
+_LOG_PATH = Msg(
+    pt="Arquivo de log:",
+    en="Log file:",
+)
 _CACHE_PATH = Msg(
     pt="Diretório global de cache:",
     en="Global cache directory:",
@@ -164,6 +168,8 @@ class Settings:
         output: list[str] = []
         output.append(str(RT(t(_SETTINGS_PATH), "g")))
         output.append("- " + self.get_settings_file().resolve().as_posix())
+        output.append(str(RT(t(_LOG_PATH), "g")))
+        output.append("- " + self.get_log_file().resolve().as_posix())
         output.append(str(RT(t(_CACHE_PATH), "g")))
         output.append("- " + UserData.global_cache_dir().resolve().as_posix())
         output.append(str(RT(t(_RESET_LANGUAGES_PATH), "g")))

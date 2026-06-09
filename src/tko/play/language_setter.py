@@ -24,23 +24,42 @@ class _LangSetterMsg:
 
 class LanguageSetter:
     @staticmethod
+    def replace_lang_on_repo(options: list[str], repo:Repository) -> None:
+        options = sorted(options)
+        Console.print(_LangSetterMsg.PROG_LANGUAGE_NOT_SET)
+        while True:
+            Console.print(_LangSetterMsg.PROMPT, options=", ".join(options), flush=True, end="")
+            lang = input()
+            if lang in options:
+                break
+        repo.data.lang = lang
+        RepositoryConfig(repo).save()
+
+    @staticmethod
     def check_prog_lang_in_text_mode(settings: Settings, repo: Repository, selected: str | None = None) -> str:
-        lang = repo.data.lang if selected is None else selected
-        lang_drafts: dict[str, str] = settings.get_languages_settings().get_languages_with_drafts()
-        changed = False
-        if lang == "" or lang not in lang_drafts:
-            options = sorted(lang_drafts.keys())
-            Console.print(_LangSetterMsg.PROG_LANGUAGE_NOT_SET)
-            while True:
-                Console.print(_LangSetterMsg.PROMPT, options=", ".join(options), flush=True, end="")
-                lang = input()
-                if lang in options:
-                    changed = True
-                    break
-        if changed:
-            RepositoryConfig(repo).save()
-            repo.data.lang = lang
-        return lang
+        """
+        If selected is provided, try use it as the language, otherwise check the repo data and if it's not set, prompt the user to choose one.
+        """
+        options: list[str] = list(settings.get_languages_settings().get_languages_with_drafts().keys())
+        if selected is not None:
+            # unchanged
+            if selected in options and selected == repo.data.lang:
+                return selected
+            # change
+            if selected in options:
+                repo.data.lang = selected
+                RepositoryConfig(repo).save()
+                return selected
+            # ask and change    
+            LanguageSetter.replace_lang_on_repo(list(options), repo)
+            return repo.data.lang
+            
+        # check if already set and valid
+        if repo.data.lang in options:
+            return repo.data.lang
+        # ask and change
+        LanguageSetter.replace_lang_on_repo(list(options), repo)
+        return repo.data.lang
     
     @staticmethod
     def check_ui_lang_in_text_mode(settings: Settings, selected: str | None = None) -> str:

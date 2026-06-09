@@ -1,3 +1,5 @@
+import filecmp
+import shutil
 from typing import Callable
 import os
 
@@ -70,8 +72,8 @@ _DOWN_FILE_UNCHANGED = Msg(
     en="[b](Unchanged )[] {path}",
 )
 _DOWN_FILE_EMPTY = Msg(
-    pt="[r](  Vazio   )[] {path}",
-    en="[r](  Empty   )[] {path}",
+    pt="[g](  Vazio   )[] {path}",
+    en="[g](  Empty   )[] {path}",
 )
 
 _DRAFTS_FOUND = Msg(
@@ -88,7 +90,7 @@ class CmdLineDown:
             from tko.repository.repository_config import RepositoryConfig
             from tko.repository.game_coordinator import GameCoordinator
             RepositoryConfig(self.rep).load()
-            GameCoordinator(self.rep).load_game(verbose=True)
+            GameCoordinator(self.rep).load_game()
             self.game = self.rep.game
         else:
             self.game = game
@@ -150,8 +152,8 @@ class CmdDown:
     def download_from_external_remote(self) -> None:
         self.destiny_folder.mkdir(exist_ok=True, parents=True)
         self.copy_readme()
-        self.copy_assets()
         self.copy_tests()
+        self.copy_assets()
         self.copy_drafts()
         self.actions.fnprint("")
         self.actions.fnprint(t(_DOWN_ACTIVITY_DOWNLOADED_SUCCESS))
@@ -191,7 +193,13 @@ class CmdDown:
             destiny_assets.mkdir(exist_ok=True, parents=True)
             for asset in origin_assets.iterdir():
                 destiny_asset = destiny_assets / asset.name
-                self.actions.compare_and_save_to(Decoder.load(asset), destiny_asset)
+                if asset.is_file():
+                    if destiny_asset.exists() and filecmp.cmp(asset, destiny_asset, shallow=False):
+                        self.actions.fnprint(RT.parse(t(_DOWN_FILE_UNCHANGED, path=self.actions.folder_and_file(destiny_asset))))
+                    else:
+                        shutil.copy2(asset, destiny_asset)
+                        self.actions.fnprint(RT.parse(t(_DOWN_FILE_UPDATED, path=self.actions.folder_and_file(destiny_asset))))
+
     
     def copy_drafts_from(self, origin_drafts_folder: Path, destiny_draft_folder: Path) -> bool:
         if not os.path.exists(origin_drafts_folder):

@@ -36,7 +36,7 @@ class TaskPath:
     def origin_target(self) -> Path | None:
         loc = self.loc
         if loc.remote_git is not None and loc.relative_path is not None:
-            git_root_dir = self.git_cache.get_remote_dir(loc.remote_git, verbose=False)
+            git_root_dir = self.git_cache.get_remote_dir(loc.remote_git)
             if git_root_dir is not None:
                 return (git_root_dir / loc.relative_path).resolve()
         return self.__remote_local_path(loc)

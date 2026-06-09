@@ -65,12 +65,12 @@ class Game:
         self.language = language
         return self
     
-    def build(self, verbose: bool, git_cache: GitCache, root_dir: Path):
+    def build(self, git_cache: GitCache, root_dir: Path):
         self.ordered_quests = []
         self.quests = {}
         self.tasks = {}
         for remote in self.remotes:
-            gb = GameBuilder(remote, verbose)
+            gb = GameBuilder(remote)
             try:
                 gb.build_from(self.language)
             except ValueError:

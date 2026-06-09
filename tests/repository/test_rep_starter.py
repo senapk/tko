@@ -128,9 +128,6 @@ def test_execute_sets_language_recreates_cache_and_saves_config(monkeypatch: Mon
         created_folders.append(folder)
         return repo
 
-    def fake_rmtree(path: Path) -> None:
-        calls["rmtree"] = path
-
     def fake_repository_config(repo_arg: object) -> FakeRepositoryConfig:
         _ = repo_arg
         return FakeRepositoryConfig(lambda: calls.__setitem__("saved", True))
@@ -141,7 +138,6 @@ def test_execute_sets_language_recreates_cache_and_saves_config(monkeypatch: Mon
         return selected or "py"
 
     monkeypatch.setattr(rep_starter_module, "Repository", fake_repository)
-    monkeypatch.setattr(rep_starter_module.shutil, "rmtree", fake_rmtree)
     monkeypatch.setattr(rep_starter_module, "RepositoryConfig", fake_repository_config)
     monkeypatch.setattr(
         rep_starter_module.LanguageSetter,

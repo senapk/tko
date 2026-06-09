@@ -1,12 +1,13 @@
-from loguru import logger
 import sys
+from loguru import logger
 from pathlib import Path
 
-def configure_loguru(log_file: Path) -> None:
+def configure_loguru(log_file: Path, debug: bool) -> None:
     logger.remove()
     logger.add(
         sys.stderr,
-        level="WARNING",
+        level="DEBUG" if debug else "INFO",
+        format="<level>{level: <8}</level> | <level>{message}</level>",
     )
     try:
         log_file.parent.mkdir(parents=True, exist_ok=True)
@@ -20,3 +21,4 @@ def configure_loguru(log_file: Path) -> None:
     except OSError:
         pass
     
+    logger.level("INFO", color="<green>")

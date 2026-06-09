@@ -24,11 +24,12 @@ _REMOTE_QUEST_FILTER = Msg(pt="[y]- Filtro Quests: {status}",
                            en="[y]- Quest Filter: {status}")
 _REMOTE_FILTER_DISABLED = Msg(pt="Desativado", en="Disabled")
 _REMOTE_FILTER_ENABLED = Msg(pt="Ativado", en="Enabled")
+
 _REMOTE_REMOVED_SUCCESS = Msg(
-    pt="[y] Fonte {alias} removida com sucesso.",
-    en="[y] Source {alias} removed successfully.",
+    pt="Fonte {alias} removida com sucesso.",
+    en="Source {alias} removed successfully.",
 )
-_REMOTE_NOT_FOUND = Msg(pt="fail: fonte não encontrada.", en="fail: source not found.")
+_REMOTE_NOT_FOUND = Msg(pt="fail: fonte {alias} não encontrada.", en="fail: source {alias} not found.")
 _REMOTE_FILTERS_UPDATED = Msg(
     pt="Filtros {alias} atualizados com sucesso.",
     en="Filters for {alias} updated successfully.",
@@ -46,12 +47,12 @@ _REMOTE_GIT_ALIAS_NOT_FOUND = Msg(
     en="fail: remote git alias not found.",
 )
 _REMOTE_CLONE_ERROR = Msg(
-    pt="Erro ao clonar repositório, fonte não foi adicionada",
-    en="Error cloning repository, source was not added",
+    pt="Erro ao acessar repositório, fonte não foi adicionada",
+    en="Error accessing repository, source was not added",
 )
 _REMOTE_CLONE_FAILED = Msg(
-    pt="fail: não foi possível clonar o repositório.",
-    en="fail: could not clone the repository.",
+    pt="fail: não foi possível acessar o repositório.",
+    en="fail: could not access the repository.",
 )
 _REMOTE_DIR_NOT_FOUND = Msg(
     pt="fail: diretório remoto não encontrado.",
@@ -70,12 +71,12 @@ _REMOTE_ADDED_SUCCESS = Msg(
     en="Remote source {name} added successfully.",
 )
 _REMOTE_CLONING = Msg(
-    pt="Clonando repositório remoto {link}",
-    en="Cloning remote repository {link}",
+    pt="Acessando repositório remoto {link}",
+    en="Accessing remote repository {link}",
 )
 _REMOTE_CLONED_SUCCESS = Msg(
-    pt="Repositório {link} clonado com sucesso.",
-    en="Repository {link} cloned successfully.",
+    pt="Repositório {link} acessado com sucesso.",
+    en="Repository {link} accessed successfully.",
 )
 
 class RemoteActions:
@@ -104,23 +105,20 @@ class RemoteActions:
             for f, v in remote.data.quest_filters.items():
                 Console.print(f"    - {f}: {v}")
 
-    def remote_rm(self, alias: str) -> None:
-        found = False
-        for remote in self.repo.remotes:
-            if remote.data.name == alias:
-                found = True
-                self.repo.data.del_remote(alias)
-                Console.print(_REMOTE_REMOVED_SUCCESS, alias=alias)
-                break
-        if not found:
-            raise Warning(t(_REMOTE_NOT_FOUND))
-        RepositoryConfig(self.repo).save()
+    def remote_rm(self, alias: str) -> bool:
+        if self.repo.data.del_remote(alias):
+            logger.info(t(_REMOTE_REMOVED_SUCCESS, alias=alias))
+            RepositoryConfig(self.repo).save()
+            return True
+        logger.warning(t(_REMOTE_NOT_FOUND, alias=alias))
+        return False
 
-    def remote_set(self, alias: str, target: str | None = None, index: str | None = None) -> None:
+    def remote_set(self, alias: str, target: str | None = None, index: str | None = None) -> bool:
         repo = self.repo
         remote: Remote | None = repo.data.get_remote(alias)
         if remote is None:
-            raise Warning(t(_REMOTE_NOT_FOUND))
+            logger.warning(t(_REMOTE_NOT_FOUND, alias=alias))
+            return False
         change: bool = False
 
         if target is not None:
@@ -131,14 +129,16 @@ class RemoteActions:
             change = True
         self.show_source(remote)
         if change:
-            Console.print(f"[y] {t(_REMOTE_FILTERS_UPDATED, alias=alias)}")
+            logger.info(t(f" {t(_REMOTE_FILTERS_UPDATED, alias=alias)}"))
             RepositoryConfig(repo).save()
+        return True
 
-    def remote_filter(self, alias: str, filter_quest: list[str] | None = None, clear: bool = False, filter_to: str | None = None) -> None:
+    def remote_filter(self, alias: str, filter_quest: list[str] | None = None, clear: bool = False, filter_to: str | None = None) -> bool:
         repo = self.repo
         source = repo.data.get_remote(alias)
         if source is None:
-            raise Warning(t(_REMOTE_NOT_FOUND))
+            logger.warning(t(_REMOTE_NOT_FOUND), alias=alias)
+            return False
         change: bool = False
 
         if filter_quest is not None:
@@ -156,8 +156,9 @@ class RemoteActions:
         # if not quests and not tasks and not clear:
         self.show_source(source)
         if change:
-            Console.print(f"[y] {t(_REMOTE_FILTERS_UPDATED, alias=alias)}")
+            logger.info(f" {t(_REMOTE_FILTERS_UPDATED, alias=alias)}")
             RepositoryConfig(repo).save()
+        return True
 
     def fix_filter(self, source: list[str] | None, destiny: str | None) -> dict[str, str] | None:
         if source is None:
@@ -175,11 +176,12 @@ class RemoteActions:
             filter_to: str | None = None,
             writeable: bool = False, 
             branch: str | None = None
-            ) -> None:
+            ) -> bool:
         
         remotes = self.repo.remotes
         if any(remote.data.name == name for remote in remotes):
-            raise Warning(t(_REMOTE_NAME_EXISTS))
+            logger.warning(t(_REMOTE_NAME_EXISTS))
+            return False
 
         repo = self.repo
         if remote_default is not None:
@@ -201,7 +203,8 @@ class RemoteActions:
         elif remote_dir is not None:
             dir_path = Path(remote_dir)
             if not dir_path.exists() or not dir_path.is_dir():
-                raise Warning(t(_REMOTE_DIR_NOT_FOUND))
+                logger.warning(t(_REMOTE_DIR_NOT_FOUND))
+                return False
             Console.print(f"[y] {t(_REMOTE_ADDING_LOCAL, path=dir_path)}")
             remote = Remote(alias=name)
             remote.data.set_local_source(target=dir_path)
@@ -221,10 +224,11 @@ class RemoteActions:
                 logger.exception(t(_REMOTE_CLONE_ERROR))
                 raise Warning(t(_REMOTE_CLONE_FAILED))
         RepositoryConfig(repo).save()
-   
+        return True
+    
     def git_clone_repository(self, link: str) -> None:
         Console.print(t(_REMOTE_CLONING, link=link))
-        repo_dir = self.repo.git_cache.get_remote_dir(link, verbose=True)
+        repo_dir = self.repo.git_cache.get_remote_dir(link)
         if repo_dir is None:
             raise Warning(t(_REMOTE_CLONE_FAILED))
         Console.print(t(_REMOTE_CLONED_SUCCESS, link=link))

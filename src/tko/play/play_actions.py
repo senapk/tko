@@ -64,7 +64,7 @@ class PlayActions:
     def reload(self):
         DraftsFinderCached.reset_cache()
         from tko.repository.game_coordinator import GameCoordinator
-        GameCoordinator(self.repo).load_game(verbose=False)
+        GameCoordinator(self.repo).load_game()
         self.tree.recalculate_layout()
 
     def get_task_folder(self, task: Task) -> Path:

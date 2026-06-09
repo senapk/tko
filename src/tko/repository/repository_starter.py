@@ -2,7 +2,6 @@ from pathlib import Path
 from tko.play.language_setter import LanguageSetter
 from tko.repository.repository import Repository
 from tko.repository.repository_paths import RepositoryPaths
-import shutil
 from tko.config.settings import Settings
 from tko.repository.repository_config import RepositoryConfig
 from tko.i18n import Msg
@@ -22,8 +21,8 @@ _REPO_STARTER_EXISTS = Msg(
     en="A TKO repository already exists in folder [g]{folder}[]",
 )
 _REPO_STARTER_RESET_PROMPT = Msg(
-    pt="Deseja resetar o repositório? [[y/N]]: ",
-    en="Do you want to reset the repository? [[y/N]]: ",
+    pt="Deseja resetar o repositório? [[Y/N]]: ",
+    en="Do you want to reset the repository? [[Y/N]]: ",
 )
 _REPO_STARTER_INSIDE_OTHER_REPO = Msg(
     pt="Você está tentando criar um repositório dentro de outro, pois já existe rep em [r]{parent}[]",
@@ -34,8 +33,8 @@ _REPO_STARTER_DEEP_REPO_WARN_2 = Msg(
     en="But there are already TKO repositories below that folder. Move or delete them",
 )
 _REPO_STARTER_OVERWRITE_PROMPT = Msg(
-    pt="Deseja sobrescrever as configurações do repositório em [y]{folder}[] ? [[y/N]]: ",
-    en="Do you want to overwrite the repository settings in [y]{folder}[] ? [[y/N]]: ",
+    pt="Deseja sobrescrever as configurações do repositório em [y]{folder}[] ? [[Y/n]]: ",
+    en="Do you want to overwrite the repository settings in [y]{folder}[] ? [[Y/n]]: ",
 )
 _REPO_STARTER_DEEP_REPO_WARN = Msg(
     pt="Você está tentando criar um repositório TKO na pasta [y]{folder}[]",
@@ -47,8 +46,8 @@ _REPO_STARTER_EMPTY_REPO = Msg(
 )
 
 _REPO_ASK_DEFAULT_REMOTES = Msg(
-    pt="Você [g]deseja adicionar[] algum dos [g]repositório[] padrão de atividades? [[y/N]]: ",
-    en="Do you [g]want to add[] any of the default activity [g]repositories[]? [[y/N]]: ",
+    pt="Você [g]deseja adicionar[] algum dos [g]repositório[] padrão de atividades? [[Y/n]]: ",
+    en="Do you [g]want to add[] any of the default activity [g]repositories[]? [[Y/n]]: ",
 )
 _REPO_ASK_DEFAULT_REMOTES_FUP = Msg(
     pt="[y]fup[] - Fundamentos de Programação",
@@ -93,11 +92,6 @@ class RepositoryStarter:
         repo = Repository(self.folder, self.settings.rs)        
         self.repo = repo
         self.create_empty_repo()
-        # erase cache folder to avoid conflicts
-        cache_folder = repo.paths.cache_folder
-        if cache_folder.exists():
-            shutil.rmtree(cache_folder)
-        cache_folder.mkdir(parents=True, exist_ok=True)
         self.language = LanguageSetter.check_prog_lang_in_text_mode(self.settings, self.repo, selected=self.language)
         Console.print(_REPO_STARTER_LANGUAGE_SET, language=self.language)
         
@@ -111,7 +105,7 @@ class RepositoryStarter:
     def ask_about_default_remotes(self):
         Console.print(_REPO_ASK_DEFAULT_REMOTES, end="")
         answer = input().lower()
-        if answer != "y":
+        if answer == "n":
             Console.print(_REPO_NONE_ADDED, cmd="[.y] tko remote add LABEL URL")
             return
         Console.print(_REPO_ASK_DEFAULT_REMOTES_FUP)
@@ -143,7 +137,7 @@ class RepositoryStarter:
             Console.print(_REPO_STARTER_EXISTS, folder=self.folder.resolve())                
             Console.print(_REPO_STARTER_RESET_PROMPT, end="")
             op = input().lower()
-            if op != "y":
+            if op == "n":
                 return False
 
         elif path_parents is not None:
@@ -153,7 +147,7 @@ class RepositoryStarter:
             self.folder = path_parents
             Console.print(_REPO_STARTER_OVERWRITE_PROMPT, folder=self.folder, end="")
             op = input().lower()
-            if op != "y":
+            if op == "n":
                 return False
         else:
             path_subdir_list = RepositoryPaths.rec_search_for_repo_subdir(self.folder)

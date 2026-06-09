@@ -21,16 +21,18 @@ class RepositoryData:
         self.selected: str = ""
         self.selected_index: int = 0
 
-    def set_remote(self, source: Remote):
+    def set_remote(self, source: Remote) -> None:
         for i, s in enumerate(self.__remotes):
             if s.data.name == source.data.name:
                 self.__remotes[i] = source
-                return self
         self.__remotes.append(source)
 
-    def del_remote(self, alias: str):
-        self.__remotes = [s for s in self.__remotes if s.data.name != alias]
-        return self
+    def del_remote(self, alias: str) -> bool:
+        __remotes = [s for s in self.__remotes if s.data.name != alias]
+        if len(__remotes) != len(self.__remotes):
+            self.__remotes = __remotes
+            return True
+        return False
 
     def get_remote(self, alias: str) -> Remote | None:
         for s in self.__remotes:

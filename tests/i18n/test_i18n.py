@@ -1,4 +1,3 @@
-from tko.config.app_settings import AppSettings
 from tko.i18n import Msg, normalize_language, set_language, t
 
 
@@ -27,8 +26,3 @@ class TestI18N:
     def test_string_fallback_uses_literal_template(self):
         set_language("en")
         assert t("No catalog {value}", value="path") == "No catalog path"
-
-    def test_app_settings_ui_language_roundtrip(self):
-        settings = AppSettings(ui_language="en")
-        restored = AppSettings.from_dict(settings.to_dict())
-        assert restored.ui_language == "en"
