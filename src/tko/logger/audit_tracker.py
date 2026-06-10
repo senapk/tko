@@ -67,6 +67,7 @@ class AuditTracker:
     def _generate_jsonl_line(timestamp: datetime, hash_value: str, content: str) -> str:
         entry: dict[str, object] = {
             "ts": int(timestamp.timestamp()),
+            "label": timestamp.strftime("%Y/%m/%d-%H:%M:%S"),
             "hash": hash_value,
             "content": content,
         }
@@ -89,28 +90,27 @@ class AuditTracker:
                 return True
         return False
 
-    def store(self, task_key: str, files: list[Path], timestamp: datetime | None = None) -> tuple[bool, int]:
+    def store(self, task_key: str, file_ts_list: list[tuple[Path, datetime | None]]) -> tuple[bool, int]:
         audit_task_folder = self.repo.paths.get_audit_task_folder(task_key)
         audit_task_folder.mkdir(parents=True, exist_ok=True)
 
-
-        if timestamp is None:
-            timestamp = datetime.now()
 
         task_root = self.repo.get_task_folder_for_label(task_key)
         any_changes = False
         total_lines = 0
 
-        unique_files = sorted({path.resolve() for path in files})
+        resolved_files = [(file.resolve(), ts) for file, ts in file_ts_list]
         audit_task_lock_file = self._task_lock_file(audit_task_folder)
-        lock = FileLock(str(audit_task_lock_file), timeout=5)
+        lock = FileLock(str(audit_task_lock_file), timeout=1)
         try:
-            with lock:
-                for file in unique_files:
-                    changed, line_count = self.save_file(file, task_root, audit_task_folder, task_key, timestamp)
-                    if changed:
-                        any_changes = any_changes or changed
-                        total_lines += line_count
+            for file, ts in resolved_files:
+                if ts is None:
+                    ts = datetime.now()
+                with lock:
+                    changed, line_count = self.save_file(file, task_root, audit_task_folder, task_key, ts)
+                if changed:
+                    any_changes = any_changes or changed
+                    total_lines += line_count
         except Timeout:
             logger.warning(f"[audit] Could not acquire lock for task {task_key}, skipping this cycle.")
             return False, 0
@@ -147,6 +147,6 @@ class AuditTracker:
 
         hh_mm_ss = timestamp.strftime("%H:%M:%S")
         if self.verbose:
-            print(f"[audit] {task_key} -> {hh_mm_ss} {output_file}", flush=True)
+            print(f"[audit] {hh_mm_ss} {file} -> {output_file}", flush=True)
 
         return True, line_count

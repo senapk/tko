@@ -26,9 +26,8 @@ class UnitRunner:
             folder = folder.resolve()
         )
         if return_code != 0:
-            # Keep execution errors stable across environments by avoiding
-            # shell/runtime specific stderr noise in snapshot comparisons.
-            unit.set_received(f"{Runner.decode_code(return_code)}\n{stdout}\n{stderr}")
+
+            unit.set_received(f"returncode:{return_code}\n{stdout}\n{stderr}")
             return ExecutionResult.EXECUTION_ERROR
         unit.set_received(stdout)
         if unit.get_received() == unit.get_expected():

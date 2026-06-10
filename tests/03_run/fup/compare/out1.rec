@@ -16,10 +16,11 @@
 ├────────────── ESPERADO ──────────────┼────────────── RECEBIDO ───────────────┤
 │ 0.44                                 │ fail: runtime exception               │
 │ -5.07                                │                                       │
+│                                      │ fail: runtime exception               │
 ├────────────────────────────────── DESIGUAL ──────────────────────────────────┤
-│ 0.44↲                   (esperado)                                           │
-│ fail:·runtime·exception (recebido)                                           │
-│ ↑                       (primeiro)                                           │
+│ 0.44↲                    (esperado)                                          │
+│ fail:·runtime·exception↲ (recebido)                                          │
+│ ↑                        (primeiro)                                          │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭──────────────────────────────────────────────────────────────────────────────╮
 │            (ω saída_incorreta)[01] GR:014 cases.tio (duas raízes)            │
@@ -57,10 +58,12 @@
 │ 5.0                                  │ 5.0                                   │
 ├────────────── ESPERADO ──────────────┼────────────── RECEBIDO ───────────────┤
 │ nao ha raiz real                     │ fail: runtime exception               │
+│                                      │                                       │
+│                                      │ fail: runtime exception               │
 ├────────────────────────────────── DESIGUAL ──────────────────────────────────┤
-│ nao·ha·raiz·real↲       (esperado)                                           │
-│ fail:·runtime·exception (recebido)                                           │
-│ ↑                       (primeiro)                                           │
+│ nao·ha·raiz·real↲        (esperado)                                          │
+│ fail:·runtime·exception↲ (recebido)                                          │
+│ ↑                        (primeiro)                                          │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭──────────────────────────────────────────────────────────────────────────────╮
 │            (ω saída_incorreta)[04] GR:014 cases.tio (05         )            │
@@ -98,8 +101,10 @@
 │ 19.2                                 │ 19.2                                  │
 ├────────────── ESPERADO ──────────────┼────────────── RECEBIDO ───────────────┤
 │ nao ha raiz real                     │ fail: runtime exception               │
+│                                      │                                       │
+│                                      │ fail: runtime exception               │
 ├────────────────────────────────── DESIGUAL ──────────────────────────────────┤
-│ nao·ha·raiz·real↲       (esperado)                                           │
-│ fail:·runtime·exception (recebido)                                           │
-│ ↑                       (primeiro)                                           │
+│ nao·ha·raiz·real↲        (esperado)                                          │
+│ fail:·runtime·exception↲ (recebido)                                          │
+│ ↑                        (primeiro)                                          │
 ╰──────────────────────────────────────────────────────────────────────────────╯

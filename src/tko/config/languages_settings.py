@@ -47,7 +47,7 @@ class LanguagesSettings:
             draft=haskell_draft
         ),
         "c": LanguageSetup(
-            build_cmd=["gcc", "-Wall", "{files}", "-o", "{output}", "-lm"],
+            build_cmd=["gcc", "-Wall", "-Werror", "-Wshadow", "-fsanitize=address,undefined", "{files}", "-o", "{output}", "-lm"],
             run_cmd=["{output}"],
             draft=c_draft
         ),

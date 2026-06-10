@@ -131,7 +131,8 @@ class Settings:
                 self.dict_alias_git = self.Defaults.alias_git.copy()
             self.app = AppSettings().from_dict(data.get(self.__appcfg, AppSettings())) # type: ignore
             # self.colors = Colors().from_dict(data.get(self.__colors, Colors())) # type: ignore
-            self.__languages_settings = LanguagesSettings(self.get_languages_file()).load_file_settings()
+            file = self.get_languages_file()
+            self.__languages_settings = LanguagesSettings(file).load_file_settings()
 
             # Cache the output after loading
             self._cached_output = {

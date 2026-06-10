@@ -100,7 +100,7 @@ class Free:
                     answer.kill()
                     os.killpg(os.getpgid(answer.pid), signal.SIGTERM)
                 if answer.returncode != 0 and answer.returncode != 1:
-                    print(Runner.decode_code(answer.returncode))
+                    print(f"returncode: {answer.returncode}")
             else:
                 subprocess.run(cmd, **kwargs)
                 

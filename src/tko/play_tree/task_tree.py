@@ -16,7 +16,6 @@ from tko.config.settings import Settings
 from tko.repository.repository import Repository
 from tko.util.rt import RT
 from tko.util.to_asc import SearchAsc
-from typing import Callable
 
 
 class TaskTree:

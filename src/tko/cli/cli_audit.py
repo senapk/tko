@@ -26,15 +26,9 @@ def audit_callback(
     repo, _ = load_repo(settings.rs, show_warnings=True, auto_load=True)
     if repo is None:
         return
-
-    interval_seconds = 60
-    if interval is not None:
-        if interval <= 0:
-            raise typer.BadParameter("interval must be greater than zero")
-        interval_seconds = interval
-
+    
     watcher = RepositoryWatcher(repo)
-    watcher.start_watching(audit=True, audit_verbose=True, audit_interval_seconds=interval_seconds)
+    watcher.start_watching(log_edits=False, log_audit=True, audit_verbose=True, audit_interval_seconds=interval)
     logger.info(t(Msg(pt="Monitor de auditoria iniciado. Aperte Ctrl+C para finalizar.", 
                       en="Audit watcher started. Press Ctrl+C to stop.")))
     

@@ -82,7 +82,7 @@ def test_start_watching_enables_audit_callback_and_interval(monkeypatch: MonkeyP
 
     repo = _make_repo(tmp_path, enabled=True, interval=42)
     watcher = RepositoryWatcher(repo)
-    watcher.start_watching(audit=True, audit_interval_seconds=42)
+    watcher.start_watching(log_audit=True, audit_interval_seconds=42)
 
     callback = holder["monitor"].kwargs["on_flush_events"]
     assert callable(callback)
@@ -114,7 +114,7 @@ def test_start_watching_audit_override_enables_audit_in_session(monkeypatch: Mon
 
     repo = _make_repo(tmp_path, enabled=False, interval=42)
     watcher = RepositoryWatcher(repo)
-    watcher.start_watching(audit=True, audit_interval_seconds=42)
+    watcher.start_watching(log_audit=True, audit_interval_seconds=42)
 
     assert holder["monitor"].kwargs["second_interval"] == 42
     assert callable(holder["monitor"].kwargs["on_flush_events"])
@@ -132,7 +132,7 @@ def test_start_watching_audit_override_disables_audit_in_session(monkeypatch: Mo
 
     repo = _make_repo(tmp_path, enabled=True, interval=42)
     watcher = RepositoryWatcher(repo)
-    watcher.start_watching(audit=False)
+    watcher.start_watching(log_audit=False)
 
     assert holder["monitor"].kwargs["second_interval"] == 300
     assert holder["monitor"].kwargs["on_flush_events"] is None
@@ -156,7 +156,7 @@ def test_start_watching_raises_when_lock_is_busy(monkeypatch: MonkeyPatch, tmp_p
     watcher = RepositoryWatcher(repo)
 
     with pytest.raises(Warning):
-        watcher.start_watching(audit=True)
+        watcher.start_watching(log_audit=True)
 
 
 def test_start_watching_non_audit_ignores_busy_lock(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
@@ -183,7 +183,7 @@ def test_start_watching_non_audit_ignores_busy_lock(monkeypatch: MonkeyPatch, tm
 
     repo = _make_repo(tmp_path, enabled=True, interval=42)
     watcher = RepositoryWatcher(repo)
-    watcher.start_watching(audit=False)
+    watcher.start_watching(log_audit=False)
 
     assert holder["monitor"].started is True
     assert holder["monitor"].kwargs["second_interval"] == 300

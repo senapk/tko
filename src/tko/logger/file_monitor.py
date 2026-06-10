@@ -5,29 +5,33 @@ from datetime import datetime
 from typing import Callable
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler, FileSystemEvent
-from tko.logger.logger import Logger
-from tko.logger.log_item_move import LogItemMove, LogItemMoveMode
+from loguru import logger
 
+# create type alias for the flush callback
+FlushCallbackType = Callable[[dict[Path, datetime]], None]
+
+class FileActionObserver:
+    def __init__( self, interval_seconds: int, on_flush_events: FlushCallbackType ) -> None:
+        self.interval_seconds: int = interval_seconds
+        self.change_log: dict[Path, datetime] = {}
+        self.on_flush_events: FlushCallbackType = on_flush_events
+        self.last_update: datetime = datetime.now()
 
 class _EventManipulator(PatternMatchingEventHandler):
-    def __init__(
-        self,
-        history_records: dict[Path, datetime],
-        ignore_patterns: list[str],
-    ) -> None:
+    def __init__( self, file_action_observers: list[FileActionObserver]) -> None:
         super().__init__(
             patterns=["*"],
-            ignore_patterns=ignore_patterns,
             ignore_directories=True,
             case_sensitive=False
         )
-        self.change_log: dict[Path, datetime] = history_records
+        self.file_action_observers: list[FileActionObserver] = file_action_observers
 
     def on_created(self, event: FileSystemEvent) -> None:
         pass
 
     def on_modified(self, event: FileSystemEvent) -> None:
-        self.change_log[Path(str(event.src_path))] = datetime.now()
+        for observer in self.file_action_observers:
+            observer.change_log[Path(str(event.src_path))] = datetime.now()
 
     def on_deleted(self, event: FileSystemEvent) -> None:
         pass
@@ -37,67 +41,40 @@ class FileMonitor:
     def __init__(
         self,
         root_directory: Path,
-        sources_dir_list: dict[Path, str],
-        ignore_patterns: list[str] | None, 
-        second_interval: int, 
-        logger: Logger,
-        on_flush_events: Callable[[dict[str, list[Path]], datetime], None] | None = None,
     ) -> None:
-        self.root_directory: Path = root_directory
-        self.sources_dir_list: dict[Path, str] = {s.resolve(): source_name for s, source_name in sources_dir_list.items()}
-        self.history: dict[Path, datetime] = {}
-        self.ignore_patterns: list[str] = ignore_patterns or []
-        self.seconds_interval: int = second_interval
-        self.logger: Logger = logger
-        self.on_flush_events = on_flush_events
-        self._last_update: datetime = datetime.now()
         self._observer = Observer()
+        self.file_action_observers: list[FileActionObserver] = []
+        self.root_directory: Path = root_directory
         self._thread: threading.Thread | None = None
         self._stop_event: threading.Event = threading.Event()
         self._running: bool = False
 
-    def find_source_key_task_key(self, path: Path) -> str | None:
-        for source_dir, source_name in self.sources_dir_list.items():
-            try:
-                relative_path = path.resolve().relative_to(source_dir.resolve())
-                first_parent = relative_path.parts[0] if relative_path.parts else ""
-                if not (source_dir/first_parent/"README.md").exists():
-                    return None
-                return f"{source_name}@{first_parent}"
-            except ValueError:
-                continue
-        return None
+    def add_observer(self, interval_seconds: int, on_flush_events: FlushCallbackType) -> None:
+        observer = FileActionObserver(
+            interval_seconds=interval_seconds,
+            
+            on_flush_events=on_flush_events
+        )
+        self.file_action_observers.append(observer)
 
     def _save_events(self) -> None:
             now = datetime.now()
-            if (now - self._last_update).total_seconds() < self.seconds_interval:
-                return
-            self._last_update = now
-            task_files: dict[str, list[Path]] = {}
-            for path, stamp in self.history.items():
-                full_key = self.find_source_key_task_key(path)
-                if full_key is None:
-                    continue
-                if full_key not in task_files:
-                    task_files[full_key] = []
-                task_files[full_key].append(path)
-                self.logger.store(
-                    LogItemMove()
-                    .set_datetime(stamp)
-                    .set_mode(LogItemMoveMode.EDIT)
-                    .set_key(full_key)
-                )
-            if self.on_flush_events is not None and task_files:
-                self.on_flush_events(task_files, now)
-            self.history.clear()
-            
+            for file_observer in self.file_action_observers:
+                if (now - file_observer.last_update).total_seconds() >= file_observer.interval_seconds:
+                    file_observer.last_update = now
+                    if file_observer.on_flush_events is None:
+                        continue
+                    if not file_observer.change_log:
+                        continue
+                    try:
+                        data = file_observer.change_log
+                        file_observer.change_log = {}
+                        file_observer.on_flush_events(data)
+                    except Exception as e:
+                        logger.warning(f"Failed to flush events: {e}")
 
     def _init_observer(self) -> None:
-        handler = _EventManipulator(
-            self.history,
-            ignore_patterns=self.ignore_patterns
-        )
-
+        handler = _EventManipulator(self.file_action_observers)
         self._observer.schedule(handler, str(self.root_directory), recursive=True)
         self._observer.start()
 
