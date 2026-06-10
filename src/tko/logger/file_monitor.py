@@ -21,13 +21,13 @@ class _EventManipulator(PatternMatchingEventHandler):
             ignore_directories=True,
             case_sensitive=False
         )
-        self.historico: dict[Path, datetime] = history_records
+        self.change_log: dict[Path, datetime] = history_records
 
     def on_created(self, event: FileSystemEvent) -> None:
         pass
 
     def on_modified(self, event: FileSystemEvent) -> None:
-        self.historico[Path(str(event.src_path))] = datetime.now()
+        self.change_log[Path(str(event.src_path))] = datetime.now()
 
     def on_deleted(self, event: FileSystemEvent) -> None:
         pass

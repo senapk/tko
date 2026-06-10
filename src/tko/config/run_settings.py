@@ -9,15 +9,27 @@ class RunSettings:
     changedir: Path = Path(".")
     local_cache: bool = False
     debug_mode: bool = False
-    force_update: bool = False
-    force_offline: bool = False
     width: int | None = None
+    update_mode = UpdateMode.IF_OLDER
 
     @property
-    def update_mode(self):
-        mode = UpdateMode.IF_OLDER
-        if self.force_update:
-            mode = UpdateMode.ALWAYS
-        elif self.force_offline:
-            mode = UpdateMode.NEVER
-        return mode
+    def force_update(self) -> bool:
+        return self.update_mode == UpdateMode.ALWAYS
+    
+    @force_update.setter
+    def force_update(self, value: bool) -> None:
+        if value:
+            self.update_mode = UpdateMode.ALWAYS
+        elif self.update_mode == UpdateMode.ALWAYS:
+            self.update_mode = UpdateMode.IF_OLDER
+
+    @property
+    def force_offline(self) -> bool:
+        return self.update_mode == UpdateMode.NEVER
+    
+    @force_offline.setter
+    def force_offline(self, value: bool) -> None:
+        if value:
+            self.update_mode = UpdateMode.NEVER
+        elif self.update_mode == UpdateMode.NEVER:
+            self.update_mode = UpdateMode.IF_OLDER

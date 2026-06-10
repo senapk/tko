@@ -11,6 +11,7 @@ import typer
 from icecream import ic  # type: ignore
 
 from tko.__init__ import __version__
+from tko.cli.cli_audit import app as audit_app
 from tko.cli.cli_build import app as build_app
 from tko.cli.cli_class import app as class_app
 from tko.cli.cli_collect import app as collect_app
@@ -41,6 +42,7 @@ app = typer.Typer(name="tko", help=f"tko {__version__}", no_args_is_help=True, c
 
 
 app.add_typer(build_app, name="build")
+app.add_typer(audit_app, name="audit")
 app.add_typer(task_app, name="task")
 app.add_typer(config_app, name="config")
 app.add_typer(reset_app, name="reset")

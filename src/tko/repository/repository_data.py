@@ -12,35 +12,12 @@ _REPOSITORY_DATA_LOAD_ERROR = Msg(
     en="Error loading data from dictionary",
 )
 
-
-class RepositoryAuditData:
-    def __init__(self):
-        self.enabled: bool = False
-        self.interval_seconds: int = 60
-
-    def load_from_dict(self, data: dict[str, Any]) -> RepositoryAuditData:
-        enabled = data.get("enabled")
-        if isinstance(enabled, bool):
-            self.enabled = enabled
-
-        interval_seconds = data.get("interval_seconds")
-        if isinstance(interval_seconds, int) and interval_seconds > 0:
-            self.interval_seconds = interval_seconds
-        return self
-
-    def save_to_dict(self) -> dict[str, Any]:
-        return {
-            "enabled": self.enabled,
-            "interval_seconds": self.interval_seconds,
-        }
-
 class RepositoryData:
     def __init__(self):
         self.version: str = ""
         self.__remotes: list[Remote] = []
         self.expanded: list[str] = []
         self.flags: dict[str, Any] = {}
-        self.audit: RepositoryAuditData = RepositoryAuditData()
         self.lang: str = ""
         self.selected: str = ""
         self.selected_index: int = 0
@@ -104,7 +81,6 @@ class RepositoryData:
             self.expanded = self._safe_load(data, "expanded", list, self.expanded)
             # self.tasks = self._safe_load(data, "tasks", dict, self.tasks)
             self.flags = self._safe_load(data, "flags", dict, self.flags)
-            self.audit.load_from_dict(self._safe_load(data, "audit", dict, {}))
             self.lang = self._safe_load(data, "lang", str, self.lang)
             self.selected = self._safe_load(data, "selected", str, self.selected)
             self.selected_index = self._safe_load(data, "selected_index", int, self.selected_index)
@@ -126,7 +102,6 @@ class RepositoryData:
             "sources": [x.save_to_dict() for x in self.__remotes],
             "expanded": self.expanded,
             "flags": self.flags,
-            "audit": self.audit.save_to_dict(),
             "lang": self.lang,
             "selected": self.selected,
             "selected_index": self.selected_index,

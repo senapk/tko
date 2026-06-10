@@ -1,6 +1,7 @@
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, cast
+import pytest
 
 from _pytest.monkeypatch import MonkeyPatch
 import tko.repository.repository_watcher as watcher_module
@@ -21,7 +22,8 @@ class _FakeMonitor:
 
 
 class _FakeAuditTracker:
-    def __init__(self, _repo: Any):
+    def __init__(self, _repo: Any, verbose: bool = False):
+        _ = verbose
         self.calls: list[tuple[str, list[Path]]] = []
 
     def store(self, task_key: str, files: list[Path]) -> tuple[bool, int]:
@@ -30,6 +32,8 @@ class _FakeAuditTracker:
 
 
 def _make_repo(tmp_path: Path, enabled: bool, interval: int) -> Any:
+    _ = (enabled, interval)
+
     def _store(_item: Any) -> None:
         return None
 
@@ -41,8 +45,8 @@ def _make_repo(tmp_path: Path, enabled: bool, interval: int) -> Any:
         root_dir=tmp_path,
         remotes=[remote],
         ignore_patterns=[],
+        paths=SimpleNamespace(config_folder=tmp_path / ".tko"),
         logger=SimpleNamespace(store=_store),
-        data=SimpleNamespace(audit=SimpleNamespace(enabled=enabled, interval_seconds=interval)),
     )
 
 
@@ -78,7 +82,7 @@ def test_start_watching_enables_audit_callback_and_interval(monkeypatch: MonkeyP
 
     repo = _make_repo(tmp_path, enabled=True, interval=42)
     watcher = RepositoryWatcher(repo)
-    watcher.start_watching()
+    watcher.start_watching(audit=True, audit_interval_seconds=42)
 
     callback = holder["monitor"].kwargs["on_flush_events"]
     assert callable(callback)
@@ -95,3 +99,91 @@ def test_start_watching_enables_audit_callback_and_interval(monkeypatch: MonkeyP
     assert holder["monitor"].stopped is True
     assert watcher.monitor is None
     assert watcher.audit_tracker is None
+
+
+def test_start_watching_audit_override_enables_audit_in_session(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    holder: dict[str, _FakeMonitor] = {}
+
+    def fake_monitor_ctor(**kwargs: Any) -> _FakeMonitor:
+        monitor = _FakeMonitor(**kwargs)
+        holder["monitor"] = monitor
+        return monitor
+
+    monkeypatch.setattr(watcher_module, "FileMonitor", fake_monitor_ctor)
+    monkeypatch.setattr(watcher_module, "AuditTracker", _FakeAuditTracker)
+
+    repo = _make_repo(tmp_path, enabled=False, interval=42)
+    watcher = RepositoryWatcher(repo)
+    watcher.start_watching(audit=True, audit_interval_seconds=42)
+
+    assert holder["monitor"].kwargs["second_interval"] == 42
+    assert callable(holder["monitor"].kwargs["on_flush_events"])
+
+
+def test_start_watching_audit_override_disables_audit_in_session(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    holder: dict[str, _FakeMonitor] = {}
+
+    def fake_monitor_ctor(**kwargs: Any) -> _FakeMonitor:
+        monitor = _FakeMonitor(**kwargs)
+        holder["monitor"] = monitor
+        return monitor
+
+    monkeypatch.setattr(watcher_module, "FileMonitor", fake_monitor_ctor)
+
+    repo = _make_repo(tmp_path, enabled=True, interval=42)
+    watcher = RepositoryWatcher(repo)
+    watcher.start_watching(audit=False)
+
+    assert holder["monitor"].kwargs["second_interval"] == 300
+    assert holder["monitor"].kwargs["on_flush_events"] is None
+
+
+def test_start_watching_raises_when_lock_is_busy(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    class _BusyLock:
+        def __init__(self, _path: str):
+            self.is_locked = False
+
+        def acquire(self, timeout: float = -1) -> None:
+            _ = timeout
+            raise watcher_module.Timeout("busy")
+
+        def release(self) -> None:
+            self.is_locked = False
+
+    monkeypatch.setattr(watcher_module, "FileLock", _BusyLock)
+
+    repo = _make_repo(tmp_path, enabled=True, interval=42)
+    watcher = RepositoryWatcher(repo)
+
+    with pytest.raises(Warning):
+        watcher.start_watching(audit=True)
+
+
+def test_start_watching_non_audit_ignores_busy_lock(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    holder: dict[str, _FakeMonitor] = {}
+
+    def fake_monitor_ctor(**kwargs: Any) -> _FakeMonitor:
+        monitor = _FakeMonitor(**kwargs)
+        holder["monitor"] = monitor
+        return monitor
+
+    class _BusyLock:
+        def __init__(self, _path: str):
+            self.is_locked = False
+
+        def acquire(self, timeout: float = -1) -> None:
+            _ = timeout
+            raise watcher_module.Timeout("busy")
+
+        def release(self) -> None:
+            self.is_locked = False
+
+    monkeypatch.setattr(watcher_module, "FileMonitor", fake_monitor_ctor)
+    monkeypatch.setattr(watcher_module, "FileLock", _BusyLock)
+
+    repo = _make_repo(tmp_path, enabled=True, interval=42)
+    watcher = RepositoryWatcher(repo)
+    watcher.start_watching(audit=False)
+
+    assert holder["monitor"].started is True
+    assert holder["monitor"].kwargs["second_interval"] == 300

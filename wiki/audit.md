@@ -10,65 +10,19 @@ Hoje o comportamento e:
 - Cada snapshot e uma copia completa do arquivo, sem diff incremental.
 - Os arquivos ficam em `.tko/audit/<source@task>/`.
 
-## Criando um repositorio ja com auditoria ligada
-
-Para criar um repositorio novo com auditoria ativada desde o inicio:
-
-```bash
-tko init --audit
-```
-
-Se quiser evitar a pergunta sobre repositorios remotos padrao:
-
-```bash
-tko init --audit --skip-remotes
-```
-
-Depois disso, a configuracao do repositorio passa a incluir a secao `audit` no arquivo `.tko/repository.yaml`.
-
-## Ligando e desligando a auditoria em um repositorio existente
-
-Dentro do repositorio, use:
-
-```bash
-tko config audit --on
-```
-
-Para desligar:
-
-```bash
-tko config audit --off
-```
-
-Para verificar o estado atual:
-
-```bash
-tko config audit
-```
-
 ## Configurando o tempo entre snapshots
 
-O tempo entre snapshots e controlado no arquivo:
+No modo explícito de auditoria, use `--interval` no comando:
 
-```text
-.tko/repository.yaml
+```bash
+tko audit --interval 60
 ```
 
-Exemplo:
-
-```yaml
-audit:
-	enabled: true
-	interval_seconds: 60
-```
-
-Nesse exemplo, o watcher tenta salvar um novo snapshot a cada `60` segundos.
+Se o parâmetro não for informado, o valor padrão é `60` segundos.
 
 Observacoes:
 
 - O valor deve ser inteiro positivo.
-- Hoje nao existe ainda um comando `tko config audit --interval ...`.
-- Para mudar o intervalo, edite o `repository.yaml` manualmente.
 
 ## Condicao necessaria: o aluno precisa manter o `tko open` rodando
 
@@ -77,6 +31,40 @@ A auditoria depende do watcher iniciado no comando:
 ```bash
 tko open
 ```
+
+Se quiser iniciar auditoria explícita em foreground (com logs de snapshots no terminal), use `tko audit`.
+
+## Modo manual em foreground (`tko audit`)
+
+Quando quiser transparência total no terminal, use:
+
+```bash
+tko audit
+```
+
+Esse comando inicia o watcher com auditoria ligada e fica em foreground mostrando os snapshots salvos, por exemplo:
+
+```text
+[audit] fup@soma -> .tko/audit/fup@soma/2026-06-09_10-11-12_solver.py
+```
+
+Para encerrar, use `Ctrl+C`.
+
+Tambem e possivel ajustar o intervalo apenas para a sessao manual:
+
+```bash
+tko audit --interval 60
+```
+
+## Protecao contra multiplos watchers (lock)
+
+Agora o sistema usa lock por repositorio em:
+
+```text
+.tko/watcher.lock
+```
+
+Com isso, se ja houver um `tko open`/`tko audit` ativo no mesmo repositorio, uma segunda tentativa de iniciar watcher falha com aviso, evitando snapshots duplicados e redundancia de copia.
 
 Se o aluno fechar o `tko open`, o watcher para e nenhum novo snapshot sera criado.
 
@@ -180,7 +168,6 @@ Use o modo de auditoria quando quiser evidencias temporais do processo de constr
 
 Os pontos principais sao:
 
-- criar o repositorio com `tko init --audit` ou ligar depois com `tko config audit --on`;
-- ajustar `audit.interval_seconds` no `.tko/repository.yaml`;
-- manter o `tko open` rodando durante a resolucao;
+- iniciar auditoria explicitamente com `tko audit` (ou `tko audit --interval ...`);
+- manter o processo de auditoria ativo durante a resolucao;
 - analisar os snapshots gerados com `tools/fzf-preview.sh`.

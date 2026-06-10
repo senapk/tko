@@ -78,7 +78,7 @@ def register_main_commands(app: typer.Typer):
             return
             
         from tko.repository.repository_watcher import RepositoryWatcher
-        watcher = RepositoryWatcher(repo).start_watching()
+        watcher = RepositoryWatcher(repo).start_watching(audit=False)
         action = CmdOpen(settings, repo)
         
         if not settings.rs.force_offline:
@@ -92,13 +92,12 @@ def register_main_commands(app: typer.Typer):
     def init_cmd( # type: ignore
         ctx: typer.Context,
         language: Optional[str] = typer.Option(None, "--language", "-l", help="Default repository language (e.g. py, cpp, java, go)"),
-        skip: bool = typer.Option(False, "--skip-remotes", "-s", help="Skip asking about default remotes"),
-        audit: bool = typer.Option(False, "--audit", help="Enable repository audit mode")
+        skip: bool = typer.Option(False, "--skip-remotes", "-s", help="Skip asking about default remotes")
     ):
         from tko.repository.repository_starter import RepositoryStarter
         
 
         settings: Settings = ctx.obj
         
-        rep_starter = RepositoryStarter(settings=settings, language=language, skip_add_remote=skip, audit_enabled=audit)
+        rep_starter = RepositoryStarter(settings=settings, language=language, skip_add_remote=skip)
         rep_starter.execute()

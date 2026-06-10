@@ -15,7 +15,7 @@ def _make_app_context(tmp_path: Path) -> Settings:
     return settings
 
 
-def test_init_passes_audit_flag_to_repository_starter(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+def test_init_passes_arguments_to_repository_starter(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
     runner = CliRunner()
     app = typer.Typer()
     register_main_commands(app)
@@ -30,13 +30,11 @@ def test_init_passes_audit_flag_to_repository_starter(monkeypatch: MonkeyPatch, 
             language: str | None,
             skip_add_remote: bool,
             force_location: bool = False,
-            audit_enabled: bool = False,
         ):
             captured["settings"] = settings
             captured["language"] = language
             captured["skip_add_remote"] = skip_add_remote
             captured["force_location"] = force_location
-            captured["audit_enabled"] = audit_enabled
 
         def execute(self) -> bool:
             captured["execute"] = True
@@ -44,11 +42,10 @@ def test_init_passes_audit_flag_to_repository_starter(monkeypatch: MonkeyPatch, 
 
     monkeypatch.setattr("tko.repository.repository_starter.RepositoryStarter", DummyStarter)
 
-    result = runner.invoke(app, ["init", "--skip-remotes", "--audit", "--language", "py"], obj=ctx)
+    result = runner.invoke(app, ["init", "--skip-remotes", "--language", "py"], obj=ctx)
 
     assert result.exit_code == 0
     assert captured["settings"] is ctx
     assert captured["language"] == "py"
     assert captured["skip_add_remote"] is True
-    assert captured["audit_enabled"] is True
     assert captured["execute"] is True
