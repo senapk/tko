@@ -1,3 +1,5 @@
+from __future__ import annotations
+from pathlib import Path
 from datetime import datetime
 from pathlib import Path
 
@@ -8,6 +10,38 @@ from tko.util.decoder import Decoder
 from hashlib import blake2s
 import json
 
+class AuditElement:
+    def __init__(self, timestamp: datetime, hash_value: str, content: str):
+        self.timestamp = timestamp
+        self.hash_value = hash_value
+        self.content = content
+
+    def to_jsonl_line(self) -> str:
+        entry: dict[str, object] = {
+            "ts": int(self.timestamp.timestamp()),
+            "label": self.timestamp.strftime("%Y/%m/%d-%H:%M:%S"),
+            "hash": self.hash_value,
+            "content": self.content,
+        }
+        return json.dumps(entry, ensure_ascii=False, separators=(",", ":"))
+    
+    def verify_hash(self) -> bool:
+        calculated_hash = blake2s(self.content.encode("utf-8")).hexdigest()
+        return calculated_hash == self.hash_value
+
+    @staticmethod
+    def from_jsonl_line(jsonl_line: str) -> AuditElement:
+        try:
+            entry = json.loads(jsonl_line)
+            timestamp = datetime.fromtimestamp(entry["ts"])
+            hash_value = entry["hash"]
+            content = entry["content"]
+            return AuditElement(timestamp, hash_value, content)
+        except Exception as e:
+            logger.warning(f"Failed to parse jsonl line: {e}")
+            raise ValueError("Invalid jsonl line format") from e
+        
+    
 
 class AuditTracker:
     def __init__(self, repo: Repository, verbose: bool, interval_seconds: int, max_file_size_bytes: int = 1024 * 1024):
@@ -62,17 +96,7 @@ class AuditTracker:
         except Exception as e:
             logger.warning(f"Failed to read last content from {audit_last_file}: {e}")
             return None, None
-    
-    @staticmethod
-    def _generate_jsonl_line(timestamp: datetime, hash_value: str, content: str) -> str:
-        entry: dict[str, object] = {
-            "ts": int(timestamp.timestamp()),
-            "label": timestamp.strftime("%Y/%m/%d-%H:%M:%S"),
-            "hash": hash_value,
-            "content": content,
-        }
-        return json.dumps(entry, ensure_ascii=False, separators=(",", ":"))
-    
+        
     @staticmethod
     def _generate_last_content(timestamp: datetime, hash_value: str) -> str:
         entry: dict[str, object] = {
@@ -124,7 +148,7 @@ class AuditTracker:
         # calculate hash of the file content
         content = Decoder.load(file)
         hash_value = blake2s(content.encode("utf-8")).hexdigest()
-        output_file = audit_task_folder / file.name
+        output_file = audit_task_folder / (file.name + ".jsonl")
         
         # verify changes in concurrent scenarios using .last file
         audit_last_file = self._output_file_last(output_file)
@@ -132,7 +156,7 @@ class AuditTracker:
             return False, 0
 
         try:
-            jsonl_line = self._generate_jsonl_line(timestamp, hash_value, content)
+            jsonl_line = AuditElement(timestamp, hash_value, content).to_jsonl_line()
             with output_file.open("a", encoding="utf-8") as f:
                 f.write(jsonl_line + "\n")
             

@@ -10,7 +10,15 @@ reset=$'\033[0m'
 
 build_snapshot() {
   if (( $# > 0 )); then
-    printf '%s\n' "$@" > "$index_file"
+    : > "$index_file"
+    local path
+    for path in "$@"; do
+      if [[ -d "$path" ]]; then
+        find "$path" -type f | sort >> "$index_file"
+      elif [[ -f "$path" ]]; then
+        printf '%s\n' "$path" >> "$index_file"
+      fi
+    done
     return 0
   fi
 
@@ -161,7 +169,18 @@ render_preview() {
 }
 
 run_fzf() {
-  build_snapshot "$@"
+  local args=("$@")
+
+  if (( ${#args[@]} == 0 )) && [[ ! -t 0 ]]; then
+    mapfile -t args
+  fi
+
+  build_snapshot "${args[@]}"
+
+  if [[ ! -s "$index_file" ]]; then
+    echo "Nenhum arquivo encontrado" >&2
+    return 1
+  fi
 
   nl -ba "$index_file" | \
     fzf \
