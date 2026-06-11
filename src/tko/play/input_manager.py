@@ -50,8 +50,17 @@ class InputManager:
             os.environ.setdefault('ESCDELAY', '25')
 
     @staticmethod
-    def get_and_remap_keys(scr: curses.window, app: AppSettings) -> int:
-        value = scr.getch()
+    def get_and_remap_keys(scr: curses.window, app: AppSettings, timeout_ms: int | None = None) -> int:
+        if timeout_ms is None:
+            value = scr.getch()
+        else:
+            # Wait up to timeout_ms and return -1 when there is no key event.
+            scr.timeout(timeout_ms)
+            value = scr.getch()
+
+        if value == -1:
+            return -1
+
         if value == InputManager.special_double_key:
             value = scr.getch()
             if value == InputManager.cedilha: #ç

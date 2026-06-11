@@ -18,6 +18,7 @@ class _CalibrateMsg:
 
 class FloatingCalibrate(FloatingABC):
     def __init__(self, settings: Settings):
+        super().__init__()
         self.floating = Floating()
         self.settings = settings
         self.floating.set_header(" Calibrar teclas direcionais ")

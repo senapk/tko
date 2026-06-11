@@ -1,7 +1,7 @@
 import typer
 from pathlib import Path
 from typing import Optional
-
+from tko.util.console import Console
 from tko.i18n import Msg, t
 
 
@@ -75,7 +75,7 @@ def build_drafts(ctx: typer.Context):
     changedir = settings.rs.changedir
     here = Path(changedir).resolve()
     
-    print(t(_CLI_BUILD_UPDATING_DRAFTS, folder=here))
+    Console.print(t(_CLI_BUILD_UPDATING_DRAFTS, folder=here))
     source_src = CodeFilter.get_default_src_dir(here)
     drafts_dest = CodeFilter.get_source_drafts_dir(here)
     if source_src.is_dir():

@@ -2,6 +2,7 @@ from tko.config.settings import Settings
 from tko.repository.repository import Repository
 from tko.play.task_graph import TaskGraph
 from tko.util.raw_terminal import RawTerminal
+from tko.util.console import Console
 
 class CmdTask:
     @staticmethod
@@ -15,4 +16,4 @@ class CmdTask:
             height = round(width / 4)
         graph = TaskGraph(settings, rep, task_key, width, height).get_output()
         for line in graph:
-            print(line)
+            Console.print(line)

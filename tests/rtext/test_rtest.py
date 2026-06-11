@@ -1,6 +1,6 @@
 from tko.util.rbuffer import RBuffer
 from tko.util.rt import RT, RenderMode
-from tko.util.rt_style import RTStyle
+from tko.util.text_style import TextStyle
 
 
 # =========================================================
@@ -10,28 +10,28 @@ from tko.util.rt_style import RTStyle
 def test_parse_plain():
     t = RT.parse("hello")
     assert t.plain() == "hello"
-    assert t.runs == ((RTStyle.parse(""), "hello"),)
+    assert t.runs == ((TextStyle.parse(""), "hello"),)
 
 
 def test_parse_style():
     t = RT.parse("[r]hello")
-    assert t.runs == ((RTStyle.parse("r"), "hello"),)
+    assert t.runs == ((TextStyle.parse("r"), "hello"),)
 
 
 def test_parse_reset():
     t = RT.parse("[r]hello[.] world")
-    assert t.runs == ((RTStyle.parse("r"), "hello"), (RTStyle.parse(""), " world"))
+    assert t.runs == ((TextStyle.parse("r"), "hello"), (TextStyle.parse(""), " world"))
 
 
 def test_parse_overlay():
     t = RT.parse("[r]red [B]blue")
     # overlay -> rB
-    assert t.runs == ((RTStyle.parse("r"), "red "), (RTStyle.parse("rB"), "blue"))
+    assert t.runs == ((TextStyle.parse("r"), "red "), (TextStyle.parse("rB"), "blue"))
 
 
 def test_parse_reset_overlay():
     t = RT.parse("[r]red [.B]blue")
-    assert t.runs == ((RTStyle.parse("r"), "red "), (RTStyle.parse("B"), "blue"))
+    assert t.runs == ((TextStyle.parse("r"), "red "), (TextStyle.parse("B"), "blue"))
 
 
 
@@ -53,7 +53,7 @@ def test_concat():
 def test_merge_runs():
     t = RT("A", "r") + RT("B", "r")
     assert len(t.runs) == 1
-    assert t.runs[0] == (RTStyle.parse("r"), "AB")
+    assert t.runs[0] == (TextStyle.parse("r"), "AB")
 
 
 def test_len():
@@ -72,12 +72,12 @@ def test_plain():
 
 def test_upper():
     t = RT("hello", "r").upper()
-    assert t.runs == ((RTStyle.parse("r"), "HELLO"),)
+    assert t.runs == ((TextStyle.parse("r"), "HELLO"),)
 
 
 def test_lower():
     t = RT("HELLO", "r").lower()
-    assert t.runs == ((RTStyle.parse("r"), "hello"),)
+    assert t.runs == ((TextStyle.parse("r"), "hello"),)
 
 
 def test_replace_simple():
@@ -88,9 +88,9 @@ def test_replace_simple():
 
 def test_replace_across_runs():
     t = RT.from_runs([
-        (RTStyle.parse("r"), "Hel"),
-        (RTStyle.parse("g"), "lo Wo"),
-        (RTStyle.parse("y"), "rld"),
+        (TextStyle.parse("r"), "Hel"),
+        (TextStyle.parse("g"), "lo Wo"),
+        (TextStyle.parse("y"), "rld"),
     ])
     t2 = t.replace("lo Wo", "X", "b")
     assert t2.plain() == "HelXrld"
@@ -102,13 +102,13 @@ def test_replace_across_runs():
 
 def test_split_preserve_style():
     t = RT.from_runs([
-        (RTStyle.parse("r"), "Hello"),
-        (RTStyle.parse(""), " "),
-        (RTStyle.parse("g"), "World"),
+        (TextStyle.parse("r"), "Hello"),
+        (TextStyle.parse(""), " "),
+        (TextStyle.parse("g"), "World"),
     ])
     parts = t.split(" ")
-    assert parts[0].runs == ((RTStyle.parse("r"), "Hello"),)
-    assert parts[1].runs == ((RTStyle.parse("g"), "World"),)
+    assert parts[0].runs == ((TextStyle.parse("r"), "Hello"),)
+    assert parts[1].runs == ((TextStyle.parse("g"), "World"),)
 
 
 # =========================================================
@@ -119,7 +119,7 @@ def test_ljust():
     t = RT("A", "r")
     t2 = t.ljust(3, RT(".", "g"))
     assert t2.plain() == "A.."
-    assert t2.runs == ((RTStyle.parse("r"), "A"), (RTStyle.parse("g"), ".."))
+    assert t2.runs == ((TextStyle.parse("r"), "A"), (TextStyle.parse("g"), ".."))
 
 
 def test_rjust():
@@ -141,34 +141,34 @@ def test_center():
 def test_buffer_add_string():
     buf = RBuffer()
     buf.add("Hello", "r")
-    assert buf.to_rt().runs == ((RTStyle.parse("r"), "Hello"),)
+    assert buf.to_rt().runs == ((TextStyle.parse("r"), "Hello"),)
 
 
 def test_buffer_rb_renders_blue_foreground_red_background():
     buf = RBuffer()
     buf.add("Hello", "Rb")
 
-    assert buf.to_rt().runs == ((RTStyle.parse("bR"), "Hello"),)
+    assert buf.to_rt().runs == ((TextStyle.parse("bR"), "Hello"),)
     assert buf.to_rt().render(RenderMode.ANSI) == "\033[34m\033[41mHello\033[0m"
 
 
 def test_buffer_add_text():
     buf = RBuffer()
     buf.add(RT("Hello", "r"))
-    assert buf.to_rt().runs == ((RTStyle.parse("r"), "Hello"),)
+    assert buf.to_rt().runs == ((TextStyle.parse("r"), "Hello"),)
 
 
 def test_buffer_add_run():
     buf = RBuffer()
-    buf.run(RTStyle.parse("r"), "Hello")
-    assert buf.to_rt().runs == ((RTStyle.parse("r"), "Hello"),)
+    buf.run(TextStyle.parse("r"), "Hello")
+    assert buf.to_rt().runs == ((TextStyle.parse("r"), "Hello"),)
 
 
 def test_buffer_merge_runs():
     buf = RBuffer()
     buf.add("A", "r")
     buf.add("B", "r")
-    assert buf.to_rt().runs == ((RTStyle.parse("r"), "AB"),)
+    assert buf.to_rt().runs == ((TextStyle.parse("r"), "AB"),)
 
 
 def test_buffer_iadd():
@@ -200,8 +200,8 @@ def test_equality():
 
 def test_slice_preserves_style():
     t = RT.from_runs([
-        (RTStyle.parse("r"), "Hello"),
-        (RTStyle.parse("g"), "World"),
+        (TextStyle.parse("r"), "Hello"),
+        (TextStyle.parse("g"), "World"),
     ])
     s = t[3:8]
     assert s.plain() == "loWor"

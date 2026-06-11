@@ -2,7 +2,7 @@ from tko.config.app_settings import AppSettings, ToggleOption
 from tko.floating.floating import Floating
 from tko.floating.floating_drop_down import FloatingDropDown, FloatingInputData
 from tko.floating.floating_manager import FloatingManager
-from tko.play.keys import GuiKeys
+from tko.play.gui_keys import GuiKeys
 from tko.tester.tester_navigator import TesterNavigator
 from tko.tester.tester_state import TesterState
 from tko.tester import tester_util
@@ -72,8 +72,7 @@ class TesterPalette:
                 GuiKeys.self_evaluate,
             ).set_exit_on_action(True)
             )
-
-        self.fman.add_input(
+        obj = (
             FloatingDropDown()
             .set_floating(
                 Floating()
@@ -84,3 +83,5 @@ class TesterPalette:
             .set_options(options)
             .set_exit_on_enter(False)
         )
+        obj.id = "palette"
+        self.fman.add_input(obj)

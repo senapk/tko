@@ -1,5 +1,5 @@
 from __future__ import annotations
-from tko.play.keys import GuiKeys
+from tko.play.gui_keys import GuiKeys
 
 
 class Flag:

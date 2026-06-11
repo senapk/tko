@@ -1,8 +1,9 @@
 from tko.config.app_settings import AppSettings
 from tko.game.task import Task
+from tko.play.gui_actions_names import GuiActionsNames
 from tko.util.rbuffer import RBuffer
 from tko.widget.frame import Frame
-from tko.play.keys import GuiActions, GuiKeys
+from tko.play.gui_keys import GuiKeys
 from tko.tester.tester_state import TesterState, SeqMode
 from tko.tester import tester_util
 from tko.run.unit import Unit
@@ -47,7 +48,7 @@ class TesterTopBar:
         solver_names = tester_util.get_solver_names(self.wdir)
         solvers_buffer = RBuffer()
         if len(solver_names) > 1:
-            solvers_buffer.add(f" {GuiActions.tab} ", "R")
+            solvers_buffer.add(f" {GuiActionsNames.tab} ", "R")
         for i, solver in enumerate(solver_names):
             if len(solver_names) > 1:
                 solvers_buffer.add(" ")

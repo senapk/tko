@@ -5,9 +5,9 @@ from typing import Iterable
 from wcwidth import wcwidth
 import enum
 import re
-from tko.util.rt_style import RTStyle, ANSI_RESET
+from tko.util.text_style import TextStyle, ANSI_RESET
 
-Run = tuple[RTStyle, str]  # (style, text)
+Run = tuple[TextStyle, str]  # (style, text)
 
 class RenderMode(enum.Enum):
     ANSI = "ansi"
@@ -26,7 +26,7 @@ class SafeDict(dict[str, object]):
         return "{" + key + "}"
 
 
-def _append_run(runs: list[Run], style: RTStyle, text: str) -> None:
+def _append_run(runs: list[Run], style: TextStyle, text: str) -> None:
     if not text:
         return
     if runs and runs[-1][0] == style:
@@ -49,7 +49,7 @@ class RunBuilder:
     def __init__(self) -> None:
         self._runs: list[Run] = []
 
-    def append(self, style: RTStyle, text: str) -> None:
+    def append(self, style: TextStyle, text: str) -> None:
         _append_run(self._runs, style, text)
 
     def extend(self, runs: Iterable[Run]) -> None:
@@ -113,7 +113,7 @@ class RT:
         if runs is not None:
             object.__setattr__(self, "runs", tuple(_merge(runs)))
         elif text:
-            object.__setattr__(self, "runs", ((RTStyle.parse(style), text),))
+            object.__setattr__(self, "runs", ((TextStyle.parse(style), text),))
         else:
             object.__setattr__(self, "runs", ())
 
@@ -127,9 +127,10 @@ class RT:
 
     @staticmethod
     def from_ansi(data: str) -> RT:
+        return RT("") # debug
         rb = RunBuilder()
 
-        style = RTStyle()
+        style = TextStyle()
 
         last = 0
 
@@ -146,7 +147,7 @@ class RT:
 
             codes = raw.split(";") if raw else ["0"]
 
-            style = RTStyle.from_ansi_codes(
+            style = TextStyle.from_ansi_codes(
                 codes,
                 style,
             )
@@ -201,7 +202,7 @@ class RT:
         buf = ""
         i = 0
 
-        style_stack: list[RTStyle] = [RTStyle()]
+        style_stack: list[TextStyle] = [TextStyle()]
 
         def flush() -> None:
             nonlocal buf
@@ -246,7 +247,7 @@ class RT:
                     style = style_stack[-1]
 
                 elif token.startswith("."):
-                    style = RTStyle.parse(token[1:])
+                    style = TextStyle.parse(token[1:])
                     style_stack.append(style)
 
                 # Push
@@ -303,17 +304,17 @@ class RT:
     def __len__(self) -> int:
         return sum(_char_width(ch) for ch, _ in self.iter_chars())
     
-    def set_style(self, style: str | RTStyle) -> RT:
+    def set_style(self, style: str | TextStyle) -> RT:
         if isinstance(style, str):
-            style = RTStyle.parse(style)
+            style = TextStyle.parse(style)
 
         return RT.from_runs(
             runs=[(style, t) for _, t in self.runs]
         )
     
-    def add_style(self, style: str | RTStyle) -> RT:
+    def add_style(self, style: str | TextStyle) -> RT:
         if isinstance(style, str):
-            style = RTStyle.parse(style)
+            style = TextStyle.parse(style)
 
         return RT.from_runs(
             runs=[
@@ -324,7 +325,7 @@ class RT:
 
     def strip_style(self) -> RT:
         return RT.from_runs(
-            runs=[(RTStyle(), t) for _, t in self.runs]
+            runs=[(TextStyle(), t) for _, t in self.runs]
         )
 
 
@@ -348,7 +349,7 @@ class RT:
             key += len(self)
         return self.slice(key, key + 1)
     
-    def iter_chars(self) -> Iterator[tuple[str, RTStyle]]:
+    def iter_chars(self) -> Iterator[tuple[str, TextStyle]]:
         for style, text in self.runs:
             for ch in text:
                 yield ch, style
@@ -477,7 +478,7 @@ class RT:
             new = RT(new, style)
 
         # explode em caracteres com estilo
-        chars: list[tuple[str, RTStyle]] = []
+        chars: list[tuple[str, TextStyle]] = []
         for s, t in self.runs:
             for c in t:
                 chars.append((c, s))
@@ -487,7 +488,7 @@ class RT:
         replaced = 0
         n = len(old)
 
-        def append_run(style: RTStyle, text: str):
+        def append_run(style: TextStyle, text: str):
             if not text:
                 return
             if result and result[-1][0] == style:
@@ -527,7 +528,7 @@ class RT:
         i = 0
 
         # explode runs em (char, style)
-        chars: list[tuple[str, RTStyle]] = []
+        chars: list[tuple[str, TextStyle]] = []
         for style, text in self.runs:
             for c in text:
                 chars.append((c, style))

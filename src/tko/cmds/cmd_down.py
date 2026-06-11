@@ -17,6 +17,7 @@ from tko.loader.toml_parser import TomlParser
 from tko.i18n import Msg, t
 from tko.util.rt import RT
 from typing import Any
+from tko.util.console import Console
 
 
 _DOWN_INVALID_REPO_ARG = Msg(
@@ -97,8 +98,8 @@ class CmdLineDown:
         
     def execute(self):
         if not self.rep.paths.config_file.exists():
-            print(t(_DOWN_INVALID_REPO_ARG))
-            print(t(_DOWN_INVALID_REPO_ARG_ACTION))
+            Console.print(t(_DOWN_INVALID_REPO_ARG))
+            Console.print(t(_DOWN_INVALID_REPO_ARG_ACTION))
             return False
     
         CmdDown(self.rep, self.task_key, self.settings).execute()
@@ -241,13 +242,13 @@ class CmdDown:
                 self.language = language_def
             else:
                 langs = self.settings.get_languages_settings().get_languages_with_drafts()
-                print(t(_DOWN_CHOOSE_DRAFT_EXTENSION, options=", ".join(langs.keys())), end="")
+                Console.print(t(_DOWN_CHOOSE_DRAFT_EXTENSION, options=", ".join(langs.keys())), end="")
                 self.language = input()
 
 class DownActions:
     def __init__(self, settings: Settings):
         self.settings = settings
-        self.fnprint: Callable[[Any], None] = print
+        self.fnprint: Callable[[Any], None] = Console.print
         self.cache_msgs: list[str] = []
 
     @staticmethod

@@ -5,7 +5,7 @@ from tko.config.app_settings import ToggleOption
 from tko.repository.repository_config import RepositoryConfig
 from tko.config.settings import Settings
 from tko.repository.repository import Repository
-from tko.play.keys import GuiKeys
+from tko.play.gui_keys import GuiKeys
 from tko.play.images import opening
 from tko.floating.floating_calibrate import FloatingCalibrate
 from tko.play.input_manager import InputManager
@@ -197,6 +197,7 @@ class Play:
         Fmt.init_colors()  # Inicializa as cores
         Fmt.set_scr(scr)  # Define o scr como global
         self.tree.layout.get_tree_size_fn = lambda: self.get_left_frame_size()
+        redraw_tick_ms = 100
 
         while not self.exit:
             self.tree.update()
@@ -210,7 +211,7 @@ class Play:
                 self.fman.draw()
 
             # o input tem que ser depois do draw para mostrar o floating
-            value = InputManager.get_and_remap_keys(scr, self.app)
+            value = InputManager.get_and_remap_keys(scr, self.app, timeout_ms=redraw_tick_ms)
             
             if self.fman.has_floating():
                 # if consumed, value becomes -1
@@ -224,7 +225,8 @@ class Play:
                     return callback
             else:
                 self.send_char_not_found(value)
-            self.save_to_json()
+            if value != -1:
+                self.save_to_json()
 
             
     def play(self):

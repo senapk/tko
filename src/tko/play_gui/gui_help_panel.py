@@ -1,5 +1,5 @@
 from tko.widget.frame import Frame
-from tko.play.keys import GuiKeys
+from tko.play.gui_keys import GuiKeys
 from tko.i18n import Msg, t
 from tko.util.rt import RT
 from tko.util.symbols import Symbols

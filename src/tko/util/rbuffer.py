@@ -1,6 +1,6 @@
 from tko.util.rt import RT, Run
 from tko.util.rt import RunBuilder
-from tko.util.rt_style import RTStyle
+from tko.util.text_style import TextStyle
 
 
 from typing import Any, Iterable
@@ -33,7 +33,7 @@ class RBuffer:
         self.add_run(style, str(value))
         return self
 
-    def run(self, style: RTStyle, text: str):
+    def run(self, style: TextStyle, text: str):
         self.builder.append(style, text)
         return self
 
@@ -45,7 +45,7 @@ class RBuffer:
     def add_run(self, style: str, text: str):
         if not text:
             return
-        self.builder.append(RTStyle.parse(style), text)
+        self.builder.append(TextStyle.parse(style), text)
 
     def clear(self):
         self.builder.clear()

@@ -1,7 +1,9 @@
 import curses
 from tko.util.rt import RT
+from tko.util.text_style import TextStyle
 from tko.widget.colors import Colors
 from tko.i18n import Msg, t
+from loguru import logger
 
 
 _FMT_NOT_INITIALIZED = Msg(
@@ -21,19 +23,20 @@ class TextPosition:
 
     
 class TokenPosition:
-    def __init__(self, y: int, x: int, style: str, text: str):
+    def __init__(self, y: int, x: int, style: TextStyle, text: str):
         self.y = y
         self.x = x
-        self.style = style
+        self.style: TextStyle = style
         self.text = text
 
     def __str__(self):
-        return f"{self.y}:{self.x}:({self.style}:{self.text})"
+        return f"{self.y}:{self.x}:({self.style.to_tag()}:{self.text})"
 
 
 class Fmt:
     __scr = None
     color_pairs: dict[str, int] = {}
+    mono: bool = False
 
     COLOR_MAP = {
         'k': curses.COLOR_BLACK,
@@ -70,29 +73,27 @@ class Fmt:
                 pair_number += 1
 
     @staticmethod
-    def stroke(y: int, x: int, fmt: str, text: str):
+    def stroke(y: int, x: int, style: TextStyle | str, text: str):
+        if isinstance(style, str):
+            style = TextStyle.parse(style)
         if Fmt.__scr is None:
             raise Exception(t(_FMT_NOT_INITIALIZED))
+        
+        fg: str = style.fg if style.fg is not None else ""
+        bg: str = style.bg if style.bg is not None else ""
+        attrs: str = "".join(style.attrs)
+
+        # if Fmt.mono:
+        #     fmt = "X" if "X" in style.to_tag() else ""
+        # else:
+        #     fmt = style.to_tag()
+
         stdscr = Fmt.__scr
-        italic = False
-        underline = False
-        reverse = False
-        source_fmt = fmt
-        if "X" in fmt or "x" in fmt:
-            reverse = True
-            fmt = fmt.replace("X", "").replace("x", "")
-        if "/" in fmt:
-            italic = True
-            fmt = fmt.replace("/", "")
-        if "_" in fmt:
-            underline = True
-            fmt = fmt.replace("_", "")
+        reverse = "X" in attrs
+        italic =  "/" in attrs
+        underline = "_" in attrs
 
-        fg_list = [c for c in fmt if c.islower()]
-        bg_list = [c for c in fmt if c.isupper()]
-        bg = "" if len(bg_list) == 0 else bg_list[0]
-        fg = "" if len(fg_list) == 0 else fg_list[0]
-
+        pair_number = -1
         if bg != "" and fg == "":
             fg = "k"
         if fg == "" and bg == "":
@@ -101,7 +102,7 @@ class Fmt:
             try:
                 pair_number = Fmt.color_pairs[fg + bg]
             except KeyError:
-                raise(Exception("Cor não encontrada: " + source_fmt))
+                logger.error("Cor não encontrada: " + style.to_tag())
         if italic:
             stdscr.attron(curses.A_ITALIC)
         if underline:
@@ -111,6 +112,8 @@ class Fmt:
         if pair_number != -1:
             stdscr.attron(curses.color_pair(pair_number))
         try:
+            if y + len(text) < curses.LINES - 2:
+                text = text[:curses.LINES - y - 2]
             stdscr.addstr(y, x, text)
         except curses.error as _e:
             lines, cols = Fmt.get_lines_cols()
@@ -156,7 +159,7 @@ class Fmt:
             x = text_pos.x
             line = text_pos.text
             for style, text in line.runs:
-                output.append(TokenPosition(y, x, style.to_tag(), text))
+                output.append(TokenPosition(y, x, style, text))
                 x += len(text)
         return output
 

@@ -32,12 +32,15 @@ class Gui:
         self.colors = self.settings.colors
         self.app: AppSettings = self.settings.app
 
+        in_drafts = lambda: self.fman.has_floating() and self.fman.input_layer[0].id == "drafts"
+        in_palette = lambda: self.fman.has_floating() and self.fman.input_layer[0].id == "palette"
+        in_search = lambda: self.search.search_mode
         self._need_update: bool = False
 
         # Sub-renderizadores
         self.action_resolver = GuiActionResolver(self.tree, self.fman, self.tree.task_formatter, self.flags)
         self.left_panel      = GuiLeftPanel(self.tree, self.search, lambda: self._need_update)
-        self.bottom_bar      = GuiBottomBar(self.tree, self.action_resolver)
+        self.bottom_bar      = GuiBottomBar(self.tree, self.action_resolver, in_drafts, in_palette, in_search)
         self.top_bar         = GuiTopBar(self.flags, self.app)
         self.skills_bar      = GuiSkillsBar(self.game, self.colors, self.flags, lambda: self.tree.get_selected_throw().basic.remote_name)
         self.help_panel      = GuiHelpPanel()

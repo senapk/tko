@@ -98,6 +98,6 @@ class DraftCreator:
             )
 
         current_folders_on_rep: list[str] = [f"@{folder.name}" for folder in sandbox_folder.iterdir() if folder.is_dir()]
-        self.fman.add_input(
-            FloatingInputText(RT(t(_DraftMsg.TITLE_PROMPT)), __create, current_folders_on_rep)
-        )
+        obj = FloatingInputText(RT(t(_DraftMsg.TITLE_PROMPT)), __create, current_folders_on_rep)
+        obj.id = "drafts"
+        self.fman.add_input(obj)

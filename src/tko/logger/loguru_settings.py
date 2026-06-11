@@ -4,11 +4,11 @@ from pathlib import Path
 
 def configure_loguru(log_file: Path, debug: bool) -> None:
     logger.remove()
-    logger.add(
-        sys.stderr,
-        level="DEBUG" if debug else "INFO",
-        format="<level>{level: <8}</level> | <level>{message}</level>",
-    )
+    # logger.add(
+    #     sys.stderr,
+    #     level="DEBUG" if debug else "INFO",
+    #     format="<level>{level: <8}</level> | <level>{message}</level>",
+    # )
     try:
         log_file.parent.mkdir(parents=True, exist_ok=True)
         logger.add(
@@ -21,4 +21,4 @@ def configure_loguru(log_file: Path, debug: bool) -> None:
     except OSError:
         pass
     
-    logger.level("INFO", color="<green>")
+    # logger.level("INFO", color="<green>")

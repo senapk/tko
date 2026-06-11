@@ -1,5 +1,5 @@
 from tko.util.rt import RT
-from tko.util.rt_style import RTStyle
+from tko.util.text_style import TextStyle
 
 def test_dollar_placeholder_string():
     t = RT.parse("ola, {}!".format("mundo"))
@@ -14,14 +14,14 @@ def test_dollar_placeholder_multiple():
 def test_dollar_placeholder_inherits_current_style():
     t = RT.parse("[r]erro: {}".format("arquivo"))
     assert t.plain() == "erro: arquivo"
-    assert t.runs == ((RTStyle.parse("r"), "erro: arquivo"),)
+    assert t.runs == ((TextStyle.parse("r"), "erro: arquivo"),)
 
 
 def test_dollar_placeholder_rtext_merges_style():
     name = RT("file.txt", "_")
     t = RT.parse("[r]open {}".format(name.flat()))
     assert t.plain() == "open file.txt"
-    assert t.runs == ((RTStyle.parse("r"), "open "), (RTStyle.parse("r_"), "file.txt"))
+    assert t.runs == ((TextStyle.parse("r"), "open "), (TextStyle.parse("r_"), "file.txt"))
 
 # ---------- [] e [.] resetam estilo ----------
 

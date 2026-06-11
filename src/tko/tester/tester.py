@@ -11,7 +11,7 @@ from tko.floating.floating import Floating
 from tko.floating.floating_manager import FloatingManager
 from tko.widget.fmt import Fmt
 from tko.play.input_manager import InputManager
-from tko.play.keys import GuiKeys
+from tko.play.gui_keys import GuiKeys
 from tko.play.opener import Opener
 from tko.tester.tester_executor import TesterExecutor
 from tko.tester.tester_navigator import TesterNavigator

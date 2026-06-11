@@ -22,6 +22,7 @@ class FloatingDropDown(FloatingABC):
     SELECTED_COLOR = "/_"
 
     def __init__(self):
+        super().__init__()
         self.floating = Floating()
         self.index = 0
         self.options: list[FloatingInputData] = []

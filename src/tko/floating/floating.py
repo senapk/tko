@@ -1,3 +1,4 @@
+from __future__ import annotations
 from tko.widget.frame import Frame
 from tko.util.rt import RT
 from tko.widget.fmt import Fmt
@@ -20,6 +21,9 @@ class FloatingType(enum.Enum):
 
 
 class FloatingABC(ABC):
+    def __init__(self):
+        self.id = ""
+
     @abstractmethod
     def draw(self):
         pass
@@ -35,6 +39,7 @@ class FloatingABC(ABC):
 
 class Floating(FloatingABC):
     def __init__(self):
+        super().__init__()
         self.frame = Frame(0, 0)
         self.content: list[RT] = []
         self.type: FloatingType = FloatingType.WARNING

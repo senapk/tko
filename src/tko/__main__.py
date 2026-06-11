@@ -22,6 +22,7 @@ from tko.cli.cli_reset import app as reset_app
 from tko.cli.cli_task import app as task_app
 from tko.cli.cli_tool import app as tool_app
 from tko.i18n import Msg, set_language, t
+from tko.widget.fmt import Fmt
 
 
 _APP_VERSION = Msg(
@@ -95,6 +96,7 @@ def main_callback(
 
     if mono:
         RenderConfig.mode = RenderMode.PLAIN
+        Fmt.mono = mono
 
     configure_loguru(sett.get_log_file(), debug)
     

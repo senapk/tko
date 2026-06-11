@@ -1,5 +1,5 @@
 from tko.util.rt import RT
-from tko.util.rt_style import RTStyle
+from tko.util.text_style import TextStyle
 
 
 # ---------- texto simples ----------
@@ -79,19 +79,19 @@ def test_merge_runs():
 
 def test_reset():
     t = RT.parse("[r]red[.]normal[]banana")
-    assert t.runs[0] == (RTStyle.parse("r"), "red")
-    assert t.runs[1] == (RTStyle.parse(""), "normal")
-    assert t.runs[2] == (RTStyle.parse("r"), "banana")
+    assert t.runs[0] == (TextStyle.parse("r"), "red")
+    assert t.runs[1] == (TextStyle.parse(""), "normal")
+    assert t.runs[2] == (TextStyle.parse("r"), "banana")
 
 def test_reset2():
     t = RT.parse("red[.]normal[]banana")
     assert len(t.runs) == 1
-    assert t.runs[0] == (RTStyle.parse(""), "rednormalbanana")
+    assert t.runs[0] == (TextStyle.parse(""), "rednormalbanana")
 
 def test_reset3():
     t = RT.parse("[b]red[.b]normal[]banana")
     assert t.runs == (
-        (RTStyle.parse("b"), "rednormalbanana"),
+        (TextStyle.parse("b"), "rednormalbanana"),
     )
 
 # ---------- reset dentro ----------

@@ -214,6 +214,7 @@ class InputBoolean(InputLine):
 
 class FloatingGrade(FloatingABC):
     def __init__(self, task: Task, fn_exit: Callable[[Task], None] | None = None):
+        super().__init__()
         self.floating = Floating()
         self._task = task
         self._line = 0

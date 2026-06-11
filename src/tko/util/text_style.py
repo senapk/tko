@@ -66,14 +66,14 @@ def _empty_attrs() -> frozenset[str]:
     return frozenset()
 
 @dataclass(frozen=True, slots=True)
-class RTStyle:
+class TextStyle:
     fg: str | None = None
     bg: str | None = None
     attrs: frozenset[str] = field(default_factory=_empty_attrs)
 
     @staticmethod
     @cache
-    def parse(style: str) -> RTStyle:
+    def parse(style: str) -> TextStyle:
         fg: str | None = None
         bg: str | None = None
         attrs: set[str] = set()
@@ -93,24 +93,24 @@ class RTStyle:
         if bg == "D":
             bg = None
 
-        return RTStyle(
+        return TextStyle(
             fg=fg,
             bg=bg,
             attrs=frozenset(attrs),
         )
 
-    def overlay(self, other: RTStyle | str) -> RTStyle:
+    def overlay(self, other: TextStyle | str) -> TextStyle:
         if isinstance(other, str):
-            other = RTStyle.parse(other)
+            other = TextStyle.parse(other)
 
-        return RTStyle(
+        return TextStyle(
             fg=other.fg or self.fg,
             bg=other.bg or self.bg,
             attrs=self.attrs | other.attrs,
         )
 
-    def clear_attrs(self) -> RTStyle:
-        return RTStyle(
+    def clear_attrs(self) -> TextStyle:
+        return TextStyle(
             fg=self.fg,
             bg=self.bg,
             attrs=frozenset(),
@@ -127,8 +127,8 @@ class RTStyle:
     @staticmethod
     def from_ansi_codes(
         codes: Iterable[str],
-        base: RTStyle | None = None,
-    ) -> RTStyle:
+        base: TextStyle | None = None,
+    ) -> TextStyle:
         fg = base.fg if base else None
         bg = base.bg if base else None
         attrs: set[str] = set(base.attrs) if base else set()
@@ -152,7 +152,7 @@ class RTStyle:
             elif code in ANSI_TO_ATTR:
                 attrs.add(ANSI_TO_ATTR[code])
 
-        return RTStyle(
+        return TextStyle(
             fg=fg,
             bg=bg,
             attrs=frozenset(attrs),
@@ -187,8 +187,10 @@ class RTStyle:
 
         for attr in sorted(self.attrs):
             codes.append(CODES[attr])
-
-        return "".join(f"\033[{code}m" for code in codes)
+        if not codes:
+            return ""
+        return f"\033[{';'.join(codes)}m"
+        #return "".join(f"\033[{code}m" for code in codes)
 
     def __str__(self) -> str:
         return self.to_tag()

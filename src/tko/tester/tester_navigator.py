@@ -4,7 +4,7 @@ from tko.logger.log_item_self import LogItemSelf
 from tko.floating.floating import Floating
 from tko.floating.floating_grade import FloatingGrade
 from tko.floating.floating_manager import FloatingManager
-from tko.play.keys import GuiKeys
+from tko.play.gui_keys import GuiKeys
 from tko.tester.tester_executor import TesterExecutor
 from tko.tester.tester_state import TesterState, SeqMode
 from tko.tester import tester_util

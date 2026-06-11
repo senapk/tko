@@ -1,10 +1,11 @@
 from tko.config.settings import Settings
 from tko.enums.diff_mode import DiffMode
 from tko.game.task import Task
+from tko.play.gui_actions_names import GuiActionsNames
 from tko.widget.fmt import Fmt
 from tko.widget.frame import Frame
 from tko.play.images import compilling_image, executing_image, images, intro, random_get, success_image
-from tko.play.keys import GuiActions, GuiKeys
+from tko.play.gui_keys import GuiKeys
 from tko.play.opener import Opener
 from tko.tester.tester_state import TesterState, SeqMode
 from tko.tester.tester_top_bar import TesterTopBar
@@ -82,13 +83,13 @@ class TesterRenderer:
 
     def make_bottom_line(self, state: TesterState) -> list[RT]:
         cmds: list[RT] = []
-        cmds.append(self.border("C", f"{GuiActions.goback}"))
-        cmds.append(self.border("C", f"{GuiActions.pallete} [{GuiKeys.palette}]"))
+        cmds.append(self.border("C", f"{GuiActionsNames.goback}"))
+        cmds.append(self.border("C", f"{GuiActionsNames.pallete} [{GuiKeys.palette}]"))
         if self.opener is not None:
-            cmds.append(self.border("C", f"{GuiActions.edit} [{GuiKeys.edit}]"))
-        cmds.append(self.border("G", f"{GuiActions.evaluate_tester} [{GuiKeys.evaluate} | {Symbols.newline}]"))
-        cmds.append(self.border("G", f"{GuiActions.execute_tester} [{GuiKeys.execute} | ←]"))
-        limite = f"{GuiActions.time_limit} {tester_util.get_time_limit_symbol(self.settings.app.timeout)} [{GuiKeys.limite}]"
+            cmds.append(self.border("C", f"{GuiActionsNames.edit} [{GuiKeys.edit}]"))
+        cmds.append(self.border("G", f"{GuiActionsNames.evaluate_tester} [{GuiKeys.evaluate} | {Symbols.newline}]"))
+        cmds.append(self.border("G", f"{GuiActionsNames.execute_tester} [{GuiKeys.execute} | ←]"))
+        limite = f"{GuiActionsNames.time_limit} {tester_util.get_time_limit_symbol(self.settings.app.timeout)} [{GuiKeys.limite}]"
         cmds.append(self.border("Y", limite))
         return cmds
 

@@ -12,6 +12,7 @@ _INPUT_TEXT_PROMPT = Msg(pt="Digite aqui: ", en="Type here: ")
 
 class FloatingInputText(FloatingABC):
     def __init__(self, label: RT, action: Callable[[str], None], unallowed_strings: list[str] | None = None):
+        super().__init__()
         self.floating = Floating()
         self.floating.set_footer(" Use Enter para confirmar ou Esc para cancelar ")
         self.floating.set_text_ljust()

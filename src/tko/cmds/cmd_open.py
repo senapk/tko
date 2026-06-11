@@ -6,6 +6,7 @@ from pathlib import Path
 from tko.play_tree.task_formatter import TaskFormatter
 from tko.game.task import Task
 from tko.i18n import Msg 
+from tko.util.console import Console
 # from tko.i18n import t
 # from tko.util.rt import RT
 # from tko.util.console import Console
@@ -66,12 +67,12 @@ class CmdOpen:
             if only_down:
                 if not istask:
                     if show_quests:
-                        print(item)
+                        Console.print(item)
                 elif task_formatter.is_downloaded_for_lang(tree_item):
-                    print(item)
+                    Console.print(item)
             else:
                 if istask:
-                    print(item)
+                    Console.print(item)
                 elif show_quests:
-                    print(item)
+                    Console.print(item)
                 
