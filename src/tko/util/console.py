@@ -5,7 +5,6 @@ from contextlib import contextmanager
 from io import StringIO, TextIOBase
 from typing import Any, ClassVar
 import sys
-from tko.util.rt import RT
 from tko.i18n import Msg, get_language
 from enum import Enum
 
@@ -65,9 +64,6 @@ class Console:
 
             if format_kwargs:
                 text = text.format_map(SafeDict(format_kwargs))
-
-            if colors and not isinstance(value, RT) and "[" in text:
-                text = RT.parse(text).render()
 
             rendered.append(text)
 

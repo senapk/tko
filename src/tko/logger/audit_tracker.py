@@ -9,6 +9,7 @@ from tko.repository.repository import Repository
 from tko.util.decoder import Decoder
 from hashlib import blake2s
 import json
+from tko.util.console import Console
 
 class AuditElement:
     def __init__(self, timestamp: datetime, hash_value: str, content: str):
@@ -169,8 +170,8 @@ class AuditTracker:
             logger.warning(f"Failed to process file {file}: {e}")
             return False, 0
 
-        hh_mm_ss = timestamp.strftime("%H:%M:%S")
         if self.verbose:
-            print(f"[audit] {hh_mm_ss} {file} -> {output_file}", flush=True)
+            hh_mm_ss = timestamp.strftime("%H:%M:%S")
+            Console.print(f"[audit] {hh_mm_ss} {file} -> {output_file}", flush=True)
 
         return True, line_count

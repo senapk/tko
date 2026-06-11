@@ -17,6 +17,8 @@ from tko.run.unit import Unit
 from tko.run.wdir import Wdir
 from tko.util.rt import RT
 from tko.util.symbols import Symbols
+from tko.widget.button import Button
+from tko.floating.floating_manager import FloatingManager
 
 
 class TesterRenderer:
@@ -26,12 +28,14 @@ class TesterRenderer:
         settings: Settings,
         wdir: Wdir,
         task: Task,
+        fman: FloatingManager,
         top_bar: TesterTopBar,
         opener: Opener | None,
     ) -> None:
         self.settings = settings
         self.wdir = wdir
         self.task = task
+        self.fman = fman
         self.top_bar = top_bar
         self.opener = opener
         self._dummy_unit = Unit()
@@ -78,19 +82,19 @@ class TesterRenderer:
     # Barras
     # ------------------------------------------------------------------
 
-    def border(self, color: str, text: str) -> RT:
-        return RT(f" {text} ", color)
+
 
     def make_bottom_line(self, state: TesterState) -> list[RT]:
         cmds: list[RT] = []
-        cmds.append(self.border("C", f"{GuiActionsNames.goback}"))
-        cmds.append(self.border("C", f"{GuiActionsNames.pallete} [{GuiKeys.palette}]"))
+        bt = Button()
+        cmds.append(bt.action_bt(f"{GuiActionsNames.goback}"))
+        cmds.append(bt.action_bt(f"{GuiActionsNames.pallete} [{GuiKeys.palette}]"))
         if self.opener is not None:
-            cmds.append(self.border("C", f"{GuiActionsNames.edit} [{GuiKeys.edit}]"))
-        cmds.append(self.border("G", f"{GuiActionsNames.evaluate_tester} [{GuiKeys.evaluate} | {Symbols.newline}]"))
-        cmds.append(self.border("G", f"{GuiActionsNames.execute_tester} [{GuiKeys.execute} | ←]"))
+            cmds.append(bt.action_bt(f"{GuiActionsNames.edit} [{GuiKeys.edit}]"))
+        cmds.append(bt.action_bt(f"{GuiActionsNames.evaluate_tester} [{GuiKeys.evaluate} | {Symbols.newline}]"))
+        cmds.append(bt.action_bt(f"{GuiActionsNames.execute_tester} [{GuiKeys.execute} | {Symbols.backspace}]"))
         limite = f"{GuiActionsNames.time_limit} {tester_util.get_time_limit_symbol(self.settings.app.timeout)} [{GuiKeys.limite}]"
-        cmds.append(self.border("Y", limite))
+        cmds.append(bt.action_bt(limite))
         return cmds
 
     def show_bottom_line(self, state: TesterState) -> None:

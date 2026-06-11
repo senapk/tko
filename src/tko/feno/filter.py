@@ -5,6 +5,7 @@ from tko.i18n import Msg, t
 from tko.util.rt import RT
 from tko.util.decoder import Decoder
 from typing import Any
+from tko.util.console import Console
 
 
 
@@ -167,8 +168,8 @@ class DeepFilter:
     
     def print(self, *args: str, **kwargs: Any):
         if not self.quiet_mode:
-            print(self.indent, end="")
-            print(*args, **kwargs)
+            Console.print(self.indent, end="")
+            Console.print(*args, **kwargs)
 
     def set_indent(self, prefix: int):
         self.indent = prefix * " "
@@ -207,7 +208,7 @@ class DeepFilter:
             with open(deny_list) as f:
                 deny = [x.strip() for x in f.read().splitlines()]
                 if filename in deny:
-                    print(t(_FILTER_ACTION_DISABLED_PATH, path=destiny))
+                    Console.print(RT.parse(t(_FILTER_ACTION_DISABLED_PATH, path=destiny)))
                     action_map[destiny] = Action(Action.DISABLED, "")
                     return
 
@@ -263,12 +264,12 @@ class DeepFilter:
         #     return
         for path, action in actions:
             if (run_actions or path.suffix[1:] in DeepFilter.include) and action.name in [Action.FILTERED, Action.COMCLEAN, Action.ORIGINAL] :
-                print(RT.parse(t(_FILTER_ACTION_PATH, action=action.name, path=path.resolve())))
+                Console.print(RT.parse(t(_FILTER_ACTION_PATH, action=action.name, path=path.resolve())))
                 path.parent.mkdir(parents=True, exist_ok=True)
                 with open(path, "w") as f:
                     f.write(action.content) 
             else:
-                print(RT.parse(t(_FILTER_ACTION_DISABLED_PATH, path=path.resolve())))
+                Console.print(RT.parse(t(_FILTER_ACTION_DISABLED_PATH, path=path.resolve())))
         
 class CodeFilter:
     @staticmethod
@@ -326,7 +327,7 @@ class CodeFilter:
             elif update:
                 Decoder.save(file, content)
             else:
-                print(content)
+                Console.print(content)
 
     @staticmethod
     def get_source_drafts_dir(source_dir: Path, language: str | None = None) -> Path:

@@ -6,7 +6,6 @@ from tko.repository.repository_config import RepositoryConfig
 from tko.config.settings import Settings
 from tko.repository.repository import Repository
 from tko.play.gui_keys import GuiKeys
-from tko.play.images import opening
 from tko.floating.floating_calibrate import FloatingCalibrate
 from tko.play.input_manager import InputManager
 from tko.play.play_palette import PlayPalette
@@ -19,7 +18,6 @@ from tko.play.flag_functors import FlagFunctor
 from tko.i18n import Msg, t
 from icecream import ic # type: ignore
 from tko.widget.fmt import Fmt
-from loguru import logger
 
 import curses
 
@@ -47,7 +45,6 @@ class Play:
     def get_left_frame_size(self) -> int:
         _, cols = Fmt.get_lines_cols()
         left_width = int(cols * self.settings.app.panel_size_percent / 100)
-        logger.debug(f"Calculated left frame size: {left_width} (cols: {cols}, percent: {self.settings.app.panel_size_percent})")
         return left_width
 
     def display_need_update(self):
@@ -59,13 +56,8 @@ class Play:
         self.settings.save_settings()
         self.loader.save(force=self.exit)
 
-    def send_quit_msg(self):
-        def set_exit():
-            self.exit = True
-
-        self.fman.add_input(
-            Floating().set_content(opening['cool'].splitlines()).set_exit_fn(set_exit).set_exit_key(GuiKeys.key_quit).set_warning()
-        )
+    def quit_now(self):
+        self.exit = True
 
     def move_up(self):
         self.tree.move_up()
@@ -100,14 +92,17 @@ class Play:
         self.gui.xray_offset = 0
         return self.actions.launcher.select_task()
 
-    def quit_directly(self):
-        self.exit = True
+    def exit_step(self):
+        if self.flags.show_panel.is_true():
+            self.flags.show_panel.set_false()
+        else:
+            self.exit = True
 
     def make_callback(self) -> InputManager:
         cman = InputManager()
 
-        cman.add_str(GuiKeys.key_quit, self.send_quit_msg)
-        cman.add_int(curses.KEY_EXIT, self.quit_directly)
+        cman.add_str(GuiKeys.key_quit, self.quit_now)
+        cman.add_int(curses.KEY_EXIT, self.exit_step)
         cman.add_int(curses.KEY_UP, self.move_up)
         cman.add_int(curses.KEY_DOWN, self.move_down)
         cman.add_int(curses.KEY_LEFT, self.move_left)
@@ -191,42 +186,49 @@ class Play:
 
     def main(self, scr: curses.window):
         InputManager.fix_esc_delay()
-        # curses.curs_set(0)
-        curses.curs_set(0)  # Esconde o cursor
+        try:
+            curses.curs_set(0)  # Esconde o cursor
+        except curses.error:
+            pass
         scr.keypad(True)
-        Fmt.init_colors()  # Inicializa as cores
-        Fmt.set_scr(scr)  # Define o scr como global
+        Fmt.set_scr(scr)  # Define o scr como global e inicializa as cores
         self.tree.layout.get_tree_size_fn = lambda: self.get_left_frame_size()
         redraw_tick_ms = 100
+        try:
+            while not self.exit:
+                self.tree.update()
 
-        while not self.exit:
-            self.tree.update()
+                self.fman.draw_warnings()
+                cman = self.make_callback()
 
-            self.fman.draw_warnings()
-            cman = self.make_callback()
+                self.gui.show_items()
 
-            self.gui.show_items()
+                if self.fman.has_floating():
+                    self.fman.draw()
 
-            if self.fman.has_floating():
-                self.fman.draw()
-
-            # o input tem que ser depois do draw para mostrar o floating
-            value = InputManager.get_and_remap_keys(scr, self.app, timeout_ms=redraw_tick_ms)
-            
-            if self.fman.has_floating():
-                # if consumed, value becomes -1
-                value = self.fman.process_input(value)
+                # o input tem que ser depois do draw para mostrar o floating
+                value = InputManager.get_and_remap_keys(scr, self.app, timeout_ms=redraw_tick_ms)
                 
-            if self.gui.search.search_mode:
-                self.gui.search.process_search(value)
-            elif cman.has_int_key(value):
-                callback = cman.exec_call(value)
-                if callback is not None:
-                    return callback
-            else:
-                self.send_char_not_found(value)
-            if value != -1:
-                self.save_to_json()
+                if self.fman.has_floating():
+                    # if consumed, value becomes -1
+                    value = self.fman.process_input(value)
+                    
+                if self.gui.search.search_mode:
+                    self.gui.search.process_search(value)
+                elif cman.has_int_key(value):
+                    callback = cman.exec_call(value)
+                    if callback is not None:
+                        return callback
+                else:
+                    self.send_char_not_found(value)
+                if value != -1:
+                    self.save_to_json()
+        finally:
+            scr.keypad(False)
+            try:
+                curses.curs_set(1)
+            except curses.error:
+                pass
 
             
     def play(self):

@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Callable
+from tko.util.console import Console
 
 class MiniwiFontSolid:
     instace: MiniwiFontSolid | None = None
@@ -211,5 +212,5 @@ class Miniwi:
         return "\n".join(lines)
 
 if __name__ == "__main__":
-    print(Miniwi.render_solid("@Julia gosta de suco de agulha"))
-    print(Miniwi.render_dotted("@Julia gosta de suco de agulha"))
+    Console.print(Miniwi.render_solid("@Julia gosta de suco de agulha"))
+    Console.print(Miniwi.render_dotted("@Julia gosta de suco de agulha"))

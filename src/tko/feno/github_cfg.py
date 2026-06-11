@@ -5,6 +5,7 @@ from tko.util.rt import RT
 
 import tomllib
 from pathlib import Path
+from tko.util.console import Console
 
 
 _FENO_GITHUB_CFG_NOT_SET = Msg(
@@ -23,7 +24,7 @@ class GithubCfg:
             self.__load_cfg_path(target)
             self.__parse_cfg()
             if self.cfg_path is None:
-                print(RT(t(_FENO_GITHUB_CFG_NOT_SET, filename=self.FILENAME), "r"))
+                Console.print(RT(t(_FENO_GITHUB_CFG_NOT_SET, filename=self.FILENAME), "r"))
 
     def cfg_exists(self):
         return self.cfg_path is not None

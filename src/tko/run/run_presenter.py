@@ -8,6 +8,7 @@ from tko.run.diff_builder_down import DiffBuilderDown
 from tko.run.diff_builder_side import DiffBuilderSide
 from tko.run.run_context import RunContext
 from tko.i18n import Msg, t
+from tko.util.console import Console
 
 
 _RUN_NO_CODE_FOUND = Msg(
@@ -22,7 +23,7 @@ class RunPresenter:
     def print_diff(self):
         if self.ctx.wdir.get_solver().has_compile_error():
             executable, _ = self.ctx.wdir.get_solver().get_executable()
-            print(executable.get_error_msg())
+            Console.print(executable.get_error_msg())
             return
         
         results = [unit.result for unit in self.ctx.wdir.unit_list]
@@ -31,7 +32,7 @@ class RunPresenter:
         
         if not self.ctx.param.compact:
             for elem in self.ctx.wdir.unit_list_resume():
-                print(elem)
+                Console.print(elem)
 
         if self.ctx.param.diff_count == DiffCount.NONE:
             return
@@ -50,15 +51,15 @@ class RunPresenter:
         if self.ctx.param.diff_mode == DiffMode.DOWN:
             ud_diff_builder = DiffBuilderDown(RawTerminal.get_terminal_size(), unit).to_insert_header()
             for line in ud_diff_builder.build_diff():
-                print(line)
+                Console.print(line)
         else:
             ss_diff_builder = DiffBuilderSide(RawTerminal.get_terminal_size(), unit).to_insert_header(True)
             for line in ss_diff_builder.build_diff():
-                print(line)
+                Console.print(line)
 
     def list_mode(self):
         if not self.ctx.config.eval_mode:
-            print(RT.parse(t(_RUN_NO_CODE_FOUND)).center(RawTerminal.get_terminal_size(), "╌"), flush=True)
-        print(self.ctx.wdir.resume_splitted())
+            Console.print(RT.parse(t(_RUN_NO_CODE_FOUND)).center(RawTerminal.get_terminal_size(), "╌"), flush=True)
+        Console.print(self.ctx.wdir.resume_splitted())
         for line in self.ctx.wdir.unit_list_resume():
-            print(line)
+            Console.print(line)

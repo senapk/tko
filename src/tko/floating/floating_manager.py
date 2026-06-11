@@ -8,6 +8,11 @@ class FloatingManager:
     def add_input(self, floating: FloatingABC):
         self.input_layer.append(floating)
 
+    def get_top(self) -> FloatingABC | None:
+        if len(self.input_layer) == 0:
+            return None
+        return self.input_layer[0]
+
     def draw_warnings(self):
         if len(self.input_layer) > 0 and self.input_layer[0].is_enable():
             self.input_layer[0].draw()

@@ -5,6 +5,7 @@ from tko.run.diff_builder_side import DiffBuilderSide
 from tko.enums.diff_mode import DiffMode
 from tko.util.raw_terminal import RawTerminal
 from tko.run.unit import Unit
+from tko.util.console import Console
 
 
 def cmd_diff(target_a: str, target_b: str, side: bool, is_path: bool) -> None:
@@ -29,4 +30,4 @@ def cmd_diff(target_a: str, target_b: str, side: bool, is_path: bool) -> None:
     else:
         diff_builder = DiffBuilderSide(RawTerminal.get_terminal_size(), unit).standalone_diff()
     for line in diff_builder.build_diff():
-        print(line)
+        Console.print(line)

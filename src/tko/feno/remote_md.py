@@ -3,6 +3,7 @@ from tko.feno.github_cfg import GithubCfg
 from tko.feno.github_url_structure import GithubUrlStructure
 from tko.util.decoder import Decoder
 from pathlib import Path
+from tko.util.console import Console
 
 class GithubRebase:
 
@@ -63,4 +64,4 @@ class GithubRebase:
         if target is not None:
             Decoder.save(target, content)
         else:
-            print(content)
+            Console.print(content)

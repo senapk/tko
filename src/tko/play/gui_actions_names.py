@@ -3,7 +3,6 @@ from tko.i18n import Msg
 
 class GuiActionsNames:
     create_draft = Msg(pt="Criar Rascunho", en="Create Draft")
-    tab = Msg(pt="↔TAB", en="↔TAB")
     leave = Msg(pt="Sair [esc]", en="Quit [esc]")
     edit = Msg(pt="Ver tarefa", en="View task")
     show_time = Msg(pt="Tempo", en="Time")
@@ -16,7 +15,7 @@ class GuiActionsNames:
     navigate = Msg(pt="←↓→", en="←↓→")
     uncheck = Msg(pt="Desmarcar", en="Uncheck")
     search = Msg(pt="Busca", en="Search")
-    goback = Msg(pt="Tela Anterior[Esc]", en="Previous Screen[Esc]")
+    goback = Msg(pt="Voltar [Esc]", en="Back [Esc]")
     pallete = Msg(pt="Paleta", en="Palette")
     grade = Msg(pt="Auto Avaliação", en="Self Evaluation")
     time_limit = Msg(pt="Limite de tempo", en="Time limit")

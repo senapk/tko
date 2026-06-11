@@ -10,6 +10,7 @@ from tko.i18n import Msg, t
 from tko.run.unit import Unit
 from tko.util.decoder import Decoder
 from pathlib import Path
+from tko.util.console import Console
 
 
 _LOADER_TARGET_FORMAT_NOT_SUPPORTED = Msg(
@@ -74,7 +75,7 @@ class Loader:
                     pass
                 return tests
             else:
-                print(t(_LOADER_TARGET_FORMAT_NOT_SUPPORTED, source=source))  # make this a raise
+                Console.print(t(_LOADER_TARGET_FORMAT_NOT_SUPPORTED, source=source))  # make this a raise
         else:
             raise FileNotFoundError(t(_LOADER_UNABLE_TO_FIND, source=source))
         return []

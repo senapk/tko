@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Optional
 from tko.config.settings import Settings
 from tko.i18n import Msg, t
+from tko.util.console import Console
 
 
 _CLI_TOOL_MDPP_UPDATING_README = Msg(
@@ -59,7 +60,7 @@ def tool_mdpp(
 
     target_paths = [Path(x) for x in targets] if targets else [Path("README.md")]
     if not targets:
-        print(t(_CLI_TOOL_MDPP_UPDATING_README, folder=Path().name))
+        Console.print(t(_CLI_TOOL_MDPP_UPDATING_README, folder=Path().name))
 
     action = Action.CLEAN if clean else Action.RUN
     for target in target_paths:
@@ -71,7 +72,7 @@ def tool_older(
     targets: list[str] = typer.Argument(..., help="Target files or directories")
 ):
     from tko.feno.older import Older
-    print(Older.find_older([Path(x) for x in targets]))
+    Console.print(Older.find_older([Path(x) for x in targets]))
 
 
 @app.command("diff", help="Show diff for 2 inputs or files")
@@ -126,9 +127,9 @@ def tool_rebase_links(
                     temp_file: str = str(Path(tmpdir) / "temp.md")
                     remote: GitHubUrl = GitHubUrl(candidate)
                     remote.download_and_rebase(temp_file)
-                    print(t(_CLI_TOOL_REBASE_URL_DOWNLOADED, url=candidate))
-                    print(t(_CLI_TOOL_REBASE_DONE))
-                    print(t(_CLI_TOOL_REBASE_SAVED_PATH, path=output_path))
+                    Console.print(t(_CLI_TOOL_REBASE_URL_DOWNLOADED, url=candidate))
+                    Console.print(t(_CLI_TOOL_REBASE_DONE))
+                    Console.print(t(_CLI_TOOL_REBASE_SAVED_PATH, path=output_path))
                     # Copy from temp to final output
                     import shutil
                     shutil.copy(temp_file, output_path)
@@ -143,9 +144,9 @@ def tool_rebase_links(
             temp_file: str = str(Path(tmpdir) / "temp.md")
             remote: GitHubUrl = GitHubUrl(target)
             remote.download_and_rebase(temp_file)
-            print(t(_CLI_TOOL_REBASE_URL_DOWNLOADED, url=target))
-            print(t(_CLI_TOOL_REBASE_DONE))
-            print(t(_CLI_TOOL_REBASE_SAVED_PATH, path=output_path))
+            Console.print(t(_CLI_TOOL_REBASE_URL_DOWNLOADED, url=target))
+            Console.print(t(_CLI_TOOL_REBASE_DONE))
+            Console.print(t(_CLI_TOOL_REBASE_SAVED_PATH, path=output_path))
             # Copy from temp to final output
             import shutil
             shutil.copy(temp_file, output_path)
@@ -155,8 +156,8 @@ def tool_rebase_links(
         content: str = Decoder.load(source_path)
         content = LinkRebase.change_to_relative_folder(content, relative_folder)
         Decoder.save(output_path, content)
-        print(t(_CLI_TOOL_REBASE_DONE))
-        print(t(_CLI_TOOL_REBASE_SAVED_PATH, path=output_path))
+        Console.print(t(_CLI_TOOL_REBASE_DONE))
+        Console.print(t(_CLI_TOOL_REBASE_SAVED_PATH, path=output_path))
 
 
 @app.command("filter", help="Filter code removing answers")
@@ -191,10 +192,10 @@ def tool_html(
     from tko.feno.html import convert_markdown_to_html
 
     if not input_file.endswith('.md'):
-        print(t(_CLI_TOOL_HTML_INPUT_MD_REQUIRED))
+        Console.print(t(_CLI_TOOL_HTML_INPUT_MD_REQUIRED))
         raise typer.Exit(1)
     if not output_file.endswith('.html'):
-        print(t(_CLI_TOOL_HTML_OUTPUT_HTML_REQUIRED))
+        Console.print(t(_CLI_TOOL_HTML_OUTPUT_HTML_REQUIRED))
         raise typer.Exit(1)
 
     final_title = title if title != "Problema" else FenoTitle.extract_title(Path(input_file))

@@ -4,6 +4,7 @@ from tko.repository.repository import Repository
 from tko.repository.repository_paths import RepositoryPaths
 
 from pathlib import Path
+from tko.util.console import Console
 
 _CLI_COMMON_NO_REPO = Msg(
     pt="Nenhum repositório TKO encontrado.",
@@ -30,7 +31,7 @@ class RepositoryBuilder:
         root_dir = RepositoryPaths.rec_search_for_repo_parents(self._dir_path)
         if root_dir is None:
             if self._verbose:
-                print(t(_CLI_COMMON_NO_REPO))
+                Console.print(t(_CLI_COMMON_NO_REPO))
             return None, Path()
         self._root_dir = root_dir
 

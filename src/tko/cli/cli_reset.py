@@ -1,6 +1,7 @@
 import typer
 from tko.i18n import Msg, t
 from tko.config.settings import Settings
+from tko.util.console import Console
 
 
 _RESET_NO_REPO = Msg(
@@ -16,7 +17,7 @@ def reset_cache(ctx: typer.Context):
     settings: Settings = ctx.obj
     repo, _ = load_repo(settings.rs, auto_load=False)
     if repo is None:
-        print(t(_RESET_NO_REPO))
+        Console.print(t(_RESET_NO_REPO))
         return
     repo.git_cache.clear_cache()
 
@@ -24,7 +25,7 @@ def reset_cache(ctx: typer.Context):
 def reset_global(ctx: typer.Context):
     settings: Settings = ctx.obj    
     sp = settings.reset().save_settings()
-    print(sp.get_settings_file())
+    Console.print(sp.get_settings_file())
 
 if __name__ == "__main__":
     app()

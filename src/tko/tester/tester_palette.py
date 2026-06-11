@@ -62,7 +62,7 @@ class TesterPalette:
                 GuiKeys.lock,
             ))
         options.append(FloatingInputData(
-                lambda: RT.parse(t(_IMAGES_LABEL).format(icon=mark(self.app.use_images))),
+                lambda: RT.parse(t(_SHOW_IMAGES).format(icon=mark(self.app.use_images))),
                 lambda: self.app.toggle(ToggleOption.IMAGES),
                 GuiKeys.images,
             ))

@@ -4,6 +4,7 @@ import unicodedata
 
 import re
 from tko.i18n import Msg, t
+from tko.util.console import Console
 
 
 _TEXT_MUST_BE_STRING = Msg(
@@ -476,4 +477,4 @@ if __name__ == "__main__":
     # Formatação usando placeholders {} e argumentos variádicos
     # Cor de conteúdo no texto
     text = Text().add("Faça").add(" uma ").addf("r", "formatação")
-    print([f"[{t.text}]" for t in text.data])  # Exibe os tokens com seus formatos
+    Console.print([f"[{t.text}]" for t in text.data])  # Exibe os tokens com seus formatos

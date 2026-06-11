@@ -3,9 +3,8 @@ from tko.widget.frame import Frame
 from tko.config.flags import Flags
 from tko.play.gui_keys import GuiKeys
 from tko.util.rt import RT
-from tko.util.tab_renderer import TabRenderer
+from tko.widget.button import Button
 from tko.i18n import Msg, t
-from tko.play.gui_actions_names import GuiActionsNames
 import time
 
 class _TopBarMsg:
@@ -20,7 +19,7 @@ class _TopBarMsg:
 class GuiTopBar:
 
     def get_time_hhmmss(self) -> RT:
-        return RT(time.strftime("%H:%M:%S "))
+        return Button.action_bt(time.strftime("%H:%M:%S"))
 
 
     def __init__(self, flags: Flags, app: AppSettings):
@@ -29,17 +28,16 @@ class GuiTopBar:
 
     def show(self, frame: Frame) -> None:
         panel_on = self.flags.show_panel.is_true()
-        vi = TabRenderer()
+        vi = Button()
         pre = [
-            RT(f" {GuiActionsNames.leave} ", "R"),
-            vi.render_button(f"{t(_TopBarMsg.RECOMMENDED)}[{GuiKeys.inbox}]", self.flags.task_view_mode.is_inbox()),
-            vi.render_button(f"{t(_TopBarMsg.ALL)}[{GuiKeys.all_tasks}]", self.flags.task_view_mode.is_all()),
+            vi.toggle_bt(f"{t(_TopBarMsg.RECOMMENDED)}[{GuiKeys.inbox}]", self.flags.task_view_mode.is_inbox()),
+            vi.toggle_bt(f"{t(_TopBarMsg.ALL)}[{GuiKeys.all_tasks}]", self.flags.task_view_mode.is_all()),
             RT(" "),
         ]
         pos = [
-            vi.render_button(f"{t(_TopBarMsg.GRAPHS)}[{GuiKeys.panel_graph}]", panel_on and self.flags.panel.is_graph()),
-            vi.render_button(f"{t(_TopBarMsg.LOGS)}[{GuiKeys.panel_logs}]", panel_on and self.flags.panel.is_logs()),
-            vi.render_button(f"{t(_TopBarMsg.SKILLS)}[{GuiKeys.panel_skills}]", panel_on and self.flags.panel.is_skills()),
+            vi.toggle_bt(f"{t(_TopBarMsg.GRAPHS)}[{GuiKeys.panel_graph}]", panel_on and self.flags.panel.is_graph()),
+            vi.toggle_bt(f"{t(_TopBarMsg.LOGS)}[{GuiKeys.panel_logs}]", panel_on and self.flags.panel.is_logs()),
+            vi.toggle_bt(f"{t(_TopBarMsg.SKILLS)}[{GuiKeys.panel_skills}]", panel_on and self.flags.panel.is_skills()),
         ]
 
 

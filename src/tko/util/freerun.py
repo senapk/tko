@@ -17,6 +17,7 @@ from prompt_toolkit.application import Application
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.containers import Window
+from tko.util.console import Console
 
 
 def ask() -> str:
@@ -56,7 +57,9 @@ _FREERUN_PROMPT_BACK = Msg(
 
 class Free:
     @staticmethod
-    def free_run(solver: SolverBuilder, standalone_mode:bool=True, header: RT = RT()) -> bool:
+    def free_run(solver: SolverBuilder, standalone_mode:bool=True, header: RT | None = None) -> bool:
+        if header is None:
+            header = RT()
         show_compilation = not standalone_mode
         to_clear = not standalone_mode
         wait_input = not standalone_mode
@@ -66,21 +69,21 @@ class Free:
         if show_compilation:
             image = random.choice(list(compilling_image.keys()))
             for line in compilling_image[image].splitlines():
-                print(RT(line, "y").center(RawTerminal.get_terminal_size(), " "))
+                Console.print(RT(line, "y").center(RawTerminal.get_terminal_size(), " "))
 
         if show_compilation:
             Runner.clear_screen()
         solver.prepare_exec()
         if solver.has_compile_error():
             executable, _ = solver.get_executable()
-            print(executable.get_error_msg())
+            Console.print(executable.get_error_msg())
         else:
             executable, _ = solver.get_executable()
             cmd, folder = executable.get_command()
             if len(header) == 0:
-                print(RT().center(RawTerminal.get_terminal_size(), "─"))
+                Console.print(RT().center(RawTerminal.get_terminal_size(), "─"))
             else:
-                print(header.center(RawTerminal.get_terminal_size(), "─"))
+                Console.print(header.center(RawTerminal.get_terminal_size(), "─"))
 
             kwargs: dict[str, Any] = {
                 "cwd": folder,
@@ -100,16 +103,16 @@ class Free:
                     answer.kill()
                     os.killpg(os.getpgid(answer.pid), signal.SIGTERM)
                 if answer.returncode != 0 and answer.returncode != 1:
-                    print(f"returncode: {answer.returncode}")
+                    Console.print(f"returncode: {answer.returncode}")
             else:
                 subprocess.run(cmd, **kwargs)
                 
         solver.reset()
         to_run_again = False
         if wait_input:
-            print(RT().center(RawTerminal.get_terminal_size(), "─"))
-            print(RT.parse(t(_FREERUN_PROMPT_RERUN)))
-            print(RT.parse(t(_FREERUN_PROMPT_BACK)))
+            Console.print(RT().center(RawTerminal.get_terminal_size(), "─"))
+            Console.print(RT.parse(t(_FREERUN_PROMPT_RERUN)))
+            Console.print(RT.parse(t(_FREERUN_PROMPT_BACK)))
 
             valor = ask()
             if valor != "esc":

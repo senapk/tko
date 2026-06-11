@@ -3,6 +3,7 @@ from tko.collect.quest_game_data import QuestGameData
 from tko.i18n import Msg, t
 from tko.collect.task_user_data import TaskUserData
 from typing import Any
+from tko.util.console import Console
 
 
 _COLLECTED_NO_RESUME_DATA = Msg(
@@ -27,7 +28,7 @@ class Collected:
 
     def load_from_dict(self, json_data: dict[str, Any]):
         if not Collected.Key.resume_str in json_data:
-            print(t(_COLLECTED_NO_RESUME_DATA))
+            Console.print(t(_COLLECTED_NO_RESUME_DATA))
             return self
 
         task_resume = json_data.get(Collected.Key.resume_str, None)

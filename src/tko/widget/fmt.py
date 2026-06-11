@@ -1,4 +1,5 @@
 import curses
+import locale
 from tko.util.rt import RT
 from tko.util.text_style import TextStyle
 from tko.widget.colors import Colors
@@ -51,17 +52,22 @@ class Fmt:
 
     @staticmethod
     def set_scr(scr: curses.window):
+        # Ensure curses runs with the user's locale so UTF-8 glyphs render correctly.
+        locale.setlocale(locale.LC_ALL, "")
         Fmt.__scr = scr
         Fmt.init_colors()
 
     @staticmethod
     def init_colors():
+        Fmt.color_pairs.clear()
+
+        if not curses.has_colors():
+            return
+
         pair_number = 1
         curses.start_color()
         curses.use_default_colors()
         for fk, fg in Fmt.COLOR_MAP.items():
-            if fk == "T":
-                continue
             curses.init_pair(pair_number, fg, -1)
             Fmt.color_pairs[fk] = pair_number
             pair_number += 1
@@ -82,6 +88,13 @@ class Fmt:
         fg: str = style.fg if style.fg is not None else ""
         bg: str = style.bg if style.bg is not None else ""
         attrs: str = "".join(style.attrs)
+        if Fmt.mono:
+            if fg != "":
+                fg = ""
+            if bg != "":
+                bg = ""
+                attrs += "X"
+
 
         # if Fmt.mono:
         #     fmt = "X" if "X" in style.to_tag() else ""
@@ -92,6 +105,21 @@ class Fmt:
         reverse = "X" in attrs
         italic =  "/" in attrs
         underline = "_" in attrs
+        italic_attr = getattr(curses, "A_ITALIC", 0)
+
+        lines, cols = Fmt.get_lines_cols()
+        if y < 0 or y >= lines or x >= cols or text == "":
+            return
+        if x < 0:
+            text = text[-x:]
+            x = 0
+            if text == "":
+                return
+        max_len = cols - x
+        if max_len <= 0:
+            return
+        if len(text) > max_len:
+            text = text[:max_len]
 
         pair_number = -1
         if bg != "" and fg == "":
@@ -103,33 +131,29 @@ class Fmt:
                 pair_number = Fmt.color_pairs[fg + bg]
             except KeyError:
                 logger.error("Cor não encontrada: " + style.to_tag())
-        if italic:
-            stdscr.attron(curses.A_ITALIC)
-        if underline:
-            stdscr.attron(curses.A_UNDERLINE)
-        if reverse:
-            stdscr.attron(curses.A_REVERSE)
-        if pair_number != -1:
-            stdscr.attron(curses.color_pair(pair_number))
         try:
-            if y + len(text) < curses.LINES - 2:
-                text = text[:curses.LINES - y - 2]
+            if italic and italic_attr:
+                stdscr.attron(italic_attr)
+            if underline:
+                stdscr.attron(curses.A_UNDERLINE)
+            if reverse:
+                stdscr.attron(curses.A_REVERSE)
+            if pair_number != -1:
+                stdscr.attron(curses.color_pair(pair_number))
             stdscr.addstr(y, x, text)
-        except curses.error as _e:
-            lines, cols = Fmt.get_lines_cols()
-            if y == lines - 1:
-                if x + len(text) <= cols:
-                    pass
+        except curses.error:
+            pass
         except ValueError as _e:
             pass
-        if pair_number != -1:
-            stdscr.attroff(curses.color_pair(pair_number))
-        if italic:
-            stdscr.attroff(curses.A_ITALIC)
-        if underline:
-            stdscr.attroff(curses.A_UNDERLINE)
-        if reverse:
-            stdscr.attroff(curses.A_REVERSE)
+        finally:
+            if pair_number != -1:
+                stdscr.attroff(curses.color_pair(pair_number))
+            if italic and italic_attr:
+                stdscr.attroff(italic_attr)
+            if underline:
+                stdscr.attroff(curses.A_UNDERLINE)
+            if reverse:
+                stdscr.attroff(curses.A_REVERSE)
 
     @staticmethod
     def cut_box(y: int, x: int, box_y: int, box_x: int, sentence: RT) -> list[TextPosition]:

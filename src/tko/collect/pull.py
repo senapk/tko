@@ -8,6 +8,7 @@ from pathlib import Path
 
 from tko.util.rt import RT
 from tko.i18n import Msg, t
+from tko.util.console import Console
 
 
 
@@ -126,7 +127,7 @@ class Pull:
 
     @staticmethod
     def pull_all_parallel(repo_list: list[Path], max_workers: int = 10):
-        print("\n" + str(RT(t(_PULL_ALL_PARALLEL, count=len(repo_list), threads=max_workers), "y")))
+        Console.print("\n" + str(RT(t(_PULL_ALL_PARALLEL, count=len(repo_list), threads=max_workers), "y")))
         start = time.time()
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -137,9 +138,9 @@ class Pull:
                 try:
                     output = future.result()
                     if output.plain():
-                        print(output)
+                        Console.print(output)
                 except Exception:
                     logger.exception(t(_PULL_ERROR_IN_REPO, repo=repo))
 
         elapsed = time.time() - start
-        print("\n" + str(RT(t(_PULL_COMPLETED, elapsed=elapsed), "y")))
+        Console.print("\n" + str(RT(t(_PULL_COMPLETED, elapsed=elapsed), "y")))

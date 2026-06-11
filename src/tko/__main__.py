@@ -23,6 +23,7 @@ from tko.cli.cli_task import app as task_app
 from tko.cli.cli_tool import app as tool_app
 from tko.i18n import Msg, set_language, t
 from tko.widget.fmt import Fmt
+from tko.util.console import Console
 
 
 _APP_VERSION = Msg(
@@ -74,7 +75,7 @@ def main_callback(
     from tko.util.rt import RenderConfig, RenderMode
 
     if version:
-        print(t(_APP_VERSION, version=__version__))
+        Console.print(t(_APP_VERSION, version=__version__))
         raise typer.Exit()
 
     if width is not None:
@@ -107,7 +108,7 @@ def main():
     try:
         app()
     except KeyboardInterrupt:
-        print(f"\n\n{t(_APP_KEYBOARD_INTERRUPT)}")
+        Console.print(f"\n\n{t(_APP_KEYBOARD_INTERRUPT)}")
         sys.exit(1)
     except Warning as w:
         logger.warning("%s", w)

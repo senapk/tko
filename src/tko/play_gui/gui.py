@@ -8,6 +8,9 @@ from tko.floating.floating_manager import FloatingManager
 from tko.play.language_setter import LanguageSetter
 from tko.play.search import Search
 from tko.play_tree.task_tree import TaskTree
+from tko.repository.repository import Repository
+from tko.play.flags import Flags
+from tko.game.game import Game
 
 from tko.play_gui.gui_action_resolver import GuiActionResolver
 from tko.play_gui.gui_left_panel import GuiLeftPanel
@@ -21,26 +24,25 @@ from tko.play_gui.gui_graph_panel import GuiGraphPanel
 class Gui:
 
     def __init__(self, tree: TaskTree, fman: FloatingManager):
-        self.repo = tree.repo
-        self.game = tree.game
-        self.tree = tree
-        self.flags = self.repo.flags
-        self.fman = fman
+        self.repo: Repository = tree.repo
+        self.game: Game = tree.game
+        self.tree: TaskTree = tree
+        self.flags: Flags = self.repo.flags
+        self.fman: FloatingManager = fman
         self.settings: Settings = tree.settings
         self.search = Search(tree=self.tree, fman=self.fman)
         self.language = LanguageSetter(self.settings, self.repo, self.fman)
         self.colors = self.settings.colors
         self.app: AppSettings = self.settings.app
 
-        in_drafts = lambda: self.fman.has_floating() and self.fman.input_layer[0].id == "drafts"
-        in_palette = lambda: self.fman.has_floating() and self.fman.input_layer[0].id == "palette"
+        top_floating = lambda: self.fman.get_top()
         in_search = lambda: self.search.search_mode
         self._need_update: bool = False
 
         # Sub-renderizadores
         self.action_resolver = GuiActionResolver(self.tree, self.fman, self.tree.task_formatter, self.flags)
         self.left_panel      = GuiLeftPanel(self.tree, self.search, lambda: self._need_update)
-        self.bottom_bar      = GuiBottomBar(self.tree, self.action_resolver, in_drafts, in_palette, in_search)
+        self.bottom_bar      = GuiBottomBar(self.tree, self.action_resolver, in_search, top_floating)
         self.top_bar         = GuiTopBar(self.flags, self.app)
         self.skills_bar      = GuiSkillsBar(self.game, self.colors, self.flags, lambda: self.tree.get_selected_throw().basic.remote_name)
         self.help_panel      = GuiHelpPanel()

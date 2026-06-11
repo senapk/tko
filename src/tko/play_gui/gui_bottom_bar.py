@@ -5,41 +5,45 @@ from tko.play.gui_keys import GuiKeys
 from tko.play_tree.task_tree import TaskTree
 from tko.util.rt import RT
 from tko.widget.fmt import Fmt
+from tko.widget.button import Button
+from tko.floating.floating import FloatingABC
 from typing import Callable
-
 
 class GuiBottomBar:
 
-    def __init__(self, tree: TaskTree, action_resolver: GuiActionResolver, 
-                 in_drafts: Callable[[], bool], in_palette: Callable[[], bool], in_search_mode: Callable[[], bool]):
+    def __init__(self, tree: TaskTree, action_resolver: GuiActionResolver, in_search: Callable[[], bool], top_floating_fn: Callable[[], FloatingABC | None]):
         self.tree = tree
         self.flags = tree.repo.flags
         self.action_resolver = action_resolver
-        self.in_drafts = in_drafts
-        self.in_palette = in_palette
-        self.in_search = in_search_mode
+        self.in_search = in_search
+        self.top_floating_fn = top_floating_fn
 
     def show(self) -> None:
+        top_floating = self.top_floating_fn()
+        self.in_drafts = top_floating is not None and top_floating.id == "drafts"
+        self.in_palette = top_floating is not None and top_floating.id == "palette"
+        self.in_self = top_floating is not None and top_floating.id == "self"
+
         lines, cols = Fmt.get_lines_cols()
-        self_color = "X"
+        self_enabled = False
         try:
             selected = self.tree.get_selected_throw()
             if isinstance(selected, Task):
-                self_color = "G"
+                self_enabled = True
         except IndexError:
             pass
 
-        def button(value: bool):
-            return "G" if value else "X"
-        act_color, act_text = self.action_resolver.get_activate_label()
+        button = Button().toggle_bt
+        
+        _, act_text = self.action_resolver.get_activate_label()
         in_help = self.flags.panel.is_help() and self.flags.show_panel.is_true()
         help_fixed: list[RT] = [
-            RT(f" {GuiActionsNames.create_draft} [{GuiKeys.create_draft}] ", button(self.in_drafts())),
-            RT(f" {GuiActionsNames.pallete} [{GuiKeys.palette}] ", button(self.in_palette())),
-            RT(f" {GuiActionsNames.search} [{GuiKeys.search}] ", button(self.in_search())),
-            RT(f" {GuiActionsNames.help} [{GuiKeys.panel_help}] ", button(in_help)),
-            RT(f" {act_text} [↲] ", act_color),
-            RT(f" {GuiActionsNames.grade} [{GuiKeys.self_evaluate}] ", self_color),
+            button(f"{GuiActionsNames.create_draft} [{GuiKeys.create_draft}]", active=self.in_drafts),
+            button(f"{GuiActionsNames.pallete} [{GuiKeys.palette}]", active=self.in_palette),
+            button(f"{GuiActionsNames.search} [{GuiKeys.search}]", active=self.in_search()),
+            button(f"{GuiActionsNames.help} [{GuiKeys.panel_help}]", active=in_help),
+            Button.action_bt(f"{act_text} [↲]", enabled=True),
+            Button.toggle_bt(f"{GuiActionsNames.grade} [{GuiKeys.self_evaluate}]", active=self.in_self, enabled=self_enabled),
         ]
         line_main = RT.join(help_fixed, RT(" "))
         Fmt.write(lines - 1, 0, line_main.center(cols))

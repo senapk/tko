@@ -3,6 +3,7 @@ import json
 
 from tko.collect.collect_single import CollectParams
 from tko.config.settings import Settings
+from tko.util.console import Console
 
 app = typer.Typer(help="Collect evaluation data")
 
@@ -55,7 +56,7 @@ def collect_repo(
     data = CollectSingle.collect(settings.rs, params)
 
     if params.json_output:
-        print(json.dumps(data.get_dict(), indent=4, ensure_ascii=False))
+        Console.print(json.dumps(data.get_dict(), indent=4, ensure_ascii=False))
 
 if __name__ == "__main__":
     app()

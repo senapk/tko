@@ -7,6 +7,7 @@ from tko.run.unit import Unit
 from tko.util.decoder import Decoder
 from tko.i18n import Msg, t
 from pathlib import Path
+from tko.util.console import Console
 
 
 
@@ -89,13 +90,13 @@ class Writer:
                 _old = Decoder.load(_target)
                 if _old == _new:
                     if not quiet:
-                        print(t(_WRITER_NO_CHANGES_TEST_FILE))
+                        Console.print(t(_WRITER_NO_CHANGES_TEST_FILE))
                     return False
 
             with open(_target, "w", encoding="utf-8") as f:
                 f.write(_new)
                 if not quiet:
-                    print(t(_WRITER_FILE_WROTE, path=_target))
+                    Console.print(t(_WRITER_FILE_WROTE, path=_target))
                 return True
 
         

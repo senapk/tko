@@ -96,7 +96,7 @@ class GuiGraphPanel:
                 frame.write(line_count, 0, line)
                 line_count += 1
         else:
-            if self.flags.panel.is_graph():
+            if self.flags.panel.is_graph() and isinstance(selected, Task):
                 exec_color = "X" if self.flags.task_graph_mode.is_executions() else "."
                 time_color = "X" if self.flags.task_graph_mode.is_time_view() else "."
                 frame.set_header(RT.parse(f" [{exec_color}]EXEC[[PageUp]][]  [{time_color}]TIME[[PgDown]][] "), "^")

@@ -208,7 +208,7 @@ class Floating(FloatingABC):
 
     def process_input(self, key: int) -> int:
         if self.type == FloatingType.WARNING or self.type == FloatingType.ERROR:
-            if key == curses.KEY_RESIZE:
+            if key == curses.KEY_RESIZE or key == -1:
                 return -1
             self.enable = False
             if self.exit_fn is not None:

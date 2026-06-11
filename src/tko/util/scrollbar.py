@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from tko.util.console import Console
 
 @dataclass
 class ScrollBar:
@@ -33,8 +34,8 @@ class ScrollBar:
 
 if __name__ == "__main__":
     sb = ScrollBar(text_size=20, index=0, screen_size=30, bar_size=90)
-    print(f"{sb.render()}")
+    Console.print(f"{sb.render()}")
     before, inside, after = sb.count_before_inside_after()
     empty = "-"
     block = "#"
-    print(f"{empty * before}{block * inside}{empty * after}")
+    Console.print(f"{empty * before}{block * inside}{empty * after}")

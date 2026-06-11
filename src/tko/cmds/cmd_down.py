@@ -242,7 +242,7 @@ class CmdDown:
                 self.language = language_def
             else:
                 langs = self.settings.get_languages_settings().get_languages_with_drafts()
-                Console.print(t(_DOWN_CHOOSE_DRAFT_EXTENSION, options=", ".join(langs.keys())), end="")
+                Console.print(RT.parse(t(_DOWN_CHOOSE_DRAFT_EXTENSION, options=", ".join(langs.keys()))), end="")
                 self.language = input()
 
 class DownActions:

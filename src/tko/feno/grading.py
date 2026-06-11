@@ -1,3 +1,4 @@
+from tko.util.console import Console
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
@@ -63,7 +64,7 @@ class MyTest:
         result = run(["tko", "eval", "--timeout", "30", "--none"] + extra + ['-r', temp_file, f"src/{self.label}"], stderr=PIPE, text=True)
         if result.returncode != 0:
            if result.stderr != "":
-               print(result.stderr)
+               Console.print(result.stderr)
         if result.returncode == 0:
             if os.path.isfile(temp_file):
                 percent = open(temp_file, "r").read().splitlines()[0].strip()
@@ -84,20 +85,20 @@ class Grading:
         max_label_len = max(len(test.label) for test in self.tests) + 1
         grade: float = 0
         grading_prefix()
-        print(f"{'TestCases':<{max_label_len}}| passed | value | earned")
+        Console.print(f"{'TestCases':<{max_label_len}}| passed | value | earned")
         sep = f"{'-' * max_label_len}|--------|-------|-------"
         grading_prefix()
-        print(sep)
+        Console.print(sep)
         for test in self.tests:
             test.value = test.value * 100 / total_weight
             awarded = test.awarded * test.value / 100
             grading_prefix()
-            print(f"{test.label.ljust(max_label_len)}|   {round(test.awarded):3d}% |  {round(test.value):3d}% |   {round(awarded):3d}%")
+            Console.print(f"{test.label.ljust(max_label_len)}|   {round(test.awarded):3d}% |  {round(test.value):3d}% |   {round(awarded):3d}%")
             grade += awarded
         grading_prefix()
-        print(sep)
+        Console.print(sep)
         grading_prefix()
-        print(f"{'Total':<{max_label_len}}|        |  100% |    {Const.ansi_green}{round(grade):3d}%{Const.ansi_reset}")
+        Console.print(f"{'Total':<{max_label_len}}|        |  100% |    {Const.ansi_green}{round(grade):3d}%{Const.ansi_reset}")
         return round(grade)
 
     @staticmethod
@@ -119,7 +120,7 @@ class Grading:
     def load_readme(readme_file: str) -> list[MyTest]:
         problems: list[MyTest] = []
         if not os.path.isfile(readme_file):
-            print(t(_GRADING_README_NOT_FOUND, file=readme_file))
+            Console.print(t(_GRADING_README_NOT_FOUND, file=readme_file))
             return problems
         
         with open(readme_file, "r") as f:
@@ -152,7 +153,7 @@ class Grading:
 
 
         if len(problems) == 0:
-            print(t(_GRADING_NO_PROBLEMS_FOUND))
+            Console.print(t(_GRADING_NO_PROBLEMS_FOUND))
             return
 
         test_list = Grading()
@@ -165,7 +166,7 @@ class Grading:
                 f.write(str(awarded))
 
 def running_prefix():
-    print(t(_GRADING_RUNNING_PREFIX), flush=True, end='')
+    Console.print(t(_GRADING_RUNNING_PREFIX), flush=True, end="")
 
 def grading_prefix():
-    print(t(_GRADING_GRADING_PREFIX), flush=True, end='')
+    Console.print(t(_GRADING_GRADING_PREFIX), flush=True, end="")

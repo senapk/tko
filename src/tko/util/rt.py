@@ -127,7 +127,6 @@ class RT:
 
     @staticmethod
     def from_ansi(data: str) -> RT:
-        return RT("") # debug
         rb = RunBuilder()
 
         style = TextStyle()

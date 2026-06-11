@@ -1,6 +1,6 @@
 from tko.config.app_settings import AppSettings
 from tko.game.task import Task
-from tko.play.gui_actions_names import GuiActionsNames
+from tko.widget.button import Button
 from tko.util.rbuffer import RBuffer
 from tko.widget.frame import Frame
 from tko.play.gui_keys import GuiKeys
@@ -29,31 +29,26 @@ class TesterTopBar:
 
     def get_fixed_arrow(self, state: TesterState) -> RT:
         diff_text = tester_util.get_diff_symbol(self.app.diff_mode)
-        buffer = RBuffer().add(f" {GuiKeys.diff} {diff_text}", "B")
-        color = "R" if state.locked_index else "G"
-        buffer.add(" ", "B")
+        buffer = RBuffer().add(Button.action_bt(f"{GuiKeys.diff} {diff_text}"))
+        buffer.add(" ")
         symbol = Symbols.locked_locked if state.locked_index else Symbols.locked_free
-        buffer.add(f" {GuiKeys.lock} {symbol} ", color)
+        buffer.add(Button.action_bt(f"{GuiKeys.lock} {symbol}"))
         return buffer.to_rt()
 
     def build_top_line_header(self, state: TesterState, frame_dx: int) -> RT:
-        activity_color = "C"
-        solver_color   = "X"
-        sources_color  = "Y"
         running_color  = "R"
 
         folder   = tester_util.get_folder(self.task)
-        activity = RT(f" {folder.name} ", activity_color)
+        activity = Button.info_label(folder.name)
 
         solver_names = tester_util.get_solver_names(self.wdir)
         solvers_buffer = RBuffer()
         if len(solver_names) > 1:
-            solvers_buffer.add(f" {GuiActionsNames.tab} ", "R")
+            solvers_buffer.add(Button.action_bt(f"{Symbols.tab_symbol}TAB"))
         for i, solver in enumerate(solver_names):
             if len(solver_names) > 1:
                 solvers_buffer.add(" ")
-            color = "G" if i == self.task.main_idx else solver_color
-            solvers_buffer.add(f" {solver} ", color)
+            solvers_buffer.add(Button.toggle_bt(solver, active=i == self.task.main_idx))
         solvers = solvers_buffer.to_rt()
 
         done = len(state.results)
@@ -65,11 +60,11 @@ class TesterTopBar:
             else:
                 solvers = count_missing
 
-        source_names = " ".join([f" {name[0]}({name[1]}) " for name in self.wdir.sources_names()])
+        source_names = ", ".join([f"{name[0]}({name[1]})" for name in self.wdir.sources_names()])
         if self.wdir.has_tests:
-            sources = RT(f"{source_names}", sources_color)
+            sources = Button.info_label(source_names)
         else:
-            sources = RT(f" {t(_TesterTopBarMsg.NO_TESTS_REGISTERED)} ", "R")
+            sources = Button.info_label(t(_TesterTopBarMsg.NO_TESTS_REGISTERED), "R")
 
         delta = frame_dx - len(solvers)
         left, right = 1, 1
@@ -115,8 +110,8 @@ class TesterTopBar:
             extrap = RT(" ", token_style.lower())
             extras = RT(" ", token_style.lower())
             if foco and show_focused:
-                extrap = RT("▒", token_style.lower())
-                extras = RT("▒", token_style.lower())
+                extrap = RT(Symbols.block_1, token_style.lower())
+                extras = RT(Symbols.block_1, token_style.lower())
             if state.locked_index and not foco:
                 elements.append(extrap + RT(str(index).zfill(2) + token_text, token_style) + extras)
             else:

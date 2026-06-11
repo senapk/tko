@@ -2,6 +2,7 @@ from pathlib import Path
 from tko.i18n import Msg, t
 from loguru import logger
 import re
+from tko.util.console import Console
 
 
 
@@ -40,4 +41,4 @@ class IndexerMd:
         with open(readme_file, "w", encoding="utf-8") as f:
             f.write(new_content)
         if verbose:
-            print(t(_INDEXER_REPLACED_TITLE, readme=readme_file, title=new_title))
+            Console.print(t(_INDEXER_REPLACED_TITLE, readme=readme_file, title=new_title))

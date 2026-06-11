@@ -31,9 +31,9 @@ class BarBuilder:
         obtained_len = round(obtained / unit_value)
         target100_len = round(target100 / unit_value)
         available_len = round(available / unit_value)
-        text_obtained = "#" * obtained_len + " " * (length - obtained_len)
-        styles_data = [styles[0]] * target100_len + [styles[1]] * (available_len - target100_len) + [styles[2]] * (length - available_len)
+        text_styles = "X" * obtained_len + " " * (length - obtained_len)
+        text_obt = "░" * target100_len + "#" * (available_len - target100_len) + " " * (length - available_len)
         rbuffer = RBuffer()
-        for char, style in zip(text_obtained, styles_data):
+        for style, char in zip(text_styles, text_obt):
             rbuffer += RT(char, style)
         return rbuffer.to_rt()

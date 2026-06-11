@@ -1,3 +1,4 @@
+from tko.util.console import Console
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 from pathlib import Path
@@ -59,11 +60,11 @@ class Elements:
     def print_lines(self) -> None:
         for line in self.lines:
             if isinstance(line, TaskLine):
-                print(f"TL: {line.key} -> {line.target_file}")
+                Console.print(f"TL: {line.key} -> {line.target_file}")
             elif isinstance(line, QuestLine):
-                print(f"QL: {line.key} -> {line.quest.basic.title}")
+                Console.print(f"QL: {line.key} -> {line.quest.basic.title}")
             else:
-                print(f"STR: {line}")
+                Console.print(f"STR: {line}")
 
     def remove_tasks_with_broken_targets(self) -> None:
         new_list: list[QuestLine | TaskLine | str] = []
@@ -74,7 +75,7 @@ class Elements:
             if line.target_file is not None:
                 if not line.target_file.exists():
                     if self.verbose:
-                        print(RT.parse(t(_INDEXER_MISSING_README_REMOVING, readme=line.target_file, task=line.key)))
+                        Console.print(RT.parse(t(_INDEXER_MISSING_README_REMOVING, readme=line.target_file, task=line.key)))
                     continue
             new_list.append(line)
         self.lines = new_list
@@ -95,7 +96,7 @@ class Elements:
             if folder_title == line.tm.title:
                 continue
             if self.verbose:
-                print(RT.parse(t(_INDEXER_MISMATCH_TITLE, readme=line.target_file, line_title=line.tm.title, folder_title=folder_title)))
+                Console.print(RT.parse(t(_INDEXER_MISMATCH_TITLE, readme=line.target_file, line_title=line.tm.title, folder_title=folder_title)))
             if save_titles:
                 IndexerMd.replace_title_in_readme(line.target_file, line.tm.title, self.verbose)
             if load_titles:
@@ -235,7 +236,7 @@ class Merger:
 
         if missing_entries:
             if self.verbose:
-                print(t(_INDEXER_MISSING_HOOKS_ADDING, count=len(missing_entries), quest=default_quest_name))
+                Console.print(t(_INDEXER_MISSING_HOOKS_ADDING, count=len(missing_entries), quest=default_quest_name))
             for _, line in missing_entries.items():
                 self.quests[found_index].lines.append(line)
         return self.header, self.quests

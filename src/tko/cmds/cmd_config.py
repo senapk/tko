@@ -1,3 +1,4 @@
+from tko.util.console import Console
 # from typing import override
 
 from tko.config.settings import Settings
@@ -48,27 +49,27 @@ class CmdConfig:
             action = True
             settings.app.use_images = param.images == "1"
             status = "True" if param.images == "1" else "False"
-            print(t(_CONFIG_IMAGES_STATUS, status=status))
+            Console.print(t(_CONFIG_IMAGES_STATUS, status=status))
             
         if param.side:
             action = True
             settings.app.diff_mode = DiffMode.SIDE
-            print(t(_CONFIG_DIFF_MODE_SIDE))
+            Console.print(t(_CONFIG_DIFF_MODE_SIDE))
         if param.down:
             action = True
             settings.app.diff_mode = DiffMode.DOWN
-            print(t(_CONFIG_DIFF_MODE_DOWN))
+            Console.print(t(_CONFIG_DIFF_MODE_DOWN))
         if param.editor:
             action = True
             settings.app.editor = param.editor
-            print(t(_CONFIG_EDITOR_CHANGED, editor=param.editor))
+            Console.print(t(_CONFIG_EDITOR_CHANGED, editor=param.editor))
 
         if param.timeout is not None:
             action = True
             settings.app.timeout = param.timeout
-            print(t(_CONFIG_TIMEOUT_CHANGED, timeout=param.timeout))
+            Console.print(t(_CONFIG_TIMEOUT_CHANGED, timeout=param.timeout))
 
         if not action:
-            print(str(settings))
+            Console.print(str(settings))
 
         settings.save_settings()

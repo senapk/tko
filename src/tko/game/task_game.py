@@ -77,6 +77,6 @@ class TaskGame:
     @property
     def tier_symbol(self) -> RT:
         #values: list[RT] = [RT("▁", "w"), RT("▃", "g"), RT("▅", "y"), RT("▇", "r")]
-        values: list[RT] = [RT("░", "g"), RT("▒", "g"), RT("▓", "g"), RT("▇", "r")]
+        values: list[RT] = [RT(Symbols.block_1, "g"), RT(Symbols.block_2, "g"), RT(Symbols.block_3, "g"), RT(Symbols.block_4, "r")]
         return values[self.tier - 1]
     
