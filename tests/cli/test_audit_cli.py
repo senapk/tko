@@ -9,6 +9,7 @@ from typer.testing import CliRunner
 from tko.cli.cli_audit import app
 from tko.config.run_settings import RunSettings
 from tko.config.settings import Settings
+from tko.util.console import Console
 
 
 def _make_app_context(tmp_path: Path) -> Settings:
@@ -55,7 +56,9 @@ def test_audit_starts_watcher_with_verbose_and_interval(monkeypatch: MonkeyPatch
     monkeypatch.setattr("tko.repository.repository_watcher.RepositoryWatcher", DummyWatcher)
     monkeypatch.setattr("time.sleep", fake_sleep)
 
-    result = runner.invoke(app, ["init", "--interval", "15"], obj=ctx)
+    with Console.capture() as out:
+        result = runner.invoke(app, ["init", "--interval", "15"], obj=ctx)
+    combined_output = result.output + out.getvalue()
 
     assert result.exit_code == 0
     assert captured["repo"] is repo
@@ -64,8 +67,7 @@ def test_audit_starts_watcher_with_verbose_and_interval(monkeypatch: MonkeyPatch
     assert captured["audit_verbose"] is True
     assert captured["audit_interval_seconds"] == 15
     assert captured["stopped"] is True
-    assert "Audit watcher started" in result.output
-    assert "Audit watcher stopped" in result.output
+    assert "Abra o tko em outro terminal para fazer as tarefas" in combined_output
 
 
 def test_audit_unpack_jsonl_creates_temp_files(tmp_path: Path) -> None:
@@ -77,10 +79,12 @@ def test_audit_unpack_jsonl_creates_temp_files(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    result = runner.invoke(app, ["unpack", str(source_file)])
+    with Console.capture() as out:
+        result = runner.invoke(app, ["unpack", str(source_file)])
+    combined_output = result.output + out.getvalue()
 
     assert result.exit_code == 0
-    output_dir = Path(result.output.strip().splitlines()[0])
+    output_dir = Path(combined_output.strip().splitlines()[0])
     extracted_files = sorted(output_dir.iterdir())
     assert len(extracted_files) == 2
     assert extracted_files[0].read_text(encoding="utf-8") == "int main() {\n    return 0;\n}\n"
@@ -102,10 +106,12 @@ def test_audit_unpack_patch_history_json_creates_temp_files(tmp_path: Path) -> N
         encoding="utf-8",
     )
 
-    result = runner.invoke(app, ["unpack", str(source_file)])
+    with Console.capture() as out:
+        result = runner.invoke(app, ["unpack", str(source_file)])
+    combined_output = result.output + out.getvalue()
 
     assert result.exit_code == 0
-    output_dir = Path(result.output.strip().splitlines()[0])
+    output_dir = Path(combined_output.strip().splitlines()[0])
     extracted_files = sorted(output_dir.iterdir())
     assert len(extracted_files) == 1
     assert extracted_files[0].read_text(encoding="utf-8") == "print(2)\n"

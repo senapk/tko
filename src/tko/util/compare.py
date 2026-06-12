@@ -1,6 +1,9 @@
 import difflib
+from io import StringIO
+from collections.abc import Sequence
 from typer.testing import CliRunner
 from tko.__main__ import app
+from tko.util.console import Console
 import pytest
 import os
 
@@ -24,6 +27,19 @@ class Compare:
     def text(capsys: pytest.CaptureFixture[str], file: str, cmd: str):
         Compare.list(capsys, file, cmd.split(" "))
 
+    @staticmethod
+    def run(cmd_list: Sequence[str] | str) -> str:
+        runner = CliRunner()
+        if isinstance(cmd_list, str):
+            cmd_list = cmd_list.split(" ")
+        full_cmd = cmd_list if "--lang" in cmd_list else ["--lang", "pt", *cmd_list]
+        buffer = StringIO()
+        with Console.redirect(stdout=buffer):
+            result = runner.invoke(app, full_cmd)
+        if result.exception:
+            raise result.exception
+        return result.stdout + buffer.getvalue()
+
     # @staticmethod
     # def list(capsys: pytest.CaptureFixture[str], file: str, cmd_list: list[str]):
     #     runner = CliRunner()
@@ -33,13 +49,10 @@ class Compare:
 
 
     @staticmethod
-    def list(capsys: pytest.CaptureFixture[str], file: str, cmd_list: list[str]):
-        runner = CliRunner()
+    def list(capsys: pytest.CaptureFixture[str], file: str, cmd_list: Sequence[str]):
         full_cmd = cmd_list if "--lang" in cmd_list else ["--lang", "pt", *cmd_list]
-        result = runner.invoke(app, full_cmd)
-        if result.exception:
-            raise result.exception
-        expected, received = Compare.load_and_save(file, result.stdout)
+        received = Compare.run(full_cmd)
+        expected, received = Compare.load_and_save(file, received)
         if expected != received:
             diff = "\n".join(difflib.unified_diff(
                 expected.splitlines(),

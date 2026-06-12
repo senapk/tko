@@ -149,7 +149,7 @@ def test_buffer_rb_renders_blue_foreground_red_background():
     buf.add("Hello", "Rb")
 
     assert buf.to_rt().runs == ((TextStyle.parse("bR"), "Hello"),)
-    assert buf.to_rt().render(RenderMode.ANSI) == "\033[34m\033[41mHello\033[0m"
+    assert buf.to_rt().render(RenderMode.ANSI) == "\033[34;41mHello\033[0m"
 
 
 def test_buffer_add_text():

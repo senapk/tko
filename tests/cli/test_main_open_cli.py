@@ -8,6 +8,7 @@ import typer
 from tko.cli.cli_main import register_main_commands
 from tko.config.run_settings import RunSettings
 from tko.config.settings import Settings
+from tko.util.console import Console
 
 
 def _make_app_context(tmp_path: Path) -> Settings:
@@ -41,8 +42,17 @@ def test_open_starts_non_audit_watcher(monkeypatch: MonkeyPatch, tmp_path: Path)
         def __init__(self, _repo: object):
             captured["watcher_repo"] = _repo
 
-        def start_watching(self, audit: bool | None = None) -> "DummyWatcher":
-            captured["audit"] = audit
+        def start_watching(
+            self,
+            log_edits: bool = True,
+            log_audit: bool = False,
+            audit_verbose: bool = False,
+            audit_interval_seconds: int | None = None,
+        ) -> "DummyWatcher":
+            captured["log_edits"] = log_edits
+            captured["log_audit"] = log_audit
+            captured["audit_verbose"] = audit_verbose
+            captured["audit_interval_seconds"] = audit_interval_seconds
             return self
 
         def stop_watching(self) -> "DummyWatcher":
@@ -53,12 +63,17 @@ def test_open_starts_non_audit_watcher(monkeypatch: MonkeyPatch, tmp_path: Path)
     monkeypatch.setattr("tko.cmds.cmd_open.CmdOpen", DummyCmdOpen)
     monkeypatch.setattr("tko.repository.repository_watcher.RepositoryWatcher", DummyWatcher)
 
-    result = runner.invoke(app, ["open"], obj=ctx)
+    with Console.capture() as out:
+        result = runner.invoke(app, ["open"], obj=ctx)
+    _ = out.getvalue()
 
     assert result.exit_code == 0
     assert captured["settings"] is ctx
     assert captured["repo"] is repo_obj
     assert captured["watcher_repo"] is repo_obj
-    assert captured["audit"] is False
+    assert captured["log_edits"] is True
+    assert captured["log_audit"] is False
+    assert captured["audit_verbose"] is False
+    assert captured["audit_interval_seconds"] is None
     assert captured["execute"] is True
     assert captured["stopped"] is True

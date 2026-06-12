@@ -1,7 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 
-from tko.logger.audit_tracker import AuditTracker
+from tko.logger.audit_tracker import AuditTracker, AuditElement
 
 
 class _FakePaths:
@@ -33,16 +33,21 @@ def test_audit_tracker_stores_snapshots(tmp_path: Path) -> None:
     solver.write_text("print('v1')\n", encoding="utf-8")
     timestamp = datetime(2026, 6, 9, 10, 11, 12)
 
-    tracker = AuditTracker(repo)  # type: ignore[arg-type]
-    changed, total_lines = tracker.store("disc@task01", [solver], timestamp=timestamp)
+    tracker = AuditTracker(repo, verbose=False, interval_seconds=0)  # type: ignore[arg-type]
+    changed, total_lines = tracker.store("disc@task01", [(solver, timestamp)])
 
     assert changed is True
     assert total_lines == 1
 
     audit_folder = tmp_path / ".tko" / "audit" / "disc@task01"
-    copied_file = audit_folder / "2026-06-09_10-11-12_solver.py"
+    copied_file = audit_folder / "solver.py.jsonl"
     assert copied_file.exists()
-    assert copied_file.read_text(encoding="utf-8") == "print('v1')\n"
+    lines = copied_file.read_text(encoding="utf-8").splitlines()
+    assert len(lines) == 1
+    entry = AuditElement.from_jsonl_line(lines[0])
+    assert entry.timestamp == timestamp
+    assert entry.content == "print('v1')\n"
+    assert entry.verify_hash() is True
 
 
 def test_audit_tracker_ignores_files_outside_src_lang(tmp_path: Path) -> None:
@@ -53,8 +58,8 @@ def test_audit_tracker_ignores_files_outside_src_lang(tmp_path: Path) -> None:
     outside = task_folder / "solver.py"
     outside.write_text("print('nope')\n", encoding="utf-8")
 
-    tracker = AuditTracker(repo)  # type: ignore[arg-type]
-    changed, total_lines = tracker.store("disc@task03", [outside], timestamp=datetime(2026, 6, 9, 10, 11, 12))
+    tracker = AuditTracker(repo, verbose=False, interval_seconds=0)  # type: ignore[arg-type]
+    changed, total_lines = tracker.store("disc@task03", [(outside, datetime(2026, 6, 9, 10, 11, 12))])
 
     assert changed is False
     assert total_lines == 0
@@ -74,8 +79,8 @@ def test_audit_tracker_ignores_large_or_missing_files(tmp_path: Path) -> None:
     big_file.write_text("a" * 200, encoding="utf-8")
     missing = src_lang_folder / "missing.py"
 
-    tracker = AuditTracker(repo, max_file_size_bytes=64)  # type: ignore[arg-type]
-    changed, total_lines = tracker.store("disc@task02", [big_file, missing])
+    tracker = AuditTracker(repo, verbose=False, interval_seconds=0, max_file_size_bytes=64)  # type: ignore[arg-type]
+    changed, total_lines = tracker.store("disc@task02", [(big_file, None), (missing, None)])
 
     assert changed is False
     assert total_lines == 0

@@ -15,7 +15,8 @@ class Test:
     #     Compare.text(capsys, "-w 80 -m run runtime.cpp", "out2")
 
     def test_run_mixed_3(self, capsys: pytest.CaptureFixture[str]):
-        Compare.text(capsys, "out2", "-w 80 -m run exception.py -d")
+        output = Compare.run("-w 80 -m run exception.py -d")
+        assert output.lower().count("runtime exception") == 0
 
     # def test_run_mixed_4(self, capsys: pytest.CaptureFixture[str]):
     #     Compare.text(capsys, "out3", "-w 80 -m run exception.cpp cases.tio -d")

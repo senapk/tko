@@ -16,8 +16,13 @@
 ├────────────────────────────────── ESPERADO ──────────────────────────────────╯
 │ 0.44
 │ -5.07
+│ 
+│ 
 ├────────────────────────────────── RECEBIDO ───────────────────────────────────
-│ fail: runtime exception
+│ returncode:-6
+│ 
+│ terminate called after throwing an instance of 'std::invalid_argument'
+│   what():  Impossivel calcular
 ╰───────────────────────────────────────────────────────────────────────────────
 ╭──────────────────────────────────────────────────────────────────────────────╮
 │            (ω saída_incorreta)[01] GR:014 cases.tio (duas raízes)            │
@@ -61,8 +66,14 @@
 │ 5.0                                                                          │
 ├────────────────────────────────── ESPERADO ──────────────────────────────────╯
 │ nao ha raiz real
+│ 
+│ 
+│ 
 ├────────────────────────────────── RECEBIDO ───────────────────────────────────
-│ fail: runtime exception
+│ returncode:-6
+│ 
+│ terminate called after throwing an instance of 'std::invalid_argument'
+│   what():  Impossivel calcular
 ╰───────────────────────────────────────────────────────────────────────────────
 ╭──────────────────────────────────────────────────────────────────────────────╮
 │            (ω saída_incorreta)[04] GR:014 cases.tio (05         )            │
@@ -106,6 +117,12 @@
 │ 19.2                                                                         │
 ├────────────────────────────────── ESPERADO ──────────────────────────────────╯
 │ nao ha raiz real
+│ 
+│ 
+│ 
 ├────────────────────────────────── RECEBIDO ───────────────────────────────────
-│ fail: runtime exception
+│ returncode:-6
+│ 
+│ terminate called after throwing an instance of 'std::invalid_argument'
+│   what():  Impossivel calcular
 ╰───────────────────────────────────────────────────────────────────────────────

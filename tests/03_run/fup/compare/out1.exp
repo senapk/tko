@@ -14,12 +14,14 @@
 │ 2                                    │ 2                                     │
 │ 3                                    │ 3                                     │
 ├────────────── ESPERADO ──────────────┼────────────── RECEBIDO ───────────────┤
-│ 0.44                                 │ fail: runtime exception               │
+│ 0.44                                 │ returncode:-6                         │
 │ -5.07                                │                                       │
+│                                      │ terminate called after throwing an i  │
+│                                      │   what():  Impossivel calcular        │
 ├────────────────────────────────── DESIGUAL ──────────────────────────────────┤
-│ 0.44↲                   (esperado)                                           │
-│ fail:·runtime·exception (recebido)                                           │
-│ ↑                       (primeiro)                                           │
+│ 0.44↲          (esperado)                                                    │
+│ returncode:-6↲ (recebido)                                                    │
+│ ↑              (primeiro)                                                    │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭──────────────────────────────────────────────────────────────────────────────╮
 │            (ω saída_incorreta)[01] GR:014 cases.tio (duas raízes)            │
@@ -56,11 +58,14 @@
 │ 3.0                                  │ 3.0                                   │
 │ 5.0                                  │ 5.0                                   │
 ├────────────── ESPERADO ──────────────┼────────────── RECEBIDO ───────────────┤
-│ nao ha raiz real                     │ fail: runtime exception               │
+│ nao ha raiz real                     │ returncode:-6                         │
+│                                      │                                       │
+│                                      │ terminate called after throwing an i  │
+│                                      │   what():  Impossivel calcular        │
 ├────────────────────────────────── DESIGUAL ──────────────────────────────────┤
-│ nao·ha·raiz·real↲       (esperado)                                           │
-│ fail:·runtime·exception (recebido)                                           │
-│ ↑                       (primeiro)                                           │
+│ nao·ha·raiz·real↲ (esperado)                                                 │
+│ returncode:-6↲    (recebido)                                                 │
+│ ↑                 (primeiro)                                                 │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ╭──────────────────────────────────────────────────────────────────────────────╮
 │            (ω saída_incorreta)[04] GR:014 cases.tio (05         )            │
@@ -97,9 +102,12 @@
 │ 3.4                                  │ 3.4                                   │
 │ 19.2                                 │ 19.2                                  │
 ├────────────── ESPERADO ──────────────┼────────────── RECEBIDO ───────────────┤
-│ nao ha raiz real                     │ fail: runtime exception               │
+│ nao ha raiz real                     │ returncode:-6                         │
+│                                      │                                       │
+│                                      │ terminate called after throwing an i  │
+│                                      │   what():  Impossivel calcular        │
 ├────────────────────────────────── DESIGUAL ──────────────────────────────────┤
-│ nao·ha·raiz·real↲       (esperado)                                           │
-│ fail:·runtime·exception (recebido)                                           │
-│ ↑                       (primeiro)                                           │
+│ nao·ha·raiz·real↲ (esperado)                                                 │
+│ returncode:-6↲    (recebido)                                                 │
+│ ↑                 (primeiro)                                                 │
 ╰──────────────────────────────────────────────────────────────────────────────╯

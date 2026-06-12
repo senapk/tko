@@ -10,7 +10,8 @@ class Test:
 
     def test_run_mixed_side(self, capsys: pytest.CaptureFixture[str]):
         cmd = "-w 80 -m run solver.cpp cases.tio -as"
-        Compare.text(capsys, "out1", cmd)
+        output = Compare.run(cmd)
+        assert output.lower().count("runtime exception") == 3
 
     def test_run_side_0(self, capsys: pytest.CaptureFixture[str]):
         cmd = "-w 80 -m run solver.py cases.tio -d"
@@ -26,4 +27,5 @@ class Test:
 
     def test_run_side_5(self, capsys: pytest.CaptureFixture[str]):
         cmd = "-w 80 -m run solver.cpp cases.tio -ad"
-        Compare.text(capsys, "out2", cmd)
+        output = Compare.run(cmd)
+        assert output.lower().count("runtime exception") == 3

@@ -89,7 +89,7 @@ def test_from_ansi_codes_overlays_base_style_without_reset():
 def test_ansi_returns_separate_escape_sequences_with_sorted_attrs():
     style = TextStyle.parse("rB_*/!")
 
-    assert style.ansi() == "\033[31m\033[44m\033[9m\033[1m\033[3m\033[4m"
+    assert style.ansi() == "\033[31;44;9;1;3;4m"
 
 
 def test_plain_style_has_no_ansi_sequence():

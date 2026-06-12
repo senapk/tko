@@ -27,7 +27,7 @@ class UnitRunner:
         )
         if return_code != 0:
 
-            unit.set_received(f"returncode:{return_code}\n{stdout}\n{stderr}")
+            unit.set_received(f"Runtime Exception\nreturn code:{return_code}\n{stdout}\n{stderr}")
             return ExecutionResult.EXECUTION_ERROR
         unit.set_received(stdout)
         if unit.get_received() == unit.get_expected():
