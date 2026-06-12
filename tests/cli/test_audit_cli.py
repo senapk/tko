@@ -2,6 +2,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 import json
+import re
 
 from _pytest.monkeypatch import MonkeyPatch
 from typer.testing import CliRunner
@@ -10,6 +11,27 @@ from tko.cli.cli_audit import app
 from tko.config.run_settings import RunSettings
 from tko.config.settings import Settings
 from tko.util.console import Console
+
+
+def _extract_output_dir(output: str) -> Path:
+    ansi_re = re.compile(r"\x1b\[[0-9;]*m")
+    lines = [ansi_re.sub("", line).strip() for line in output.splitlines()]
+
+    for line in lines:
+        if not line:
+            continue
+        candidate = Path(line)
+        if candidate.is_dir() and candidate.name.startswith("tko-audit-unpack-"):
+            return candidate
+
+    for line in lines:
+        if not line:
+            continue
+        candidate = Path(line)
+        if candidate.is_dir():
+            return candidate
+
+    raise AssertionError(f"Could not find unpack output directory in output:\n{output}")
 
 
 def _make_app_context(tmp_path: Path) -> Settings:
@@ -84,7 +106,7 @@ def test_audit_unpack_jsonl_creates_temp_files(tmp_path: Path) -> None:
     combined_output = result.output + out.getvalue()
 
     assert result.exit_code == 0
-    output_dir = Path(combined_output.strip().splitlines()[0])
+    output_dir = _extract_output_dir(combined_output)
     extracted_files = sorted(output_dir.iterdir())
     assert len(extracted_files) == 2
     assert extracted_files[0].read_text(encoding="utf-8") == "int main() {\n    return 0;\n}\n"
@@ -111,7 +133,7 @@ def test_audit_unpack_patch_history_json_creates_temp_files(tmp_path: Path) -> N
     combined_output = result.output + out.getvalue()
 
     assert result.exit_code == 0
-    output_dir = Path(combined_output.strip().splitlines()[0])
+    output_dir = _extract_output_dir(combined_output)
     extracted_files = sorted(output_dir.iterdir())
     assert len(extracted_files) == 1
     assert extracted_files[0].read_text(encoding="utf-8") == "print(2)\n"
