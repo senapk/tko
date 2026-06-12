@@ -110,15 +110,15 @@ class LanguageSetter:
         self.settings.app.ui_language = next_lang
         set_ui_language(next_lang)
         self.settings.save_settings()
-        self.fman.add_input(
-            Floating()
-            .bottom()
-            .right()
-            .put_text("")
-            .put_text(t(_LangSetterMsg.UI_LANGUAGE_CHANGED, language=next_lang))
-            .put_text("")
-            .set_warning()
-        )
+        # self.fman.add_input(
+        #     Floating()
+        #     .bottom()
+        #     .right()
+        #     .put_text("")
+        #     .put_text(t(_LangSetterMsg.UI_LANGUAGE_CHANGED, language=next_lang))
+        #     .put_text("")
+        #     .set_warning()
+        # )
 
 class TextFunctor:
     def __init__(self, data: str):

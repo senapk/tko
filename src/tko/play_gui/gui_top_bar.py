@@ -19,7 +19,7 @@ class _TopBarMsg:
 class GuiTopBar:
 
     def get_time_hhmmss(self) -> RT:
-        return Button.action_bt(time.strftime("%H:%M:%S"))
+        return Button.info_label(time.strftime("%H:%M:%S"))
 
 
     def __init__(self, flags: Flags, app: AppSettings):

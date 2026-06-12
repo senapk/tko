@@ -18,9 +18,9 @@ class _PaletteMsg:
     IMAGES               = Msg(pt=" {symbol} Mostrar: [y]Imagens[] após passar nos testes",     en=" {symbol} Show: [y]Images[] after passing tests")
     TIME                 = Msg(pt=" {symbol} Mostrar: [y]Tempo[] gasto nas tarefas",            en=" {symbol} Show: [y]Time[] spent on tasks")
     VERSIONS             = Msg(pt=" {symbol} Mostrar: [y]Ver versões[] da tarefa",              en=" {symbol} Show: [y]Show task versions[]")
-    LANGUAGE             = Msg(pt=" {symbol} Config: [y]Mudar <linguagem[] de programação",     en=" {symbol} Config: Change [y]programming language[]")
-    UI_LANGUAGE          = Msg(pt=" {symbol} Config: [y]Alternar <idioma[] da interface PT/EN", en=" {symbol} Config: [y]Toggle UI language[] PT/EN")
-    CALIBRATE            = Msg(pt=" {symbol} Config: [y]Calibrar <teclas[] do teclado",         en=" {symbol} Config: Calibrate [y]keyboard keys[]")
+    LANGUAGE             = Msg(pt=" {symbol} Config: [y]Mudar linguagem[] de programação",     en=" {symbol} Config: Change [y]programming language[]")
+    UI_LANGUAGE          = Msg(pt=" {symbol} Config: [y]Alternar idioma[] da interface PT/EN", en=" {symbol} Config: [y]Toggle UI language[] PT/EN")
+    CALIBRATE            = Msg(pt=" {symbol} Config: [y]Calibrar teclas[] do teclado",         en=" {symbol} Config: Calibrate [y]keyboard keys[]")
     RELOAD               = Msg(pt=" {symbol} Config: [y]Recarregar TKO[]",                      en=" {symbol} Config: [y]Reload TKO[]")
     INCREASE_PANEL_SIZE  = Msg(pt=" {symbol} Mostrar: [y]Aumentar[] tamanho do painel",         en=" {symbol} Show: [y]Increase[] panel size")
     DECREASE_PANEL_SIZE  = Msg(pt=" {symbol} Mostrar: [y]Diminuir[] tamanho do painel",         en=" {symbol} Show: [y]Decrease[] panel size")
@@ -85,7 +85,7 @@ class PlayPalette:
                 lambda: RT.parse(t(_PaletteMsg.UI_LANGUAGE).format(symbol=Symbols.action)),
                 self.gui.language.toggle_ui_language,
                 GuiKeys.toggle_ui_language
-            ).set_exit_on_action(True)
+            ).set_exit_on_action(False)
         )
 
         options.append(

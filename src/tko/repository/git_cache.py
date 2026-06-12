@@ -108,8 +108,13 @@ class GitCache:
     def get_remote_dir(self, url: str) -> Path | None:
         target_path: Path = self._repo_dir(url)
         if url in self.avoid:
-            logger.debug(f"Skipping cache for {url} due to previous failure.")
-            return None
+            if target_path.exists():
+                logger.debug(f"Skipping updade for {url} due to previous failure. Using old content.")
+                return target_path
+            else:
+                logger.debug(f"Skipping updade for {url} due to previous failure. Directory missing.")
+                return None
+        
         
         if url in self.updated:
             logger.debug(f"Using cached repository for {url} at {target_path}")
@@ -130,20 +135,14 @@ class GitCache:
 
             need_update = False
             if self.update_mode == UpdateMode.IF_OLDER and self._is_expired(target_path):
-                logger.warning(f"Updating expired repository {url}...")
-                need_update = True
-
+                logger.info(f"Updating expired repository {url}...")
             if  self.update_mode == UpdateMode.ALWAYS:
-                logger.warning(f"Forcing update of repository {url}")
-                need_update = True
-
+                logger.info(f"Forcing update of repository {url}")
             if need_update:
                 ok = self._update(target_path)
                 if ok:
                     self.updated[url] = True
-                    return target_path
                 else:
                     logger.warning(f"Updating repository {url} failed.")
                     self.avoid[url] = True
-                    return target_path
         return target_path

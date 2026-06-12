@@ -62,7 +62,10 @@ def register_main_commands(app: typer.Typer):
         cmd_run.execute()
 
     @app.command("open", help="Open repository in interactive mode")
-    def open_cmd(ctx: typer.Context): # type: ignore
+    def open_cmd( # type: ignore
+            ctx: typer.Context, 
+            audit: bool = typer.Option(False, "--audit", "-a", help="Enable audit watcher"),
+        ): 
         from tko.cli.common import load_repo
         from tko.cmds.cmd_open import CmdOpen
         from tko.config.check_version import CheckVersion
@@ -78,7 +81,7 @@ def register_main_commands(app: typer.Typer):
             return
             
         from tko.repository.repository_watcher import RepositoryWatcher
-        watcher = RepositoryWatcher(repo).start_watching(log_audit=False)
+        watcher = RepositoryWatcher(repo).start_watching(log_audit=audit, audit_verbose=False)
         action = CmdOpen(settings, repo)
         
         if not settings.rs.force_offline:

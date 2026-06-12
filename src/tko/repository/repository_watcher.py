@@ -59,7 +59,7 @@ class AuditLogger:
 
 class RepositoryWatcher:
     default_interval_seconds = 300
-    default_audit_interval_seconds = 5
+    default_audit_interval_seconds = 20
 
     def __init__(self, repo: Repository):
         self.repo = repo
