@@ -7,6 +7,7 @@ from tko.config.settings import Settings
 from tko.repository.repository import Repository
 from tko.play.gui_keys import GuiKeys
 from tko.floating.floating_calibrate import FloatingCalibrate
+from tko.floating.floating import Floating
 from tko.play.input_manager import InputManager
 from tko.play.play_palette import PlayPalette
 from tko.floating import Floating
@@ -15,6 +16,7 @@ from tko.play_tree.task_tree import TaskTree
 from tko.play_gui.gui import Gui
 from tko.play.play_actions import PlayActions
 from tko.play.flag_functors import FlagFunctor
+from tko.play_gui.gui_help_info import GuiHelpInfo
 from tko.i18n import Msg, t
 from icecream import ic # type: ignore
 from tko.widget.fmt import Fmt
@@ -50,6 +52,10 @@ class Play:
     def display_need_update(self):
         self.gui.set_need_update()
 
+    def show_help(self):
+        self.fman.add_input(
+            Floating().set_rt_content(GuiHelpInfo.show()).set_header(f" {Msg(pt="Ajuda", en="Help")} ").set_countdown(100)
+        )
 
     def save_to_json(self):
         self.tree.save_state()
@@ -131,7 +137,7 @@ class Play:
         cman.add_str(GuiKeys.inbox, lambda: self.flags.task_view_mode.set_view_inbox())
         cman.add_str(GuiKeys.all_tasks, lambda: self.flags.task_view_mode.set_view_all())
 
-        cman.add_str(GuiKeys.panel_help, lambda: self.open_toggle_panel(self.flags.panel.HELP))
+        cman.add_str(GuiKeys.ask_help, self.show_help)
         cman.add_str(GuiKeys.panel_graph, lambda: self.open_toggle_panel(self.flags.panel.GRAPH))
         cman.add_str(GuiKeys.panel_logs, lambda: self.open_toggle_panel(self.flags.panel.LOGS))
         cman.add_str(GuiKeys.panel_skills, lambda: self.open_toggle_panel(self.flags.panel.SKILLS))
@@ -165,10 +171,6 @@ class Play:
         if current != value:
             panel.set_value(value)
 
-    def open_help(self):
-        self.flags.show_panel.set_true()
-        self.flags.panel.set_help()
-
 
     def send_char_not_found(self, key: int):
         exclude_str = [ord(v) for v in [" ", "\n"]]
@@ -180,7 +182,7 @@ class Play:
         self.fman.add_input(
             Floating().bottom().right().set_error().put_text(
                 t(_PLAY_KEY_NOT_RECOGNIZED, char=chr(key), code=key)
-            )
+            ).set_countdown(Floating.Time.FAST)
         )
 
 

@@ -73,7 +73,7 @@ class DraftCreator:
                 self.fman.add_input(
                     Floating().bottom().right()
                     .put_text("\n" + t(_DraftMsg.FOLDER_EXISTS, folder=folder) + "\n")
-                    .set_error()
+                    .set_error().set_countdown(Floating.Time.FAST)
                 )
                 return
 
@@ -94,7 +94,7 @@ class DraftCreator:
             self.fman.add_input(
                 Floating().bottom().right()
                 .put_text(t(_DraftMsg.CREATED_AT, folder=folder))
-                .set_warning()
+                .set_warning().set_countdown(Floating.Time.MEDIUM)
             )
 
         current_folders_on_rep: list[str] = [f"@{folder.name}" for folder in sandbox_folder.iterdir() if folder.is_dir()]

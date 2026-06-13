@@ -60,13 +60,13 @@ class TaskEditorService:
                 self.fman.add_input(
                     Floating().bottom().right()
                     .put_text(f"\n{t(_TaskEditorMsg.CODE_NOT_FOUND)}\n")
-                    .set_error()
+                    .set_error().set_countdown(Floating.Time.FAST)
                 )
         else:
             self.fman.add_input(
                 Floating().bottom().right()
                 .put_text(f"\n{t(_TaskEditorMsg.CODE_ONLY_DOWNLOADED)}\n")
-                .set_error()
+                .set_error().set_countdown(Floating.Time.FAST)
             )
 
     def open_link(self):
@@ -87,7 +87,7 @@ class TaskEditorService:
                         Floating().bottom().right()
                         .set_header(f" {t(_TaskEditorMsg.OPENING_LINK)} ")
                         .put_text(f"\n {str(url)} \n")
-                        .set_warning()
+                        .set_warning().set_countdown(Floating.Time.FAST)
                     )
                 except Exception as _:
                     pass
@@ -101,7 +101,7 @@ class TaskEditorService:
                 Floating().bottom().right()
                 .put_text(f"\n{t(_TaskEditorMsg.IS_MISSION)}")
                 .put_text(f"\n{t(_TaskEditorMsg.LINK_ONLY_TASKS)}\n")
-                .set_error()
+                .set_error().set_countdown(Floating.Time.FAST)
             )
 
     def open_versions(self):

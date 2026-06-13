@@ -1,4 +1,3 @@
-from tko.widget.frame import Frame
 from tko.play.gui_keys import GuiKeys
 from tko.i18n import Msg, t
 from tko.util.rt import RT
@@ -57,12 +56,12 @@ class _GuiHelpMsg:
                          en="tko config set --editor <command>")
 
 
-class GuiHelpPanel:
+class GuiHelpInfo:
 
-    def show(self, frame: Frame) -> None:
-        frame.draw()
-        dx = frame.get_dx() - 2
+    @staticmethod
+    def show() -> list[RT]:
         help_lines: list[RT] = []
+        dx = 65
         help_lines.append(RT(t(_GuiHelpMsg.SECTION_CONFIG), "g").center(dx, RT("-")))
         help_lines.append(RT.parse(t(_GuiHelpMsg.CALIBRATE_LINE).format(GuiKeys.calibrate)))
 
@@ -91,5 +90,4 @@ class GuiHelpPanel:
         help_lines.append(RT(t(_GuiHelpMsg.EDITOR_DESC)))
         help_lines.append(RT(t(_GuiHelpMsg.EDITOR_COMMAND), "y").center(dx))
 
-        for i, line in enumerate(help_lines):
-            frame.write(i, 0, line)
+        return help_lines

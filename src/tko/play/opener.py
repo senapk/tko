@@ -40,7 +40,7 @@ class Opener:
         aviso = (Floating()
                 .bottom()
                 .right()
-                .set_warning()
+                .set_warning().set_countdown(Floating.Time.MEDIUM)
                 .put_sentence(RT("Pasta: ") + RT(str(folder), "g") + " ")
                 .put_text("Abrindo arquivos com o comando")
                 )

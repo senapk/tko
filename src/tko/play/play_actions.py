@@ -85,7 +85,7 @@ class PlayActions:
                 self.fman.add_input(
                     Floating().bottom().right()
                     .put_text(f"\n{t(_PlayActionMsg.TASK_DELETE_NOT_MATCH)}\n")
-                    .set_error()
+                    .set_error().set_countdown(Floating.Time.MEDIUM)
                 )
                 return
             folder = self.get_task_folder(obj)
@@ -94,13 +94,13 @@ class PlayActions:
                 self.fman.add_input(
                     Floating().bottom().right()
                     .put_text(f"\n{t(_PlayActionMsg.TASK_DELETE_SUCCESS, folder=folder)}\n")
-                    .set_warning()
+                    .set_warning().set_countdown(Floating.Time.SLOW)
                 )
             except OSError:
                 self.fman.add_input(
                     Floating().bottom().right()
                     .put_text(f"\n{t(_PlayActionMsg.DELETE_ERROR)}\n")
-                    .set_error()
+                    .set_error().set_countdown(Floating.Time.MEDIUM)
                 )
             self.reload()
 
@@ -114,7 +114,7 @@ class PlayActions:
                 self.fman.add_input(
                     Floating().bottom().right()
                     .put_text("\n" + t(_PlayActionMsg.TASK_NO_LOCAL_FOLDER) + "\n")
-                    .set_error()
+                    .set_error().set_countdown(Floating.Time.MEDIUM)
                 )
                 return
             if ic.enabled:
@@ -130,5 +130,5 @@ class PlayActions:
             self.fman.add_input(
                 Floating().bottom().right()
                 .put_text("\n" + t(_PlayActionMsg.ONLY_TASK_FOLDERS) + "\n")
-                .set_error()
+                .set_error().set_countdown(Floating.Time.FAST)
             )

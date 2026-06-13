@@ -63,7 +63,7 @@ class TesterNavigator:
             state.mode = SeqMode.select
         if state.locked_index:
             self.fman.add_input(
-                Floating().bottom().right().set_warning()
+                Floating().bottom().right().set_warning().set_countdown(Floating.Time.FAST)
                 .put_text(t(_TesterNavigatorMsg.LOCKED_HINT, arrow="←", lock_key=GuiKeys.lock))
             )
             return
@@ -81,7 +81,7 @@ class TesterNavigator:
             state.mode = SeqMode.select
         if state.locked_index:
             self.fman.add_input(
-                Floating().bottom().right().set_warning()
+                Floating().bottom().right().set_warning().set_countdown(Floating.Time.FAST)
                 .put_text(t(_TesterNavigatorMsg.LOCKED_HINT, arrow="→", lock_key=GuiKeys.lock))
             )
             return
@@ -110,7 +110,7 @@ class TesterNavigator:
         solver_names = tester_util.get_solver_names(self.wdir)
         if len(solver_names) == 1:
             self.fman.add_input(
-                Floating().bottom().right().set_warning()
+                Floating().bottom().right().set_warning().set_countdown(Floating.Time.MEDIUM)
                 .put_text(t(_TesterNavigatorMsg.SINGLE_SOLVER_1))
                 .put_text(t(_TesterNavigatorMsg.SINGLE_SOLVER_2))
                 .put_text(t(_TesterNavigatorMsg.SINGLE_SOLVER_3))
@@ -139,7 +139,7 @@ class TesterNavigator:
     def self_evaluate(self, state: TesterState) -> None:
         if self.rep is None:
             self.fman.add_input(
-                Floating().bottom().right().set_warning()
+                Floating().bottom().right().set_warning().set_countdown(Floating.Time.MEDIUM)
                 .put_text(t(_TesterNavigatorMsg.NO_LOG_REPO))
             )
             return

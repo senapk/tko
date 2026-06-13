@@ -78,7 +78,7 @@ class TaskLauncher:
         if not run.context.wdir.solver:
             cmd = CmdDown(self.repo, task.basic.full_key, self.settings)
             cmd.execute()
-            msg = Floating().bottom().right().set_warning()
+            msg = Floating().bottom().right().set_warning().set_countdown(Floating.Time.MEDIUM)
             msg.put_text("\n" + t(_TaskLauncherMsg.NO_SOURCE_FOR_LANG, lang=self.repo.data.lang))
             msg.put_text("\n" + t(_TaskLauncherMsg.DRAFT_CREATED) + "\n")
             self.fman.add_input(msg)

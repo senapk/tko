@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 from loguru import logger
 import time
 from pathlib import Path
@@ -10,6 +9,7 @@ from filelock import FileLock
 import shutil
 import enum
 from tko.i18n import Msg, t
+from tko.util.has_internet import has_internet
 
 _GIT_CACHE_CLEARING = Msg(
     pt="Limpando cache git em {cache_dir}...",
@@ -37,6 +37,7 @@ class UpdateMode(enum.Enum):
     NEVER = "never"
     IF_OLDER = "if_older"
 
+
 class GitCache:
     def __init__(self, cache_dir: str | Path, max_age: timedelta = timedelta(hours=1), update_mode: UpdateMode = UpdateMode.IF_OLDER) -> None:
         logger.debug(f"Initializing GitCache with cache_dir={cache_dir}, update_mode={update_mode}")
@@ -45,6 +46,7 @@ class GitCache:
         self.updated: dict[str, bool] = {}
         self.avoid: dict[str, bool] = {} # repos that failed to update, to avoid retrying them in the same session
         self.max_age: timedelta = max_age
+        self.has_internet: bool = has_internet(1)
 
     def clear_cache(self):
         if self.cache_dir.exists():
@@ -107,6 +109,10 @@ class GitCache:
 
     def get_remote_dir(self, url: str) -> Path | None:
         target_path: Path = self._repo_dir(url)
+        if not self.has_internet and target_path.exists():
+            logger.debug(f"No internet connection. Using cached repository for {url} at {target_path}")
+            return target_path
+
         if url in self.avoid:
             if target_path.exists():
                 logger.debug(f"Skipping updade for {url} due to previous failure. Using old content.")
@@ -115,9 +121,7 @@ class GitCache:
                 logger.debug(f"Skipping updade for {url} due to previous failure. Directory missing.")
                 return None
         
-        
         if url in self.updated:
-            logger.debug(f"Using cached repository for {url} at {target_path}")
             return target_path
 
         lock_path: Path = self._lock_path(target_path)
@@ -136,8 +140,10 @@ class GitCache:
             need_update = False
             if self.update_mode == UpdateMode.IF_OLDER and self._is_expired(target_path):
                 logger.info(f"Updating expired repository {url}...")
+                need_update = True
             if  self.update_mode == UpdateMode.ALWAYS:
                 logger.info(f"Forcing update of repository {url}")
+                need_update = True
             if need_update:
                 ok = self._update(target_path)
                 if ok:

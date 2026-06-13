@@ -42,7 +42,7 @@ class TesterUiActions:
 
     def toggle_lock(self, state: TesterState) -> None:
         self.fman.add_input(
-            Floating().bottom().right().set_warning()
+            Floating().bottom().right().set_warning().set_countdown(Floating.Time.FAST)
             .put_text(
                 t(_TesterUiActionsMsg.LOCK_TOGGLE).format(
                     t(_TesterUiActionsMsg.LOCK_ON) if not state.locked_index else t(_TesterUiActionsMsg.LOCK_OFF)
@@ -58,7 +58,7 @@ class TesterUiActions:
     def change_limit(self, state: TesterState) -> None:
         self.navigator.change_limit(state)
         self.fman.add_input(
-            Floating().bottom().right().set_warning()
+            Floating().bottom().right().set_warning().set_countdown(Floating.Time.FAST)
             .put_text(
                 t(_TesterUiActionsMsg.LIMIT_CHANGED).format(
                     tester_util.get_time_limit_symbol(self.settings.app.timeout)
@@ -70,7 +70,7 @@ class TesterUiActions:
     def toggle_diff(self) -> None:
         self.app.toggle_diff()
         self.fman.add_input(
-            Floating().bottom().right().set_warning()
+            Floating().bottom().right().set_warning().set_countdown(Floating.Time.FAST)
             .put_text(t(_TesterUiActionsMsg.DIFF_MODE_CHANGED).format(self.app.diff_mode.value))
         )
         self.settings.save_settings()
@@ -78,7 +78,7 @@ class TesterUiActions:
     def toggle_images(self) -> None:
         self.app.toggle(ToggleOption.IMAGES)
         self.fman.add_input(
-            Floating().bottom().right().set_warning()
+            Floating().bottom().right().set_warning().set_countdown(Floating.Time.FAST)
             .put_text(
                 t(_TesterUiActionsMsg.IMAGES_MODE_CHANGED).format(
                     t(_TesterUiActionsMsg.IMAGES_ON) if self.app.use_images else t(_TesterUiActionsMsg.IMAGES_OFF)
@@ -93,5 +93,5 @@ class TesterUiActions:
     def send_char_not_found(self, key: int) -> None:
         self.fman.add_input(
             Floating().bottom().right().set_error()
-            .put_text(t(_TesterUiActionsMsg.CHAR_NOT_FOUND).format(chr(key), key))
+            .put_text(t(_TesterUiActionsMsg.CHAR_NOT_FOUND).format(chr(key), key)).set_countdown(Floating.Time.FAST)
         )

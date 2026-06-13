@@ -1,6 +1,7 @@
 from tko.widget.fmt import Fmt
 from tko.util.rt import RT
 from tko.util.scrollbar import ScrollBar
+from typing import Callable
 
 
 class Frame:
@@ -27,6 +28,7 @@ class Frame:
         self.__text_length = 0
         self.__show_scrollbar = False
         self.__scrollbar_side = "left"
+        self.countdown_fn: Callable[[], RT] | None = None
 
     def set_border_color(self, color: str):
         self._border_color = color
@@ -70,7 +72,10 @@ class Frame:
         return self.__align_header_footer(self._header, self._halign, self._hprefix, self._hsuffix)
 
     def get_full_footer(self):
-        return self.__align_header_footer(self._footer, self._falign, self._fprefix, self._fsuffix)
+        footer = self._footer
+        if self.countdown_fn is not None:
+            footer += self.countdown_fn()
+        return self.__align_header_footer(footer, self._falign, self._fprefix, self._fsuffix)
 
     def set_pos(self, y: int, x: int):
         self._x = x

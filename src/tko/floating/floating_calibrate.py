@@ -70,6 +70,8 @@ class FloatingCalibrate(FloatingABC):
         content.append(RT(t(_CalibrateMsg.BACKSPACE).ljust(10), color) + RT(format_value(self._options[7]), color))
 
     def process_input(self, key: int) -> int:
+        if key == -1:
+            return -1
         if key == ord('\n'):
             self.floating.enable = False
             self.settings.app.set_key(app.AppKeys.LEFT, self._options[0])

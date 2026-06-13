@@ -38,7 +38,7 @@ class TaskDownloadService:
                 Floating().bottom().right()
                 .put_text(f"\n{t(_TaskDownloadMsg.IS_MISSION)}")
                 .put_text(f"\n{t(_TaskDownloadMsg.ONLY_TASKS)}\n")
-                .set_error()
+                .set_error().set_countdown(Floating.Time.FAST)
             )
             return
         if not isinstance(obj, Task):
@@ -52,7 +52,8 @@ class TaskDownloadService:
             )
             return
         down_frame = (
-            Floating().bottom().right().set_warning().set_text_ljust().set_header(f" {t(_TaskDownloadMsg.HEADER)} ")
+            Floating().bottom().right().set_warning().set_countdown(Floating.Time.FAST)
+            .set_text_ljust().set_header(f" {t(_TaskDownloadMsg.HEADER)} ")
         )
         self.fman.add_input(down_frame)
 

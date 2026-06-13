@@ -7,7 +7,7 @@ from typing import Callable
 import enum
 import curses
 from abc import ABC, abstractmethod
-
+from tko.util.countdown import Countdown
 
 _FLOATING_INVALID_ALIGN = Msg(
     pt="Invalid align {align}",
@@ -38,6 +38,11 @@ class FloatingABC(ABC):
 
 
 class Floating(FloatingABC):
+    class Time:
+        FAST = 20
+        MEDIUM = 45
+        SLOW = 70
+
     def __init__(self):
         super().__init__()
         self.frame = Frame(0, 0)
@@ -48,6 +53,17 @@ class Floating(FloatingABC):
         self.exit_key: None | int = None
         self.centralize_text = True
         self.floating_align = ""
+
+        self.counting_enable = False
+        self.counting = 0
+        self.max_count = 30
+        self.frame.countdown_fn = lambda: RT() if not self.counting_enable else RT(Countdown.braille(self.counting, self.max_count, 5), "y")
+
+    def set_countdown(self, max_count: int = 30):
+        self.counting_enable = True
+        self.counting = 0
+        self.max_count = max_count
+        return self
 
     def left(self):
         self.floating_align = [c for c in self.floating_align if c != ">"]
@@ -165,6 +181,10 @@ class Floating(FloatingABC):
     def set_content(self, content: list[str]):
         self.content = [RT(x) for x in content]
         return self
+    
+    def set_rt_content(self, content: list[RT]):
+        self.content = content
+        return self
 
     def set_default_footer(self):
         if len(self.frame.get_footer()) == 0:
@@ -207,8 +227,17 @@ class Floating(FloatingABC):
         return self
 
     def process_input(self, key: int) -> int:
+        if key == -1:
+            if self.counting_enable:
+                self.counting += 1
+                if self.counting >= self.max_count:
+                    self.enable = False
+                    if self.exit_fn is not None:
+                        self.exit_fn()
+            return -1
+        
         if self.type == FloatingType.WARNING or self.type == FloatingType.ERROR:
-            if key == curses.KEY_RESIZE or key == -1:
+            if key == curses.KEY_RESIZE:
                 return -1
             self.enable = False
             if self.exit_fn is not None:
