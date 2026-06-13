@@ -17,7 +17,6 @@ from tko.play_gui.gui_left_panel import GuiLeftPanel
 from tko.play_gui.gui_bottom_bar import GuiBottomBar
 from tko.play_gui.gui_top_bar import GuiTopBar
 from tko.play_gui.gui_skills_bar import GuiSkillsBar
-from tko.play_gui.gui_help_panel import GuiHelpPanel
 from tko.play_gui.gui_graph_panel import GuiGraphPanel
 
 
@@ -45,7 +44,6 @@ class Gui:
         self.bottom_bar      = GuiBottomBar(self.tree, self.action_resolver, in_search, top_floating)
         self.top_bar         = GuiTopBar(self.flags, self.app)
         self.skills_bar      = GuiSkillsBar(self.game, self.colors, self.flags, lambda: self.tree.get_selected_throw().basic.remote_name)
-        self.help_panel      = GuiHelpPanel()
         self.graph_panel     = GuiGraphPanel(self.settings, self.repo, self.flags)
 
     # ------------------------------------------------------------------
@@ -120,8 +118,6 @@ class Gui:
                 except IndexError:
                     selected = None
                 self.graph_panel.show(frame_right, selected)
-            elif self.flags.panel.is_help():
-                self.help_panel.show(frame_right)
 
         # frame principal — desenhado após o painel lateral
         frame_main = (

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from tko.util.symbols import Symbols
 from tko.util.rt import RT
 import enum
@@ -30,7 +30,7 @@ class ExecutionResult(enum.Enum):
         elif result == ExecutionResult.EXECUTION_ERROR:
             return RT(Symbols.execution)
         else:
-            raise ValueError(t(_EXECUTION_RESULT_INVALID_TYPE))
+            raise ValueError(str(_EXECUTION_RESULT_INVALID_TYPE))
 
     # @override
     def __str__(self):

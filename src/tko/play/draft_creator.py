@@ -8,7 +8,7 @@ from tko.floating.floating_input_text import FloatingInputText
 from tko.play_tree.task_tree import TaskTree
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from tko.util.rt import RT
 from tko.config.sandbox_drafts import SandboxDrafts
 
@@ -64,7 +64,7 @@ class DraftCreator:
             if key == "":
                 key = SandboxDrafts.format_draft_key(find_numbered_draft_id(sandbox_folder))
             if title == "":
-                title = t(_DraftMsg.TITLE_PLACEHOLDER)
+                title = str(_DraftMsg.TITLE_PLACEHOLDER)
 
             folder: Path = sandbox_folder / key
             if not folder.exists():
@@ -72,8 +72,8 @@ class DraftCreator:
             else:
                 self.fman.add_input(
                     Floating().bottom().right()
-                    .put_text("\n" + t(_DraftMsg.FOLDER_EXISTS, folder=folder) + "\n")
-                    .set_error()
+                    .put_text("\n" + str(_DraftMsg.FOLDER_EXISTS).format(folder=folder) + "\n")
+                    .set_error().set_countdown(Floating.Time.FAST)
                 )
                 return
 
@@ -93,11 +93,11 @@ class DraftCreator:
             self.reload()
             self.fman.add_input(
                 Floating().bottom().right()
-                .put_text(t(_DraftMsg.CREATED_AT, folder=folder))
-                .set_warning()
+                .put_text(str(_DraftMsg.CREATED_AT).format(folder=folder))
+                .set_warning().set_countdown(Floating.Time.MEDIUM)
             )
 
         current_folders_on_rep: list[str] = [f"@{folder.name}" for folder in sandbox_folder.iterdir() if folder.is_dir()]
-        obj = FloatingInputText(RT(t(_DraftMsg.TITLE_PROMPT)), __create, current_folders_on_rep)
+        obj = FloatingInputText(RT(str(_DraftMsg.TITLE_PROMPT)), __create, current_folders_on_rep)
         obj.id = "drafts"
         self.fman.add_input(obj)

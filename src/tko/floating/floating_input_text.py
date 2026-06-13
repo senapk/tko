@@ -1,7 +1,7 @@
 from tko.floating.floating import Floating, FloatingABC
 from tko.util.symbols import Symbols
 from tko.util.rt import RT
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 
 import curses
 from typing import Callable
@@ -34,7 +34,7 @@ class FloatingInputText(FloatingABC):
         content.clear()
         content.append(self.label)
         is_allowed = RT(Symbols.check, "g") if self.input_text not in self.unallowed_strings else RT(Symbols.failure, "r")
-        content.append(RT(t(_INPUT_TEXT_PROMPT)) + self.input_text + Symbols.cursor + is_allowed)
+        content.append(RT(str(_INPUT_TEXT_PROMPT)) + self.input_text + Symbols.cursor + is_allowed)
         content.append(RT())
         self.floating.draw()
 

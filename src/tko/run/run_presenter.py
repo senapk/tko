@@ -7,7 +7,7 @@ from tko.enums.diff_mode import DiffMode
 from tko.run.diff_builder_down import DiffBuilderDown
 from tko.run.diff_builder_side import DiffBuilderSide
 from tko.run.run_context import RunContext
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from tko.util.console import Console
 
 
@@ -59,7 +59,7 @@ class RunPresenter:
 
     def list_mode(self):
         if not self.ctx.config.eval_mode:
-            Console.print(RT.parse(t(_RUN_NO_CODE_FOUND)).center(RawTerminal.get_terminal_size(), "╌"), flush=True)
+            Console.print(RT.parse(f"{_RUN_NO_CODE_FOUND}").center(RawTerminal.get_terminal_size(), "╌"), flush=True)
         Console.print(self.ctx.wdir.resume_splitted())
         for line in self.ctx.wdir.unit_list_resume():
             Console.print(line)

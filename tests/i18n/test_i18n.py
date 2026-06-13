@@ -1,4 +1,4 @@
-from tko.i18n import Msg, normalize_language, set_language, t
+from tko.i18n import Msg, normalize_language, set_language
 
 
 _CLI_COMMON_NO_REPO = Msg(
@@ -19,10 +19,10 @@ class TestI18N:
 
     def test_translate_pt_and_en(self):
         set_language("en")
-        assert t(_CLI_COMMON_NO_REPO) == "No TKO repository found."
+        assert str(_CLI_COMMON_NO_REPO) == "No TKO repository found."
         set_language("pt-BR")
-        assert t(_CLI_COMMON_NO_REPO) == "Nenhum repositório TKO encontrado."
+        assert str(_CLI_COMMON_NO_REPO) == "Nenhum repositório TKO encontrado."
 
     def test_string_fallback_uses_literal_template(self):
         set_language("en")
-        assert t("No catalog {value}", value="path") == "No catalog path"
+        assert str("No catalog {value}").format(value="path") == "No catalog path"

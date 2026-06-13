@@ -10,7 +10,7 @@ from tko.tester.tester_state import TesterState, SeqMode
 from tko.tester import tester_util
 from tko.repository.repository import Repository
 from tko.run.wdir import Wdir
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 
 
 class _TesterNavigatorMsg:
@@ -63,8 +63,8 @@ class TesterNavigator:
             state.mode = SeqMode.select
         if state.locked_index:
             self.fman.add_input(
-                Floating().bottom().right().set_warning()
-                .put_text(t(_TesterNavigatorMsg.LOCKED_HINT, arrow="←", lock_key=GuiKeys.lock))
+                Floating().bottom().right().set_warning().set_countdown(Floating.Time.FAST)
+                .put_text(str(_TesterNavigatorMsg.LOCKED_HINT).format(arrow="←", lock_key=GuiKeys.lock))
             )
             return
         
@@ -81,8 +81,8 @@ class TesterNavigator:
             state.mode = SeqMode.select
         if state.locked_index:
             self.fman.add_input(
-                Floating().bottom().right().set_warning()
-                .put_text(t(_TesterNavigatorMsg.LOCKED_HINT, arrow="→", lock_key=GuiKeys.lock))
+                Floating().bottom().right().set_warning().set_countdown(Floating.Time.FAST)
+                .put_text(str(_TesterNavigatorMsg.LOCKED_HINT).format(arrow="→", lock_key=GuiKeys.lock))
             )
             return
         if not self.wdir.get_solver().has_compile_error():
@@ -110,10 +110,10 @@ class TesterNavigator:
         solver_names = tester_util.get_solver_names(self.wdir)
         if len(solver_names) == 1:
             self.fman.add_input(
-                Floating().bottom().right().set_warning()
-                .put_text(t(_TesterNavigatorMsg.SINGLE_SOLVER_1))
-                .put_text(t(_TesterNavigatorMsg.SINGLE_SOLVER_2))
-                .put_text(t(_TesterNavigatorMsg.SINGLE_SOLVER_3))
+                Floating().bottom().right().set_warning().set_countdown(Floating.Time.MEDIUM)
+                .put_text(str(_TesterNavigatorMsg.SINGLE_SOLVER_1))
+                .put_text(str(_TesterNavigatorMsg.SINGLE_SOLVER_2))
+                .put_text(str(_TesterNavigatorMsg.SINGLE_SOLVER_3))
             )
             return
         self.task.main_idx = (self.task.main_idx + 1) % len(solver_names)
@@ -139,8 +139,8 @@ class TesterNavigator:
     def self_evaluate(self, state: TesterState) -> None:
         if self.rep is None:
             self.fman.add_input(
-                Floating().bottom().right().set_warning()
-                .put_text(t(_TesterNavigatorMsg.NO_LOG_REPO))
+                Floating().bottom().right().set_warning().set_countdown(Floating.Time.MEDIUM)
+                .put_text(str(_TesterNavigatorMsg.NO_LOG_REPO))
             )
             return
         logger = self.rep.logger

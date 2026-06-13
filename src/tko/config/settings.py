@@ -6,7 +6,7 @@ from pathlib import Path
 import yaml #type: ignore
 
 from tko.config.languages_settings import LanguagesSettings
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from tko.util.rt import RT
 from tko.widget.colors import Colors
 from tko.util.decoder import Decoder
@@ -111,7 +111,7 @@ class Settings:
     def get_alias_git(self, alias: str) -> str:
         if alias in self.dict_alias_git:
             return self.dict_alias_git[alias]
-        raise Warning(t(_SETTINGS_GIT_LABEL_NOT_FOUND, alias=alias))
+        raise Warning(f"{_SETTINGS_GIT_LABEL_NOT_FOUND}".format(alias=alias))
 
     def has_alias_git(self, alias: str) -> bool:
         return alias in self.dict_alias_git
@@ -124,7 +124,7 @@ class Settings:
             data: Any = yaml.safe_load(content)
 
             if data is None or not isinstance(data, dict):
-                raise FileNotFoundError(t(_SETTINGS_EMPTY_CONFIG_FILE, path=settings_file))
+                raise FileNotFoundError(f"{_SETTINGS_EMPTY_CONFIG_FILE}".format(path=settings_file))
             self.data = data
             self.dict_alias_git: dict[str, str] = dict(self.dict_alias_git) # type: ignore
             if len(self.dict_alias_git.keys()) == 0: # type: ignore
@@ -167,17 +167,17 @@ class Settings:
 
     def __str__(self):
         output: list[str] = []
-        output.append(str(RT(t(_SETTINGS_PATH), "g")))
+        output.append(str(RT(f"{_SETTINGS_PATH}", "g")))
         output.append("- " + self.get_settings_file().resolve().as_posix())
-        output.append(str(RT(t(_LOG_PATH), "g")))
+        output.append(str(RT(f"{_LOG_PATH}", "g")))
         output.append("- " + self.get_log_file().resolve().as_posix())
-        output.append(str(RT(t(_CACHE_PATH), "g")))
+        output.append(str(RT(f"{_CACHE_PATH}", "g")))
         output.append("- " + UserData.global_cache_dir().resolve().as_posix())
-        output.append(str(RT(t(_RESET_LANGUAGES_PATH), "g")))
+        output.append(str(RT(f"{_RESET_LANGUAGES_PATH}", "g")))
         output.append("- user  : " + self.get_languages_file().resolve().as_posix())
         output.append("- sample: " + self.get_languages_sample().resolve().as_posix())
         
-        output.append(str(RT(t(_SETTINGS_REMOTE_SOURCES_REGISTERED), "g")))
+        output.append(str(RT(f"{_SETTINGS_REMOTE_SOURCES_REGISTERED}", "g")))
         max_alias = max([len(key) for key in self.dict_alias_git])
         for key in self.dict_alias_git:
             output.append("- @{} : {}".format(key.ljust(max_alias), self.dict_alias_git[key]))

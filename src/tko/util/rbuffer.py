@@ -58,4 +58,4 @@ class RBuffer:
         return self.add(other)
 
     def __str__(self) -> str:
-        return self.to_rt().render()
+        return self.to_rt().flat()

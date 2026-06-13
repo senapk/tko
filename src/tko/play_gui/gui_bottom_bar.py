@@ -41,7 +41,7 @@ class GuiBottomBar:
             button(f"{GuiActionsNames.create_draft} [{GuiKeys.create_draft}]", active=self.in_drafts),
             button(f"{GuiActionsNames.pallete} [{GuiKeys.palette}]", active=self.in_palette),
             button(f"{GuiActionsNames.search} [{GuiKeys.search}]", active=self.in_search()),
-            button(f"{GuiActionsNames.help} [{GuiKeys.panel_help}]", active=in_help),
+            button(f"{GuiActionsNames.help} [{GuiKeys.ask_help}]", active=in_help),
             Button.action_bt(f"{act_text} [↲]", enabled=True),
             Button.toggle_bt(f"{GuiActionsNames.grade} [{GuiKeys.self_evaluate}]", active=self.in_self, enabled=self_enabled),
         ]

@@ -1,7 +1,7 @@
 from loguru import logger
 from pathlib import Path
 import shutil
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from tko.util.rt import RT
 from tko.util.decoder import Decoder
 from typing import Any
@@ -208,7 +208,7 @@ class DeepFilter:
             with open(deny_list) as f:
                 deny = [x.strip() for x in f.read().splitlines()]
                 if filename in deny:
-                    Console.print(RT.parse(t(_FILTER_ACTION_DISABLED_PATH, path=destiny)))
+                    Console.print(RT.parse(str(_FILTER_ACTION_DISABLED_PATH).format(path=destiny)))
                     action_map[destiny] = Action(Action.DISABLED, "")
                     return
 
@@ -264,12 +264,12 @@ class DeepFilter:
         #     return
         for path, action in actions:
             if (run_actions or path.suffix[1:] in DeepFilter.include) and action.name in [Action.FILTERED, Action.COMCLEAN, Action.ORIGINAL] :
-                Console.print(RT.parse(t(_FILTER_ACTION_PATH, action=action.name, path=path.resolve())))
+                Console.print(RT.parse(str(_FILTER_ACTION_PATH).format(action=action.name, path=path.resolve())))
                 path.parent.mkdir(parents=True, exist_ok=True)
                 with open(path, "w") as f:
                     f.write(action.content) 
             else:
-                Console.print(RT.parse(t(_FILTER_ACTION_DISABLED_PATH, path=path.resolve())))
+                Console.print(RT.parse(str(_FILTER_ACTION_DISABLED_PATH).format(path=path.resolve())))
         
 class CodeFilter:
     @staticmethod
@@ -277,7 +277,7 @@ class CodeFilter:
         if path.is_file():
             file_content = Decoder.load(path)
             return True, file_content
-        logger.warning(t(_FILTER_FILE_NOT_FOUND, path=path))
+        logger.warning(str(_FILTER_FILE_NOT_FOUND).format(path=path))
         return False, "" 
 
     @staticmethod
@@ -287,14 +287,14 @@ class CodeFilter:
         if isinstance(destiny_dir, str):
             destiny_dir = Path(destiny_dir)
         if not source_dir.is_dir():
-            logger.error(t(_FILTER_TARGET_MUST_BE_FOLDER))
+            logger.error(str(_FILTER_TARGET_MUST_BE_FOLDER))
             exit()
         if destiny_dir is None:
-            logger.error(t(_FILTER_OUTPUT_FOLDER_REQUIRED))
+            logger.error(str(_FILTER_OUTPUT_FOLDER_REQUIRED))
             exit()
         if destiny_dir.exists():
             if not force:
-                logger.error(t(_FILTER_OUTPUT_FOLDER_EXISTS))
+                logger.error(str(_FILTER_OUTPUT_FOLDER_EXISTS))
                 exit()
             else:
                 # recursive delete all folder content without deleting the folder itself

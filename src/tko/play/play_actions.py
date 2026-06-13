@@ -9,7 +9,7 @@ from tko.floating.floating_input_text import FloatingInputText
 from tko.game.task import Task
 from tko.play_gui.gui import Gui
 from tko.util.rt import RT
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 
 from tko.play.draft_creator import DraftCreator
 from tko.play.task_download_service import TaskDownloadService
@@ -84,8 +84,8 @@ class PlayActions:
             if obj.basic.key != text:
                 self.fman.add_input(
                     Floating().bottom().right()
-                    .put_text(f"\n{t(_PlayActionMsg.TASK_DELETE_NOT_MATCH)}\n")
-                    .set_error()
+                    .put_text(f"\n{str(_PlayActionMsg.TASK_DELETE_NOT_MATCH)}\n")
+                    .set_error().set_countdown(Floating.Time.MEDIUM)
                 )
                 return
             folder = self.get_task_folder(obj)
@@ -93,14 +93,14 @@ class PlayActions:
                 shutil.rmtree(folder)
                 self.fman.add_input(
                     Floating().bottom().right()
-                    .put_text(f"\n{t(_PlayActionMsg.TASK_DELETE_SUCCESS, folder=folder)}\n")
-                    .set_warning()
+                    .put_text(f"\n{str(_PlayActionMsg.TASK_DELETE_SUCCESS).format(folder=folder)}\n")
+                    .set_warning().set_countdown(Floating.Time.SLOW)
                 )
             except OSError:
                 self.fman.add_input(
                     Floating().bottom().right()
-                    .put_text(f"\n{t(_PlayActionMsg.DELETE_ERROR)}\n")
-                    .set_error()
+                    .put_text(f"\n{str(_PlayActionMsg.DELETE_ERROR)}\n")
+                    .set_error().set_countdown(Floating.Time.MEDIUM)
                 )
             self.reload()
 
@@ -113,8 +113,8 @@ class PlayActions:
             if folder == Path("") or not os.path.exists(folder):
                 self.fman.add_input(
                     Floating().bottom().right()
-                    .put_text("\n" + t(_PlayActionMsg.TASK_NO_LOCAL_FOLDER) + "\n")
-                    .set_error()
+                    .put_text("\n" + str(_PlayActionMsg.TASK_NO_LOCAL_FOLDER) + "\n")
+                    .set_error().set_countdown(Floating.Time.MEDIUM)
                 )
                 return
             if ic.enabled:
@@ -122,13 +122,13 @@ class PlayActions:
             else:
                 self.fman.add_input(
                     FloatingInputText(
-                        RT(t(_PlayActionMsg.DELETE_CONFIRM_PREFIX)) + RT(f"{obj.basic.key}", "y"),
+                        RT(str(_PlayActionMsg.DELETE_CONFIRM_PREFIX)) + RT(f"{obj.basic.key}", "y"),
                         action=delete_folder,
                     )
                 )
         else:
             self.fman.add_input(
                 Floating().bottom().right()
-                .put_text("\n" + t(_PlayActionMsg.ONLY_TASK_FOLDERS) + "\n")
-                .set_error()
+                .put_text("\n" + str(_PlayActionMsg.ONLY_TASK_FOLDERS) + "\n")
+                .set_error().set_countdown(Floating.Time.FAST)
             )

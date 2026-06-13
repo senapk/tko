@@ -1,4 +1,4 @@
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 
 
 _LABEL_FACTORY_INDEX_INT_REQUIRED = Msg(
@@ -16,7 +16,7 @@ class LabelFactory:
         try:
             self._index = int(value)
         except ValueError:
-            raise ValueError(t(_LABEL_FACTORY_INDEX_INT_REQUIRED))
+            raise ValueError(str(_LABEL_FACTORY_INDEX_INT_REQUIRED))
         return self
 
     def label(self, value: str):

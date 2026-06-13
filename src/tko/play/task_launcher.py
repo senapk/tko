@@ -14,7 +14,7 @@ from tko.play.task_download_service import TaskDownloadService
 from tko.play.task_editor_service import TaskEditorService
 from tko.cmds.cmd_run import Run
 from tko.cmds.cmd_down import CmdDown
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from tko.util.param import Param
 
 
@@ -65,7 +65,7 @@ class TaskLauncher:
     def run_selected_task(self, task: Task) -> None:
         task_folder = task.path.work_dir
         if not task_folder:
-            raise Warning(t(_TaskLauncherMsg.FOLDER_NOT_FOUND))
+            raise Warning(str(_TaskLauncherMsg.FOLDER_NOT_FOUND))
         run = Run(settings=self.settings, target_list=[task_folder], param=Param.Basic())
         run.set_lang(self.repo.data.lang)
         opener = Opener(self.settings).set_language(self.repo.data.lang).add_task_folder_to_open(task_folder)
@@ -78,9 +78,9 @@ class TaskLauncher:
         if not run.context.wdir.solver:
             cmd = CmdDown(self.repo, task.basic.full_key, self.settings)
             cmd.execute()
-            msg = Floating().bottom().right().set_warning()
-            msg.put_text("\n" + t(_TaskLauncherMsg.NO_SOURCE_FOR_LANG, lang=self.repo.data.lang))
-            msg.put_text("\n" + t(_TaskLauncherMsg.DRAFT_CREATED) + "\n")
+            msg = Floating().bottom().right().set_warning().set_countdown(Floating.Time.MEDIUM)
+            msg.put_text("\n" + str(_TaskLauncherMsg.NO_SOURCE_FOR_LANG).format(lang=self.repo.data.lang))
+            msg.put_text("\n" + str(_TaskLauncherMsg.DRAFT_CREATED) + "\n")
             self.fman.add_input(msg)
         else:
             run.execute()

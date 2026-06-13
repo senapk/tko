@@ -3,7 +3,7 @@ import yaml # type: ignore
 from pathlib import Path
 from typing import Any
 from tko.util.decoder import Decoder
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from tko.util.rt import RT
 from tko.util.atomic_write_yaml import atomic_write_yaml
 from tko.repository.repository import Repository
@@ -42,7 +42,7 @@ class RepositoryConfig:
         lines = content.splitlines()
         for line in lines:
             if line.startswith("<<<<<<<") or line.startswith("=======") or line.startswith(">>>>>>>"):
-                raise ConfigMergeConflictError(t(_REPOSITORY_LOADER_GIT_CONFLICT, file=self.repo.paths.config_file))
+                raise ConfigMergeConflictError(str(_REPOSITORY_LOADER_GIT_CONFLICT).format(file=self.repo.paths.config_file))
     @staticmethod
     def _length(data: Any) -> int:
         if isinstance(data, dict):
@@ -65,16 +65,16 @@ class RepositoryConfig:
                 local_data = yaml.safe_load(backup_content)
 
             if local_data is None or not isinstance(local_data, dict) or self._length(local_data) == 0:
-                raise FileNotFoundError(t(_REPOSITORY_LOADER_EMPTY_CONFIG_FILE, file=self.repo.paths.config_file))
+                raise FileNotFoundError(str(_REPOSITORY_LOADER_EMPTY_CONFIG_FILE).format(file=self.repo.paths.config_file))
 
         except ConfigMergeConflictError:
             raise
         except yaml.YAMLError as e:
-            raise Warning(RT.parse(t(_REPOSITORY_LOADER_YAML_CORRUPTED, file=self.repo.paths.config_file, error=e)))
+            raise Warning(RT.parse(str(_REPOSITORY_LOADER_YAML_CORRUPTED).format(file=self.repo.paths.config_file, error=e)))
         except FileNotFoundError:
-            raise Warning(RT.parse(t(_REPOSITORY_LOADER_CONFIG_EMPTY, file=self.repo.paths.config_file)))
+            raise Warning(RT.parse(str(_REPOSITORY_LOADER_CONFIG_EMPTY).format(file=self.repo.paths.config_file)))
         except Exception as e:
-            raise Warning(RT.parse(t(_REPOSITORY_LOADER_CONFIG_CORRUPTED_UNEXPECTED, file=self.repo.paths.config_file, error=e)))
+            raise Warning(RT.parse(str(_REPOSITORY_LOADER_CONFIG_CORRUPTED_UNEXPECTED).format(file=self.repo.paths.config_file, error=e)))
 
         self.repo.data.load_from_dict(local_data)  # type: ignore
         self.repo.flags.from_dict(self.repo.data.flags)  # type: ignore

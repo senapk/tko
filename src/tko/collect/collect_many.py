@@ -1,6 +1,5 @@
 from tko.collect.collect_single import CollectSingle
 from tko.config.run_settings import RunSettings
-from tko.i18n import t
 from tko.repository.repository_paths import RepositoryPaths
 from tko.util.rt import RT
 from loguru import logger
@@ -68,26 +67,26 @@ class CollectMany:
         for git_dir, username in zip(git_dir_list, usernames):
             tko_rep_folder_list = RepositoryPaths.rec_search_for_repo_subdir(git_dir)
             if not tko_rep_folder_list:
-                Console.print(RT(f"{username: <{padding}}", "r") + RT(t(CMD_COLLECT_TKO_REPO_NOT_FOUND, path=git_dir), "r"))
+                Console.print(RT(f"{username: <{padding}}", "r") + RT(f"{CMD_COLLECT_TKO_REPO_NOT_FOUND}".format(path=git_dir), "r"))
                 continue
             tko_folder = tko_rep_folder_list[0]
-            multiple_found = RT(t(CMD_COLLECT_MULTIPLE_REPOS_FOUND), "r") if len(tko_rep_folder_list) > 1 else RT()
-            Console.print(RT(f"{username: <{padding}}", "y" if multiple_found else "g") + t(CMD_COLLECT_RUNNING_IN, folder=tko_folder) + multiple_found)
+            multiple_found = RT(f"{CMD_COLLECT_MULTIPLE_REPOS_FOUND}", "r") if len(tko_rep_folder_list) > 1 else RT()
+            Console.print(RT(f"{username: <{padding}}", "y" if multiple_found else "g") + RT(f"{CMD_COLLECT_RUNNING_IN}".format(folder=tko_folder), "g") + multiple_found)
             output = CollectSingle.collect_to_json(rs, tko_folder, daily=False, resume=True, game=False)
 
             try:
                 json_output: dict[str, Any] = json.loads(output) if output != "" else {}
             except json.JSONDecodeError:
-                logger.exception(t(CMD_COLLECT_JSON_PARSE_FAILED, username=username))
+                logger.exception(f"{CMD_COLLECT_JSON_PARSE_FAILED}".format(username=username))
                 continue
             if "error" in json_output:
-                Console.print(RT(f"{username: <{padding}}", "r") + RT(t(CMD_COLLECT_ERROR, error=json_output['error']), "r"))
+                Console.print(RT(f"{username: <{padding}}", "r") + RT(f"{CMD_COLLECT_ERROR}".format(error=json_output['error']), "r"))
                 continue
 
             output_map[username] = json_output["resume"] if "resume" in json_output else {}
         if json_path is not None:
             with open(json_path, "w", encoding="utf-8") as f:
-                Console.print(RT(t(CMD_COLLECT_SAVING_EXTRACTED_DATA, path=json_path), "g"))
+                Console.print(RT(f"{CMD_COLLECT_SAVING_EXTRACTED_DATA}".format(path=json_path), "g"))
                 json.dump(output_map, f, indent=4, ensure_ascii=False)
 
         header_keys = ["username", "key", "quest", "minutes", "versions", "executions", "rate", "study", "self", "friend", "concept", "problem", "code", "debug", "refactor", "guided"]
@@ -124,4 +123,4 @@ class CollectMany:
                         if block_prefix is not None:
                             row["block"]= f"{block_prefix}"
                         writer.writerow(row)
-            Console.print(RT(t(CMD_COLLECT_SAVING_EXTRACTED_DATA, path=csv_path), "g"))
+            Console.print(RT(f"{CMD_COLLECT_SAVING_EXTRACTED_DATA}".format(path=csv_path), "g"))

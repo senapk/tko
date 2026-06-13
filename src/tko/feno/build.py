@@ -7,7 +7,7 @@ from tko.feno.cases import Cases
 from tko.feno.log import Log
 from tko.feno.mdpp import Mdpp
 from tko.feno.filter import DeepFilter
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from tko.util.decoder import Decoder
 from pathlib import Path
 from tko.util.console import Console
@@ -144,11 +144,11 @@ def build_all(targets: list[Path], remote: bool, check: bool, erase: bool, brief
 
     if len(targets) == 0:
         targets = [Path(".")]
-        Console.print(t(_FENO_BUILD_NO_TARGET_SPECIFIED))
+        Console.print(_FENO_BUILD_NO_TARGET_SPECIFIED)
 
     for target in targets:
         if not os.path.isdir(target):
-            Console.print(f"\n    {t(_FENO_BUILD_TARGET_NOT_DIRECTORY, target=target)}")
+            Console.print(f"\n    {_FENO_BUILD_TARGET_NOT_DIRECTORY}".format(target=target))
             continue
         hook = target.name
         actions = Actions(target).set_use_remote(remote)

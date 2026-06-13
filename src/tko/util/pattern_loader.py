@@ -1,7 +1,7 @@
 from __future__ import annotations
 from loguru import logger
 import re
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 
 
 
@@ -50,13 +50,13 @@ class PatternLoader:
 
     def __check_double_wildcard(self):
         if self.input_pattern.count("@") > 1 or self.output_pattern.count("@") > 1:
-            raise ValueError(t(_PATTERN_WILDCARD_ONLY_ONCE))
+            raise ValueError(str(_PATTERN_WILDCARD_ONLY_ONCE))
 
     def __check_missing_wildcard(self):
         if "@" in self.input_pattern and "@" not in self.output_pattern:
-            raise ValueError(t(_PATTERN_INPUT_WILDCARD_REQUIRES_OUTPUT))
+            raise ValueError(str(_PATTERN_INPUT_WILDCARD_REQUIRES_OUTPUT))
         if "@" not in self.input_pattern and "@" in self.output_pattern:
-            raise ValueError(t(_PATTERN_OUTPUT_WILDCARD_REQUIRES_INPUT))
+            raise ValueError(str(_PATTERN_OUTPUT_WILDCARD_REQUIRES_INPUT))
 
     def make_file_source(self, label: str) -> FileSource:
         return FileSource(label, self.input_pattern.replace("@", label), self.output_pattern.replace("@", label))
@@ -72,7 +72,7 @@ class PatternLoader:
             label = match[0]
             file_source = self.make_file_source(label)
             if file_source.output_file not in filename_list:
-                logger.error(t(_PATTERN_OUTPUT_FILE_NOT_FOUND, file=file_source.output_file))
+                logger.error(str(_PATTERN_OUTPUT_FILE_NOT_FOUND).format(file=file_source.output_file))
             else:
                 file_source_list.append(file_source)
         return file_source_list

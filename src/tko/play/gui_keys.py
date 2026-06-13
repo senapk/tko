@@ -9,7 +9,7 @@ class GuiKeys:
     panel_graph = "3"
     panel_logs = "4"
     panel_skills = "5"
-    panel_help = "?"
+    ask_help = "?"
     panel_toggle = " "
 
     show_duration = "T"

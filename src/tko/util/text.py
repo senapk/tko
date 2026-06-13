@@ -3,7 +3,7 @@ from typing import Any
 import unicodedata
 
 import re
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from tko.util.console import Console
 
 
@@ -61,7 +61,7 @@ class Text:
     class Token:
         def __init__(self, text: str = "", fmt: str = ""):
             if not isinstance(text, str): # type: ignore
-                raise TypeError(t(_TEXT_MUST_BE_STRING))
+                raise TypeError(str(_TEXT_MUST_BE_STRING))
             self.text = text
             self.fmt = fmt
         
@@ -202,7 +202,7 @@ class Text:
 
     def __getitem__(self, index: int) -> Text.Token:
         if index < 0 or index >= len(self):
-            raise IndexError(t(_TEXT_INDEX_OUT_OF_RANGE))
+            raise IndexError(str(_TEXT_INDEX_OUT_OF_RANGE))
         return self.data[index]
 
     def __len__(self):

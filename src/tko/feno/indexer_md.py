@@ -1,5 +1,5 @@
 from pathlib import Path
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from loguru import logger
 import re
 from tko.util.console import Console
@@ -31,7 +31,7 @@ class IndexerMd:
     @staticmethod
     def replace_title_in_readme(readme_file: Path, new_title: str, verbose: bool) -> None:
         if not readme_file.exists():
-            logger.error(t(_INDEXER_REPLACE_TITLE_README_MISSING, readme=readme_file))
+            logger.error(str(_INDEXER_REPLACE_TITLE_README_MISSING).format(readme=readme_file))
             return
         with open(readme_file, "r", encoding="utf-8") as f:
             content = f.read()
@@ -41,4 +41,4 @@ class IndexerMd:
         with open(readme_file, "w", encoding="utf-8") as f:
             f.write(new_content)
         if verbose:
-            Console.print(t(_INDEXER_REPLACED_TITLE, readme=readme_file, title=new_title))
+            Console.print(str(_INDEXER_REPLACED_TITLE).format(readme=readme_file, title=new_title))

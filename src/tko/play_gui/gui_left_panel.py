@@ -4,7 +4,7 @@ from tko.play.search import Search
 from tko.play_tree.task_tree import TaskTree
 from tko.util.rt import RT
 from tko.util.symbols import Symbols
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from typing import Callable
 from tko.game.tree_item import IsTreeItem
 from tko.game.quest import Quest
@@ -25,7 +25,7 @@ class GuiLeftPanel:
         self._need_update_fn = need_update_fn
 
     def make_search_text(self, size: int) -> RT:
-        text = t(_LeftPanelMsg.SEARCH) + self.tree.state.search + Symbols.cursor
+        text = str(_LeftPanelMsg.SEARCH) + self.tree.state.search + Symbols.cursor
         text = text.ljust(size)
         return RT(text)
 
@@ -61,9 +61,9 @@ class GuiLeftPanel:
         text = RT.parse(" {}-{} ".format(dirname_str, self.tree.repo.data.lang.upper()))
         if self._need_update_fn():
             text = (
-                RT(t(_LeftPanelMsg.OUTDATED), "r")
-                + RT(t(_LeftPanelMsg.UPDATE_MESSAGE), "y")
-                + RT(t(_LeftPanelMsg.UPDATE_COMMAND), "g")
+                RT(str(_LeftPanelMsg.OUTDATED), "r")
+                + RT(str(_LeftPanelMsg.UPDATE_MESSAGE), "y")
+                + RT(str(_LeftPanelMsg.UPDATE_COMMAND), "g")
             )
         frame.set_footer(text, "<", prefix="{", suffix="}")
         frame.set_scrollbar(

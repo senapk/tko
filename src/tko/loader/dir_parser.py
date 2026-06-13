@@ -5,7 +5,7 @@ from pathlib import Path
 from tko.run.unit import Unit
 from tko.util.decoder import Decoder
 from tko.util.pattern_loader import PatternLoader
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 
 
 
@@ -37,5 +37,5 @@ class DirParser:
                 unit.set_expected(value + ("" if value.endswith("\n") else "\n"))
                 unit_list.append(unit)
         except FileNotFoundError:
-            logger.exception(t(_LOADER_FAILED_TO_LOAD, folder=folder))
+            logger.exception(str(_LOADER_FAILED_TO_LOAD).format(folder=folder))
         return unit_list

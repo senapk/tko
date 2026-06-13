@@ -1,65 +1,70 @@
 from __future__ import annotations
 
-from loguru import logger
-import time
+from dataclasses import dataclass
+from datetime import timedelta
 from pathlib import Path
-from datetime import  timedelta
-import subprocess
-import hashlib
-from filelock import FileLock
-import shutil
+from typing import Protocol
+
 import enum
-from tko.i18n import Msg, t
+import hashlib
+import shutil
+import subprocess
+import time
+
+from filelock import FileLock
+from loguru import logger
+
+from tko.i18n import Msg
+from tko.util.has_internet import has_internet
+
 
 _GIT_CACHE_CLEARING = Msg(
     pt="Limpando cache git em {cache_dir}...",
     en="Clearing git cache at {cache_dir}...",
 )
+
 _GIT_CACHE_CLONING = Msg(
     pt="Repositório não encontrado. Clonando {url} para o cache...",
     en="Repository not found. Cloning {url} into cache...",
 )
+
 _GIT_CACHE_CLONE_FAILED = Msg(
     pt="Falha ao clonar.",
     en="Failed to clone.",
 )
+
 _GIT_CACHE_UPDATING = Msg(
     pt="Atualizando cache para {url}...",
     en="Updating cache for {url}...",
 )
+
 _GIT_CACHE_UPDATE_FAILED_UPDATE = Msg(
     pt="Falha ao atualizar cache para {url}. Use 'tko reset cache' se estiver com problemas.",
     en="Failed to update cache for {url}. Use 'tko reset cache' if you are having issues.",
 )
+
 
 class UpdateMode(enum.Enum):
     ALWAYS = "always"
     NEVER = "never"
     IF_OLDER = "if_older"
 
-class GitCache:
-    def __init__(self, cache_dir: str | Path, max_age: timedelta = timedelta(hours=1), update_mode: UpdateMode = UpdateMode.IF_OLDER) -> None:
-        logger.debug(f"Initializing GitCache with cache_dir={cache_dir}, update_mode={update_mode}")
-        self.cache_dir: Path = Path(cache_dir)
-        self.update_mode: UpdateMode = update_mode
-        self.updated: dict[str, bool] = {}
-        self.avoid: dict[str, bool] = {} # repos that failed to update, to avoid retrying them in the same session
-        self.max_age: timedelta = max_age
 
-    def clear_cache(self):
-        if self.cache_dir.exists():
-            logger.info(t(_GIT_CACHE_CLEARING, cache_dir=self.cache_dir))
-            shutil.rmtree(self.cache_dir)
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
+@dataclass(slots=True)
+class GitResult:
+    ok: bool
+    stderr: str = ""
 
-    def _repo_dir(self, url: str) -> Path:
-        digest: str = hashlib.sha1(url.encode()).hexdigest()
-        return self.cache_dir / digest
 
-    def _lock_path(self, repo_path: Path) -> Path:
-        return repo_path.with_suffix(".lock")
+class GitRunner(Protocol):
+    def __call__( self, *args: str, cwd: Path | None = None ) -> GitResult: ...
 
-    def _git(self, *args: str, cwd: Path | None = None) -> None:
+
+def _git(
+    *args: str,
+    cwd: Path | None = None,
+) -> GitResult:
+    try:
         subprocess.run(
             ["git", *args],
             cwd=cwd,
@@ -69,80 +74,276 @@ class GitCache:
             timeout=120,
         )
 
-    def _clone(self, url: str, path: Path) -> bool:
-        try:
-            self._git(
-                "clone",
-                "--depth", "1",
-                "--filter=blob:none",
-                "--no-single-branch",
-                url,
-                str(path),
+        return GitResult(ok=True)
+
+    except subprocess.CalledProcessError as e:
+        return GitResult(
+            ok=False,
+            stderr=e.stderr.decode(errors="replace"),
+        )
+
+    except subprocess.TimeoutExpired as e:
+        return GitResult(
+            ok=False,
+            stderr=f"Git command timed out after {e.timeout}s",
+        )
+
+
+class GitCache:
+    def __init__(
+        self,
+        cache_dir: str | Path,
+        max_age: timedelta = timedelta(hours=1),
+        update_mode: UpdateMode = UpdateMode.IF_OLDER,
+    ) -> None:
+        logger.debug(
+            f"Initializing GitCache "
+            f"with cache_dir={cache_dir}, "
+            f"update_mode={update_mode}"
+        )
+
+        self.cache_dir = Path(cache_dir)
+        self.update_mode = update_mode
+        self.max_age = max_age
+
+        self.updated: dict[str, bool] = {}
+        self.avoid: dict[str, bool] = {}
+
+        self.git_fn: GitRunner = _git
+
+    def clear_cache(self) -> None:
+        if self.cache_dir.exists():
+            logger.info( str(_GIT_CACHE_CLEARING).format(cache_dir=self.cache_dir, ) )
+            shutil.rmtree(self.cache_dir)
+
+        self.cache_dir.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+    def _repo_dir(self, url: str) -> Path:
+        digest = hashlib.blake2b(
+            url.encode(),
+            digest_size=16,
+        ).hexdigest()
+
+        return self.cache_dir / digest
+
+    def _lock_path(self, repo_path: Path) -> Path:
+        return repo_path.with_suffix(".lock")
+
+    def _last_fetch_file(self, repo: Path) -> Path:
+        return repo / ".last_fetch"
+
+    def _mark_updated(self, repo: Path) -> None:
+        self._last_fetch_file(repo).touch()
+
+    def _is_valid_repo(self, repo: Path) -> bool:
+        return (repo / ".git").exists()
+
+    def _clone(
+        self,
+        url: str,
+        path: Path,
+    ) -> GitResult:
+        result = self.git_fn(
+            "clone",
+            "--depth",
+            "1",
+            "--filter=blob:none",
+            "--no-single-branch",
+            url,
+            str(path),
+        )
+
+        if result.ok:
+            result = self.git_fn(
+                "fetch",
+                "--prune",
+                "origin",
+                cwd=path,
             )
-            self._git("fetch", "--prune", "origin", cwd=path)
+
+        return result
+
+    def _update(
+        self,
+        repo: Path,
+    ) -> GitResult:
+        result = self.git_fn(
+            "fetch",
+            "--prune",
+            "origin",
+            cwd=repo,
+        )
+
+        if result.ok:
+            result = self.git_fn(
+                "reset",
+                "--hard",
+                "origin/HEAD",
+                cwd=repo,
+            )
+
+        if result.ok:
+            result = self.git_fn(
+                "clean",
+                "-fd",
+                cwd=repo,
+            )
+
+        return result
+
+    def _is_expired(
+        self,
+        repo: Path,
+    ) -> bool:
+        stamp = self._last_fetch_file(repo)
+
+        if not stamp.exists():
             return True
-        except subprocess.CalledProcessError as _:
-            return False
 
-    def _update(self, repo: Path) -> bool:
-        try:
-            self._git("fetch", "--prune", "origin", cwd=repo)
-            self._git("reset", "--hard", "origin/HEAD", cwd=repo)
-            self._git("clean", "-fd", cwd=repo)
-            return True
-        except subprocess.CalledProcessError as _:
-            return False
+        age_seconds = (
+            time.time()
+            - stamp.stat().st_mtime
+        )
 
-    def _is_expired(self, repo: Path) -> bool:
-        fetch_head: Path = repo / ".git" / "FETCH_HEAD"
+        return (
+            age_seconds
+            > self.max_age.total_seconds()
+        )
 
-        if not fetch_head.exists():
-            return True
+    def _acquire_lock(
+        self,
+        lock_path: Path,
+    ) -> FileLock:
+        return FileLock(str(lock_path)) # type: ignore
 
-        age_seconds: float = time.time() - fetch_head.stat().st_mtime
-        return age_seconds > self.max_age.total_seconds()
+    def get_remote_dir(
+        self,
+        url: str,
+    ) -> Path | None:
+        target_path = self._repo_dir(url)
 
-    def _acquire_lock(self, lock_path: Path):
-        return FileLock(str(lock_path))
+        if not has_internet(1):
+            if target_path.exists():
+                logger.debug(
+                    f"No internet connection. "
+                    f"Using cached repository "
+                    f"for {url} at {target_path}"
+                )
+                return target_path
 
-    def get_remote_dir(self, url: str) -> Path | None:
-        target_path: Path = self._repo_dir(url)
+            return None
+
         if url in self.avoid:
             if target_path.exists():
-                logger.debug(f"Skipping updade for {url} due to previous failure. Using old content.")
+                logger.debug(
+                    f"Skipping update for {url} "
+                    f"due to previous failure. "
+                    f"Using old content."
+                )
                 return target_path
-            else:
-                logger.debug(f"Skipping updade for {url} due to previous failure. Directory missing.")
-                return None
-        
-        
+
+            logger.debug(
+                f"Skipping update for {url} "
+                f"due to previous failure. "
+                f"Directory missing."
+            )
+
+            return None
+
         if url in self.updated:
-            logger.debug(f"Using cached repository for {url} at {target_path}")
             return target_path
 
-        lock_path: Path = self._lock_path(target_path)
+        lock_path = self._lock_path(target_path)
+
         with self._acquire_lock(lock_path):
+            if url in self.updated:
+                return target_path
+
+            if (
+                target_path.exists()
+                and not self._is_valid_repo(target_path)
+            ):
+                logger.warning(
+                    f"Removing corrupted repository "
+                    f"cache at {target_path}"
+                )
+
+                shutil.rmtree(
+                    target_path,
+                    ignore_errors=True,
+                )
+
             if not target_path.exists():
-                logger.warning(f"Repository not found in cache. Cloning {url}...")
-                ok = self._clone(url, target_path)
-                if ok:
+                logger.info(
+                    str(_GIT_CACHE_CLONING).format(url=url,
+                    )
+                )
+
+                result = self._clone(
+                    url,
+                    target_path,
+                )
+
+                if result.ok:
+                    self._mark_updated(target_path)
                     self.updated[url] = True
                     return target_path
-                else:
-                    self.avoid[url] = True
-                    logger.warning(f"Clone failed for {url}")
-                    return None
+
+                logger.warning(
+                    str(_GIT_CACHE_CLONE_FAILED)
+                )
+
+                logger.debug(result.stderr)
+
+                self.avoid[url] = True
+
+                return None
 
             need_update = False
-            if self.update_mode == UpdateMode.IF_OLDER and self._is_expired(target_path):
-                logger.info(f"Updating expired repository {url}...")
-            if  self.update_mode == UpdateMode.ALWAYS:
-                logger.info(f"Forcing update of repository {url}")
+
+            if self.update_mode == UpdateMode.ALWAYS:
+                need_update = True
+
+            elif (
+                self.update_mode
+                == UpdateMode.IF_OLDER
+                and self._is_expired(target_path)
+            ):
+                need_update = True
+
             if need_update:
-                ok = self._update(target_path)
-                if ok:
+                logger.info(
+                    str(_GIT_CACHE_UPDATING).format(url=url,
+                    )
+                )
+
+                result = self._update(
+                    target_path,
+                )
+
+                if result.ok:
+                    self._mark_updated(
+                        target_path,
+                    )
+
                     self.updated[url] = True
+
                 else:
-                    logger.warning(f"Updating repository {url} failed.")
+                    logger.warning(
+                        str(_GIT_CACHE_UPDATE_FAILED_UPDATE).format(url=url,
+                        )
+                    )
+
+                    logger.debug(
+                        result.stderr,
+                    )
+
                     self.avoid[url] = True
-        return target_path
+
+            else:
+                self.updated[url] = True
+
+            return target_path

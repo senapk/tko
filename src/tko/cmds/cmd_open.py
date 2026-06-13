@@ -36,19 +36,6 @@ class CmdOpen:
     def display_need_update(self):
         self.need_update = True
 
-    # def load_folder(self, repo_dir: Path):
-    #     self.repo_dir = repo_dir
-    #     self.repo = Repository(repo_dir, self.update_mode)
-    #     if not self.repo.paths.config_file.exists():
-    #         Console.print(_OPEN_INVALID_REPO)
-    #         Console.print(_OPEN_ACTION_HINT)
-    #         raise RuntimeError(Console.format(_NOT_FOUND_HINT, repo_dir=repo_dir))
-    #     from tko.repository.repository_config import RepositoryConfig
-    #     from tko.repository.game_coordinator import GameCoordinator
-    #     RepositoryConfig(self.repo).load()
-    #     GameCoordinator(self.repo).load_game(verbose=True)
-    #     return self
-
     def execute(self):
         play = Play(self.settings, self.repo)
         if self.need_update:

@@ -11,7 +11,7 @@ from tko.run.wdir import Wdir
 from tko.util.rt import RT
 from tko.util.symbols import Symbols
 from tko.enums.execution_result import ExecutionResult
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 
 
 class _TesterTopBarMsg:
@@ -56,7 +56,7 @@ class TesterTopBar:
         count_missing = RT(f" ({done}/{full}) ", running_color)
         if state.mode == SeqMode.running:
             if state.locked_index:
-                solvers = RT(f" {t(_TesterTopBarMsg.RUNNING_LOCKED_ACTIVITY)} ", "R")
+                solvers = RT(f" {str(_TesterTopBarMsg.RUNNING_LOCKED_ACTIVITY)} ", "R")
             else:
                 solvers = count_missing
 
@@ -64,7 +64,7 @@ class TesterTopBar:
         if self.wdir.has_tests:
             sources = Button.info_label(source_names)
         else:
-            sources = Button.info_label(t(_TesterTopBarMsg.NO_TESTS_REGISTERED), "R")
+            sources = Button.info_label(str(_TesterTopBarMsg.NO_TESTS_REGISTERED), "R")
 
         delta = frame_dx - len(solvers)
         left, right = 1, 1
@@ -138,7 +138,7 @@ class TesterTopBar:
         unit = state.get_focused_unit(self.wdir)
         info = RT()
         if self.wdir.get_solver().has_compile_error():
-            info = RT(f" {t(_TesterTopBarMsg.COMPILE_ERROR)} ", "R")
+            info = RT(f" {str(_TesterTopBarMsg.COMPILE_ERROR)} ", "R")
         elif not state.is_all_right() and state.mode != SeqMode.intro:
             info = unit.str(pad=False)
         frame.write(0, 0, info.center(frame.get_dx()))

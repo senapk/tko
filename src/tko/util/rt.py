@@ -3,20 +3,11 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import Iterable
 from wcwidth import wcwidth
-import enum
 import re
 from tko.util.text_style import TextStyle, ANSI_RESET
 
 Run = tuple[TextStyle, str]  # (style, text)
 
-class RenderMode(enum.Enum):
-    ANSI = "ansi"
-    PLAIN = "plain"
-    FLAT = "flat"
-
-class RenderConfig:
-    mode: RenderMode = RenderMode.ANSI
-    enabled: bool = True
 
 class ParseError(ValueError):
     pass
@@ -285,20 +276,12 @@ class RT:
             else:
                 out += text
         return out
-
-    def render(self, mode: RenderMode | None = None) -> str:
-        mode = mode or RenderConfig.mode
-        if not RenderConfig.enabled or mode == RenderMode.PLAIN:
-            return self.plain()
-        if mode == RenderMode.FLAT:
-            return self.flat()
-        return self.ansi()
     
     def __iter__(self) -> Iterator[Run]:
         return iter(self.runs)
     
     def __str__(self) -> str:
-        return self.render()
+        return self.flat()
 
     def __len__(self) -> int:
         return sum(_char_width(ch) for ch, _ in self.iter_chars())

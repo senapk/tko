@@ -1,6 +1,6 @@
 from __future__ import annotations
 from loguru import logger
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from tko.repository.remote import Remote
 
 from typing import Any
@@ -94,7 +94,7 @@ class RepositoryData:
                     raise TypeError("The 'sources' field must be a list.")
 
         except (KeyError, TypeError):
-            logger.exception(t(_REPOSITORY_DATA_LOAD_ERROR))
+            logger.exception(str(_REPOSITORY_DATA_LOAD_ERROR))
 
     def save_to_dict(self) -> dict[str, Any]:
         return {

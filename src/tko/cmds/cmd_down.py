@@ -14,7 +14,7 @@ from tko.game.task_enums import TaskEval
 from tko.feno.filter import CodeFilter
 from pathlib import Path
 from tko.loader.toml_parser import TomlParser
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from tko.util.rt import RT
 from typing import Any
 from tko.util.console import Console
@@ -98,8 +98,8 @@ class CmdLineDown:
         
     def execute(self):
         if not self.rep.paths.config_file.exists():
-            Console.print(t(_DOWN_INVALID_REPO_ARG))
-            Console.print(t(_DOWN_INVALID_REPO_ARG_ACTION))
+            Console.print(f"{_DOWN_INVALID_REPO_ARG}")
+            Console.print(f"{_DOWN_INVALID_REPO_ARG_ACTION}")
             return False
     
         CmdDown(self.rep, self.task_key, self.settings).execute()
@@ -114,14 +114,14 @@ class CmdDown:
         self.task: Task = self.repo.game.get_task_throw(self.task_key)
         self.resolver = self.task.path
         if self.task.resource.is_read:
-            raise ValueError(t(_CMD_DOWN_ACTIVITY_LINK_NOT_DOWNLOADABLE, task_key=self.task_key))
+            raise ValueError(f"{_CMD_DOWN_ACTIVITY_LINK_NOT_DOWNLOADABLE}".format(task_key=self.task_key))
         
         origin_target = self.resolver.origin_target
         destiny_folder = self.resolver.work_dir
         if origin_target is None:
-            raise ValueError(t(_CMD_DOWN_ACTIVITY_NO_ORIGIN_FOLDER, task_key=self.task_key))
+            raise ValueError(f"{_CMD_DOWN_ACTIVITY_NO_ORIGIN_FOLDER}".format(task_key=self.task_key))
         if destiny_folder is None:
-            raise ValueError(t(_CMD_DOWN_ACTIVITY_NO_DESTINY_FOLDER, task_key=self.task_key))
+            raise ValueError(f"{_CMD_DOWN_ACTIVITY_NO_DESTINY_FOLDER}".format(task_key=self.task_key))
 
         self.origin_folder: Path = origin_target.parent        
         self.destiny_folder: Path = destiny_folder
@@ -136,9 +136,9 @@ class CmdDown:
             return True
         if self.task.resource.is_static_type:
             if not self.copy_drafts():
-                self.actions.fnprint(t(_DOWN_ACTIVITY_ALREADY_PRESENT))
+                self.actions.fnprint(f"{_DOWN_ACTIVITY_ALREADY_PRESENT}")
             return False
-        self.actions.fnprint(t(_DOWN_LINK_HAS_NO_DOWNLOAD))
+        self.actions.fnprint(f"{_DOWN_LINK_HAS_NO_DOWNLOAD}")
         return False
 
     def set_fnprint(self, fnprint: Callable[[str| RT], None]):
@@ -157,14 +157,14 @@ class CmdDown:
         self.copy_assets()
         self.copy_drafts()
         self.actions.fnprint("")
-        self.actions.fnprint(t(_DOWN_ACTIVITY_DOWNLOADED_SUCCESS))
+        self.actions.fnprint(f"{_DOWN_ACTIVITY_DOWNLOADED_SUCCESS}")
 
     def copy_drafts(self):
         finder = DraftsFinderCached(self.destiny_folder, self.language)
         found, destiny_drafts_folder = finder.search_for_solvers()
         if found:
             relative = destiny_drafts_folder.relative_to(Path.cwd(), walk_up=True).as_posix()
-            self.actions.fnprint(t(_DRAFTS_FOUND, folder=relative))
+            self.actions.fnprint(f"{_DRAFTS_FOUND}".format(folder=relative))
             return True
         
         if self.task.resource.is_static_type: # working in local remote source, creating only default draft if not found
@@ -196,10 +196,10 @@ class CmdDown:
                 destiny_asset = destiny_assets / asset.name
                 if asset.is_file():
                     if destiny_asset.exists() and filecmp.cmp(asset, destiny_asset, shallow=False):
-                        self.actions.fnprint(RT.parse(t(_DOWN_FILE_UNCHANGED, path=self.actions.folder_and_file(destiny_asset))))
+                        self.actions.fnprint(RT.parse(f"{_DOWN_FILE_UNCHANGED}".format(path=self.actions.folder_and_file(destiny_asset))))
                     else:
                         shutil.copy2(asset, destiny_asset)
-                        self.actions.fnprint(RT.parse(t(_DOWN_FILE_UPDATED, path=self.actions.folder_and_file(destiny_asset))))
+                        self.actions.fnprint(RT.parse(f"{_DOWN_FILE_UPDATED}".format(path=self.actions.folder_and_file(destiny_asset))))
 
     
     def copy_drafts_from(self, origin_drafts_folder: Path, destiny_draft_folder: Path) -> bool:
@@ -242,7 +242,7 @@ class CmdDown:
                 self.language = language_def
             else:
                 langs = self.settings.get_languages_settings().get_languages_with_drafts()
-                Console.print(RT.parse(t(_DOWN_CHOOSE_DRAFT_EXTENSION, options=", ".join(langs.keys()))), end="")
+                Console.print(f"{_DOWN_CHOOSE_DRAFT_EXTENSION}".format(options=", ".join(langs.keys())), end="")
                 self.language = input()
 
 class DownActions:
@@ -262,14 +262,14 @@ class DownActions:
     def compare_and_save_to(self, content: str, path: Path):
         if not os.path.exists(path):
             Decoder.save(path, content)
-            self.fnprint(RT.parse(t(_DOWN_FILE_NEW, path=self.folder_and_file(path))))
+            self.fnprint(RT.parse(f"{_DOWN_FILE_NEW}".format(path=self.folder_and_file(path))))
         else:
             path_content = Decoder.load(path)
             if path_content != content:
-                self.fnprint(RT.parse(t(_DOWN_FILE_UPDATED, path=self.folder_and_file(path))))
+                self.fnprint(RT.parse(f"{_DOWN_FILE_UPDATED}".format(path=self.folder_and_file(path))))
                 Decoder.save(path, content)
             else:
-                self.fnprint(RT.parse(t(_DOWN_FILE_UNCHANGED, path=self.folder_and_file(path))))
+                self.fnprint(RT.parse(f"{_DOWN_FILE_UNCHANGED}".format(path=self.folder_and_file(path))))
 
     def create_default_draft(self, destiny: Path, language: str):
         filename = "draft."
@@ -282,5 +282,5 @@ class DownActions:
                     f.write(lang_drafts[language])
                 else:
                     f.write("")
-            self.fnprint(RT.parse(t(_DOWN_FILE_EMPTY, path=self.folder_and_file(draft_path, 3))))
+            self.fnprint(RT.parse(f"{_DOWN_FILE_EMPTY}".format(path=self.folder_and_file(draft_path, 3))))
         return draft_path

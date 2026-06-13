@@ -3,7 +3,7 @@ from tko.util.console import Console
 # -*- coding: utf-8 -*-
 from pathlib import Path
 from tko.feno.quest_line import QuestLine
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from tko.util.decoder import Decoder
 from tko.util.rt import RT
 from tko.feno.task_line import TaskLine
@@ -75,7 +75,7 @@ class Elements:
             if line.target_file is not None:
                 if not line.target_file.exists():
                     if self.verbose:
-                        Console.print(RT.parse(t(_INDEXER_MISSING_README_REMOVING, readme=line.target_file, task=line.key)))
+                        Console.print(RT.parse(str(_INDEXER_MISSING_README_REMOVING).format(readme=line.target_file, task=line.key)))
                     continue
             new_list.append(line)
         self.lines = new_list
@@ -96,7 +96,7 @@ class Elements:
             if folder_title == line.tm.title:
                 continue
             if self.verbose:
-                Console.print(RT.parse(t(_INDEXER_MISMATCH_TITLE, readme=line.target_file, line_title=line.tm.title, folder_title=folder_title)))
+                Console.print(RT.parse(str(_INDEXER_MISMATCH_TITLE).format(readme=line.target_file, line_title=line.tm.title, folder_title=folder_title)))
             if save_titles:
                 IndexerMd.replace_title_in_readme(line.target_file, line.tm.title, self.verbose)
             if load_titles:
@@ -236,7 +236,7 @@ class Merger:
 
         if missing_entries:
             if self.verbose:
-                Console.print(t(_INDEXER_MISSING_HOOKS_ADDING, count=len(missing_entries), quest=default_quest_name))
+                Console.print(str(_INDEXER_MISSING_HOOKS_ADDING).format(count=len(missing_entries), quest=default_quest_name))
             for _, line in missing_entries.items():
                 self.quests[found_index].lines.append(line)
         return self.header, self.quests

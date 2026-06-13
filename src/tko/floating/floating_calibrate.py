@@ -1,7 +1,7 @@
 from tko.util.rt import RT
 from tko.floating.floating import Floating, FloatingABC
 from tko.config.settings import Settings
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 import tko.config.app_settings as app
 
 
@@ -53,23 +53,25 @@ class FloatingCalibrate(FloatingABC):
         content = self.floating.content
         content.clear()
         color = "G" if self._index == 0 else ""
-        content.append(RT(t(_CalibrateMsg.LEFT).ljust(10), color) + RT(format_value(self._options[0]), color))
+        content.append(RT(str(_CalibrateMsg.LEFT).ljust(10), color) + RT(format_value(self._options[0]), color))
         color = "G" if self._index == 1 else ""
-        content.append(RT(t(_CalibrateMsg.RIGHT).ljust(10), color) + RT(format_value(self._options[1]), color))
+        content.append(RT(str(_CalibrateMsg.RIGHT).ljust(10), color) + RT(format_value(self._options[1]), color))
         color = "G" if self._index == 2 else ""
-        content.append(RT(t(_CalibrateMsg.UP).ljust(10), color) + RT(format_value(self._options[2]), color))
+        content.append(RT(str(_CalibrateMsg.UP).ljust(10), color) + RT(format_value(self._options[2]), color))
         color = "G" if self._index == 3 else ""
-        content.append(RT(t(_CalibrateMsg.DOWN).ljust(10), color) + RT(format_value(self._options[3]), color))
+        content.append(RT(str(_CalibrateMsg.DOWN).ljust(10), color) + RT(format_value(self._options[3]), color))
         color = "G" if self._index == 4 else ""
-        content.append(RT(t(_CalibrateMsg.ESC).ljust(10), color) + RT(format_value(self._options[4]), color))
+        content.append(RT(str(_CalibrateMsg.ESC).ljust(10), color) + RT(format_value(self._options[4]), color))
         color = "G" if self._index == 5 else ""
-        content.append(RT(t(_CalibrateMsg.PAGE_UP).ljust(10), color) + RT(format_value(self._options[5]), color))
+        content.append(RT(str(_CalibrateMsg.PAGE_UP).ljust(10), color) + RT(format_value(self._options[5]), color))
         color = "G" if self._index == 6 else ""
-        content.append(RT(t(_CalibrateMsg.PAGE_DOWN).ljust(10), color) + RT(format_value(self._options[6]), color))
+        content.append(RT(str(_CalibrateMsg.PAGE_DOWN).ljust(10), color) + RT(format_value(self._options[6]), color))
         color = "G" if self._index == 7 else ""
-        content.append(RT(t(_CalibrateMsg.BACKSPACE).ljust(10), color) + RT(format_value(self._options[7]), color))
+        content.append(RT(str(_CalibrateMsg.BACKSPACE).ljust(10), color) + RT(format_value(self._options[7]), color))
 
     def process_input(self, key: int) -> int:
+        if key == -1:
+            return -1
         if key == ord('\n'):
             self.floating.enable = False
             self.settings.app.set_key(app.AppKeys.LEFT, self._options[0])

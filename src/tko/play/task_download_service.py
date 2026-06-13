@@ -9,7 +9,7 @@ from tko.repository.repository import Repository
 from tko.config.settings import Settings
 from tko.cmds.cmd_down import CmdDown
 from tko.logger.log_item_move import LogItemMove, LogItemMoveMode
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 
 
 class _TaskDownloadMsg:
@@ -36,9 +36,9 @@ class TaskDownloadService:
         if isinstance(obj, Quest):
             self.fman.add_input(
                 Floating().bottom().right()
-                .put_text(f"\n{t(_TaskDownloadMsg.IS_MISSION)}")
-                .put_text(f"\n{t(_TaskDownloadMsg.ONLY_TASKS)}\n")
-                .set_error()
+                .put_text(f"\n{str(_TaskDownloadMsg.IS_MISSION)}")
+                .put_text(f"\n{str(_TaskDownloadMsg.ONLY_TASKS)}\n")
+                .set_error().set_countdown(Floating.Time.FAST)
             )
             return
         if not isinstance(obj, Task):
@@ -48,11 +48,12 @@ class TaskDownloadService:
     def down_task(self, task: Task) -> None:
         if task.resource.is_static_type:
             self.fman.add_input(
-                Floating().bottom().right().put_text(f"\n{t(_TaskDownloadMsg.NOT_IMPORTABLE)}\n").set_error()
+                Floating().bottom().right().put_text(f"\n{str(_TaskDownloadMsg.NOT_IMPORTABLE)}\n").set_error()
             )
             return
         down_frame = (
-            Floating().bottom().right().set_warning().set_text_ljust().set_header(f" {t(_TaskDownloadMsg.HEADER)} ")
+            Floating().bottom().right().set_warning().set_countdown(Floating.Time.FAST)
+            .set_text_ljust().set_header(f" {str(_TaskDownloadMsg.HEADER)} ")
         )
         self.fman.add_input(down_frame)
 

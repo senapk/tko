@@ -7,7 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from tko.util.rt import RT
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from tko.util.console import Console
 
 
@@ -53,7 +53,7 @@ class Pull:
         except FileNotFoundError:
             return "", "git not found", 127
         except Exception:
-            logger.exception(t(_PULL_UNEXPECTED_ERROR, directory=directory))
+            logger.exception(f"{_PULL_UNEXPECTED_ERROR}".format(directory=directory))
             return "", "unexpected error", 1
 
     @staticmethod
@@ -95,10 +95,10 @@ class Pull:
 
         # 1. Skip se já atualizado
         if Pull.is_up_to_date(directory, branch):
-            return output + RT(t(_PULL_UP_TO_DATE), "c")
+            return output + RT(f"{_PULL_UP_TO_DATE}", "c")
 
         # 2. Fetch otimizado
-        output += RT(t(_PULL_FETCH_LABEL), "y")
+        output += RT(f"{_PULL_FETCH_LABEL}", "y")
         ok, msg = Pull.git_ok(
             directory,
             "fetch",
@@ -109,25 +109,25 @@ class Pull:
             branch
         )
         if not ok:
-            return output + "\n" + t(_PULL_FETCH_FAILED, msg=msg)
+            return output + "\n" + f"{_PULL_FETCH_FAILED}".format(msg=msg)
 
         # 3. Aplicar atualização
-        output += RT(t(_PULL_UPDATE_LABEL), "y")
+        output += RT(f"{_PULL_UPDATE_LABEL}", "y")
         ok, msg = Pull.git_ok(directory, "reset", "--hard", "FETCH_HEAD")
 
         if not ok:
             # fallback raro (repo zoado)
-            output += RT(t(_PULL_FALLBACK_LABEL), "r")
+            output += RT(f"{_PULL_FALLBACK_LABEL}", "r")
             Pull.git_ok(directory, "clean", "-fd")
             ok, msg = Pull.git_ok(directory, "reset", "--hard", f"origin/{branch}")
             if not ok:
-                return output + "\n" + t(_PULL_RESET_FAILED, msg=msg)
+                return output + "\n" + f"{_PULL_RESET_FAILED}".format(msg=msg)
 
         return output + "\n"
 
     @staticmethod
     def pull_all_parallel(repo_list: list[Path], max_workers: int = 10):
-        Console.print("\n" + str(RT(t(_PULL_ALL_PARALLEL, count=len(repo_list), threads=max_workers), "y")))
+        Console.print(RT(f"\n{_PULL_ALL_PARALLEL}".format(count=len(repo_list), threads=max_workers), "y"))
         start = time.time()
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -140,7 +140,7 @@ class Pull:
                     if output.plain():
                         Console.print(output)
                 except Exception:
-                    logger.exception(t(_PULL_ERROR_IN_REPO, repo=repo))
+                    logger.exception(f"{_PULL_ERROR_IN_REPO}".format(repo=repo))
 
         elapsed = time.time() - start
-        Console.print("\n" + str(RT(t(_PULL_COMPLETED, elapsed=elapsed), "y")))
+        Console.print(RT(f"\n{_PULL_COMPLETED}".format(elapsed=elapsed), "y"))

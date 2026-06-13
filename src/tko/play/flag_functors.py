@@ -17,7 +17,7 @@ class FlagFunctor:
 
         if msg:
             self.fman.add_input(
-                Floating().set_warning().put_text(msg)
+                Floating().set_warning().put_text(msg).set_countdown(Floating.Time.FAST)
             )
 
 class GradeFunctor:

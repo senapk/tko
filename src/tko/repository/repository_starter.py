@@ -6,7 +6,7 @@ from tko.config.settings import Settings
 from tko.repository.repository_config import RepositoryConfig
 from tko.i18n import Msg
 from tko.util.console import Console
-
+from tko.util.rt import RT
 
 _REPO_STARTER_LANGUAGE_SET = Msg(
     pt="A linguagem do repositório foi definida como [y]{language}[.].",
@@ -93,28 +93,28 @@ class RepositoryStarter:
         self.repo = repo
         self.create_empty_repo()
         self.language = LanguageSetter.check_prog_lang_in_text_mode(self.settings, self.repo, selected=self.language)
-        Console.print(_REPO_STARTER_LANGUAGE_SET, language=self.language)
-        
+        Console.print(RT.parse(f"{_REPO_STARTER_LANGUAGE_SET}".format(language=self.language)))
+
         if not self.skip:
             self.ask_about_default_remotes()
 
         RepositoryConfig(repo).save()
-        Console.print(_REPO_STARTER_OPEN_HINT)
+        Console.print(RT.parse(f"{_REPO_STARTER_OPEN_HINT}"))
         return True
 
     def ask_about_default_remotes(self):
-        Console.print(_REPO_ASK_DEFAULT_REMOTES, end="")
+        Console.print(RT.parse(f"{_REPO_ASK_DEFAULT_REMOTES}"), end="")
         answer = input().lower()
         if answer == "n":
-            Console.print(_REPO_NONE_ADDED, cmd="[.y] tko remote add LABEL URL")
+            Console.print(RT.parse(f"{_REPO_NONE_ADDED}".format(cmd="[.y] tko remote add LABEL URL")))
             return
-        Console.print(_REPO_ASK_DEFAULT_REMOTES_FUP)
-        Console.print(_REPO_ASK_DEFAULT_REMOTES_POO)
-        Console.print(_REPO_ASK_DEFAULT_REMOTES_ED)
+        Console.print(RT.parse(f"{_REPO_ASK_DEFAULT_REMOTES_FUP}"))
+        Console.print(RT.parse(f"{_REPO_ASK_DEFAULT_REMOTES_POO}"))
+        Console.print(RT.parse(f"{_REPO_ASK_DEFAULT_REMOTES_ED}"))
 
         options = ["fup", "poo", "ed", "none"]
         while True: 
-            Console.print(_WITCH_REPO, options=", ".join(options), end="")
+            Console.print(RT.parse(f"{_WITCH_REPO}".format(options=", ".join(options))), end="")
             op = input().lower()
             if op in options:
                 if op != "none":
@@ -134,28 +134,28 @@ class RepositoryStarter:
         path_parents = RepositoryPaths.rec_search_for_repo_parents(self.folder)
 
         if path_parents is not None and path_parents.resolve() == self.folder.resolve():
-            Console.print(_REPO_STARTER_EXISTS, folder=self.folder.resolve())                
-            Console.print(_REPO_STARTER_RESET_PROMPT, end="")
+            Console.print(RT.parse(f"{_REPO_STARTER_EXISTS}".format(folder=self.folder.resolve())))
+            Console.print(RT.parse(f"{_REPO_STARTER_RESET_PROMPT}"), end="")
             op = input().lower()
             if op == "n":
                 return False
 
         elif path_parents is not None:
             if self.folder != path_parents:
-                Console.print(_REPO_STARTER_INSIDE_OTHER_REPO, parent=path_parents)
-                Console.print(_REPO_STARTER_DEEP_REPO_WARN_2)
+                Console.print(RT.parse(f"{_REPO_STARTER_INSIDE_OTHER_REPO}".format(parent=path_parents)))
+                Console.print(RT.parse(f"{_REPO_STARTER_DEEP_REPO_WARN_2}"))
             self.folder = path_parents
-            Console.print(_REPO_STARTER_OVERWRITE_PROMPT, folder=self.folder, end="")
+            Console.print(RT.parse(f"{_REPO_STARTER_OVERWRITE_PROMPT}".format(folder=self.folder)), end="")
             op = input().lower()
             if op == "n":
                 return False
         else:
             path_subdir_list = RepositoryPaths.rec_search_for_repo_subdir(self.folder)
             if len(path_subdir_list) > 0:
-                Console.print(_REPO_STARTER_DEEP_REPO_WARN, folder=self.folder.resolve())
-                Console.print(_REPO_STARTER_DEEP_REPO_WARN_2)
+                Console.print(RT.parse(f"{_REPO_STARTER_DEEP_REPO_WARN}".format(folder=self.folder.resolve())))
+                Console.print(RT.parse(f"{_REPO_STARTER_DEEP_REPO_WARN_2}"))
                 for path in path_subdir_list:
-                    Console.print(f"- [r]{path}")
+                    Console.print(RT.parse(f"- [r]{path}"))
                 return False
 
         return True
@@ -163,4 +163,4 @@ class RepositoryStarter:
     def create_empty_repo(self):
         source = self.repo.create_default_sandbox_source()
         self.repo.data.set_remote(source)
-        Console.print(_REPO_STARTER_EMPTY_REPO)
+        Console.print(RT.parse(f"{_REPO_STARTER_EMPTY_REPO}"))

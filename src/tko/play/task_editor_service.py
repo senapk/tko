@@ -12,7 +12,7 @@ from tko.repository.repository import Repository
 from tko.config.settings import Settings
 from tko.play.opener import Opener
 from tko.logger.tracker import Tracker
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 
 
 class _TaskEditorMsg:
@@ -59,14 +59,14 @@ class TaskEditorService:
             else:
                 self.fman.add_input(
                     Floating().bottom().right()
-                    .put_text(f"\n{t(_TaskEditorMsg.CODE_NOT_FOUND)}\n")
-                    .set_error()
+                    .put_text(f"\n{str(_TaskEditorMsg.CODE_NOT_FOUND)}\n")
+                    .set_error().set_countdown(Floating.Time.FAST)
                 )
         else:
             self.fman.add_input(
                 Floating().bottom().right()
-                .put_text(f"\n{t(_TaskEditorMsg.CODE_ONLY_DOWNLOADED)}\n")
-                .set_error()
+                .put_text(f"\n{str(_TaskEditorMsg.CODE_ONLY_DOWNLOADED)}\n")
+                .set_error().set_countdown(Floating.Time.FAST)
             )
 
     def open_link(self):
@@ -78,16 +78,16 @@ class TaskEditorService:
             task: Task = obj
             url = task.resource.external_url
             target = task.path.origin_target
-            logger.info(t(_TaskEditorMsg.OPENING_LINK_LOG, task_key=task.basic.key, url=url))
-            logger.info(t(_TaskEditorMsg.TARGET_LOG, target=target))
+            logger.info(str(_TaskEditorMsg.OPENING_LINK_LOG).format(task_key=task.basic.key, url=url))
+            logger.info(str(_TaskEditorMsg.TARGET_LOG).format(target=target))
             if url is not None:
                 try:
                     self._open_link_without_stdout_stderr(url)
                     self.fman.add_input(
                         Floating().bottom().right()
-                        .set_header(f" {t(_TaskEditorMsg.OPENING_LINK)} ")
+                        .set_header(f" {str(_TaskEditorMsg.OPENING_LINK)} ")
                         .put_text(f"\n {str(url)} \n")
-                        .set_warning()
+                        .set_warning().set_countdown(Floating.Time.FAST)
                     )
                 except Exception as _:
                     pass
@@ -99,9 +99,9 @@ class TaskEditorService:
         elif isinstance(obj, Quest):
             self.fman.add_input(
                 Floating().bottom().right()
-                .put_text(f"\n{t(_TaskEditorMsg.IS_MISSION)}")
-                .put_text(f"\n{t(_TaskEditorMsg.LINK_ONLY_TASKS)}\n")
-                .set_error()
+                .put_text(f"\n{str(_TaskEditorMsg.IS_MISSION)}")
+                .put_text(f"\n{str(_TaskEditorMsg.LINK_ONLY_TASKS)}\n")
+                .set_error().set_countdown(Floating.Time.FAST)
             )
 
     def open_versions(self):
@@ -121,9 +121,9 @@ class TaskEditorService:
                     subprocess.Popen(fullcmd, stdout=outfile, stderr=outfile, shell=True)
                     self.fman.add_input(
                         Floating().bottom().right()
-                        .put_text(f"\n{t(_TaskEditorMsg.VERSIONS_DECOMPRESSED)}")
+                        .put_text(f"\n{str(_TaskEditorMsg.VERSIONS_DECOMPRESSED)}")
                         .put_text(msg)
-                        .put_text(f"{t(_TaskEditorMsg.VERSIONS_OPENING, cmd=fullcmd)}\n")
+                        .put_text(f"{str(_TaskEditorMsg.VERSIONS_OPENING).format(cmd=fullcmd)}\n")
                     )
         except IndexError:
             pass

@@ -7,7 +7,7 @@ from tko.run.run_tracker import RunTracker
 from tko.run.run_presenter import RunPresenter
 from tko.run.run_loader import RunLoader
 from tko.run.test_loop_service import TestLoopService
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from tko.util.console import Console
 
 
@@ -39,7 +39,7 @@ class RunExecutor:
 
     def run_tests_on_raw_term(self) -> int:
         if not self.ctx.config.eval_mode:
-            Console.print(RT.parse(t(_RUN_TESTING_LABEL)).center(RawTerminal.get_terminal_size(), "═"))
+            Console.print(RT.parse(f"{_RUN_TESTING_LABEL}").center(RawTerminal.get_terminal_size(), "═"))
         
         percent = self.test_loop.run_top_line(self.get_rate)
         self.presenter.print_diff()

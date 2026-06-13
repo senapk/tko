@@ -5,7 +5,7 @@ from tko.run.solver_builder import SolverBuilder
 from tko.run.wdir_summary_service import WdirSummaryService
 from tko.run.wdir_target_resolver import WdirTargetResolver
 from tko.run.wdir_units_service import WdirUnitsService
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from tko.util.rt import RT
 from pathlib import Path
 from tko.config.settings import Settings
@@ -46,7 +46,7 @@ class Wdir:
 
     def get_solver(self) -> SolverBuilder:
         if self.solver is None:
-            raise ValueError(t(_RUN_NO_SOURCE_FILES))
+            raise ValueError(str(_RUN_NO_SOURCE_FILES))
         return self.solver
 
     @property
@@ -60,7 +60,7 @@ class Wdir:
     
     def autoload(self):
         if self.autoload_folder is None:
-            raise ValueError(t(_RUN_AUTOLOAD_FOLDER_NOT_SET) + " " + t(_RUN_AUTOLOAD_LANG_HINT))
+            raise ValueError(str(_RUN_AUTOLOAD_FOLDER_NOT_SET) + " " + str(_RUN_AUTOLOAD_LANG_HINT))
         source_list, solver_list = WdirTargetResolver.resolve_autoload(self.autoload_folder, self.lang)
         self.setup_solver(solver_list)
         self.source_list = source_list
@@ -79,7 +79,7 @@ class Wdir:
     def build_unit_list(self):
         self.pack_list, loading_failures = WdirUnitsService.load_packs(self.source_list)
         if loading_failures > 0 and loading_failures == len(self.source_list):
-            raise FileNotFoundError(t(_RUN_NO_TEST_CASES))
+            raise FileNotFoundError(str(_RUN_NO_TEST_CASES))
         self.unit_list = WdirUnitsService.merge_unique_units(self.pack_list)
         #self.__number_and_mark_duplicated()
         #self.__remove_duplicated()
@@ -97,7 +97,7 @@ class Wdir:
             if 0 <= index < len(self.unit_list):
                 self.unit_list = [self.unit_list[index]]
             else:
-                raise ValueError(t(_RUN_FILTER_INDEX_OUT_OF_BOUNDS, index=index))
+                raise ValueError(str(_RUN_FILTER_INDEX_OUT_OF_BOUNDS).format(index=index))
         return self
 
     def manipulate(self, param: Param.Manip):

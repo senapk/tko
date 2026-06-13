@@ -6,7 +6,7 @@ from tko.util.raw_terminal import RawTerminal
 from tko.util.runner import Runner
 from tko.play.images import compilling_image
 from tko.run.solver_builder import SolverBuilder
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 import subprocess
 import random
 import sys
@@ -111,8 +111,8 @@ class Free:
         to_run_again = False
         if wait_input:
             Console.print(RT().center(RawTerminal.get_terminal_size(), "─"))
-            Console.print(RT.parse(t(_FREERUN_PROMPT_RERUN)))
-            Console.print(RT.parse(t(_FREERUN_PROMPT_BACK)))
+            Console.print(RT.parse(str(_FREERUN_PROMPT_RERUN)))
+            Console.print(RT.parse(str(_FREERUN_PROMPT_BACK)))
 
             valor = ask()
             if valor != "esc":

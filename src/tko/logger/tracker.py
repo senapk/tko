@@ -4,7 +4,7 @@ import argparse
 import csv
 from pathlib import Path
 from tko.logger.patch_history import PatchHistory
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from tko.util.decoder import Decoder
 import tempfile
 from tko.logger.log_sort import LogSort
@@ -43,7 +43,7 @@ class Track:
 
     def column_to_track(self, columns: list[str]):
         if len(columns) < 3:
-            raise ValueError(t(_TRACKER_NOT_ENOUGH_COLUMNS))
+            raise ValueError(str(_TRACKER_NOT_ENOUGH_COLUMNS))
         self.timestamp = columns[0]
         self.result = columns[1]
         self.file_stamp_list = columns[2].split(";")
@@ -128,7 +128,7 @@ class Tracker:
         try:
             return datetime.datetime.strptime(timestamp, "%Y-%m-%d_%H-%M-%S")
         except ValueError:
-            raise ValueError(t(_TRACKER_INVALID_TIMESTAMP_FORMAT, timestamp=timestamp))
+            raise ValueError(str(_TRACKER_INVALID_TIMESTAMP_FORMAT).format(timestamp=timestamp))
 
     # return timestamp of the last version of the file
     def save_file_with_timestamp_prefix(self, timestamp: str, file: Path) -> tuple[str, bool, int]:

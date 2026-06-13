@@ -2,7 +2,7 @@ from pathlib import Path
 
 from tko.cmds.drafts_finder_cached import DraftsFinderCached
 # from tko.enums.identifier_type import IdentifierType
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from tko.loader.loader import Loader
 
 _RUN_TARGET_NOT_FOUND = Msg(
@@ -22,7 +22,7 @@ class WdirTargetResolver:
     def identify_source_and_solver_targets(target_list: list[Path]) -> tuple[list[Path], list[Path]]:
         for target in target_list:
             if not target.exists():
-                raise Warning(t(_RUN_TARGET_NOT_FOUND, target=target))
+                raise Warning(str(_RUN_TARGET_NOT_FOUND).format(target=target))
 
         solvers = [target for target in target_list if target.suffix not in Loader.SOURCES_EXTENSIONS]
         sources = WdirTargetResolver.filter_and_order_sources([target for target in target_list if not target in solvers])

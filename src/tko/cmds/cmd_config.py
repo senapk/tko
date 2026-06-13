@@ -3,7 +3,8 @@ from tko.util.console import Console
 
 from tko.config.settings import Settings
 from tko.enums.diff_mode import DiffMode
-from tko.i18n import Msg, t
+from tko.i18n import Msg
+from tko.util.rt import RT
 
 
 _CONFIG_IMAGES_STATUS = Msg(
@@ -49,27 +50,27 @@ class CmdConfig:
             action = True
             settings.app.use_images = param.images == "1"
             status = "True" if param.images == "1" else "False"
-            Console.print(t(_CONFIG_IMAGES_STATUS, status=status))
+            Console.print(f"{_CONFIG_IMAGES_STATUS}".format(status=status))
             
         if param.side:
             action = True
             settings.app.diff_mode = DiffMode.SIDE
-            Console.print(t(_CONFIG_DIFF_MODE_SIDE))
+            Console.print(f"{_CONFIG_DIFF_MODE_SIDE}")
         if param.down:
             action = True
             settings.app.diff_mode = DiffMode.DOWN
-            Console.print(t(_CONFIG_DIFF_MODE_DOWN))
+            Console.print(f"{_CONFIG_DIFF_MODE_DOWN}")
         if param.editor:
             action = True
             settings.app.editor = param.editor
-            Console.print(t(_CONFIG_EDITOR_CHANGED, editor=param.editor))
+            Console.print(f"{_CONFIG_EDITOR_CHANGED}".format(editor=param.editor))
 
         if param.timeout is not None:
             action = True
             settings.app.timeout = param.timeout
-            Console.print(t(_CONFIG_TIMEOUT_CHANGED, timeout=param.timeout))
+            Console.print(f"{_CONFIG_TIMEOUT_CHANGED}".format(timeout=param.timeout))
 
         if not action:
-            Console.print(str(settings))
+            Console.print(RT.parse(f"{settings}"))
 
         settings.save_settings()

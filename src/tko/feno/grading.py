@@ -7,7 +7,7 @@ import os
 import configparser
 import argparse
 import tempfile
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 
 
 _GRADING_README_NOT_FOUND = Msg(
@@ -120,7 +120,7 @@ class Grading:
     def load_readme(readme_file: str) -> list[MyTest]:
         problems: list[MyTest] = []
         if not os.path.isfile(readme_file):
-            Console.print(t(_GRADING_README_NOT_FOUND, file=readme_file))
+            Console.print(str(_GRADING_README_NOT_FOUND).format(file=readme_file))
             return problems
         
         with open(readme_file, "r") as f:
@@ -153,7 +153,7 @@ class Grading:
 
 
         if len(problems) == 0:
-            Console.print(t(_GRADING_NO_PROBLEMS_FOUND))
+            Console.print(str(_GRADING_NO_PROBLEMS_FOUND))
             return
 
         test_list = Grading()
@@ -166,7 +166,7 @@ class Grading:
                 f.write(str(awarded))
 
 def running_prefix():
-    Console.print(t(_GRADING_RUNNING_PREFIX), flush=True, end="")
+    Console.print(str(_GRADING_RUNNING_PREFIX), flush=True, end="")
 
 def grading_prefix():
-    Console.print(t(_GRADING_GRADING_PREFIX), flush=True, end="")
+    Console.print(str(_GRADING_GRADING_PREFIX), flush=True, end="")

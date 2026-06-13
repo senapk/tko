@@ -3,7 +3,7 @@ import locale
 from tko.util.rt import RT
 from tko.util.text_style import TextStyle
 from tko.widget.colors import Colors
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from loguru import logger
 
 
@@ -83,7 +83,7 @@ class Fmt:
         if isinstance(style, str):
             style = TextStyle.parse(style)
         if Fmt.__scr is None:
-            raise Exception(t(_FMT_NOT_INITIALIZED))
+            raise Exception(str(_FMT_NOT_INITIALIZED))
         
         fg: str = style.fg if style.fg is not None else ""
         bg: str = style.bg if style.bg is not None else ""

@@ -5,7 +5,7 @@ import re
 import enum
 from loguru import logger
 from tko.feno.filter import Filter
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from tko.util.decoder import Decoder
 from pathlib import Path
 from dataclasses import dataclass
@@ -264,7 +264,7 @@ class Load:
                     params.extract = val
                     i += 1 # Consome o valor
                 else:
-                    logger.warning(t(_MDPP_MISSING_EXTRACT_VALUE))
+                    logger.warning(str(_MDPP_MISSING_EXTRACT_VALUE))
             elif token == "--tests":
                 val = Load.__get_value(tokens, i)
                 try:
@@ -274,7 +274,7 @@ class Load:
                     else:
                         raise ValueError
                 except ValueError:
-                    logger.warning(t(_MDPP_INVALID_TESTS_INTEGER))
+                    logger.warning(str(_MDPP_INVALID_TESTS_INTEGER))
 
             elif token == "--rmcom":
                 params.rmcom = True
@@ -283,7 +283,7 @@ class Load:
                 params.filter = True
 
             elif token.startswith("--"):
-                logger.warning(t(_MDPP_UNRECOGNIZED_TAG, tag=token))
+                logger.warning(str(_MDPP_UNRECOGNIZED_TAG).format(tag=token))
             
             i += 1 # Sempre avança para o próximo token
             
@@ -348,7 +348,7 @@ class Load:
     def _process_file_content(abspath: Path, rel_path: str, params: LoadParams) -> str:
         """Encapsula a lógica de leitura e transformação do conteúdo."""
         if not abspath.is_file():
-            logger.warning(t(_MDPP_FILE_NOT_FOUND, path=rel_path))
+            logger.warning(str(_MDPP_FILE_NOT_FOUND).format(path=rel_path))
             return ""
 
         data = Decoder.load(abspath)
@@ -408,7 +408,7 @@ class Save:
                 content_old = Decoder.load(path)
             if not exists or content != content_old:
                 Decoder.save(path, content)
-                logger.info(t(_MDPP_FILE_UPDATED, path=path))
+                logger.info(str(_MDPP_FILE_UPDATED).format(path=path))
 
 class MdppMain:
     @staticmethod
@@ -423,7 +423,7 @@ class MdppMain:
         if path.is_file():
             file_content = Decoder.load(path)
             return True, file_content
-        logger.warning(t(_MDPP_FILE_NOT_FOUND, path=path))
+        logger.warning(str(_MDPP_FILE_NOT_FOUND).format(path=path))
         return False, "" 
 
 class Mdpp:
@@ -432,10 +432,10 @@ class Mdpp:
         # path = MdppMain.fix_path(target)
         path = target
         if not path.suffix == ".md":
-            logger.warning(t(_MDPP_FILE_NOT_MARKDOWN, path=path))
+            logger.warning(str(_MDPP_FILE_NOT_MARKDOWN).format(path=path))
             return False
         if not path.is_file():
-            logger.warning(t(_MDPP_FILE_NOT_FOUND, path=path))
+            logger.warning(str(_MDPP_FILE_NOT_FOUND).format(path=path))
             return False
         target_dir = path.parent.resolve()
         found, original = MdppMain.open_file(path)

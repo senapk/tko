@@ -5,7 +5,7 @@ from tko.game.task import Task
 from tko.run.wdir import Wdir
 from tko.util.rt import RT
 from tko.util.symbols import Symbols
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 
 
 _TESTER_TASK_FOLDER_NOT_FOUND = Msg(
@@ -41,7 +41,7 @@ def get_time_limit_symbol(timeout: int) -> str:
 def get_folder(task: Task) -> Path:
     folder = task.path.work_dir
     if folder is None:
-        raise Warning(t(_TESTER_TASK_FOLDER_NOT_FOUND))
+        raise Warning(str(_TESTER_TASK_FOLDER_NOT_FOUND))
     return folder
 
 

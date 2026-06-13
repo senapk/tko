@@ -3,7 +3,7 @@ from pathlib import Path
 
 import markdown
 from typing import Any
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 
 
 
@@ -169,6 +169,6 @@ def convert_markdown_to_html(title: str, markdown_file_path: Path, output_html_p
         # print(f"Conversão concluída: '{markdown_file_path}' -> '{output_html_path}'")
 
     except FileNotFoundError:
-        logger.exception(t(_FENO_HTML_MARKDOWN_NOT_FOUND, path=markdown_file_path))
+        logger.exception(str(_FENO_HTML_MARKDOWN_NOT_FOUND).format(path=markdown_file_path))
     except Exception:
-        logger.exception(t(_FENO_HTML_CONVERSION_ERROR))
+        logger.exception(str(_FENO_HTML_CONVERSION_ERROR))

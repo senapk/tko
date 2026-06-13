@@ -4,7 +4,7 @@ from tko.game.task import Task
 from tko.util.rbuffer import RBuffer
 from tko.util.rt import RT
 from tko.util.symbols import Symbols
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 
 from abc import ABC, abstractmethod
 from typing import Callable
@@ -206,9 +206,9 @@ class InputBoolean(InputLine):
             text_buffer.add(self.prefix)
         text = text_buffer.to_rt().ljust(pad)
         text_buffer = RBuffer().add(text).add("│ ")
-        text_buffer.add(t(_GradeMsg.NO), self.CHOOSEN_COLOR if self.value == "0" else "")
+        text_buffer.add(str(_GradeMsg.NO), self.CHOOSEN_COLOR if self.value == "0" else "")
         text_buffer.add(" ")
-        text_buffer.add(t(_GradeMsg.YES), self.CHOOSEN_COLOR if self.value == "1" else "")
+        text_buffer.add(str(_GradeMsg.YES), self.CHOOSEN_COLOR if self.value == "1" else "")
         return text_buffer.to_rt()
 
 
@@ -220,12 +220,12 @@ class FloatingGrade(FloatingABC):
         self._line = 0
         self.floating.set_text_ljust()
         self.floating.frame.set_border_color("g")
-        self.floating.set_header_text(RT(t(_GradeMsg.HEADER), "y/"))
-        self.floating.set_footer_text(RT(t(_GradeMsg.FOOTER), "y/"))
+        self.floating.set_header_text(RT(str(_GradeMsg.HEADER), "y/"))
+        self.floating.set_footer_text(RT(str(_GradeMsg.FOOTER), "y/"))
         self.fn_exit = fn_exit
 
         progression: list[tuple[str, RT]] = [
-            ("x", RT(t(_GradeMsg.NOTHING), "g")),
+            ("x", RT(str(_GradeMsg.NOTHING), "g")),
             ("1", RT(" 10%", "y")),
             ("2", RT(" 20%", "y")),
             ("3", RT(" 30%", "y")),
@@ -238,9 +238,9 @@ class FloatingGrade(FloatingABC):
             ("✓", RT(" 100%", "y"))]
 
         if self._task.config.is_auto:
-            texto_auto = t(_GradeMsg.AUTO_MODE_LABEL)
+            texto_auto = str(_GradeMsg.AUTO_MODE_LABEL)
         else:
-            texto_auto = t(_GradeMsg.MANUAL_MODE_LABEL)
+            texto_auto = str(_GradeMsg.MANUAL_MODE_LABEL)
         
         guided   = "" if not self._task.info.feedback else ("1" if self._task.info.guided else "0")
         concept  = "" if not self._task.info.feedback else ("1" if self._task.info.ia_concept else "0")
@@ -251,18 +251,18 @@ class FloatingGrade(FloatingABC):
 
         self.quantity_input_lines: list[InputLine] = [
             InputSlide("rate", RT(texto_auto), progression, self._task.info.rate // 10).set_locked(self._task.config.is_auto),
-            InputText("study", RT(t(_GradeMsg.STUDY_TIME_LABEL)), str(self._task.info.study)).set_number_only(True),
+            InputText("study", RT(str(_GradeMsg.STUDY_TIME_LABEL)), str(self._task.info.study)).set_number_only(True),
         ]
         self.support_input_lines: list[InputLine] = [
-            InputText("friend", RT(t(_GradeMsg.FRIEND_LABEL)), self._task.info.friend),
-            InputBoolean("guided",  RT(t(_GradeMsg.GUIDED_LABEL)) + "      " + RT("   " + t(_GradeMsg.GUIDED_DISCOUNT), "g") + self.get_discount("guided"), guided),
+            InputText("friend", RT(str(_GradeMsg.FRIEND_LABEL)), self._task.info.friend),
+            InputBoolean("guided",  RT(str(_GradeMsg.GUIDED_LABEL)) + "      " + RT("   " + str(_GradeMsg.GUIDED_DISCOUNT), "g") + self.get_discount("guided"), guided),
         ]
         self.quality_input_lines: list[InputLine] = [
-            InputBoolean("concept", RT(t(_GradeMsg.CONCEPT_LABEL)) + "" + RT("  " + t(_GradeMsg.CONCEPT_DISCOUNT), "g") + self.get_discount("concept"), concept),
-            InputBoolean("problem", RT(t(_GradeMsg.PROBLEM_LABEL)) + "              " + RT(" " + t(_GradeMsg.PROBLEM_DISCOUNT), "g") + self.get_discount("problem"), problem),
-            InputBoolean("code",    RT(t(_GradeMsg.CODE_LABEL)) + " " + RT(" " + t(_GradeMsg.CODE_DISCOUNT), "g") + self.get_discount("code"), code),
-            InputBoolean("debug",   RT(t(_GradeMsg.DEBUG_LABEL)) + " " + RT("  " + t(_GradeMsg.DEBUG_DISCOUNT), "g") + self.get_discount("debug"), debug),
-            InputBoolean("refactor",RT(t(_GradeMsg.REFACTOR_LABEL)) + "    " + RT("" + t(_GradeMsg.REFACTOR_DISCOUNT), "g") + self.get_discount("refactor"), refactor),
+            InputBoolean("concept", RT(str(_GradeMsg.CONCEPT_LABEL)) + "" + RT("  " + str(_GradeMsg.CONCEPT_DISCOUNT), "g") + self.get_discount("concept"), concept),
+            InputBoolean("problem", RT(str(_GradeMsg.PROBLEM_LABEL)) + "              " + RT(" " + str(_GradeMsg.PROBLEM_DISCOUNT), "g") + self.get_discount("problem"), problem),
+            InputBoolean("code",    RT(str(_GradeMsg.CODE_LABEL)) + " " + RT(" " + str(_GradeMsg.CODE_DISCOUNT), "g") + self.get_discount("code"), code),
+            InputBoolean("debug",   RT(str(_GradeMsg.DEBUG_LABEL)) + " " + RT("  " + str(_GradeMsg.DEBUG_DISCOUNT), "g") + self.get_discount("debug"), debug),
+            InputBoolean("refactor",RT(str(_GradeMsg.REFACTOR_LABEL)) + "    " + RT("" + str(_GradeMsg.REFACTOR_DISCOUNT), "g") + self.get_discount("refactor"), refactor),
         ]
         self.all_input_lines: list[InputLine] = self.quantity_input_lines + self.support_input_lines + self.quality_input_lines
         self.input_dict: dict[str, InputLine] = {line.id: line for line in self.all_input_lines}
@@ -291,7 +291,7 @@ class FloatingGrade(FloatingABC):
         self.set_focus()
         content = self.floating.content
         content.clear()
-        content.append(RT(f"         {t(_GradeMsg.SECTION_TITLE)}         "))
+        content.append(RT(f"         {str(_GradeMsg.SECTION_TITLE)}         "))
         width = 90
         pad = _GRADE_LINE_PAD
         dummy_task = self._task.clone()
@@ -303,10 +303,10 @@ class FloatingGrade(FloatingABC):
         left_side = "║ "
         for line in self.quantity_input_lines:
             content.append(RT(left_side) + line.get_text(pad))
-        content.append(RT("╠═") + RT(f" {t(_GradeMsg.SECTION_HUMAN_HELP)} ").center(width, "═"))
+        content.append(RT("╠═") + RT(f" {str(_GradeMsg.SECTION_HUMAN_HELP)} ").center(width, "═"))
         for line in self.support_input_lines:
             content.append(RT(left_side) + line.get_text(pad))
-        content.append(RT("╠═") + RT(f" {t(_GradeMsg.SECTION_AI_USAGE)} ").center(width, "═"))
+        content.append(RT("╠═") + RT(f" {str(_GradeMsg.SECTION_AI_USAGE)} ").center(width, "═"))
         for line in self.quality_input_lines:
             content.append(RT(left_side) + line.get_text(pad))
         content.append(RT("╚═══════════════════════════════════════════════════════════").ljust(width, "═"))

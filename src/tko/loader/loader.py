@@ -6,7 +6,7 @@ from tko.loader.dir_parser import DirParser
 from tko.loader.tio_parser import TioParser
 from tko.loader.toml_parser import TomlParser
 from tko.loader.vpl_parser import VplParser
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from tko.run.unit import Unit
 from tko.util.decoder import Decoder
 from pathlib import Path
@@ -75,7 +75,7 @@ class Loader:
                     pass
                 return tests
             else:
-                Console.print(t(_LOADER_TARGET_FORMAT_NOT_SUPPORTED, source=source))  # make this a raise
+                Console.print(str(_LOADER_TARGET_FORMAT_NOT_SUPPORTED).format(source=source))  # make this a raise
         else:
-            raise FileNotFoundError(t(_LOADER_UNABLE_TO_FIND, source=source))
+            raise FileNotFoundError(str(_LOADER_UNABLE_TO_FIND).format(source=source))
         return []

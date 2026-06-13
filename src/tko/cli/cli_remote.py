@@ -5,7 +5,7 @@ import typer
 
 from tko.cli.common import load_repo
 from tko.config.settings import Settings
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from tko.repository.remote_actions import RemoteActions
 
 
@@ -77,7 +77,7 @@ def remote_add(
         )
 
     except ValueError:
-        logger.exception(t(_CLI_REMOTE_ADD_SOURCE_ERROR))
+        logger.exception(f"{_CLI_REMOTE_ADD_SOURCE_ERROR}")
 
 
 @app.command("filter", help="Manage filters for a remote task source")
@@ -89,7 +89,7 @@ def remote_filter(
     to: Optional[str] = typer.Option(None, "--to", "-t", help="Quest destination for filtered tasks added with this source"),
 ):
     if clear and quest:
-        logger.error(t(_CLI_REMOTE_CLEAR_WITH_QUEST_ERROR))
+        logger.error(f"{_CLI_REMOTE_CLEAR_WITH_QUEST_ERROR}")
         return
 
     settings: Settings = ctx.obj

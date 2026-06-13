@@ -8,7 +8,7 @@ from tko.game.task import Task
 from tko.repository.remote import Remote
 from tko.util.decoder import Decoder
 from tko.feno.indexer import fix_readme
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from icecream import ic  # type: ignore
 
 
@@ -60,11 +60,11 @@ class GameBuilder:
         try:
             filename: Path = self.remote.path.index_file
             if not self.remote.is_sandbox and not filename.exists():
-                logger.warning(t(_GAME_BUILDER_README_FETCH_ERROR, name=self.remote.data.name))
+                logger.warning(str(_GAME_BUILDER_README_FETCH_ERROR).format(name=self.remote.data.name))
                 return False
         except ValueError:
             if not self.remote.is_sandbox:
-                logger.warning(t(_GAME_BUILDER_SOURCE_NO_ORIGIN_DIR, name=self.remote.data.name))
+                logger.warning(str(_GAME_BUILDER_SOURCE_NO_ORIGIN_DIR).format(name=self.remote.data.name))
             return False
         self.__ensure_sandbox_readme_fixed(filename)
         ok, content = self.load_content(filename)
@@ -82,7 +82,7 @@ class GameBuilder:
         content: str = ""
         if not filename.exists():
             if not self.remote.is_sandbox:
-                logger.warning(t(_GAME_BUILDER_SOURCE_NOT_FOUND, filename=filename, name=self.remote.data.name))
+                logger.warning(str(_GAME_BUILDER_SOURCE_NOT_FOUND).format(filename=filename, name=self.remote.data.name))
                 return False, content
         else:
             content = Decoder.load(filename)
@@ -143,9 +143,7 @@ class GameBuilder:
                     quests[r].requirements.required_by_ptr.append(q)
                 else:
                     logger.warning(
-                        t(
-                            _GAME_BUILDER_QUEST_REQUIRES_MISSING,
-                            filename=filename,
+                        str(_GAME_BUILDER_QUEST_REQUIRES_MISSING).format(filename=filename,
                             line=q.source.line_number,
                             quest=str(q),
                             required=r,
@@ -159,7 +157,7 @@ class GameBuilder:
         editable_source: bool = self.remote.data.is_editable
         source_dir_root: Path | None = self.remote.path.source_dir
         if source_dir_root is None:
-            logger.warning(t(_GAME_BUILDER_SOURCE_NO_ORIGIN_DIR, name=alias))
+            logger.warning(str(_GAME_BUILDER_SOURCE_NO_ORIGIN_DIR).format(name=alias))
             return
         git_url: str | None = self.remote.data.git_url
 
@@ -167,7 +165,7 @@ class GameBuilder:
             filename = self.remote.path.index_file
         except ValueError:
             if not self.remote.is_sandbox:
-                logger.exception(t(_GAME_BUILDER_INDEX_FETCH_ERROR, name=alias))
+                logger.exception(str(_GAME_BUILDER_INDEX_FETCH_ERROR).format(name=alias))
             return
         for line_num, line in enumerate(lines):
             quest_parser = QuestParser(alias)
@@ -183,7 +181,7 @@ class GameBuilder:
     def __get_active_quest(self) -> Quest:
         if self.active_quest is None:
             qkey = "_sem_quest"
-            return self.__add_quest(Quest(t(_GAME_BUILDER_NO_QUEST_TITLE), qkey))
+            return self.__add_quest(Quest(str(_GAME_BUILDER_NO_QUEST_TITLE), qkey))
         return self.active_quest
 
     def __add_quest(self, quest: Quest) -> Quest:

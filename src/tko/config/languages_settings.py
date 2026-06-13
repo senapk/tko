@@ -1,5 +1,4 @@
 from tko.config.languages_drafts import c_draft, cpp_draft, draft_go, draft_js, draft_rust, haskell_draft, java_draft, ts_draft
-from tko.i18n import t
 from tko.util.decoder import Decoder
 from tko.config.languages_setup import LanguageSetup
 from tko.i18n import Msg
@@ -106,7 +105,7 @@ class LanguagesSettings:
         try:
             content = Decoder.load(self.path)
             if content.strip() == "":
-                raise Exception(t(_CONFIG_LANG_EMPTY))
+                raise Exception(str(_CONFIG_LANG_EMPTY))
             data = tomllib.loads(content)
             for lang_ext, settings in data.items():
                 self.lang_settings[lang_ext] = LanguageSetup(
@@ -115,5 +114,5 @@ class LanguagesSettings:
                     draft=settings.get("draft", "")
                 )
         except Exception:
-            logger.exception(t(_CONFIG_LANG_LOAD_FAILED, path=self.path))
+            logger.exception(str(_CONFIG_LANG_LOAD_FAILED).format(path=self.path))
         return self

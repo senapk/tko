@@ -6,7 +6,7 @@ from tko.repository.repository_config import RepositoryConfig
 from tko.util.rt import RT
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
-from tko.i18n import Msg, set_language as set_ui_language, SUPPORTED_LANGUAGES, t
+from tko.i18n import Msg, set_language as set_ui_language, SUPPORTED_LANGUAGES
 from tko.util.console import Console
 
 class _LangSetterMsg:
@@ -28,7 +28,7 @@ class LanguageSetter:
         options = sorted(options)
         Console.print(_LangSetterMsg.PROG_LANGUAGE_NOT_SET)
         while True:
-            Console.print(_LangSetterMsg.PROMPT, options=", ".join(options), flush=True, end="")
+            Console.print(str(_LangSetterMsg.PROMPT).format(options=", ".join(options)), flush=True, end="")
             lang = input()
             if lang in options:
                 break
@@ -70,7 +70,7 @@ class LanguageSetter:
             options = sorted(lang_options)
             Console.print(_LangSetterMsg.UI_NOT_SET)
             while True:
-                Console.print(_LangSetterMsg.PROMPT, options=", ".join(options), flush=True, end="")
+                Console.print(str(_LangSetterMsg.PROMPT).format(options=", ".join(options)), flush=True, end="")
                 lang = input()
                 if lang in options:
                     changed = True
@@ -96,8 +96,8 @@ class LanguageSetter:
             FloatingDropDown().set_floating(
                 Floating()
                 .top()
-                .set_header(t(_LangSetterMsg.LANG_CHOOSE))
-                .set_footer(t(_LangSetterMsg.RESET_TKO))
+                .set_header(str(_LangSetterMsg.LANG_CHOOSE))
+                .set_footer(str(_LangSetterMsg.RESET_TKO))
                 .set_text_ljust()
             )
             .set_options(options)
@@ -110,15 +110,6 @@ class LanguageSetter:
         self.settings.app.ui_language = next_lang
         set_ui_language(next_lang)
         self.settings.save_settings()
-        # self.fman.add_input(
-        #     Floating()
-        #     .bottom()
-        #     .right()
-        #     .put_text("")
-        #     .put_text(t(_LangSetterMsg.UI_LANGUAGE_CHANGED, language=next_lang))
-        #     .put_text("")
-        #     .set_warning()
-        # )
 
 class TextFunctor:
     def __init__(self, data: str):
@@ -142,7 +133,7 @@ class SetLangFunctor:
             .bottom()
             .right()
             .put_text("")
-            .put_text(t(_LangSetterMsg.LANGUAGE_CHANGED, language=self.value))
+            .put_text(str(_LangSetterMsg.LANGUAGE_CHANGED).format(language=self.value))
             .put_text("")
-            .set_warning()
+            .set_warning().set_countdown(Floating.Time.FAST)
         )

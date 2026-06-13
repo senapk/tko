@@ -6,7 +6,7 @@ from tko.play.gui_keys import GuiKeys
 from tko.tester.tester_navigator import TesterNavigator
 from tko.tester.tester_state import TesterState
 from tko.tester import tester_util
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from tko.util.rt import RT
 from tko.util.symbols import Symbols
 
@@ -42,32 +42,32 @@ class TesterPalette:
 
         options: list[FloatingInputData] = []
         options.append(FloatingInputData(
-                lambda: RT.parse(t(_CHANGE_MAIN).format(icon=Symbols.action)),
+                lambda: RT.parse(str(_CHANGE_MAIN).format(icon=Symbols.action)),
                 lambda: self.navigator.change_main(state),
                 "TAB",
             ))
         options.append(FloatingInputData(
-                lambda: RT.parse(t(_DIFF_MODE).format(icon=tester_util.get_diff_symbol(self.app.diff_mode))),
+                lambda: RT.parse(str(_DIFF_MODE).format(icon=tester_util.get_diff_symbol(self.app.diff_mode))),
                 self.app.toggle_diff,
                 GuiKeys.diff,
             ))
         options.append(FloatingInputData(
-                lambda: RT.parse(t(_LIMIT).format(icon=Symbols.action, valor=tester_util.get_time_limit_symbol(self.app.timeout))),
+                lambda: RT.parse(str(_LIMIT).format(icon=Symbols.action, valor=tester_util.get_time_limit_symbol(self.app.timeout))),
                 lambda: self.navigator.change_limit(state),
                 GuiKeys.limite,
             ))
         options.append(FloatingInputData(
-                lambda: RT.parse(t(_TEST_SCOPE).format(icon=mark(not state.locked_index))),
+                lambda: RT.parse(str(_TEST_SCOPE).format(icon=mark(not state.locked_index))),
                 lambda: self.navigator.lock_unit(state),
                 GuiKeys.lock,
             ))
         options.append(FloatingInputData(
-                lambda: RT.parse(t(_SHOW_IMAGES).format(icon=mark(self.app.use_images))),
+                lambda: RT.parse(str(_SHOW_IMAGES).format(icon=mark(self.app.use_images))),
                 lambda: self.app.toggle(ToggleOption.IMAGES),
                 GuiKeys.images,
             ))
         options.append(FloatingInputData(
-                lambda: RT.parse(t(_EVALUATE).format(icon=Symbols.action)),
+                lambda: RT.parse(str(_EVALUATE).format(icon=Symbols.action)),
                 lambda: self.navigator.self_evaluate(state),
                 GuiKeys.self_evaluate,
             ).set_exit_on_action(True)
@@ -77,8 +77,8 @@ class TesterPalette:
             .set_floating(
                 Floating()
                 .set_text_ljust()
-                .set_header_text(RT.parse(t(_HEADER)))
-                .set_footer_text(RT.parse(t(_FOOTER)))
+                .set_header_text(RT.parse(str(_HEADER)))
+                .set_footer_text(RT.parse(str(_FOOTER)))
             )
             .set_options(options)
             .set_exit_on_enter(False)

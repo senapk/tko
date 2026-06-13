@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import os
-from enum import Enum
-from typing import Any
 
 from tko.i18n.message import Msg
 
@@ -50,20 +48,20 @@ class SafeDict(dict[str, object]):
     def __missing__(self, key: str) -> str:
         return "{" + key + "}"
 
-def t(key: Enum | str | Msg, **params: Any) -> str:
-    language = get_language()
+# def t(key: Enum | str | Msg, **params: Any) -> str:
+#     language = get_language()
 
-    if isinstance(key, Msg):
-        template = key.for_language(language)
-    else:
-        key_value = key.value if isinstance(key, Enum) else key
-        template = str(key_value)
+#     if isinstance(key, Msg):
+#         template = key.for_language(language)
+#     else:
+#         key_value = key.value if isinstance(key, Enum) else key
+#         template = str(key_value)
 
-    if not params:
-        return template
+#     if not params:
+#         return template
 
-    return template.format_map(SafeDict(params))
+#     return template.format_map(SafeDict(params))
 
 
 
-__all__ = ["Msg", "normalize_language", "get_language", "set_language", "t", "SUPPORTED_LANGUAGES"]
+__all__ = ["Msg", "normalize_language", "get_language", "set_language",  "SUPPORTED_LANGUAGES"]

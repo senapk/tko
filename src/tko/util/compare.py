@@ -1,5 +1,4 @@
 import difflib
-from io import StringIO
 from collections.abc import Sequence
 from typer.testing import CliRunner
 from tko.__main__ import app
@@ -33,12 +32,11 @@ class Compare:
         if isinstance(cmd_list, str):
             cmd_list = cmd_list.split(" ")
         full_cmd = cmd_list if "--lang" in cmd_list else ["--lang", "pt", *cmd_list]
-        buffer = StringIO()
-        with Console.redirect(stdout=buffer):
+        with Console.capture() as captured:
             result = runner.invoke(app, full_cmd)
         if result.exception:
             raise result.exception
-        return result.stdout + buffer.getvalue()
+        return result.stdout + captured.getvalue()
 
     # @staticmethod
     # def list(capsys: pytest.CaptureFixture[str], file: str, cmd_list: list[str]):

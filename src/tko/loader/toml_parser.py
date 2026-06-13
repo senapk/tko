@@ -1,6 +1,6 @@
 import tomllib
 from pathlib import Path
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from tko.util.decoder import Decoder
 from tko.loader.unit_data import UnitData
 from tko.util.console import Console
@@ -83,10 +83,10 @@ class TomlParser:
 
         for i, case in enumerate(data[main_list_name], start=1): # type:ignore
             if not isinstance(case, dict):
-                raise ValueError(t(_TOML_CASE_INVALID, index=i))
+                raise ValueError(str(_TOML_CASE_INVALID).format(index=i))
 
             if "input" not in case or "output" not in case:
-                Console.print(t(_TOML_CASE_DATA_WARNING, index=i, case=case)) # type: ignore
+                Console.print(str(_TOML_CASE_DATA_WARNING).format(index=i, case=case)) # type: ignore
                 continue # ou raise ValueError(f"Case {i} inválido: campos 'input' e 'output' são obrigatórios.")
 
             if "input" in case:

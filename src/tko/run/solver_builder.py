@@ -8,7 +8,7 @@ from tko.util.runner import Runner
 from tko.config.settings import Settings
 from pathlib import Path
 from tko.run_build.ts_macro_preprocessor import TypeScriptMacroPreprocessor
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 
 
 _SOLVER_COMMAND_NOT_FOUND = Msg(
@@ -91,8 +91,8 @@ class SolverBuilder:
 
     def check_tool(self, name: str):
         if shutil.which(name) is None:
-            self.__exec.set_compile_error(RT(t(_SOLVER_COMMAND_NOT_FOUND, name=name), "r"))
-            raise CompileError(t(_SOLVER_COMMAND_NOT_FOUND, name=name))
+            self.__exec.set_compile_error(RT(str(_SOLVER_COMMAND_NOT_FOUND).format(name=name), "r"))
+            raise CompileError(str(_SOLVER_COMMAND_NOT_FOUND).format(name=name))
 
     def not_compiled(self):
         return not self.__exec.compiled()
@@ -171,7 +171,7 @@ class SolverBuilder:
     def prepare_exec_with_lang(self):
         lang = self.settings.get_languages_settings().get_languages().get(self.args_list[0].suffix[1:], None)
         if lang is None:
-            self.__exec.set_compile_error(RT(t(_SOLVER_EXTENSION_UNRECOGNIZED, suffix=self.args_list[0].suffix), "r"))
+            self.__exec.set_compile_error(RT(str(_SOLVER_EXTENSION_UNRECOGNIZED).format(suffix=self.args_list[0].suffix), "r"))
             return
         self._prepare_exec_with_commands(lang.build_cmd, lang.run_cmd)
 
@@ -215,7 +215,7 @@ class SolverBuilder:
         try:
             lang = self.settings.get_languages_settings().get_languages().get("ts", None)
             if lang is None:
-                self.__exec.set_compile_error(RT(t(_SOLVER_TS_CONFIG_NOT_FOUND), "r"))
+                self.__exec.set_compile_error(RT(str(_SOLVER_TS_CONFIG_NOT_FOUND), "r"))
                 return
             build_cmd = lang.build_cmd
             run_cmd = lang.run_cmd

@@ -9,7 +9,7 @@ from tko.config.settings import Settings
 from tko.logger.audit_tracker import AuditElement
 from tko.logger.patch_history import PatchHistory
 from loguru import logger
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from tko.util.console import Console
 
 app = typer.Typer(help="Audit repository activity", no_args_is_help=True)
@@ -60,13 +60,14 @@ def audit_init(
     if repo is None:
         return
     
+    AUDIT_STARTING = Msg(pt="Monitor de auditoria iniciado. Aperte Ctrl+C para finalizar.", 
+                      en="Audit watcher started. Press Ctrl+C to stop.")
+
     watcher = RepositoryWatcher(repo)
     watcher.start_watching(log_edits=False, log_audit=True, audit_verbose=True, audit_interval_seconds=interval)
-    logger.info(t(Msg(pt="Monitor de auditoria iniciado. Aperte Ctrl+C para finalizar.", 
-                      en="Audit watcher started. Press Ctrl+C to stop.")))
-    
-    Console.print(t(Msg(pt="Abra o tko em outro terminal para fazer as tarefas", 
-                        en="Open tko in another terminal to perform tasks")))
+    logger.info(f"{AUDIT_STARTING}")
+    OPEN_TKO = Msg(pt='Abra o tko em outro terminal para fazer as tarefas', en='Open tko in another terminal to perform tasks')
+    Console.print(f"{OPEN_TKO}")
     try:
         while True:
             time.sleep(1)
@@ -74,7 +75,7 @@ def audit_init(
         pass
     finally:
         watcher.stop_watching()
-        logger.info(t(Msg(pt="Monitor de auditoria parado.", en="Audit watcher stopped.")))
+        logger.info(f"{Msg(pt='Monitor de auditoria parado.', en='Audit watcher stopped.')}")
 
 
 @app.command("unpack")

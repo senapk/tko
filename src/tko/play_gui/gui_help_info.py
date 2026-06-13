@@ -1,6 +1,5 @@
-from tko.widget.frame import Frame
 from tko.play.gui_keys import GuiKeys
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from tko.util.rt import RT
 from tko.util.symbols import Symbols
 
@@ -57,39 +56,38 @@ class _GuiHelpMsg:
                          en="tko config set --editor <command>")
 
 
-class GuiHelpPanel:
+class GuiHelpInfo:
 
-    def show(self, frame: Frame) -> None:
-        frame.draw()
-        dx = frame.get_dx() - 2
+    @staticmethod
+    def show() -> list[RT]:
         help_lines: list[RT] = []
-        help_lines.append(RT(t(_GuiHelpMsg.SECTION_CONFIG), "g").center(dx, RT("-")))
-        help_lines.append(RT.parse(t(_GuiHelpMsg.CALIBRATE_LINE).format(GuiKeys.calibrate)))
+        dx = 65
+        help_lines.append(RT(str(_GuiHelpMsg.SECTION_CONFIG), "g").center(dx, RT("-")))
+        help_lines.append(RT.parse(str(_GuiHelpMsg.CALIBRATE_LINE).format(GuiKeys.calibrate)))
 
-        help_lines.append(RT(t(_GuiHelpMsg.SECTION_SYMBOLS), "g").center(dx, RT("-")))
-        help_lines.append(RT.parse(t(_GuiHelpMsg.SYMBOL_STUDY_WRITE_NOHELP).format(Symbols.loss_free, Symbols.loss_part, Symbols.loss_zero)))
-        help_lines.append(RT.parse(t(_GuiHelpMsg.SYMBOL_SELF_EVAL).format(
+        help_lines.append(RT(str(_GuiHelpMsg.SECTION_SYMBOLS), "g").center(dx, RT("-")))
+        help_lines.append(RT.parse(str(_GuiHelpMsg.SYMBOL_STUDY_WRITE_NOHELP).format(Symbols.loss_free, Symbols.loss_part, Symbols.loss_zero)))
+        help_lines.append(RT.parse(str(_GuiHelpMsg.SYMBOL_SELF_EVAL).format(
             Symbols.diamond_filled, Symbols.circle_filled, Symbols.task_view,
             Symbols.diamond_void, Symbols.circle_void, Symbols.task_view)))
-        help_lines.append(RT(t(_GuiHelpMsg.SECTION_NAVIGATION), "g").center(dx, RT("-")))
-        help_lines.append(RT.parse(t(_GuiHelpMsg.NAV_ARROWS).format("↑↓→")))
-        help_lines.append(RT.parse(t(_GuiHelpMsg.NAV_ENTER).format("↲")))
-        help_lines.append(RT(t(_GuiHelpMsg.SECTION_INTERFACE), "g").center(dx, RT("-")))
-        help_lines.append(RT.parse(t(_GuiHelpMsg.INTERFACE_INBOX).format(GuiKeys.inbox)))
-        help_lines.append(RT.parse(t(_GuiHelpMsg.INTERFACE_ALL).format(GuiKeys.all_tasks)))
-        help_lines.append(RT.parse(t(_GuiHelpMsg.INTERFACE_PALETTE).format(GuiKeys.palette)))
-        help_lines.append(RT.parse(t(_GuiHelpMsg.INTERFACE_TIME).format(GuiKeys.show_duration)))
-        help_lines.append(RT.parse(t(_GuiHelpMsg.INTERFACE_SEARCH).format(GuiKeys.search)))
+        help_lines.append(RT(str(_GuiHelpMsg.SECTION_NAVIGATION), "g").center(dx, RT("-")))
+        help_lines.append(RT.parse(str(_GuiHelpMsg.NAV_ARROWS).format("↑↓→")))
+        help_lines.append(RT.parse(str(_GuiHelpMsg.NAV_ENTER).format("↲")))
+        help_lines.append(RT(str(_GuiHelpMsg.SECTION_INTERFACE), "g").center(dx, RT("-")))
+        help_lines.append(RT.parse(str(_GuiHelpMsg.INTERFACE_INBOX).format(GuiKeys.inbox)))
+        help_lines.append(RT.parse(str(_GuiHelpMsg.INTERFACE_ALL).format(GuiKeys.all_tasks)))
+        help_lines.append(RT.parse(str(_GuiHelpMsg.INTERFACE_PALETTE).format(GuiKeys.palette)))
+        help_lines.append(RT.parse(str(_GuiHelpMsg.INTERFACE_TIME).format(GuiKeys.show_duration)))
+        help_lines.append(RT.parse(str(_GuiHelpMsg.INTERFACE_SEARCH).format(GuiKeys.search)))
 
-        help_lines.append(RT(t(_GuiHelpMsg.SECTION_TASKS), "g").center(dx, RT("-")))
-        help_lines.append(RT.parse(t(_GuiHelpMsg.TASK_DOWNLOAD).format(GuiKeys.down_task)))
-        help_lines.append(RT.parse(t(_GuiHelpMsg.TASK_DELETE).format(GuiKeys.delete_folder)))
-        help_lines.append(RT.parse(t(_GuiHelpMsg.TASK_DRAFT).format(GuiKeys.create_draft)))
-        help_lines.append(RT.parse(t(_GuiHelpMsg.TASK_EVALUATION).format(GuiKeys.self_evaluate)))
+        help_lines.append(RT(str(_GuiHelpMsg.SECTION_TASKS), "g").center(dx, RT("-")))
+        help_lines.append(RT.parse(str(_GuiHelpMsg.TASK_DOWNLOAD).format(GuiKeys.down_task)))
+        help_lines.append(RT.parse(str(_GuiHelpMsg.TASK_DELETE).format(GuiKeys.delete_folder)))
+        help_lines.append(RT.parse(str(_GuiHelpMsg.TASK_DRAFT).format(GuiKeys.create_draft)))
+        help_lines.append(RT.parse(str(_GuiHelpMsg.TASK_EVALUATION).format(GuiKeys.self_evaluate)))
 
-        help_lines.append(RT(t(_GuiHelpMsg.SECTION_DEFAULT_EDITOR), "g").center(dx, RT("-")))
-        help_lines.append(RT(t(_GuiHelpMsg.EDITOR_DESC)))
-        help_lines.append(RT(t(_GuiHelpMsg.EDITOR_COMMAND), "y").center(dx))
+        help_lines.append(RT(str(_GuiHelpMsg.SECTION_DEFAULT_EDITOR), "g").center(dx, RT("-")))
+        help_lines.append(RT(str(_GuiHelpMsg.EDITOR_DESC)))
+        help_lines.append(RT(str(_GuiHelpMsg.EDITOR_COMMAND), "y").center(dx))
 
-        for i, line in enumerate(help_lines):
-            frame.write(i, 0, line)
+        return help_lines

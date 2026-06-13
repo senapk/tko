@@ -2,7 +2,7 @@ from loguru import logger
 
 from tko.game.quest import Quest
 from tko.game.task import Task
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 
 
 
@@ -38,7 +38,7 @@ class GameValidator:
                 if task.basic.full_key in keys:
                     logger.error(
                         "%s em %s %s, ignorando tarefa",
-                        t(_GAME_VALIDATOR_DUPLICATE_KEY, task_key=task.basic.full_key),
+                        str(_GAME_VALIDATOR_DUPLICATE_KEY).format(task_key=task.basic.full_key),
                         task.resource.line_number,
                         task.resource.line_data,
                     )
@@ -49,7 +49,7 @@ class GameValidator:
         # print chaves repetidas
         for k in keys:
             if keys.count(k) > 1:
-                logger.error(t(_GAME_VALIDATOR_DUPLICATE_KEY, task_key=k))
+                logger.error(str(_GAME_VALIDATOR_DUPLICATE_KEY).format(task_key=k))
                 exit(1)
 
         # trim titles
@@ -60,7 +60,7 @@ class GameValidator:
         for q in self.quests.values():
             for r in q.requirements.requires:
                 if q.basic.full_key == r:
-                    logger.error(t(_GAME_VALIDATOR_SELF_REF_ERROR, line_number=q.source.line_number, line=q.source.line))
+                    logger.error(str(_GAME_VALIDATOR_SELF_REF_ERROR).format(line_number=q.source.line_number, line=q.source.line))
                     exit(1)
 
 
@@ -69,7 +69,7 @@ class GameValidator:
         def dfs(qx: Quest, visitedx: list[str]):
             if len(visitedx) > 0:
                 if visitedx[0] == qx.basic.full_key:
-                    logger.error(t(_GAME_VALIDATOR_CYCLE_DETECTED, visited=visitedx))
+                    logger.error(str(_GAME_VALIDATOR_CYCLE_DETECTED).format(visited=visitedx))
                     exit(1)
             if qx.basic.full_key in visitedx:
                 return

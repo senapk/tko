@@ -23,7 +23,7 @@ from tko.tester.tester_ui_actions import TesterUiActions
 from tko.repository.repository import Repository
 from tko.run.solver_builder import CompileError
 from tko.run.wdir import Wdir
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 
 
 
@@ -207,6 +207,6 @@ class Tester:
                                 .set_mode(LogItemExec.Mode.FREE)
                                 .set_fail(LogItemExec.Fail.COMP)
                             )
-                        logger.exception(t(_TESTER_COMPILE_ERROR_DURING_RUN))
-                        input(t(_TESTER_PRESS_ENTER_TO_CONTINUE))
+                        logger.exception(str(_TESTER_COMPILE_ERROR_DURING_RUN))
+                        input(str(_TESTER_PRESS_ENTER_TO_CONTINUE))
                         break

@@ -4,7 +4,7 @@ from tko.config.flags import Flags
 from tko.play.gui_keys import GuiKeys
 from tko.util.rt import RT
 from tko.widget.button import Button
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 import time
 
 class _TopBarMsg:
@@ -30,14 +30,14 @@ class GuiTopBar:
         panel_on = self.flags.show_panel.is_true()
         vi = Button()
         pre = [
-            vi.toggle_bt(f"{t(_TopBarMsg.RECOMMENDED)}[{GuiKeys.inbox}]", self.flags.task_view_mode.is_inbox()),
-            vi.toggle_bt(f"{t(_TopBarMsg.ALL)}[{GuiKeys.all_tasks}]", self.flags.task_view_mode.is_all()),
+            vi.toggle_bt(f"{str(_TopBarMsg.RECOMMENDED)}[{GuiKeys.inbox}]", self.flags.task_view_mode.is_inbox()),
+            vi.toggle_bt(f"{str(_TopBarMsg.ALL)}[{GuiKeys.all_tasks}]", self.flags.task_view_mode.is_all()),
             RT(" "),
         ]
         pos = [
-            vi.toggle_bt(f"{t(_TopBarMsg.GRAPHS)}[{GuiKeys.panel_graph}]", panel_on and self.flags.panel.is_graph()),
-            vi.toggle_bt(f"{t(_TopBarMsg.LOGS)}[{GuiKeys.panel_logs}]", panel_on and self.flags.panel.is_logs()),
-            vi.toggle_bt(f"{t(_TopBarMsg.SKILLS)}[{GuiKeys.panel_skills}]", panel_on and self.flags.panel.is_skills()),
+            vi.toggle_bt(f"{str(_TopBarMsg.GRAPHS)}[{GuiKeys.panel_graph}]", panel_on and self.flags.panel.is_graph()),
+            vi.toggle_bt(f"{str(_TopBarMsg.LOGS)}[{GuiKeys.panel_logs}]", panel_on and self.flags.panel.is_logs()),
+            vi.toggle_bt(f"{str(_TopBarMsg.SKILLS)}[{GuiKeys.panel_skills}]", panel_on and self.flags.panel.is_skills()),
         ]
 
 

@@ -2,6 +2,7 @@ import typer
 
 from tko.config.settings import Settings
 from tko.util.console import Console
+from tko.util.rt import RT
 
 app = typer.Typer(help="Configure settings")
 
@@ -29,7 +30,7 @@ def config_set(
 @app.command("list", help="List default configuration values")
 def config_list(ctx: typer.Context):
     settings: Settings = ctx.obj
-    Console.print(str(settings))
+    Console.print(RT.parse(str(settings)))
 
 if __name__ == "__main__":
     app()

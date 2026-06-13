@@ -1,95 +1,181 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterator
 from contextlib import contextmanager
-from io import StringIO, TextIOBase
-from typing import Any, ClassVar
-import sys
-from tko.i18n import Msg, get_language
 from enum import Enum
+from io import StringIO
+from typing import Any, ClassVar, Protocol, TextIO
 
-class Tee(TextIOBase):
-    def __init__(self, *streams: TextIOBase) -> None:
-        self.streams: tuple[TextIOBase, ...] = streams
+import sys
 
-    def write(self, data: str) -> int:
-        for stream in self.streams:
-            stream.write(data)
-
-        return len(data)
-
-    def flush(self) -> None:
-        for stream in self.streams:
-            stream.flush()
+from tko.util.rt import RT
 
 
-type StreamLike = TextIOBase | Iterable[TextIOBase]
+class RenderMode(Enum):
+    ANSI = "ansi"
+    PLAIN = "plain"
+    FLAT = "flat"
 
-class SafeDict(dict[str, object]):
-    def __missing__(self, key: str) -> str:
-        return "{" + key + "}"
 
-class Console:
-    stdout: ClassVar[TextIOBase] = sys.stdout  # type: ignore
-    stderr: ClassVar[TextIOBase] = sys.stderr  # type: ignore
-
+class Renderer:
     @staticmethod
-    def _normalize(stream: StreamLike) -> TextIOBase:
-        if isinstance(stream, TextIOBase):
-            return stream
-
-        streams: tuple[TextIOBase, ...] = tuple(stream)
-
-        if len(streams) == 1:
-            return streams[0]
-
-        return Tee(*streams)
-
-    @staticmethod
-    def format(
-        *values: object,
-        sep: str = " ",
-        colors: bool = True,
-        **format_kwargs: Any,
+    def render(
+        value: Any,
+        mode: RenderMode,
     ) -> str:
-        rendered: list[str] = []
-        language = get_language()
-        for value in values:
-            if isinstance(value, Msg):
-                text = value.for_language(language)
-            elif isinstance(value, Enum):
-                text = str(value.value)
-            else:
-                text: str = str(value)
+        if not isinstance(value, RT):
+            return str(value)
 
-            if format_kwargs:
-                text = text.format_map(SafeDict(format_kwargs))
+        match mode:
+            case RenderMode.PLAIN:
+                return value.plain()
 
-            rendered.append(text)
+            case RenderMode.ANSI:
+                return value.ansi()
 
-        return sep.join(rendered)
-    
-    @staticmethod
-    def print(
-        *values: object,
+            case RenderMode.FLAT:
+                return value.flat()
+
+        raise ValueError(f"Invalid render mode: {mode}")
+
+
+class Writer(Protocol):
+    def write(
+        self,
+        *values: RT,
         sep: str = " ",
         end: str = "\n",
-        file: TextIOBase | None = None,
-        flush: bool = False,
-        err: bool = False,
-        colors: bool = True,
-        **format_kwargs: Any,
-    ) -> None:
-        rendered: str = Console.format(*values, sep=sep, colors=colors, **format_kwargs)
+    ) -> None: ...
 
-        stream: TextIOBase = file or (
-            Console.stderr if err else Console.stdout
+    def flush(self) -> None: ...
+
+
+class PrintWriter:
+    def __init__(
+        self,
+        file: TextIO,
+        mode: RenderMode = RenderMode.ANSI,
+    ) -> None:
+        self.file = file
+        self.mode = mode
+
+    def write(
+        self,
+        *values: RT,
+        sep: str = " ",
+        end: str = "\n",
+    ) -> None:
+        self.file.write(
+            sep.join(
+                Renderer.render(
+                    value,
+                    self.mode,
+                )
+                for value in values
+            )
         )
 
-        print(
-            rendered,
+        self.file.write(end)
+
+    def flush(self) -> None:
+        self.file.flush()
+
+
+class CaptureWriter:
+    def __init__(
+        self,
+        mode: RenderMode = RenderMode.PLAIN,
+    ) -> None:
+        self.buffer = StringIO()
+        self.mode = mode
+
+    def write(
+        self,
+        *values: RT,
+        sep: str = " ",
+        end: str = "\n",
+    ) -> None:
+        self.buffer.write(
+            sep.join(
+                Renderer.render(
+                    value,
+                    self.mode,
+                )
+                for value in values
+            )
+        )
+
+        self.buffer.write(end)
+
+    def flush(self) -> None:
+        pass
+
+    def getvalue(self) -> str:
+        return self.buffer.getvalue()
+
+
+class Console:
+    stdout: ClassVar[Writer] = PrintWriter(
+        sys.stdout,
+        RenderMode.ANSI,
+    )
+
+    stderr: ClassVar[Writer] = PrintWriter(
+        sys.stderr,
+        RenderMode.ANSI,
+    )
+
+    @staticmethod
+    def rt(value: Any) -> RT:
+        if isinstance(value, RT):
+            return value
+
+        return RT(str(value))
+
+    @staticmethod
+    def _write(
+        stream: Writer,
+        *values: Any,
+        sep: str = " ",
+        end: str = "\n",
+        flush: bool = False,
+    ) -> None:
+        stream.write(
+            *(Console.rt(value) for value in values),
+            sep=sep,
             end=end,
-            file=stream,
+        )
+
+        if flush:
+            stream.flush()
+
+    @staticmethod
+    def print(
+        *values: Any,
+        sep: str = " ",
+        end: str = "\n",
+        flush: bool = False,
+    ) -> None:
+        Console._write(
+            Console.stdout,
+            *values,
+            sep=sep,
+            end=end,
+            flush=flush,
+        )
+
+    @staticmethod
+    def error(
+        *values: Any,
+        sep: str = " ",
+        end: str = "\n",
+        flush: bool = False,
+    ) -> None:
+        Console._write(
+            Console.stderr,
+            *values,
+            sep=sep,
+            end=end,
             flush=flush,
         )
 
@@ -97,18 +183,18 @@ class Console:
     @contextmanager
     def redirect(
         *,
-        stdout: StreamLike | None = None,
-        stderr: StreamLike | None = None,
+        stdout: Writer | None = None,
+        stderr: Writer | None = None,
     ) -> Iterator[None]:
         previous_stdout = Console.stdout
         previous_stderr = Console.stderr
 
         try:
             if stdout is not None:
-                Console.stdout = Console._normalize(stdout)
+                Console.stdout = stdout
 
             if stderr is not None:
-                Console.stderr = Console._normalize(stderr)
+                Console.stderr = stderr
 
             yield
 
@@ -121,20 +207,12 @@ class Console:
     def capture(
         *,
         stderr: bool = False,
-        tee: bool = False,
-    ) -> Iterator[StringIO]:
-        buffer = StringIO()
-
-        stream: TextIOBase = buffer
-
-        if tee:
-            stream = Tee(
-                Console.stderr if stderr else Console.stdout,
-                buffer,
-            )
+        mode: RenderMode = RenderMode.PLAIN,
+    ) -> Iterator[CaptureWriter]:
+        capture = CaptureWriter(mode)
 
         with Console.redirect(
-            stderr=stream if stderr else None,
-            stdout=stream if not stderr else None,
+            stderr=capture if stderr else None,
+            stdout=capture if not stderr else None,
         ):
-            yield buffer
+            yield capture

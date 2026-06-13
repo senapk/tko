@@ -21,7 +21,7 @@ from tko.cli.cli_remote import app as remote_app
 from tko.cli.cli_reset import app as reset_app
 from tko.cli.cli_task import app as task_app
 from tko.cli.cli_tool import app as tool_app
-from tko.i18n import Msg, set_language, t
+from tko.i18n import Msg, set_language
 from tko.widget.fmt import Fmt
 from tko.util.console import Console
 
@@ -72,10 +72,10 @@ def main_callback(
 ):
     from tko.config.settings import Settings
     from tko.util.raw_terminal import RawTerminal
-    from tko.util.rt import RenderConfig, RenderMode
+    from tko.util.console import RenderMode, PrintWriter
 
     if version:
-        Console.print(t(_APP_VERSION, version=__version__))
+        Console.print(f"{_APP_VERSION}".format(version=__version__))
         raise typer.Exit()
 
     if width is not None:
@@ -96,7 +96,8 @@ def main_callback(
     set_language(sett.app.ui_language)
 
     if mono:
-        RenderConfig.mode = RenderMode.PLAIN
+        Console.stdout = PrintWriter(sys.stdout, RenderMode.PLAIN)
+        Console.stderr = PrintWriter(sys.stderr, RenderMode.PLAIN)
         Fmt.mono = mono
 
     configure_loguru(sett.get_log_file(), debug)
@@ -108,7 +109,7 @@ def main():
     try:
         app()
     except KeyboardInterrupt:
-        Console.print(f"\n\n{t(_APP_KEYBOARD_INTERRUPT)}")
+        Console.print(f"\n\n{_APP_KEYBOARD_INTERRUPT}")
         sys.exit(1)
     except Warning as w:
         logger.warning("%s", w)

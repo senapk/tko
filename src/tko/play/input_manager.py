@@ -3,7 +3,7 @@ from tko.config.app_settings import AppSettings
 import curses
 import os
 from tko.config.app_settings import AppSettings, AppKeys
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 
 
 _INPUT_DUPLICATE_KEY = Msg(pt="Chave duplicada {input_key}", en="Duplicate key {input_key}")
@@ -26,7 +26,7 @@ class InputManager:
 
     def add_int(self, _key: int, fn: Callable[[], None]):
         if _key in self.calls.keys():
-            raise ValueError(t(_INPUT_DUPLICATE_KEY, input_key=chr(_key)))
+            raise ValueError(str(_INPUT_DUPLICATE_KEY).format(input_key=chr(_key)))
         self.calls[_key] = fn
 
     def add_str(self, str_key: str, fn: Callable[[], None]):

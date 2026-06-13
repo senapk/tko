@@ -5,7 +5,7 @@ from tko.util.pattern_loader import PatternLoader
 from tko.loader.toml_parser import TomlParser
 from tko.run.unit import Unit
 from tko.util.decoder import Decoder
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from pathlib import Path
 from tko.util.console import Console
 
@@ -90,13 +90,13 @@ class Writer:
                 _old = Decoder.load(_target)
                 if _old == _new:
                     if not quiet:
-                        Console.print(t(_WRITER_NO_CHANGES_TEST_FILE))
+                        Console.print(str(_WRITER_NO_CHANGES_TEST_FILE))
                     return False
 
             with open(_target, "w", encoding="utf-8") as f:
                 f.write(_new)
                 if not quiet:
-                    Console.print(t(_WRITER_FILE_WROTE, path=_target))
+                    Console.print(str(_WRITER_FILE_WROTE).format(path=_target))
                 return True
 
         
@@ -105,6 +105,6 @@ class Writer:
         elif target.suffix in [".tio", ".vpl", ".toml"]:
             save_file(target, unit_list)
         else:
-            logger.error(t(_WRITER_TARGET_NOT_SUPPORTED_BUILD, target=target))
+            logger.error(str(_WRITER_TARGET_NOT_SUPPORTED_BUILD).format(target=target))
             return False
         return True

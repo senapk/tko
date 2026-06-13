@@ -10,7 +10,7 @@ from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.repository.git_cache import GitCache
 from tko.repository.remote import Remote
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 # from typing import override
 
 
@@ -47,7 +47,7 @@ class Game:
     def get_task_throw(self, key: str) -> Task:
         if key in self.tasks:
             return self.tasks[key]
-        raise Warning(t(_GAME_TASK_NOT_FOUND_IN_COURSE, task_key=key))
+        raise Warning(str(_GAME_TASK_NOT_FOUND_IN_COURSE).format(task_key=key))
 
     def get_task(self, key: str) -> Task | None:
         if key in self.tasks:
@@ -58,7 +58,7 @@ class Game:
         for s in self.remotes:
             if s.is_sandbox:
                 return s
-        raise ValueError(t(_GAME_SANDBOX_SOURCE_NOT_FOUND))
+        raise ValueError(str(_GAME_SANDBOX_SOURCE_NOT_FOUND))
 
     def set_remotes(self, remotes: list[Remote], language: str):
         self.remotes = remotes
@@ -74,7 +74,7 @@ class Game:
             try:
                 gb.build_from(self.language)
             except ValueError:
-                logger.exception(t(_GAME_BUILD_FAILED_FOR_SOURCE, name=remote.data.name))
+                logger.exception(str(_GAME_BUILD_FAILED_FOR_SOURCE).format(name=remote.data.name))
                 continue
             for quest_key in gb.ordered_quests:
                 self.ordered_quests.append(remote.data.name + "@" + quest_key)

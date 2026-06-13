@@ -1,5 +1,5 @@
 from tko.feno.github_url_structure import GithubUrlStructure
-from tko.i18n import Msg, t
+from tko.i18n import Msg
 from tko.util.rt import RT
 
 
@@ -24,7 +24,7 @@ class GithubCfg:
             self.__load_cfg_path(target)
             self.__parse_cfg()
             if self.cfg_path is None:
-                Console.print(RT(t(_FENO_GITHUB_CFG_NOT_SET, filename=self.FILENAME), "r"))
+                Console.print(RT(str(_FENO_GITHUB_CFG_NOT_SET).format(filename=self.FILENAME), "r"))
 
     def cfg_exists(self):
         return self.cfg_path is not None
