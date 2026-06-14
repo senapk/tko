@@ -84,7 +84,6 @@ class ViewMode(Flag):
 
 
 class PanelMode(Flag):
-    HELP = "help"
     GRAPH = "graph"
     LOGS = "logs"
     SKILLS = "skills"
@@ -94,7 +93,6 @@ class PanelMode(Flag):
             id=id,
             default_value=default_value,
             msgs={
-                PanelMode.HELP: "Mostrar ajuda",
                 PanelMode.GRAPH: "Gráfico de tarefas",
                 PanelMode.LOGS: "Mostrar logs",
                 PanelMode.SKILLS: "Mostrar trilhas",
@@ -102,9 +100,6 @@ class PanelMode(Flag):
             description="Mostra o Painel de Informações",
             keycode="",
         )
-
-    def is_help(self):
-        return self.get_value() == PanelMode.HELP
 
     def is_graph(self):
         return self.get_value() == PanelMode.GRAPH
@@ -114,9 +109,6 @@ class PanelMode(Flag):
 
     def is_skills(self):
         return self.get_value() == PanelMode.SKILLS
-
-    def set_help(self):
-        self._value = PanelMode.HELP
 
     def set_graph(self):
         self._value = PanelMode.GRAPH
@@ -161,7 +153,7 @@ class Flags:
     def __init__(self):
         self.task_view_mode = ViewMode("inbox")
 
-        self.panel = PanelMode("panel", PanelMode.HELP)
+        self.panel = PanelMode("panel", PanelMode.SKILLS)
 
         self.show_panel = BoolFlag(
             id="show_panel",

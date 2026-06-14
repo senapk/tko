@@ -3,6 +3,7 @@ from pathlib import Path
 from tko.game.task import Task
 from tko.play.opener import Opener
 from tko.repository.repository import Repository
+from tko.repository.repository_watcher import RepositoryWatcher
 from tko.util.param import Param
 from tko.config.settings import Settings
 from tko.util.rt import RT
@@ -26,9 +27,10 @@ _RUN_NO_SOURCE_OR_TESTS = Msg(
 )
 
 class Run:
-    def __init__(self, settings: Settings, target_list: list[Path], param: None | Param.Basic, language: str | None = None, repo: Repository | None = None):
+    def __init__(self, settings: Settings, target_list: list[Path], param: None | Param.Basic, language: str | None = None, repo: Repository | None = None, watcher: RepositoryWatcher | None = None):
         config = RunConfig()
         self.context = RunContext(config, settings, target_list, param, language, repo)
+        self.watcher = watcher
 
     # Fluent Setters delegated to context
     def show_track_info(self):
@@ -106,7 +108,7 @@ class Run:
 
     def _run_in_curses_mode(self, loader: RunLoader) -> int:
         """Execute in curses TUI mode."""
-        tester = Tester(self.context.settings, self.context.repo, self.context.wdir, self.context.get_task())
+        tester = Tester(settings = self.context.settings, repo = self.context.repo, wdir = self.context.wdir, task = self.context.get_task(), watcher = self.watcher)
         
         # Set opener
         if self.context.opener is not None:

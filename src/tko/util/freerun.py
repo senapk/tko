@@ -95,17 +95,21 @@ class Free:
                     kwargs["preexec_fn"] = os.setsid
                 else:
                     kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+                with Console.capture() as cap: # disable Console prints in execution of cmd, but capture them to show after it finishes
+                    answer = subprocess.Popen(cmd, **kwargs)
+                    try:
+                        answer.wait()
+                    except KeyboardInterrupt:
+                        answer.kill()
+                        os.killpg(os.getpgid(answer.pid), signal.SIGTERM)
+                Console.print(cap.getvalue())
 
-                answer = subprocess.Popen(cmd, **kwargs)
-                try:
-                    answer.wait()
-                except KeyboardInterrupt:
-                    answer.kill()
-                    os.killpg(os.getpgid(answer.pid), signal.SIGTERM)
                 if answer.returncode != 0 and answer.returncode != 1:
                     Console.print(f"returncode: {answer.returncode}")
             else:
-                subprocess.run(cmd, **kwargs)
+                with Console.capture() as cap: # disable Console prints in execution of cmd, but capture them to show after it finishes
+                    subprocess.run(cmd, **kwargs)
+                Console.print(cap.getvalue())
                 
         solver.reset()
         to_run_again = False

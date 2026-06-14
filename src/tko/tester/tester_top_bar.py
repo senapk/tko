@@ -12,7 +12,9 @@ from tko.util.rt import RT
 from tko.util.symbols import Symbols
 from tko.enums.execution_result import ExecutionResult
 from tko.i18n import Msg
-
+from typing import Callable
+from tko.play_gui.gui_top_bar import edit_audit_info
+from tko.util.aligner import Aligner
 
 class _TesterTopBarMsg:
     RUNNING_LOCKED_ACTIVITY = Msg(pt="Executando atividade travada", en="Running locked activity")
@@ -21,10 +23,12 @@ class _TesterTopBarMsg:
 
 class TesterTopBar:
 
-    def __init__(self, wdir: Wdir, task: Task, app: AppSettings) -> None:
+    def __init__(self, wdir: Wdir, task: Task, app: AppSettings, edit_fn: Callable[[], bool], audit_fn: Callable[[], bool]) -> None:
         self.wdir = wdir
         self.task = task
         self.app = app
+        self.edit_fn = edit_fn
+        self.audit_fn = audit_fn
         self._dummy_unit = Unit()
 
     def get_fixed_arrow(self, state: TesterState) -> RT:
@@ -35,7 +39,7 @@ class TesterTopBar:
         buffer.add(Button.action_bt(f"{GuiKeys.lock} {symbol}"))
         return buffer.to_rt()
 
-    def build_top_line_header(self, state: TesterState, frame_dx: int) -> RT:
+    def build_top_line_header(self, state: TesterState, frame_dx: int, timed: bool) -> RT:
         running_color  = "R"
 
         folder   = tester_util.get_folder(self.task)
@@ -66,14 +70,20 @@ class TesterTopBar:
         else:
             sources = Button.info_label(str(_TesterTopBarMsg.NO_TESTS_REGISTERED), "R")
 
-        delta = frame_dx - len(solvers)
-        left, right = 1, 1
-        if delta > 0:
-            delta_left = delta // 2
-            left  = max(1, delta_left - len(activity))
-            right = max(1, (delta - delta_left) - len(sources))
+        left = activity
+        center = edit_audit_info(self.edit_fn, self.audit_fn, timed=timed)
+        right = RT.join([solvers, sources], " ")
         filler = "─" if self.wdir.has_tests else " "
-        return RBuffer().add(activity).add(filler * left).add(solvers).add(filler * right).add(sources).to_rt()
+        return Aligner.distribute_with_filler(left, center, right, filler, frame_dx)
+
+        # delta = frame_dx - len(_center)
+        # left, right = 1, 1
+        # if delta > 0:
+        #     delta_left = delta // 2
+        #     left  = max(1, delta_left - len(_left))
+        #     right = max(1, (delta - delta_left) - len(_right))
+        # filler = "─" if self.wdir.has_tests else " "
+        # return RBuffer().add(_left).add(filler * left).add(_center).add(filler * right).add(_right).to_rt()
 
     def build_unit_list(self, state: TesterState, frame: Frame) -> RT:
         done_list = state.results
@@ -150,7 +160,7 @@ class TesterTopBar:
         frame = Frame(0, 0).set_size(size, cols)
         if not self.wdir.has_tests:
             frame.set_border_none()
-        frame.set_header(self.build_top_line_header(state, frame.get_dx()))
+        frame.set_header(self.build_top_line_header(state, frame.get_dx(), timed=True))
         self.draw_top_bar_content(state, frame)
         frame.set_footer(self.build_unit_list(state, frame), "")
         frame.draw()

@@ -1,4 +1,5 @@
 from tko.game.game import Game
+from tko.repository.repository_watcher import RepositoryWatcher
 from tko.widget.fmt import Fmt
 from tko.play.language_setter import LanguageSetter
 from tko.config.app_settings import ToggleOption
@@ -31,16 +32,17 @@ _PLAY_KEY_NOT_RECOGNIZED = Msg(
 )
 
 class Play:
-    def __init__(self, settings: Settings, repo: Repository):
+    def __init__(self, settings: Settings, repo: Repository, watcher: RepositoryWatcher | None):
         self.settings = settings
         self.app = settings.app
         self.repo = repo
+        self.watcher = watcher
         self.game: Game = repo.game
         self.exit = False
         self.flags = repo.flags
         self.fman: FloatingManager = FloatingManager()        
         self.tree = TaskTree(self.settings, repo) # type: ignore
-        self.gui = Gui(tree=self.tree, fman=self.fman)
+        self.gui = Gui(tree=self.tree, fman=self.fman, watcher=self.watcher)
         self.actions = PlayActions(self.gui)
         self.play_palette = PlayPalette(self.actions)
         self.loader = RepositoryConfig(repo)

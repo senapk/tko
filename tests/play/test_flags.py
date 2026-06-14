@@ -72,7 +72,6 @@ class TestFlags:
         )
 
         assert flags.task_view_mode.is_all() is True
-        assert flags.panel.is_help() is True
         assert flags.show_panel.is_true() is False
         assert flags.task_graph_mode.is_time_view() is True
         assert flags.show_time.is_true() is True

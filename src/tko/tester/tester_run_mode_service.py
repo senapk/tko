@@ -69,7 +69,7 @@ class TesterRunModeService:
                 .set_size(changes, total_lines)
             )
 
-        header = self.top_bar.build_top_line_header(state, RawTerminal.get_terminal_size())
+        header = self.top_bar.build_top_line_header(state, RawTerminal.get_terminal_size(), timed=False)
         return lambda: Free.free_run(
             self.wdir.get_solver(),
             standalone_mode=False,

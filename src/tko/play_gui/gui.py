@@ -2,6 +2,7 @@ from tko.config.settings import Settings
 from tko.config.app_settings import AppSettings
 from tko.game.task import Task
 from tko.i18n.message import Msg
+from tko.repository.repository_watcher import RepositoryWatcher
 from tko.widget.fmt import Fmt
 from tko.widget.frame import Frame
 from tko.floating.floating_manager import FloatingManager
@@ -22,7 +23,7 @@ from tko.play_gui.gui_graph_panel import GuiGraphPanel
 
 class Gui:
 
-    def __init__(self, tree: TaskTree, fman: FloatingManager):
+    def __init__(self, tree: TaskTree, fman: FloatingManager, watcher: RepositoryWatcher | None):
         self.repo: Repository = tree.repo
         self.game: Game = tree.game
         self.tree: TaskTree = tree
@@ -33,6 +34,7 @@ class Gui:
         self.language = LanguageSetter(self.settings, self.repo, self.fman)
         self.colors = self.settings.colors
         self.app: AppSettings = self.settings.app
+        self.watcher = watcher
 
         top_floating = lambda: self.fman.get_top()
         in_search = lambda: self.search.search_mode
@@ -42,7 +44,11 @@ class Gui:
         self.action_resolver = GuiActionResolver(self.tree, self.fman, self.tree.task_formatter, self.flags)
         self.left_panel      = GuiLeftPanel(self.tree, self.search, lambda: self._need_update)
         self.bottom_bar      = GuiBottomBar(self.tree, self.action_resolver, in_search, top_floating)
-        self.top_bar         = GuiTopBar(self.flags, self.app)
+
+        edit_mode_fn = lambda: self.watcher is not None and self.watcher.edit_logger is not None
+        audit_mode_fn = lambda: self.watcher is not None and self.watcher.audit_logger is not None
+        
+        self.top_bar         = GuiTopBar(self.flags, self.app, edit_fn=edit_mode_fn, audit_fn=audit_mode_fn)
         self.skills_bar      = GuiSkillsBar(self.game, self.colors, self.flags, lambda: self.tree.get_selected_throw().basic.remote_name)
         self.graph_panel     = GuiGraphPanel(self.settings, self.repo, self.flags)
 

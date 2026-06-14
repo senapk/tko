@@ -6,6 +6,7 @@ from pathlib import Path
 from tko.play_tree.task_formatter import TaskFormatter
 from tko.game.task import Task
 from tko.i18n import Msg 
+from tko.repository.repository_watcher import RepositoryWatcher
 from tko.util.console import Console
 # from tko.i18n import t
 # from tko.util.rt import RT
@@ -26,18 +27,19 @@ _NOT_FOUND_HINT = Msg(
 )
 
 class CmdOpen:
-    def __init__(self, settings: Settings, repo: Repository):
+    def __init__(self, settings: Settings, repo: Repository, watcher: RepositoryWatcher | None = None):
         self.settings = settings
         self.need_update = False
         self.repo: Repository = repo
         self.repo_dir: Path = repo.paths.root_dir
         self.update_mode = settings.rs.update_mode
+        self.watcher = watcher
 
     def display_need_update(self):
         self.need_update = True
 
     def execute(self):
-        play = Play(self.settings, self.repo)
+        play = Play(self.settings, self.repo, self.watcher)
         if self.need_update:
             play.display_need_update()
         play.play()

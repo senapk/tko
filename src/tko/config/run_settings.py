@@ -12,6 +12,7 @@ class RunSettings:
     width: int | None = None
     update_mode = UpdateMode.IF_OLDER
 
+
     @property
     def force_update(self) -> bool:
         return self.update_mode == UpdateMode.ALWAYS

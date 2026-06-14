@@ -66,8 +66,7 @@ class TaskLauncher:
         task_folder = task.path.work_dir
         if not task_folder:
             raise Warning(str(_TaskLauncherMsg.FOLDER_NOT_FOUND))
-        run = Run(settings=self.settings, target_list=[task_folder], param=Param.Basic())
-        run.set_lang(self.repo.data.lang)
+        run = Run(settings=self.settings, target_list=[task_folder], param=Param.Basic(), language=self.repo.data.lang, repo=self.repo, watcher=self.gui.watcher)
         opener = Opener(self.settings).set_language(self.repo.data.lang).add_task_folder_to_open(task_folder)
         run.set_opener(opener)
         run.set_run_without_ask(False)

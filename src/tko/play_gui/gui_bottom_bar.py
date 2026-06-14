@@ -36,12 +36,10 @@ class GuiBottomBar:
         button = Button().toggle_bt
         
         _, act_text = self.action_resolver.get_activate_label()
-        in_help = self.flags.panel.is_help() and self.flags.show_panel.is_true()
         help_fixed: list[RT] = [
             button(f"{GuiActionsNames.create_draft} [{GuiKeys.create_draft}]", active=self.in_drafts),
             button(f"{GuiActionsNames.pallete} [{GuiKeys.palette}]", active=self.in_palette),
             button(f"{GuiActionsNames.search} [{GuiKeys.search}]", active=self.in_search()),
-            button(f"{GuiActionsNames.help} [{GuiKeys.ask_help}]", active=in_help),
             Button.action_bt(f"{act_text} [↲]", enabled=True),
             Button.toggle_bt(f"{GuiActionsNames.grade} [{GuiKeys.self_evaluate}]", active=self.in_self, enabled=self_enabled),
         ]

@@ -9,6 +9,7 @@ from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_move import LogItemMove, LogItemMoveMode
 from tko.floating.floating import Floating, AlignY, AlignX, Position
 from tko.floating.floating_manager import FloatingManager, FloatingWriter
+from tko.repository.repository_watcher import RepositoryWatcher
 from tko.widget.fmt import Fmt
 from tko.play.input_manager import InputManager
 from tko.play.gui_keys import GuiKeys
@@ -41,24 +42,27 @@ _TESTER_PRESS_ENTER_TO_CONTINUE = Msg(
 
 class Tester:
 
-    def __init__(self, settings: Settings, rep: Repository | None, wdir: Wdir, task: Task) -> None:
+    def __init__(self, settings: Settings, repo: Repository | None, wdir: Wdir, task: Task, watcher: RepositoryWatcher | None) -> None:
         self.settings = settings
-        self.rep = rep
+        self.watcher = watcher
+        self.rep = repo
         self.wdir = wdir
         self.task = task
         self.app = settings.app
-        fman    = FloatingManager()
-        self.fman = fman
+        self.fman = FloatingManager()
+        fman = self.fman
         self.state    = TesterState(list(wdir.unit_list))
-        self.top_bar  = TesterTopBar(wdir, task, settings.app)
-        self.executor = TesterExecutor(settings, rep, wdir, task, fman, self.top_bar)
+        edit_mode_fn = lambda: self.watcher is not None and self.watcher.edit_logger is not None
+        audit_mode_fn = lambda: self.watcher is not None and self.watcher.audit_logger is not None
+        self.top_bar  = TesterTopBar(wdir, task, settings.app, edit_fn=edit_mode_fn, audit_fn=audit_mode_fn)
+        self.executor = TesterExecutor(settings, repo, wdir, task, fman, self.top_bar)
         self.renderer = TesterRenderer(settings=settings, wdir=wdir, task=task, fman=fman, top_bar=self.top_bar, opener=None)
-        self.navigator = TesterNavigator(settings, rep, wdir, task, fman, self.executor)
+        self.navigator = TesterNavigator(settings, repo, wdir, task, fman, self.executor)
         self.palette   = TesterPalette(settings.app, fman, self.navigator)
         self.ui_actions = TesterUiActions(settings, fman, self.navigator, self.palette)
 
-        if rep:
-                rep.logger.store(
+        if repo:
+                repo.logger.store(
                     LogItemMove().set_mode(LogItemMoveMode.PICK).set_key(task.basic.full_key)
             )
 
@@ -196,7 +200,7 @@ class Tester:
             else:
                 while True:
                     try:
-                        repeat = free_run_fn()
+                        repeat = free_run_fn() 
                         if not repeat:
                             break
                     except CompileError:
@@ -205,8 +209,8 @@ class Tester:
                             self.rep.logger.store(
                                 LogItemExec()
                                     .set_key(self.task.basic.full_key)
-                                .set_mode(LogItemExec.Mode.FREE)
-                                .set_fail(LogItemExec.Fail.COMP)
+                                    .set_mode(LogItemExec.Mode.FREE)
+                                    .set_fail(LogItemExec.Fail.COMP)
                             )
                         logger.exception(str(_TESTER_COMPILE_ERROR_DURING_RUN))
                         input(str(_TESTER_PRESS_ENTER_TO_CONTINUE))

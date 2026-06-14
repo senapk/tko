@@ -22,6 +22,7 @@ class AuditElement:
         entry: dict[str, object] = {
             "ts": int(self.timestamp.timestamp()),
             "label": self.timestamp.strftime("%Y/%m/%d-%H:%M:%S"),
+            "mode": "full",
             "hash": self.hash_value,
             "content": self.content,
         }

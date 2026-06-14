@@ -31,9 +31,10 @@ def test_open_starts_non_audit_watcher(monkeypatch: MonkeyPatch, tmp_path: Path)
         return repo_obj, tmp_path
 
     class DummyCmdOpen:
-        def __init__(self, _settings: Settings, _repo: object):
+        def __init__(self, _settings: Settings, _repo: object, _watcher: object):
             captured["settings"] = _settings
             captured["repo"] = _repo
+            captured["cmd_watcher"] = _watcher
 
         def execute(self) -> None:
             captured["execute"] = True
@@ -71,9 +72,10 @@ def test_open_starts_non_audit_watcher(monkeypatch: MonkeyPatch, tmp_path: Path)
     assert captured["settings"] is ctx
     assert captured["repo"] is repo_obj
     assert captured["watcher_repo"] is repo_obj
+    assert captured["cmd_watcher"] is not None
     assert captured["log_edits"] is True
     assert captured["log_audit"] is False
-    assert captured["audit_verbose"] is False
+    assert captured["audit_verbose"] is True
     assert captured["audit_interval_seconds"] is None
     assert captured["execute"] is True
     assert captured["stopped"] is True
