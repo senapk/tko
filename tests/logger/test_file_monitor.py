@@ -6,7 +6,7 @@ from tko.logger.file_monitor import FileMonitor
 
 class _TestFileMonitor(FileMonitor):
     def force_flush(self) -> None:
-        self._save_events()
+        self._check_save_events()
 
 
 def test_file_monitor_flushes_observer_callback_with_changed_files(tmp_path: Path) -> None:

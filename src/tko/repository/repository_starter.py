@@ -7,6 +7,8 @@ from tko.repository.repository_config import RepositoryConfig
 from tko.i18n import Msg
 from tko.util.console import Console
 from tko.util.rt import RT
+from tko.repository.git_cache import GitCache
+from tko.config.user_data import UserData
 
 _REPO_STARTER_LANGUAGE_SET = Msg(
     pt="A linguagem do repositório foi definida como [y]{language}[.].",
@@ -89,7 +91,8 @@ class RepositoryStarter:
         if not self.force_location:
             if not self.validate_path():
                 return False
-        repo = Repository(self.folder, self.settings.rs)        
+        git_cache = GitCache(cache_dir=UserData.global_cache_dir(), update_mode=self.settings.rs.update_mode)
+        repo = Repository(self.folder, self.settings.rs, git_cache=git_cache)        
         self.repo = repo
         self.create_empty_repo()
         self.language = LanguageSetter.check_prog_lang_in_text_mode(self.settings, self.repo, selected=self.language)
@@ -119,7 +122,7 @@ class RepositoryStarter:
             if op in options:
                 if op != "none":
                     self.add_remote(op)
-                return
+                return 
 
     def add_remote(self, target: str):
         from tko.repository.remote_actions import RemoteActions

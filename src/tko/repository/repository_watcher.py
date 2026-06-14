@@ -6,6 +6,7 @@ from tko.repository.repository import Repository
 from tko.logger.logger import Logger
 from tko.logger.log_item_move import LogItemMove, LogItemMoveMode
 from datetime import datetime
+from loguru import logger
 
 
 
@@ -58,8 +59,8 @@ class AuditLogger:
 
 
 class RepositoryWatcher:
-    default_interval_seconds = 300
-    default_audit_interval_seconds = 20
+    default_edit_interval_seconds = 30 # debug
+    default_audit_interval_seconds = 10 # debug
 
     def __init__(self, repo: Repository):
         self.repo = repo
@@ -79,10 +80,12 @@ class RepositoryWatcher:
         sources_dir_list: dict[Path, str] = {source.path.work_dir: source.data.name for source in self.repo.remotes}
         self.monitor = FileMonitor(root_directory=self.repo.root_dir)
         if log_edits:
-            second_interval = self.default_interval_seconds
+            logger.debug("Starting edit logger with interval of {} seconds".format(self.default_edit_interval_seconds))
+            second_interval = self.default_edit_interval_seconds
             self.edit_logger = EditLogger(sources_dir_list=sources_dir_list, logger=self.repo.logger)
             self.monitor.add_observer(interval_seconds=second_interval, on_flush_events=self.edit_logger.on_flush_events)
         if log_audit:
+            logger.debug("Starting audit logger with interval of {} seconds".format(self.default_audit_interval_seconds))
             second_interval = audit_interval_seconds
             if second_interval is None or second_interval <= 0:
                 second_interval = self.default_audit_interval_seconds

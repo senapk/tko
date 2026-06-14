@@ -82,7 +82,7 @@ class PlayActions:
             if not isinstance(obj, Task):
                 return
             if obj.basic.key != text:
-                self.fman.add_input(
+                self.fman.add_floating(
                     Floating().bottom().right()
                     .put_text(f"\n{str(_PlayActionMsg.TASK_DELETE_NOT_MATCH)}\n")
                     .set_error().set_countdown(Floating.Time.MEDIUM)
@@ -91,13 +91,13 @@ class PlayActions:
             folder = self.get_task_folder(obj)
             try:
                 shutil.rmtree(folder)
-                self.fman.add_input(
+                self.fman.add_floating(
                     Floating().bottom().right()
                     .put_text(f"\n{str(_PlayActionMsg.TASK_DELETE_SUCCESS).format(folder=folder)}\n")
                     .set_warning().set_countdown(Floating.Time.SLOW)
                 )
             except OSError:
-                self.fman.add_input(
+                self.fman.add_floating(
                     Floating().bottom().right()
                     .put_text(f"\n{str(_PlayActionMsg.DELETE_ERROR)}\n")
                     .set_error().set_countdown(Floating.Time.MEDIUM)
@@ -111,7 +111,7 @@ class PlayActions:
         if isinstance(obj, Task):
             folder = self.get_task_folder(obj)
             if folder == Path("") or not os.path.exists(folder):
-                self.fman.add_input(
+                self.fman.add_floating(
                     Floating().bottom().right()
                     .put_text("\n" + str(_PlayActionMsg.TASK_NO_LOCAL_FOLDER) + "\n")
                     .set_error().set_countdown(Floating.Time.MEDIUM)
@@ -120,14 +120,14 @@ class PlayActions:
             if ic.enabled:
                 delete_folder(text=folder.name)
             else:
-                self.fman.add_input(
+                self.fman.add_floating(
                     FloatingInputText(
                         RT(str(_PlayActionMsg.DELETE_CONFIRM_PREFIX)) + RT(f"{obj.basic.key}", "y"),
                         action=delete_folder,
                     )
                 )
         else:
-            self.fman.add_input(
+            self.fman.add_floating(
                 Floating().bottom().right()
                 .put_text("\n" + str(_PlayActionMsg.ONLY_TASK_FOLDERS) + "\n")
                 .set_error().set_countdown(Floating.Time.FAST)

@@ -16,7 +16,7 @@ class FlagFunctor:
         msg = self.flag.msgs[self.flag.get_value()]
 
         if msg:
-            self.fman.add_input(
+            self.fman.add_floating(
                 Floating().set_warning().put_text(msg).set_countdown(Floating.Time.FAST)
             )
 

@@ -91,7 +91,7 @@ class PlayPalette:
         options.append(
             FloatingInputData(
                 lambda: RT.parse(str(_PaletteMsg.CALIBRATE).format(symbol=Symbols.action)),
-                lambda: self.fman.add_input(FloatingCalibrate(self.actions.settings)),
+                lambda: self.fman.add_floating(FloatingCalibrate(self.actions.settings)),
                 GuiKeys.calibrate
             ).set_exit_on_action(True)
         )
@@ -156,4 +156,4 @@ class PlayPalette:
                 .set_exit_on_enter(False)
             )
         obj.id = "palette"
-        self.fman.add_input(obj)
+        self.fman.add_floating(obj)

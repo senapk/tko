@@ -5,24 +5,20 @@ from contextlib import contextmanager
 from enum import Enum
 from io import StringIO
 from typing import Any, ClassVar, Protocol, TextIO
-
 import sys
 
 from tko.util.rt import RT
 
 
 class RenderMode(Enum):
-    ANSI = "ansi"
+    COLOR = "color"
     PLAIN = "plain"
     FLAT = "flat"
 
 
 class Renderer:
     @staticmethod
-    def render(
-        value: Any,
-        mode: RenderMode,
-    ) -> str:
+    def render( value: Any, mode: RenderMode ) -> str:
         if not isinstance(value, RT):
             return str(value)
 
@@ -30,7 +26,7 @@ class Renderer:
             case RenderMode.PLAIN:
                 return value.plain()
 
-            case RenderMode.ANSI:
+            case RenderMode.COLOR:
                 return value.ansi()
 
             case RenderMode.FLAT:
@@ -40,31 +36,17 @@ class Renderer:
 
 
 class Writer(Protocol):
-    def write(
-        self,
-        *values: RT,
-        sep: str = " ",
-        end: str = "\n",
-    ) -> None: ...
+    def write( self, *values: RT, sep: str = " ", end: str = "\n" ) -> None: ...
 
     def flush(self) -> None: ...
 
 
 class PrintWriter:
-    def __init__(
-        self,
-        file: TextIO,
-        mode: RenderMode = RenderMode.ANSI,
-    ) -> None:
+    def __init__(self, file: TextIO, mode: RenderMode = RenderMode.COLOR) -> None:
         self.file = file
         self.mode = mode
 
-    def write(
-        self,
-        *values: RT,
-        sep: str = " ",
-        end: str = "\n",
-    ) -> None:
+    def write(self, *values: RT, sep: str = " ", end: str = "\n") -> None:
         self.file.write(
             sep.join(
                 Renderer.render(
@@ -82,19 +64,11 @@ class PrintWriter:
 
 
 class CaptureWriter:
-    def __init__(
-        self,
-        mode: RenderMode = RenderMode.PLAIN,
-    ) -> None:
+    def __init__( self, mode: RenderMode = RenderMode.PLAIN ) -> None:
         self.buffer = StringIO()
         self.mode = mode
 
-    def write(
-        self,
-        *values: RT,
-        sep: str = " ",
-        end: str = "\n",
-    ) -> None:
+    def write( self, *values: RT, sep: str = " ", end: str = "\n" ) -> None:
         self.buffer.write(
             sep.join(
                 Renderer.render(
@@ -115,15 +89,13 @@ class CaptureWriter:
 
 
 class Console:
-    stdout: ClassVar[Writer] = PrintWriter(
-        sys.stdout,
-        RenderMode.ANSI,
-    )
+    stdout: ClassVar[Writer] = PrintWriter( sys.stdout, RenderMode.COLOR, )
+    stderr: ClassVar[Writer] = PrintWriter( sys.stderr, RenderMode.COLOR)
 
-    stderr: ClassVar[Writer] = PrintWriter(
-        sys.stderr,
-        RenderMode.ANSI,
-    )
+    @staticmethod
+    def reset():
+        Console.stdout = PrintWriter(sys.stdout, RenderMode.COLOR)
+        Console.stderr = PrintWriter(sys.stderr, RenderMode.COLOR)
 
     @staticmethod
     def rt(value: Any) -> RT:

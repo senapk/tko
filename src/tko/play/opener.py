@@ -53,7 +53,7 @@ class Opener:
 
     def send_floating(self, floating: Floating):
         if self.fman is not None:
-            self.fman.add_input(floating)
+            self.fman.add_floating(floating)
 
 
     def __call__(self):

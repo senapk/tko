@@ -70,7 +70,7 @@ class DraftCreator:
             if not folder.exists():
                 folder.mkdir()
             else:
-                self.fman.add_input(
+                self.fman.add_floating(
                     Floating().bottom().right()
                     .put_text("\n" + str(_DraftMsg.FOLDER_EXISTS).format(folder=folder) + "\n")
                     .set_error().set_countdown(Floating.Time.FAST)
@@ -91,7 +91,7 @@ class DraftCreator:
             self.tree.state.expanded.add(f"{sandbox_source.data.name}@{sandbox_source.data.name}")
             self.repo.data.selected = self.tree.state.selected
             self.reload()
-            self.fman.add_input(
+            self.fman.add_floating(
                 Floating().bottom().right()
                 .put_text(str(_DraftMsg.CREATED_AT).format(folder=folder))
                 .set_warning().set_countdown(Floating.Time.MEDIUM)
@@ -100,4 +100,4 @@ class DraftCreator:
         current_folders_on_rep: list[str] = [f"@{folder.name}" for folder in sandbox_folder.iterdir() if folder.is_dir()]
         obj = FloatingInputText(RT(str(_DraftMsg.TITLE_PROMPT)), __create, current_folders_on_rep)
         obj.id = "drafts"
-        self.fman.add_input(obj)
+        self.fman.add_floating(obj)

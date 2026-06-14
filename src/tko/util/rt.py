@@ -271,7 +271,7 @@ class RT:
     def ansi(self) -> str:
         out = ""
         for style, text in self.runs:
-            if style:
+            if not style.is_plain():
                 out += style.ansi() + text + ANSI_RESET
             else:
                 out += text

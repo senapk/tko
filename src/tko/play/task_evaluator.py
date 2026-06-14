@@ -39,4 +39,4 @@ class TaskEvaluator:
         if isinstance(obj, Task):
             obj = FloatingGrade(obj, lambda task: self.repo.logger.store(LogItemSelf().set_task(task)))
             obj.id = "self"
-            self.fman.add_input(obj)
+            self.fman.add_floating(obj)

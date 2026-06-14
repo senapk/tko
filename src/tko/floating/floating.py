@@ -182,7 +182,7 @@ class Floating(FloatingABC):
         self.content = [RT(x) for x in content]
         return self
     
-    def set_rt_content(self, content: list[RT]):
+    def set_content_rt(self, content: list[RT]):
         self.content = content
         return self
 

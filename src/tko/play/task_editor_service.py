@@ -57,13 +57,13 @@ class TaskEditorService:
                 opener.add_task_folder_to_open(folder)
                 opener.open_files()
             else:
-                self.fman.add_input(
+                self.fman.add_floating(
                     Floating().bottom().right()
                     .put_text(f"\n{str(_TaskEditorMsg.CODE_NOT_FOUND)}\n")
                     .set_error().set_countdown(Floating.Time.FAST)
                 )
         else:
-            self.fman.add_input(
+            self.fman.add_floating(
                 Floating().bottom().right()
                 .put_text(f"\n{str(_TaskEditorMsg.CODE_ONLY_DOWNLOADED)}\n")
                 .set_error().set_countdown(Floating.Time.FAST)
@@ -83,7 +83,7 @@ class TaskEditorService:
             if url is not None:
                 try:
                     self._open_link_without_stdout_stderr(url)
-                    self.fman.add_input(
+                    self.fman.add_floating(
                         Floating().bottom().right()
                         .set_header(f" {str(_TaskEditorMsg.OPENING_LINK)} ")
                         .put_text(f"\n {str(url)} \n")
@@ -97,7 +97,7 @@ class TaskEditorService:
                 opener.add_files_to_open([target])
                 opener.open_files()
         elif isinstance(obj, Quest):
-            self.fman.add_input(
+            self.fman.add_floating(
                 Floating().bottom().right()
                 .put_text(f"\n{str(_TaskEditorMsg.IS_MISSION)}")
                 .put_text(f"\n{str(_TaskEditorMsg.LINK_ONLY_TASKS)}\n")
@@ -119,7 +119,7 @@ class TaskEditorService:
                     fullcmd = "{} {}".format(cmd, folder)
                     outfile = tempfile.NamedTemporaryFile(delete=False)
                     subprocess.Popen(fullcmd, stdout=outfile, stderr=outfile, shell=True)
-                    self.fman.add_input(
+                    self.fman.add_floating(
                         Floating().bottom().right()
                         .put_text(f"\n{str(_TaskEditorMsg.VERSIONS_DECOMPRESSED)}")
                         .put_text(msg)

@@ -10,6 +10,7 @@ from tko.util.decoder import Decoder
 from hashlib import blake2s
 import json
 from tko.util.console import Console
+from tko.util.rt import RT
 
 class AuditElement:
     def __init__(self, timestamp: datetime, hash_value: str, content: str):
@@ -119,7 +120,6 @@ class AuditTracker:
         audit_task_folder = self.repo.paths.get_audit_task_folder(task_key)
         audit_task_folder.mkdir(parents=True, exist_ok=True)
 
-
         task_root = self.repo.get_task_folder_for_label(task_key)
         any_changes = False
         total_lines = 0
@@ -143,6 +143,7 @@ class AuditTracker:
         return any_changes, total_lines
 
     def save_file(self, file: Path, task_root: Path, audit_task_folder: Path, task_key: str, timestamp: datetime) -> tuple[bool, int]:
+        logger.debug(f"Attempting to save file {file} for task {task_key} at {timestamp}")
         if not self._is_auditable(file, task_root):
             return False, 0
 
@@ -154,6 +155,7 @@ class AuditTracker:
         # verify changes in concurrent scenarios using .last file
         audit_last_file = self._output_file_last(output_file)
         if self._is_too_soon(audit_last_file, timestamp, hash_value):
+            logger.debug(f"Change for file {file} is too soon or has same content, skipping save.")
             return False, 0
 
         try:
@@ -170,8 +172,9 @@ class AuditTracker:
             logger.warning(f"Failed to process file {file}: {e}")
             return False, 0
 
+        logger.debug(f"Sending to console: {file} with verbose {self.verbose}")
         if self.verbose:
             hh_mm_ss = timestamp.strftime("%H:%M:%S")
-            Console.print(f"[audit] {hh_mm_ss} {file} -> {output_file}", flush=True)
+            Console.print(RT.parse(f"[y][[audit]][] {hh_mm_ss} {task_key}"), flush=True)
 
         return True, line_count

@@ -1,6 +1,8 @@
 import typer
+from tko.config.user_data import UserData
 from tko.i18n import Msg
 from tko.config.settings import Settings
+from tko.repository.git_cache import GitCache
 from tko.util.console import Console
 
 
@@ -13,13 +15,9 @@ app = typer.Typer(help="Reset configuration")
 
 @app.command("cache", help="Clear configuration cache")
 def reset_cache(ctx: typer.Context):
-    from tko.cli.common import load_repo
-    settings: Settings = ctx.obj
-    repo, _ = load_repo(settings.rs, auto_load=False)
-    if repo is None:
-        Console.print(f"{_RESET_NO_REPO}")
-        return
-    repo.git_cache.clear_cache()
+    settings: Settings = ctx.obj    
+    git_cache = GitCache(cache_dir=UserData.global_cache_dir(), update_mode=settings.rs.update_mode)
+    git_cache.clear_cache()
 
 @app.command("global", help="Reset global configuration to factory default")
 def reset_global(ctx: typer.Context):

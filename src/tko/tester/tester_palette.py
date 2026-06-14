@@ -84,4 +84,4 @@ class TesterPalette:
             .set_exit_on_enter(False)
         )
         obj.id = "palette"
-        self.fman.add_input(obj)
+        self.fman.add_floating(obj)

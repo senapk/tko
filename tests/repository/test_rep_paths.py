@@ -1,9 +1,5 @@
 from pathlib import Path
-
-from _pytest.monkeypatch import MonkeyPatch
-
 from tko.config.run_settings import RunSettings
-from tko.config.user_data import UserData
 from tko.repository.repository_paths import RepositoryPaths
 
 
@@ -61,20 +57,6 @@ def test_path_helpers_return_expected_locations(tmp_path: Path):
     assert paths.old_history_file == tmp_path / ".tko" / "history.csv"
     assert paths.root_dir == tmp_path
 
-
-def test_cache_folder_uses_global_cache_when_local_cache_is_disabled(monkeypatch: MonkeyPatch, tmp_path: Path):
-    paths = RepositoryPaths(tmp_path, make_run_settings(tmp_path, local_cache=False))
-    global_cache = tmp_path / "global-cache"
-
-    monkeypatch.setattr(UserData, "global_cache_dir", lambda: global_cache)
-
-    assert paths.cache_folder == global_cache
-
-
-def test_cache_folder_uses_repository_cache_when_local_cache_is_enabled(tmp_path: Path):
-    paths = RepositoryPaths(tmp_path, make_run_settings(tmp_path, local_cache=True))
-
-    assert paths.cache_folder == tmp_path / ".tko" / "cache"
 
 
 def test_config_file_presence_can_be_checked_from_property(tmp_path: Path):

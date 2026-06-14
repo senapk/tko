@@ -1,6 +1,5 @@
 from pathlib import Path
 from tko.config.run_settings import RunSettings
-from tko.config.user_data import UserData
 
 class RepositoryPaths:
     CFG_FILE = "repository.yaml"
@@ -9,7 +8,6 @@ class RepositoryPaths:
     TRACK_FOLDER = "track"
     AUDIT_FOLDER = "audit"
     LOG_FOLDER = "log"
-    CACHE_FOLDER = "cache"
     CONFIG_FOLDER = ".tko"
 
     def __init__(self, repo_dir: Path | str, run_settings: RunSettings):
@@ -53,11 +51,6 @@ class RepositoryPaths:
     def audit_folder(self) -> Path:
         return self.root_dir / RepositoryPaths.CONFIG_FOLDER / RepositoryPaths.AUDIT_FOLDER
 
-    @property
-    def cache_folder(self) -> Path:
-        if self.run_settings.local_cache:
-            return self.root_dir / RepositoryPaths.CONFIG_FOLDER / RepositoryPaths.CACHE_FOLDER
-        return UserData.global_cache_dir()
         
     @property
     def config_folder(self) -> Path:

@@ -50,7 +50,7 @@ class InputManager:
             os.environ.setdefault('ESCDELAY', '25')
 
     @staticmethod
-    def get_and_remap_keys(scr: curses.window, app: AppSettings, timeout_ms: int | None = None) -> int:
+    def get_and_remap_keys(scr: curses.window, app: AppSettings, timeout_ms: int | None = 100) -> int:
         if timeout_ms is None:
             value = scr.getch()
         else:

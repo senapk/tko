@@ -34,7 +34,7 @@ class TaskDownloadService:
             return
         
         if isinstance(obj, Quest):
-            self.fman.add_input(
+            self.fman.add_floating(
                 Floating().bottom().right()
                 .put_text(f"\n{str(_TaskDownloadMsg.IS_MISSION)}")
                 .put_text(f"\n{str(_TaskDownloadMsg.ONLY_TASKS)}\n")
@@ -47,7 +47,7 @@ class TaskDownloadService:
 
     def down_task(self, task: Task) -> None:
         if task.resource.is_static_type:
-            self.fman.add_input(
+            self.fman.add_floating(
                 Floating().bottom().right().put_text(f"\n{str(_TaskDownloadMsg.NOT_IMPORTABLE)}\n").set_error()
             )
             return
@@ -55,7 +55,7 @@ class TaskDownloadService:
             Floating().bottom().right().set_warning().set_countdown(Floating.Time.FAST)
             .set_text_ljust().set_header(f" {str(_TaskDownloadMsg.HEADER)} ")
         )
-        self.fman.add_input(down_frame)
+        self.fman.add_floating(down_frame)
 
         def fnprint(text : str | RT):
             down_frame.put_text(" " + text)

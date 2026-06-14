@@ -81,6 +81,6 @@ class TaskLauncher:
             msg = Floating().bottom().right().set_warning().set_countdown(Floating.Time.MEDIUM)
             msg.put_text("\n" + str(_TaskLauncherMsg.NO_SOURCE_FOR_LANG).format(lang=self.repo.data.lang))
             msg.put_text("\n" + str(_TaskLauncherMsg.DRAFT_CREATED) + "\n")
-            self.fman.add_input(msg)
+            self.fman.add_floating(msg)
         else:
             run.execute()

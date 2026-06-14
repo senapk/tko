@@ -8,7 +8,8 @@ from tko.game.task import Task
 from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_move import LogItemMove, LogItemMoveMode
 from tko.floating.floating import Floating
-from tko.floating.floating_manager import FloatingManager
+from tko.floating.floating_manager import FloatingManager, FloatingWriter
+from tko.util.console import RenderMode
 from tko.widget.fmt import Fmt
 from tko.play.input_manager import InputManager
 from tko.play.gui_keys import GuiKeys
@@ -24,6 +25,7 @@ from tko.repository.repository import Repository
 from tko.run.solver_builder import CompileError
 from tko.run.wdir import Wdir
 from tko.i18n import Msg
+from tko.util.console import Console, PrintWriter
 
 
 
@@ -46,9 +48,10 @@ class Tester:
         self.wdir = wdir
         self.task = task
         self.app = settings.app
-
         fman    = FloatingManager()
-
+        self.fman = fman
+        Console.stdout = FloatingWriter(self.fman, RenderMode.COLOR)
+        Console.stderr = FloatingWriter(self.fman, RenderMode.COLOR)
         self.state    = TesterState(list(wdir.unit_list))
         self.top_bar  = TesterTopBar(wdir, task, settings.app)
         self.executor = TesterExecutor(settings, rep, wdir, task, fman, self.top_bar)
@@ -56,7 +59,6 @@ class Tester:
         self.navigator = TesterNavigator(settings, rep, wdir, task, fman, self.executor)
         self.palette   = TesterPalette(settings.app, fman, self.navigator)
         self.ui_actions = TesterUiActions(settings, fman, self.navigator, self.palette)
-        self.fman = fman
 
         if rep:
                 rep.logger.store(
@@ -150,7 +152,7 @@ class Tester:
                     try:
                         self.wdir.get_solver().prepare_exec()
                     except CompileError as e:
-                        self.fman.add_input(
+                        self.fman.add_floating(
                             Floating().bottom().right().set_error().put_text(e.message)
                         )
                         state.mode = SeqMode.finished
@@ -162,18 +164,18 @@ class Tester:
 
             self.renderer.draw(state)
 
-            if self.fman.has_floating():
+            if self.fman.has_floatings():
                 self.fman.draw_warnings()
 
             if state.mode == SeqMode.running:
                 Fmt.refresh()
                 continue
 
-            if self.fman.has_floating():
+            if self.fman.has_floatings():
                 self.fman.draw()
 
             value = InputManager.get_and_remap_keys(scr, self.app)
-            if self.fman.has_floating():
+            if self.fman.has_floatings():
                 value = self.fman.process_input(value)
 
             fn_exec = self._process_key(value)
@@ -183,7 +185,9 @@ class Tester:
 
     def run(self) -> None:
         while True:
-            free_run_fn = curses.wrapper(self.main)  # type: ignore[arg-type]
+            writer = FloatingWriter(self.fman, align="")
+            with Console.redirect( stdout = writer, stderr = writer):
+                free_run_fn = curses.wrapper(self.main)  # type: ignore[arg-type]
             if free_run_fn is None:
                 if self.rep:
                     self.rep.logger.store(

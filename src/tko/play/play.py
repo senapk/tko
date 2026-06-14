@@ -11,7 +11,8 @@ from tko.floating.floating import Floating
 from tko.play.input_manager import InputManager
 from tko.play.play_palette import PlayPalette
 from tko.floating import Floating
-from tko.floating.floating_manager import FloatingManager
+from tko.floating.floating_manager import FloatingManager, FloatingWriter
+from tko.util.console import Console, PrintWriter
 from tko.play_tree.task_tree import TaskTree
 from tko.play_gui.gui import Gui
 from tko.play.play_actions import PlayActions
@@ -37,7 +38,7 @@ class Play:
         self.game: Game = repo.game
         self.exit = False
         self.flags = repo.flags
-        self.fman: FloatingManager = FloatingManager()
+        self.fman: FloatingManager = FloatingManager()        
         self.tree = TaskTree(self.settings, repo) # type: ignore
         self.gui = Gui(tree=self.tree, fman=self.fman)
         self.actions = PlayActions(self.gui)
@@ -53,8 +54,8 @@ class Play:
         self.gui.set_need_update()
 
     def show_help(self):
-        self.fman.add_input(
-            Floating().set_rt_content(GuiHelpInfo.show()).set_header(f" {Msg(pt="Ajuda", en="Help")} ").set_countdown(100)
+        self.fman.add_floating(
+            Floating().set_content_rt(GuiHelpInfo.show()).set_header(f" {Msg(pt="Ajuda", en="Help")} ").set_countdown(100)
         )
 
     def save_to_json(self):
@@ -118,7 +119,7 @@ class Play:
         cman.add_int(curses.KEY_NPAGE, self.page_down)
         cman.add_int(curses.KEY_PPAGE, self.page_up)
 
-        cman.add_str(GuiKeys.calibrate, lambda: self.fman.add_input(FloatingCalibrate(self.settings)))
+        cman.add_str(GuiKeys.calibrate, lambda: self.fman.add_floating(FloatingCalibrate(self.settings)))
         cman.add_str(GuiKeys.activate, self.activate) # type: ignore
         # cman.add_str(GuiKeys.open_url, self.actions.open_link)
         cman.add_str(GuiKeys.down_task, self.actions.downloader.down_remote_task)
@@ -179,7 +180,7 @@ class Play:
             return
         if key < 0 or key > 255:
             return
-        self.fman.add_input(
+        self.fman.add_floating(
             Floating().bottom().right().set_error().put_text(
                 str(_PLAY_KEY_NOT_RECOGNIZED).format(char=chr(key), code=key)
             ).set_countdown(Floating.Time.FAST)
@@ -195,7 +196,6 @@ class Play:
         scr.keypad(True)
         Fmt.set_scr(scr)  # Define o scr como global e inicializa as cores
         self.tree.layout.get_tree_size_fn = lambda: self.get_left_frame_size()
-        redraw_tick_ms = 100
         try:
             while not self.exit:
                 self.tree.update()
@@ -205,13 +205,13 @@ class Play:
 
                 self.gui.show_items()
 
-                if self.fman.has_floating():
+                if self.fman.has_floatings():
                     self.fman.draw()
 
                 # o input tem que ser depois do draw para mostrar o floating
-                value = InputManager.get_and_remap_keys(scr, self.app, timeout_ms=redraw_tick_ms)
+                value = InputManager.get_and_remap_keys(scr, self.app)
                 
-                if self.fman.has_floating():
+                if self.fman.has_floatings():
                     # if consumed, value becomes -1
                     value = self.fman.process_input(value)
                     
@@ -237,7 +237,11 @@ class Play:
         LanguageSetter.check_prog_lang_in_text_mode(self.settings, self.repo)
 
         while True:
-            output = curses.wrapper(self.main)
+            writer = FloatingWriter(self.fman, align="")
+            # with open("play.log", "a", encoding="utf-8") as f:
+            #     writer = PrintWriter(f)
+            with Console.redirect(stdout = writer, stderr = writer):
+                output = curses.wrapper(self.main)
             if output is None:
                 return
             else:

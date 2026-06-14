@@ -1,5 +1,7 @@
 from tko.config.run_settings import RunSettings
+from tko.config.user_data import UserData
 from tko.i18n import Msg
+from tko.repository.git_cache import GitCache
 from tko.repository.repository import Repository
 from tko.repository.repository_paths import RepositoryPaths
 
@@ -34,8 +36,8 @@ class RepositoryBuilder:
                 Console.print(str(_CLI_COMMON_NO_REPO))
             return None, Path()
         self._root_dir = root_dir
-
-        repo = Repository(root_dir, rs=self._rs, recursive_search=False)
+        git_cache = GitCache(cache_dir=UserData.global_cache_dir(), update_mode=self._rs.update_mode)
+        repo = Repository(root_dir, rs=self._rs, git_cache=git_cache, recursive_search=False)
         if self._load_config_and_game:
             from tko.repository.repository_config import RepositoryConfig
             from tko.repository.game_coordinator import GameCoordinator

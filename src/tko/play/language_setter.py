@@ -92,7 +92,7 @@ class LanguageSetter:
         for lang in keys:
             options.append(FloatingInputData(TextFunctor(lang), SetLangFunctor(self.settings, self.rep, self.fman, lang)))
 
-        self.fman.add_input(
+        self.fman.add_floating(
             FloatingDropDown().set_floating(
                 Floating()
                 .top()
@@ -128,7 +128,7 @@ class SetLangFunctor:
     def __call__(self):
         self.rep.data.lang = self.value.strip()
         RepositoryConfig(self.rep).save()
-        self.fman.add_input(
+        self.fman.add_floating(
             Floating()
             .bottom()
             .right()

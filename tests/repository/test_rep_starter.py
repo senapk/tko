@@ -125,8 +125,8 @@ def test_execute_sets_language_recreates_cache_and_saves_config(monkeypatch: Mon
         "printed_end": False,
     }
 
-    def fake_repository(folder: Path, rs: RunSettings) -> FakeRepo:
-        _ = rs
+    def fake_repository(folder: Path, rs: RunSettings, git_cache: object | None = None) -> FakeRepo:
+        _ = (rs, git_cache)
         created_folders.append(folder)
         return repo
 
@@ -164,31 +164,3 @@ def test_execute_sets_language_recreates_cache_and_saves_config(monkeypatch: Mon
     assert created_folders == [tmp_path]
     assert calls["saved"] is True
     assert calls["language_prompt"] is True
-
-
-
-
-# def test_execute_integration_creates_repository_config_with_default_sandbox(tmp_path: Path):
-#     repo_folder = tmp_path / "repo"
-#     repo_folder.mkdir()
-
-#     starter = RepositoryStarter(settings=make_settings(), folder=repo_folder, language="py", skip=True)
-
-#     assert starter.execute() is True
-
-#     config_file = repo_folder / RepositoryPaths.CONFIG_FOLDER / RepositoryPaths.CFG_FILE
-#     cache_folder = repo_folder / RepositoryPaths.CONFIG_FOLDER / RepositoryPaths.CACHE_FOLDER
-#     assert config_file.exists()
-#     assert cache_folder.exists()
-
-#     data = yaml.safe_load(config_file.read_text(encoding="utf-8"))
-
-#     assert data["version"] == "0.2"
-#     assert data["lang"] == "py"
-#     assert len(data["sources"]) == 1
-#     sandbox = data["sources"][0]
-#     assert sandbox["name"] == "sandbox"
-#     assert sandbox["target"] == "base"
-#     assert sandbox["index"] == "../README.md"
-#     assert sandbox["type"] == "local"
-#     assert sandbox["writeable"] is True

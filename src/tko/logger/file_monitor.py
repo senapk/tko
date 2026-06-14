@@ -18,9 +18,10 @@ class FileActionObserver:
         self.last_update: datetime = datetime.now()
 
 class _EventManipulator(PatternMatchingEventHandler):
-    def __init__( self, file_action_observers: list[FileActionObserver]) -> None:
+    def __init__( self, file_action_observers: list[FileActionObserver], ignore_patterns: list[str]) -> None:
         super().__init__(
             patterns=["*"],
+            ignore_patterns=ignore_patterns,
             ignore_directories=True,
             case_sensitive=False
         )
@@ -38,6 +39,8 @@ class _EventManipulator(PatternMatchingEventHandler):
 
 
 class FileMonitor:
+    ignore_patterns = ["*.tmp", "*.log", "*.bak", "*.swp", "*~", "watcher.lock", "*.last", "*.auditlog", "*.editlog", "*.json", "*.jsonl"]
+
     def __init__(
         self,
         root_directory: Path,
@@ -57,7 +60,7 @@ class FileMonitor:
         )
         self.file_action_observers.append(observer)
 
-    def _save_events(self) -> None:
+    def _check_save_events(self) -> None:
             now = datetime.now()
             for file_observer in self.file_action_observers:
                 if (now - file_observer.last_update).total_seconds() >= file_observer.interval_seconds:
@@ -74,13 +77,13 @@ class FileMonitor:
                         logger.warning(f"Failed to flush events: {e}")
 
     def _init_observer(self) -> None:
-        handler = _EventManipulator(self.file_action_observers)
+        handler = _EventManipulator(self.file_action_observers, ignore_patterns=self.ignore_patterns)
         self._observer.schedule(handler, str(self.root_directory), recursive=True)
         self._observer.start()
 
         try:
             while not self._stop_event.is_set():
-                self._save_events()
+                self._check_save_events()
                 time.sleep(0.5)
         finally:
             self._observer.stop()

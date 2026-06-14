@@ -1,20 +1,18 @@
 from __future__ import annotations
 from pathlib import Path
 from tko.config.run_settings import RunSettings
+from tko.config.user_data import UserData
 from tko.repository.repository_data import RepositoryData
 from tko.repository.remote import Remote
 from tko.game.game import Game
 from tko.logger.logger import Logger
 from tko.repository.repository_paths import RepositoryPaths
 from icecream import ic # type: ignore
-from datetime import timedelta
 from tko.repository.git_cache import GitCache
 from tko.config.flags import Flags
 from tko.game.task import Task
 
 class Repository:
-    cache_time_for_remote_source = 3600 # seconds
-
     ignore_patterns = [
         "*.log",
         ".git/*",
@@ -26,14 +24,17 @@ class Repository:
         "*/.venv/*",
     ]
 
-    def __init__(self, folder: Path, rs: RunSettings, recursive_search: bool = True):
+    def __init__(self, folder: Path, rs: RunSettings, git_cache: GitCache | None, recursive_search: bool = True) -> None:
+        if git_cache is None:
+            self.git_cache = GitCache(cache_dir=UserData.global_cache_dir(), update_mode=rs.update_mode)
+        else:
+            self.git_cache = git_cache
         rep_folder: Path = folder
         if recursive_search:
             recursive_folder = RepositoryPaths.rec_search_for_repo_parents(folder)
             if recursive_folder is not None:
                 rep_folder = recursive_folder
         self.paths = RepositoryPaths(rep_folder, rs)
-        self.git_cache = GitCache(cache_dir=self.paths.cache_folder, max_age=timedelta(seconds=self.cache_time_for_remote_source), update_mode=rs.update_mode)
         self.data: RepositoryData = RepositoryData()
         self.game = Game()
         self.flags = Flags()

@@ -41,7 +41,7 @@ class TesterUiActions:
         self.palette = palette
 
     def toggle_lock(self, state: TesterState) -> None:
-        self.fman.add_input(
+        self.fman.add_floating(
             Floating().bottom().right().set_warning().set_countdown(Floating.Time.FAST)
             .put_text(
                 str(_TesterUiActionsMsg.LOCK_TOGGLE).format(
@@ -57,7 +57,7 @@ class TesterUiActions:
 
     def change_limit(self, state: TesterState) -> None:
         self.navigator.change_limit(state)
-        self.fman.add_input(
+        self.fman.add_floating(
             Floating().bottom().right().set_warning().set_countdown(Floating.Time.FAST)
             .put_text(
                 str(_TesterUiActionsMsg.LIMIT_CHANGED).format(
@@ -69,7 +69,7 @@ class TesterUiActions:
 
     def toggle_diff(self) -> None:
         self.app.toggle_diff()
-        self.fman.add_input(
+        self.fman.add_floating(
             Floating().bottom().right().set_warning().set_countdown(Floating.Time.FAST)
             .put_text(str(_TesterUiActionsMsg.DIFF_MODE_CHANGED).format(self.app.diff_mode.value))
         )
@@ -77,7 +77,7 @@ class TesterUiActions:
 
     def toggle_images(self) -> None:
         self.app.toggle(ToggleOption.IMAGES)
-        self.fman.add_input(
+        self.fman.add_floating(
             Floating().bottom().right().set_warning().set_countdown(Floating.Time.FAST)
             .put_text(
                 str(_TesterUiActionsMsg.IMAGES_MODE_CHANGED).format(
@@ -91,7 +91,7 @@ class TesterUiActions:
         self.palette.open(state)
 
     def send_char_not_found(self, key: int) -> None:
-        self.fman.add_input(
+        self.fman.add_floating(
             Floating().bottom().right().set_error()
             .put_text(str(_TesterUiActionsMsg.CHAR_NOT_FOUND).format(chr(key), key)).set_countdown(Floating.Time.FAST)
         )
