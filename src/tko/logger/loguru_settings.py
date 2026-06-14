@@ -7,7 +7,7 @@ from tko.util.console import Console
 from tko.util.rt import RT
 
 
-from typing import Any, Protocol
+from typing import Any
 
 from loguru import logger
 from pathlib import Path

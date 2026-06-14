@@ -7,12 +7,12 @@ from tko.config.settings import Settings
 from tko.repository.repository import Repository
 from tko.play.gui_keys import GuiKeys
 from tko.floating.floating_calibrate import FloatingCalibrate
-from tko.floating.floating import Floating
+from tko.floating.floating import AlignX, Floating, AlignY, Position
+from tko.floating.floating_manager import FloatingManager, FloatingWriter
 from tko.play.input_manager import InputManager
 from tko.play.play_palette import PlayPalette
-from tko.floating import Floating
 from tko.floating.floating_manager import FloatingManager, FloatingWriter
-from tko.util.console import Console, PrintWriter
+from tko.util.console import Console
 from tko.play_tree.task_tree import TaskTree
 from tko.play_gui.gui import Gui
 from tko.play.play_actions import PlayActions
@@ -237,7 +237,7 @@ class Play:
         LanguageSetter.check_prog_lang_in_text_mode(self.settings, self.repo)
 
         while True:
-            writer = FloatingWriter(self.fman, align="")
+            writer = FloatingWriter(self.fman, Position(AlignY.bottom, AlignX.right, offset_x=-2, offset_y=-2))
             # with open("play.log", "a", encoding="utf-8") as f:
             #     writer = PrintWriter(f)
             with Console.redirect(stdout = writer, stderr = writer):

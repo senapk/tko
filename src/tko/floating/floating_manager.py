@@ -1,4 +1,4 @@
-from tko.floating.floating import FloatingABC
+from tko.floating.floating import FloatingABC, Position
 from tko.floating.floating import Floating
 from tko.util.rt import RT
 from tko.util.console import RenderMode
@@ -33,17 +33,17 @@ class FloatingManager:
 
 
 class FloatingWriter:
-    def __init__(self, fman: FloatingManager, align: str, mode: RenderMode = RenderMode.COLOR) -> None:
+    def __init__(self, fman: FloatingManager, pos: Position, mode: RenderMode = RenderMode.COLOR) -> None:
         self.fman = fman
         self.mode = mode
-        self.align = align
+        self.pos = pos
 
     def write(self, *values: RT, sep: str = " ", end: str = "\n") -> None:
         content = RT(sep).join([value for value in values])
         content_list = content.splitlines()
         
         self.fman.add_floating(
-            Floating().set_warning().set_frame_align(self.align).set_content_rt(content_list).set_countdown(Floating.Time.FAST)
+            Floating().set_warning().set_frame_position(self.pos).set_content_rt(content_list).set_countdown(Floating.Time.FAST)
         )
 
     def flush(self) -> None:

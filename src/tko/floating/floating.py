@@ -1,4 +1,5 @@
 from __future__ import annotations
+from dataclasses import dataclass
 from tko.widget.frame import Frame
 from tko.util.rt import RT
 from tko.widget.fmt import Fmt
@@ -37,6 +38,23 @@ class FloatingABC(ABC):
         pass
 
 
+class AlignY(enum.Enum):
+    center = "center"
+    top = "top"
+    bottom = "bottom"
+
+class AlignX(enum.Enum):
+    center = "center"
+    left = "left"
+    right = "right"
+
+@dataclass(frozen=True)
+class Position:
+    align_y: AlignY
+    align_x: AlignX
+    offset_y: int = 0
+    offset_x: int = 0
+
 class Floating(FloatingABC):
     class Time:
         FAST = 20
@@ -52,7 +70,7 @@ class Floating(FloatingABC):
         self.exit_fn: Callable[[], None] | None = None
         self.exit_key: None | int = None
         self.centralize_text = True
-        self.floating_align = ""
+        self.floating_align: Position = Position(AlignY.center, AlignX.center)
 
         self.counting_enable = False
         self.counting = 0
@@ -63,26 +81,6 @@ class Floating(FloatingABC):
         self.counting_enable = True
         self.counting = 0
         self.max_count = max_count
-        return self
-
-    def left(self):
-        self.floating_align = [c for c in self.floating_align if c != ">"]
-        self.floating_align += "<"
-        return self
-    
-    def right(self):
-        self.floating_align = [c for c in self.floating_align if c != "<"]
-        self.floating_align += ">"
-        return self
-    
-    def top(self):
-        self.floating_align = [c for c in self.floating_align if c != "v"]
-        self.floating_align += "^"
-        return self
-    
-    def bottom(self):
-        self.floating_align = [c for c in self.floating_align if c != "^"]
-        self.floating_align += "v"
         return self
 
     def disable(self):
@@ -96,8 +94,33 @@ class Floating(FloatingABC):
         self.centralize_text = True
         return self
 
-    def set_frame_align(self, _align: str):
-        self.floating_align = _align
+    def set_frame_position(self, pos: Position):
+        self.floating_align = pos
+        return self
+    
+    def set_offsets(self, offset_y: int = 0, offset_x: int = 0):
+        fa = self.floating_align
+        self.floating_align = Position(align_y=fa.align_y, align_x=fa.align_x, offset_y=offset_y, offset_x=offset_x)
+        return self
+    
+    def left(self):
+        fa = self.floating_align
+        self.floating_align = Position(align_x=AlignX.left, align_y=fa.align_y, offset_x= fa.offset_x, offset_y=fa.offset_y)
+        return self
+    
+    def right(self):
+        fa = self.floating_align
+        self.floating_align = Position(align_x=AlignX.right, align_y=fa.align_y, offset_x= fa.offset_x, offset_y=fa.offset_y)
+        return self
+    
+    def top(self):
+        fa = self.floating_align
+        self.floating_align = Position(align_x=fa.align_x, align_y=AlignY.top, offset_x= fa.offset_x, offset_y=fa.offset_y)
+        return self
+    
+    def bottom(self):
+        fa = self.floating_align
+        self.floating_align = Position(align_x=fa.align_x, align_y=AlignY.bottom, offset_x= fa.offset_x, offset_y=fa.offset_y)
         return self
 
     def set_header(self, text: str):
@@ -125,24 +148,21 @@ class Floating(FloatingABC):
         return self
 
     def _set_xy(self, dy: int, dx: int):
-        valid = "<>^v"
-        for c in self.floating_align:
-            if c not in valid:
-                raise ValueError(str(_FLOATING_INVALID_ALIGN).format(align=c))
-
         lines, cols = Fmt.get_lines_cols()
 
         x = (cols - dx) // 2
-        if "<" in self.floating_align:
+        if self.floating_align.align_x == AlignX.left:
             x = 1
-        elif ">" in self.floating_align:
+        elif self.floating_align.align_x == AlignX.right:
             x = cols - dx - 2
 
         y = (lines - dy) // 2
-        if "^" in self.floating_align:
+        if self.floating_align.align_y == AlignY.top:
             y = 1
-        elif "v" in self.floating_align:
+        elif self.floating_align.align_y == AlignY.bottom:
             y = lines - dy - 2
+        y += self.floating_align.offset_y
+        x += self.floating_align.offset_x
 
         self.frame.set_pos(y, x)
         return self

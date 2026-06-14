@@ -7,9 +7,8 @@ from tko.config.settings import Settings
 from tko.game.task import Task
 from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_move import LogItemMove, LogItemMoveMode
-from tko.floating.floating import Floating
+from tko.floating.floating import Floating, AlignY, AlignX, Position
 from tko.floating.floating_manager import FloatingManager, FloatingWriter
-from tko.util.console import RenderMode
 from tko.widget.fmt import Fmt
 from tko.play.input_manager import InputManager
 from tko.play.gui_keys import GuiKeys
@@ -25,7 +24,7 @@ from tko.repository.repository import Repository
 from tko.run.solver_builder import CompileError
 from tko.run.wdir import Wdir
 from tko.i18n import Msg
-from tko.util.console import Console, PrintWriter
+from tko.util.console import Console
 
 
 
@@ -50,8 +49,6 @@ class Tester:
         self.app = settings.app
         fman    = FloatingManager()
         self.fman = fman
-        Console.stdout = FloatingWriter(self.fman, RenderMode.COLOR)
-        Console.stderr = FloatingWriter(self.fman, RenderMode.COLOR)
         self.state    = TesterState(list(wdir.unit_list))
         self.top_bar  = TesterTopBar(wdir, task, settings.app)
         self.executor = TesterExecutor(settings, rep, wdir, task, fman, self.top_bar)
@@ -185,7 +182,7 @@ class Tester:
 
     def run(self) -> None:
         while True:
-            writer = FloatingWriter(self.fman, align="")
+            writer = FloatingWriter(self.fman, Position(AlignY.bottom, AlignX.right, offset_x=-2, offset_y=-2))
             with Console.redirect( stdout = writer, stderr = writer):
                 free_run_fn = curses.wrapper(self.main)  # type: ignore[arg-type]
             if free_run_fn is None:
