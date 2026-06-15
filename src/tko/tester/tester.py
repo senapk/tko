@@ -166,7 +166,7 @@ class Tester:
             self.renderer.draw(state)
 
             if self.fman.has_floatings():
-                self.fman.draw_warnings()
+                self.fman.draw_floatings()
 
             if state.mode == SeqMode.running:
                 Fmt.refresh()

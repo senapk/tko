@@ -41,10 +41,8 @@ class TesterTopBar:
 
     def build_top_line_header(self, state: TesterState, frame_dx: int, timed: bool) -> RT:
         running_color  = "R"
-
         folder   = tester_util.get_folder(self.task)
         activity = Button.info_label(folder.name)
-
         solver_names = tester_util.get_solver_names(self.wdir)
         solvers_buffer = RBuffer()
         if len(solver_names) > 1:
@@ -160,7 +158,9 @@ class TesterTopBar:
         frame = Frame(0, 0).set_size(size, cols)
         if not self.wdir.has_tests:
             frame.set_border_none()
-        frame.set_header(self.build_top_line_header(state, frame.get_dx(), timed=True))
-        self.draw_top_bar_content(state, frame)
-        frame.set_footer(self.build_unit_list(state, frame), "")
+            Fmt.write(0, 0, self.build_top_line_header(state, cols, timed=True))
+        else:
+            frame.set_header(self.build_top_line_header(state, frame.get_dx(), timed=True))
+            self.draw_top_bar_content(state, frame)
+            frame.set_footer(self.build_unit_list(state, frame), "")
         frame.draw()

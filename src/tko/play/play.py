@@ -102,10 +102,7 @@ class Play:
         return self.actions.launcher.select_task()
 
     def exit_step(self):
-        if self.flags.show_panel.is_true():
-            self.flags.show_panel.set_false()
-        else:
-            self.exit = True
+        self.exit = True
 
     def make_callback(self) -> InputManager:
         cman = InputManager()
@@ -202,7 +199,7 @@ class Play:
             while not self.exit:
                 self.tree.update()
 
-                self.fman.draw_warnings()
+                self.fman.draw_floatings()
                 cman = self.make_callback()
 
                 self.gui.show_items()

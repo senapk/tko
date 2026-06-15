@@ -16,7 +16,7 @@ class FloatingManager:
             return None
         return self.input_layer[0]
 
-    def draw_warnings(self):
+    def draw_floatings(self):
         if len(self.input_layer) > 0 and self.input_layer[0].is_enable():
             self.input_layer[0].draw()
 
