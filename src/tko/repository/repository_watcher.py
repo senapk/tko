@@ -73,12 +73,16 @@ class RepositoryWatcher:
     def start_watching(
         self,
         log_edits: bool = True,
-        log_audit: bool = False,
+        log_audit: bool | None = None,
         audit_verbose: bool = False,
         audit_interval_seconds: int | None = None,
     ) -> RepositoryWatcher:
         if self.monitor is not None:
             return self
+        if log_audit is None:
+            log_audit = getattr(getattr(self.repo, "audit", None), "enabled", getattr(self.repo, "audit_enabled", False))
+        if audit_interval_seconds is None:
+            audit_interval_seconds = getattr(getattr(self.repo, "audit", None), "interval_seconds", None)
         sources_dir_list: dict[Path, str] = {source.path.work_dir: source.data.name for source in self.repo.remotes}
         self.monitor = FileMonitor(root_directory=self.repo.root_dir)
         if log_edits:

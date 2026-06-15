@@ -56,6 +56,8 @@ def _make_repo(tmp_path: Path) -> Any:
         ignore_patterns=[],
         paths=SimpleNamespace(config_folder=tmp_path / ".tko"),
         logger=SimpleNamespace(store=_store),
+        audit=SimpleNamespace(enabled=False, interval_seconds=None),
+        data=SimpleNamespace(audit_enabled=False, audit_interval_seconds=None),
     )
 
 
@@ -176,3 +178,23 @@ def test_stop_watching_resets_state(monkeypatch: MonkeyPatch, tmp_path: Path) ->
     assert watcher.monitor is None
     assert watcher.edit_logger is None
     assert watcher.audit_logger is None
+
+
+def test_start_watching_defaults_to_persistent_audit_flag(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    holder: dict[str, _FakeMonitor] = {}
+
+    def fake_monitor_ctor(**kwargs: Any) -> _FakeMonitor:
+        monitor = _FakeMonitor(**kwargs)
+        holder["monitor"] = monitor
+        return monitor
+
+    monkeypatch.setattr(watcher_module, "FileMonitor", fake_monitor_ctor)
+    monkeypatch.setattr(watcher_module, "AuditTracker", _FakeAuditTracker)
+
+    repo = _make_repo(tmp_path)
+    repo.audit.enabled = True
+    watcher = RepositoryWatcher(repo)
+    watcher.start_watching()
+
+    monitor = holder["monitor"]
+    assert len(monitor.observers) == 2

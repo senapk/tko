@@ -44,7 +44,7 @@ def test_audit_starts_watcher_with_verbose_and_interval(monkeypatch: MonkeyPatch
     runner = CliRunner()
     ctx = _make_app_context(tmp_path)
 
-    repo = SimpleNamespace()
+    repo = SimpleNamespace(audit=SimpleNamespace(enabled=False, interval_seconds=None))
     captured: dict[str, Any] = {"stopped": False}
 
     def fake_load_repo(*_args: Any, **_kwargs: Any) -> tuple[SimpleNamespace, Path]:
@@ -137,3 +137,57 @@ def test_audit_unpack_patch_history_json_creates_temp_files(tmp_path: Path) -> N
     extracted_files = sorted(output_dir.iterdir())
     assert len(extracted_files) == 1
     assert extracted_files[0].read_text(encoding="utf-8") == "print(2)\n"
+
+
+def test_audit_set_on_persists_flag(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    runner = CliRunner()
+    ctx = _make_app_context(tmp_path)
+
+    repo = SimpleNamespace(audit=SimpleNamespace(enabled=False, interval_seconds=None))
+    captured: dict[str, Any] = {"saved": False}
+
+    def fake_load_repo(*_args: Any, **_kwargs: Any) -> tuple[SimpleNamespace, Path]:
+        return repo, tmp_path
+
+    def fake_save(self: Any) -> Any:
+        captured["saved"] = True
+        return self
+
+    monkeypatch.setattr("tko.cli.common.load_repo", fake_load_repo)
+    monkeypatch.setattr("tko.repository.repository_config.RepositoryConfig.save", fake_save)
+
+    with Console.capture() as out:
+        result = runner.invoke(app, ["set", "--on"], obj=ctx)
+    combined_output = result.output + out.getvalue()
+
+    assert result.exit_code == 0
+    assert repo.audit.enabled is True
+    assert captured["saved"] is True
+    assert "Auditoria persistente habilitada" in combined_output
+
+
+def test_audit_set_off_persists_flag(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    runner = CliRunner()
+    ctx = _make_app_context(tmp_path)
+
+    repo = SimpleNamespace(audit=SimpleNamespace(enabled=True, interval_seconds=None))
+    captured: dict[str, Any] = {"saved": False}
+
+    def fake_load_repo(*_args: Any, **_kwargs: Any) -> tuple[SimpleNamespace, Path]:
+        return repo, tmp_path
+
+    def fake_save(self: Any) -> Any:
+        captured["saved"] = True
+        return self
+
+    monkeypatch.setattr("tko.cli.common.load_repo", fake_load_repo)
+    monkeypatch.setattr("tko.repository.repository_config.RepositoryConfig.save", fake_save)
+
+    with Console.capture() as out:
+        result = runner.invoke(app, ["set", "--off"], obj=ctx)
+    combined_output = result.output + out.getvalue()
+
+    assert result.exit_code == 0
+    assert repo.audit.enabled is False
+    assert captured["saved"] is True
+    assert "Auditoria persistente desabilitada" in combined_output

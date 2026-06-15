@@ -208,7 +208,7 @@ class VersionsWriter:
 
         return "".join(result)
 
-    def load_history(
+    def _load_history(
         self,
         audit_file: Path,
     ) -> VersionHistory:
@@ -250,6 +250,12 @@ class VersionsWriter:
             snapshots=snapshots,
             last_full_index=last_full_index,
         )
+
+    def load_history(
+        self,
+        audit_file: Path,
+    ) -> VersionHistory:
+        return self._load_history(audit_file)
 
     def _history(
         self,

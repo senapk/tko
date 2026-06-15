@@ -44,6 +44,26 @@ class Repository:
         return self.paths.config_file.exists()
 
     @property
+    def audit(self):
+        return self.data.audit
+
+    @property
+    def audit_enabled(self) -> bool:
+        return self.data.audit.enabled
+
+    @audit_enabled.setter
+    def audit_enabled(self, value: bool) -> None:
+        self.data.audit.enabled = value
+
+    @property
+    def audit_interval_seconds(self) -> int | None:
+        return self.data.audit.interval_seconds
+
+    @audit_interval_seconds.setter
+    def audit_interval_seconds(self, value: int | None) -> None:
+        self.data.audit.interval_seconds = value
+
+    @property
     def remotes(self) -> list[Remote]:
         remotes: list[Remote] = []
         for remote in self.data.remotes_raw_list:

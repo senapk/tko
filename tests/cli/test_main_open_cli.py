@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Any
+from types import SimpleNamespace
 
 from _pytest.monkeypatch import MonkeyPatch
 from typer.testing import CliRunner
@@ -24,7 +25,7 @@ def test_open_starts_non_audit_watcher(monkeypatch: MonkeyPatch, tmp_path: Path)
     register_main_commands(app)
     ctx = _make_app_context(tmp_path)
 
-    repo_obj = object()
+    repo_obj = SimpleNamespace(audit=SimpleNamespace(enabled=False, interval_seconds=None))
     captured: dict[str, Any] = {"execute": False, "stopped": False}
 
     def fake_load_repo(*_args: Any, **_kwargs: Any) -> tuple[object, Path]:
@@ -77,5 +78,56 @@ def test_open_starts_non_audit_watcher(monkeypatch: MonkeyPatch, tmp_path: Path)
     assert captured["log_audit"] is False
     assert captured["audit_verbose"] is True
     assert captured["audit_interval_seconds"] is None
+    assert captured["execute"] is True
+    assert captured["stopped"] is True
+
+
+def test_open_uses_persistent_audit_when_enabled(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    runner = CliRunner()
+    app = typer.Typer()
+    register_main_commands(app)
+    ctx = _make_app_context(tmp_path)
+
+    repo_obj = SimpleNamespace(audit=SimpleNamespace(enabled=True, interval_seconds=33))
+    captured: dict[str, Any] = {"execute": False, "stopped": False}
+
+    def fake_load_repo(*_args: Any, **_kwargs: Any) -> tuple[object, Path]:
+        return repo_obj, tmp_path
+
+    class DummyCmdOpen:
+        def __init__(self, _settings: Settings, _repo: object, _watcher: object):
+            captured["watcher"] = _watcher
+
+        def execute(self) -> None:
+            captured["execute"] = True
+
+    class DummyWatcher:
+        def __init__(self, _repo: object):
+            pass
+
+        def start_watching(
+            self,
+            log_edits: bool = True,
+            log_audit: bool | None = None,
+            audit_verbose: bool = False,
+            audit_interval_seconds: int | None = None,
+        ) -> "DummyWatcher":
+            captured["log_audit"] = log_audit
+            return self
+
+        def stop_watching(self) -> "DummyWatcher":
+            captured["stopped"] = True
+            return self
+
+    monkeypatch.setattr("tko.cli.common.load_repo", fake_load_repo)
+    monkeypatch.setattr("tko.cmds.cmd_open.CmdOpen", DummyCmdOpen)
+    monkeypatch.setattr("tko.repository.repository_watcher.RepositoryWatcher", DummyWatcher)
+
+    with Console.capture() as out:
+        result = runner.invoke(app, ["open"], obj=ctx)
+    _ = out.getvalue()
+
+    assert result.exit_code == 0
+    assert captured["log_audit"] is True
     assert captured["execute"] is True
     assert captured["stopped"] is True

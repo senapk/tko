@@ -81,7 +81,11 @@ def register_main_commands(app: typer.Typer):
             return
             
         from tko.repository.repository_watcher import RepositoryWatcher
-        watcher = RepositoryWatcher(repo).start_watching(log_audit=audit, audit_verbose=True)
+        watcher = RepositoryWatcher(repo).start_watching(
+            log_audit=(repo.audit.enabled or audit),
+            audit_verbose=True,
+            audit_interval_seconds=repo.audit.interval_seconds,
+        )
         action = CmdOpen(settings, repo, watcher)
         
         if not settings.rs.force_offline:

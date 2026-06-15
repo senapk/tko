@@ -11,7 +11,7 @@ from hashlib import blake2s
 import json
 from tko.util.console import Console
 from tko.util.rt import RT
-from tko.logger.versions_writer import VersionsWriter
+from tko.logger.versions_writer import AuditElement, VersionsWriter
     
 class LastElement:
     def __init__(self, timestamp: datetime, hash_value: str) -> None:
