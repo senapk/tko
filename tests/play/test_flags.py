@@ -54,7 +54,6 @@ class TestFlags:
         assert flags.to_dict() == {
             "inbox": ViewMode.ALL,
             "panel": PanelMode.LOGS,
-            "show_panel": BoolFlag.FALSE,
             "task_graph_mode": TaskGraphMode.TIME,
             "show_time": BoolFlag.FALSE,
         }
