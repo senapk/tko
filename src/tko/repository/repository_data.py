@@ -126,7 +126,7 @@ class RepositoryData:
             self.flags = self._safe_load(data, "flags", dict, self.flags)
             audit_data = self._safe_load(data, "audit", dict, None)
             if isinstance(audit_data, dict):
-                self.audit.from_dict(audit_data)
+                self.audit.from_dict(audit_data) # type: ignore
             else:
                 self.audit.enabled = self._safe_load(data, "audit_enabled", bool, self.audit.enabled)
                 legacy_interval = self._safe_load(data, "audit_interval_seconds", int, self.audit.interval_seconds)

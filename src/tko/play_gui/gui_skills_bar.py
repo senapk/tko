@@ -128,16 +128,16 @@ class GuiSkillsBar:
             elements.append(self.get_entry_xp(skills_resume, skill, max_target * self.target_cut_factor, dx))
 
         # Total bar
-        total_obtained, total_target100, total_complete = xp_resume.sum_xp(skills_resume)
+        total_obtained, total_target100, _ = xp_resume.sum_xp(skills_resume)
         if total_target100 == 0:
             grade = 0
         else:
             grade = total_obtained / total_target100 * 10.0
 
-        if self.flags.show_panel.is_true():
-            text = f" Nota: {grade:.1f}       "
-        else:
-            text = f"Nota: {grade:.1f} :{round(total_obtained):03d}/{round(total_target100):03d}/{round(total_complete):03d}"
+        # if self.flags.show_panel.is_true():
+        text = f" Nota: {grade:.1f}       "
+        # else:
+        #     text = f"Nota: {grade:.1f} :{round(total_obtained):03d}/{round(total_target100):03d}/{round(total_complete):03d}"
         done_color = self.colors.main_bar_done
         todo_color = self.colors.main_bar_todo
         percent = total_obtained / total_target100 if total_target100 > 0 else 0.0

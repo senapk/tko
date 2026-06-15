@@ -110,7 +110,7 @@ class TreeRenderer:
 
         title = self.quest_formatter.get_quest_full_title(
             q,
-            self.flags.panel.is_skills() and self.flags.show_panel.is_true(),
+            self.flags.panel.is_skills(),
         ).add_style(color)
         if focused:
             color = self.settings.colors.focused_item

@@ -102,28 +102,26 @@ class Gui:
         mid_sy   = main_sy - top_dy - bottom_dy
 
         right_sx = 0
-        if self.flags.show_panel.is_true():
-            right_sx = round(cols * (100 - self.settings.app.panel_size_percent) / 100.0)
+        right_sx = round(cols * (100 - self.settings.app.panel_size_percent) / 100.0)
 
         task_sx = main_sx - right_sx
 
         frame_top = Frame(top_y, 0).set_size(top_dy + 2, cols)
         self.top_bar.show(frame_top)
 
-        if self.flags.show_panel.is_true():
-            frame_right = (
-                Frame(mid_y, cols - right_sx)
-                .set_size(mid_sy, right_sx)
-                .set_border_color(self._get_frame_color())
-            )
-            if self.flags.panel.is_skills():
-                self.skills_bar.show(frame_right)
-            elif self.flags.panel.is_graph() or self.flags.panel.is_logs():
-                try:
-                    selected = self.tree.get_selected_throw()
-                except IndexError:
-                    selected = None
-                self.graph_panel.show(frame_right, selected)
+        frame_right = (
+            Frame(mid_y, cols - right_sx)
+            .set_size(mid_sy, right_sx)
+            .set_border_color(self._get_frame_color())
+        )
+        if self.flags.panel.is_skills():
+            self.skills_bar.show(frame_right)
+        elif self.flags.panel.is_graph() or self.flags.panel.is_logs():
+            try:
+                selected = self.tree.get_selected_throw()
+            except IndexError:
+                selected = None
+            self.graph_panel.show(frame_right, selected)
 
         # frame principal — desenhado após o painel lateral
         frame_main = (

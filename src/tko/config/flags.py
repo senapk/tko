@@ -155,16 +155,16 @@ class Flags:
 
         self.panel = PanelMode("panel", PanelMode.SKILLS)
 
-        self.show_panel = BoolFlag(
-            id="show_panel",
-            default_value=True,
-            msgs={
-                True: "Mostrar painel lateral",
-                False: "Ocultar painel lateral",
-            },
-            description="Mostra o painel lateral",
-            keycode="",
-        )
+        # self.show_panel = BoolFlag(
+        #     id="show_panel",
+        #     default_value=True,
+        #     msgs={
+        #         True: "Mostrar painel lateral",
+        #         False: "Ocultar painel lateral",
+        #     },
+        #     description="Mostra o painel lateral",
+        #     keycode="",
+        # )
 
         self.task_graph_mode = TaskGraphMode("task_graph_mode")
 
@@ -182,7 +182,7 @@ class Flags:
         self.all_flags: list[Flag] = [
             self.task_view_mode,
             self.panel,
-            self.show_panel,
+            # self.show_panel,
             self.task_graph_mode,
             self.show_time,
         ]
@@ -191,7 +191,7 @@ class Flags:
         return {
             self.task_view_mode.id: self.task_view_mode.get_value(),
             self.panel.id: self.panel.get_value(),
-            self.show_panel.id: self.show_panel.get_value(),
+            # self.show_panel.id: self.show_panel.get_value(),
             self.task_graph_mode.id: self.task_graph_mode.get_value(),
             self.show_time.id: self.show_time.get_value(),
         }
@@ -199,6 +199,6 @@ class Flags:
     def from_dict(self, data: dict[str, str]):
         self.task_view_mode.set_value(data.get(self.task_view_mode.id, self.task_view_mode.default))
         self.panel.set_value(data.get(self.panel.id, self.panel.default))
-        self.show_panel.set_value(data.get(self.show_panel.id, self.show_panel.default))
+        # self.show_panel.set_value(data.get(self.show_panel.id, self.show_panel.default))
         self.task_graph_mode.set_value(data.get(self.task_graph_mode.id, self.task_graph_mode.default))
         self.show_time.set_value(data.get(self.show_time.id, self.show_time.default))

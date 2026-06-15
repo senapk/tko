@@ -78,16 +78,15 @@ class GuiTopBar:
 
 
     def show(self, frame: Frame) -> None:
-        panel_on = self.flags.show_panel.is_true()
         vi = Button()
         pre = [
             vi.toggle_bt(f"{str(_TopBarMsg.RECOMMENDED)}[{GuiKeys.inbox}]", self.flags.task_view_mode.is_inbox()),
             vi.toggle_bt(f"{str(_TopBarMsg.ALL)}[{GuiKeys.all_tasks}]", self.flags.task_view_mode.is_all()),
         ]
         pos = [
-            vi.toggle_bt(f"{str(_TopBarMsg.GRAPHS)}[{GuiKeys.panel_graph}]", panel_on and self.flags.panel.is_graph()),
-            vi.toggle_bt(f"{str(_TopBarMsg.LOGS)}[{GuiKeys.panel_logs}]", panel_on and self.flags.panel.is_logs()),
-            vi.toggle_bt(f"{str(_TopBarMsg.SKILLS)}[{GuiKeys.panel_skills}]", panel_on and self.flags.panel.is_skills()),
+            vi.toggle_bt(f"{str(_TopBarMsg.GRAPHS)}[{GuiKeys.panel_graph}]", self.flags.panel.is_graph()),
+            vi.toggle_bt(f"{str(_TopBarMsg.LOGS)}[{GuiKeys.panel_logs}]", self.flags.panel.is_logs()),
+            vi.toggle_bt(f"{str(_TopBarMsg.SKILLS)}[{GuiKeys.panel_skills}]", self.flags.panel.is_skills()),
         ]
 
 

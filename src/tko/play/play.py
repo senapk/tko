@@ -141,7 +141,6 @@ class Play:
         cman.add_str(GuiKeys.panel_graph, lambda: self.open_toggle_panel(self.flags.panel.GRAPH))
         cman.add_str(GuiKeys.panel_logs, lambda: self.open_toggle_panel(self.flags.panel.LOGS))
         cman.add_str(GuiKeys.panel_skills, lambda: self.open_toggle_panel(self.flags.panel.SKILLS))
-        cman.add_str(GuiKeys.panel_toggle, lambda: self.flags.show_panel.toggle())
 
         cman.add_str(GuiKeys.unfold_patch, self.actions.editor.open_versions)
         
@@ -159,18 +158,10 @@ class Play:
 
     def open_toggle_panel(self, value: str):
         current = self.flags.panel.get_value()
-        panel = self.flags.panel
-        
-        if self.flags.show_panel.is_true():
-            if current != value:
-                panel.set_value(value)
-            else:
-                self.flags.show_panel.set_false()
-            return
-        self.flags.show_panel.set_true()
+        panel = self.flags.panel        
         if current != value:
             panel.set_value(value)
-
+        return
 
     def send_char_not_found(self, key: int):
         exclude_str = [ord(v) for v in [" ", "\n"]]
