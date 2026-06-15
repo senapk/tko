@@ -7,6 +7,7 @@ from tko.logger.logger import Logger
 from tko.logger.log_item_move import LogItemMove, LogItemMoveMode
 from datetime import datetime
 from loguru import logger
+from tko.logger.versions_writer import VersionsWriter
 
 
 
@@ -60,13 +61,14 @@ class AuditLogger:
 
 class RepositoryWatcher:
     default_edit_interval_seconds = 300
-    default_audit_interval_seconds = 20
+    default_audit_interval_seconds = 5
 
     def __init__(self, repo: Repository):
         self.repo = repo
         self.monitor: FileMonitor | None = None
         self.edit_logger: EditLogger | None = None
         self.audit_logger: AuditLogger | None = None
+        self.versions_writer: VersionsWriter = VersionsWriter()
 
     def start_watching(
         self,
@@ -89,7 +91,20 @@ class RepositoryWatcher:
             second_interval = audit_interval_seconds
             if second_interval is None or second_interval <= 0:
                 second_interval = self.default_audit_interval_seconds
-            self.audit_tracker = AuditTracker(self.repo, verbose=audit_verbose, interval_seconds=second_interval)
+            try:
+                self.audit_tracker = AuditTracker(
+                    self.repo,
+                    verbose=audit_verbose,
+                    interval_seconds=second_interval,
+                    versions_writer=self.versions_writer,
+                )
+            except TypeError:
+                # Backward compatibility for test doubles or legacy constructors.
+                self.audit_tracker = AuditTracker(
+                    self.repo,
+                    verbose=audit_verbose,
+                    interval_seconds=second_interval,
+                )
             self.audit_logger = AuditLogger(source_dir_list=sources_dir_list, audit_tracker=self.audit_tracker)
             self.monitor.add_observer(interval_seconds=second_interval, on_flush_events=self.audit_logger.on_flush_events)
 

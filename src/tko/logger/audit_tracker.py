@@ -11,47 +11,33 @@ from hashlib import blake2s
 import json
 from tko.util.console import Console
 from tko.util.rt import RT
-
-class AuditElement:
-    def __init__(self, timestamp: datetime, hash_value: str, content: str):
+from tko.logger.versions_writer import VersionsWriter
+    
+class LastElement:
+    def __init__(self, timestamp: datetime, hash_value: str) -> None:
         self.timestamp = timestamp
         self.hash_value = hash_value
-        self.content = content
 
-    def to_jsonl_line(self) -> str:
-        entry: dict[str, object] = {
+    def to_json(self) -> str:
+        return json.dumps({
             "ts": int(self.timestamp.timestamp()),
-            "label": self.timestamp.strftime("%Y/%m/%d-%H:%M:%S"),
-            "mode": "full",
-            "hash": self.hash_value,
-            "content": self.content,
-        }
-        return json.dumps(entry, ensure_ascii=False, separators=(",", ":"))
-    
-    def verify_hash(self) -> bool:
-        calculated_hash = blake2s(self.content.encode("utf-8")).hexdigest()
-        return calculated_hash == self.hash_value
-
-    @staticmethod
-    def from_jsonl_line(jsonl_line: str) -> AuditElement:
-        try:
-            entry = json.loads(jsonl_line)
-            timestamp = datetime.fromtimestamp(entry["ts"])
-            hash_value = entry["hash"]
-            content = entry["content"]
-            return AuditElement(timestamp, hash_value, content)
-        except Exception as e:
-            logger.warning(f"Failed to parse jsonl line: {e}")
-            raise ValueError("Invalid jsonl line format") from e
-        
-    
+            "hash": self.hash_value
+        })
 
 class AuditTracker:
-    def __init__(self, repo: Repository, verbose: bool, interval_seconds: int, max_file_size_bytes: int = 1024 * 1024):
-        self.repo = repo
-        self.max_file_size_bytes = max_file_size_bytes
-        self.verbose = verbose
-        self.interval_seconds = interval_seconds
+    def __init__(
+        self,
+        repo: Repository,
+        verbose: bool,
+        interval_seconds: int,
+        versions_writer: VersionsWriter | None = None,
+        max_file_size_bytes: int = 1024 * 1024,
+    ) -> None:
+        self.repo: Repository = repo
+        self.max_file_size_bytes: int = max_file_size_bytes
+        self.verbose: bool = verbose
+        self.interval_seconds: int = interval_seconds
+        self.versions_writer: VersionsWriter = versions_writer or VersionsWriter()
 
 
     def _is_auditable(self, path: Path, task_root: Path) -> bool:
@@ -76,7 +62,7 @@ class AuditTracker:
 
     @staticmethod
     def _output_file_last(file: Path) -> Path:
-        return file.with_name(file.name + ".last")
+        return file.with_name("." + file.name + ".last")
     
     @staticmethod
     def _task_lock_file(task_dir: Path) -> Path:
@@ -100,13 +86,6 @@ class AuditTracker:
             logger.warning(f"Failed to read last content from {audit_last_file}: {e}")
             return None, None
         
-    @staticmethod
-    def _generate_last_content(timestamp: datetime, hash_value: str) -> str:
-        entry: dict[str, object] = {
-            "ts": int(timestamp.timestamp()),
-            "hash": hash_value,
-        }
-        return json.dumps(entry, ensure_ascii=False, separators=(",", ":"))
     
     def _is_too_soon(self, audit_last_file: Path, new_timestamp: datetime, new_hash: str) -> bool:
         ts_last, hash_last = self._read_last_content(audit_last_file)
@@ -160,11 +139,13 @@ class AuditTracker:
             return False, 0
 
         try:
-            jsonl_line = AuditElement(timestamp, hash_value, content).to_jsonl_line()
-            with output_file.open("a", encoding="utf-8") as f:
-                f.write(jsonl_line + "\n")
+            self.versions_writer.write(
+                audit_file=output_file,
+                content=content,
+                timestamp=timestamp,
+            )
             
-            last_content = self._generate_last_content(timestamp, hash_value)
+            last_content = LastElement(timestamp=timestamp, hash_value=hash_value).to_json()
             with audit_last_file.open("w", encoding="utf-8") as f:
                 f.write(last_content)
 

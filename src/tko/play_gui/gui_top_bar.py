@@ -99,22 +99,3 @@ class GuiTopBar:
 
         text = Aligner.distribute_with_filler(left, center, right, " ", limit)
         frame.write(0, 0, text)
-
-        # Calculate available space for center
-        # if possible center the time, otherwise align to the left of the remaining space
-        # if the time doesn't fit, remove it and just show the buttons
-        # space_for_center = limit - len(left) - len(right)
-        # if space_for_center < len(center):
-        #     center = RT("")
-        # frame.write(0, 0, left)
-        # right_space_start = limit - len(left)
-        # if right_space_start < len(left):
-        #     right_space_start = len(left) + 1
-        # else:
-        #     right_space_start = limit - len(right)
-        # frame.write(0, right_space_start, right)
-
-        # available = limit - len(left) - len(right)
-        # if available < len(center):
-        #     return
-        # frame.write(0, len(left), center.center(available))

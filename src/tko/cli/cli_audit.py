@@ -2,12 +2,13 @@ import re
 import tempfile
 import time
 from pathlib import Path
+from datetime import datetime
 
 import typer
 
 from tko.config.settings import Settings
-from tko.logger.audit_tracker import AuditElement
 from tko.logger.patch_history import PatchHistory
+from tko.logger.versions_writer import VersionsWriter
 from loguru import logger
 from tko.i18n import Msg
 from tko.util.console import Console
@@ -32,18 +33,14 @@ def _unpack_patch_history(json_file: Path, output_dir: Path) -> int:
 
 def _unpack_audit_jsonl(jsonl_file: Path, output_dir: Path) -> int:
     stem = _sanitize_filename(jsonl_file.stem)
-    count = 0
-    with jsonl_file.open("r", encoding="utf-8") as handle:
-        for index, line in enumerate(handle, start=1):
-            line = line.strip()
-            if not line:
-                continue
-            element = AuditElement.from_jsonl_line(line)
-            label = _sanitize_filename(element.timestamp.strftime("%Y-%m-%d_%H-%M-%S"))
-            output_file = output_dir / f"{index:04d}_{label}_{stem}"
-            output_file.write_text(element.content, encoding="utf-8")
-            count += 1
-    return count
+    snapshots = VersionsWriter().load_history(jsonl_file).snapshots
+
+    for index, snapshot in enumerate(snapshots, start=1):
+        label = _sanitize_filename(snapshot.timestamp.strftime("%Y-%m-%d_%H-%M-%S"))
+        output_file = output_dir / f"{index:04d}_{label}_{stem}"
+        output_file.write_text(snapshot.content, encoding="utf-8")
+
+    return len(snapshots)
 
 
 @app.command("init")
