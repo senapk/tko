@@ -62,6 +62,7 @@ class TreeRenderer:
         head.add(" ")
         help_style, help_text = self.task_formatter.get_task_help_symbol(t)
         head.add(help_text, help_style)
+        head.add(" ").add(self.time_formatter.format_percent_1s(t.grader.get_rate_percent()))
         head.add(" ")
         head.add(t.game.tier_symbol)
         head.add(">" if focused else " ")
@@ -88,7 +89,6 @@ class TreeRenderer:
             output = output.ljust(self.layout.sentence_cut_size, RT(" ", focus_color))
         tail = RBuffer().add(output).add(" ")
 
-        tail.add(self.time_formatter.format_percent_1s(t.grader.get_rate_percent())).add(" ")
         value = t.grader.full_percent
         tail.add(self.time_formatter.format_percent_3s(value))
         if self.flags.show_time.is_true():
@@ -101,8 +101,14 @@ class TreeRenderer:
         body = RBuffer().add(q.ui.ligature.set_style(color))
         done, goal, _ = q.progress.get_obtained_goal_available()
         done = round(done)
+        if done < 100:
+            done_str = f"{done:02}"
+        else:
+            done_str = "……"
         goal = round(goal)
-        body.add(f" {done:02}/{goal:02}")
+        goal_str = f"{goal:02}"
+
+        body.add(f" {done_str:>3}/{goal_str:>3}")
         
         body.add(">" if focused else " ")
 
@@ -121,7 +127,7 @@ class TreeRenderer:
             output = output.slice(0, self.layout.sentence_cut_size - 1) + "…"
         else:
             output = output.ljust(self.layout.sentence_cut_size, RT(self.filler, color))
-        tail = RBuffer().add(output).add("   ")
+        tail = RBuffer().add(output).add(" ")
         percent_text = self.quest_formatter.get_percent_text(q)
         tail.add(percent_text)
         if self.flags.show_time.is_true():
