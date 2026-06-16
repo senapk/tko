@@ -39,7 +39,7 @@ class _EventManipulator(PatternMatchingEventHandler):
 
 
 class FileMonitor:
-    ignore_patterns = ["*.tmp", "*.log", "*.bak", "*.swp", "*~", "watcher.lock", "*.last", "*.auditlog", "*.editlog", "*.json", "*.jsonl"]
+    ignore_patterns = ["*.tmp", "*.log", "*.bak", "*.swp", "*~", "watcher.lock", "*.last", "*.auditlog", "*.editlog", "*.json", "*.jsonl", "*.jpg", "*.jpeg", "*.png", "*.gif", "*.bmp", "*.pdf", "*.docx", "*.xlsx", "*.pptx", "Readme.md", "extra.md"]
 
     def __init__(
         self,
