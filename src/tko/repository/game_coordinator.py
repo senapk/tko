@@ -2,6 +2,7 @@ from __future__ import annotations
 from loguru import logger
 from tko.repository.git_cache import UpdateMode
 from tko.i18n import Msg
+from tko.game.task import Task
 from tko.logger.log_sort import LogSort
 from tko.repository.repository import Repository
 
@@ -42,14 +43,19 @@ class GameCoordinator:
         for key, task_log in task_dict.items():
             if key not in self.repo.game.tasks:
                 continue
-            task = self.repo.game.tasks[key]
+            task: Task = self.repo.game.tasks[key]
             
             self_list = task_log.self_list
             if self_list:
                 _, self_item = self_list[-1]
                 task.info.copy_quality_from(self_item.info)
 
-            exec_list = task_log.exec_list
-            if exec_list:
-                _, exec_item = exec_list[-1]
-                task.info.rate = exec_item.rate
+            if task.config.is_eval_self:
+                if self_list:
+                    _, self_item = self_list[-1]
+                    task.info.rate = self_item.info.rate
+            else:
+                exec_list = task_log.exec_list
+                if exec_list:
+                    _, exec_item = exec_list[-1]
+                    task.info.rate = exec_item.rate

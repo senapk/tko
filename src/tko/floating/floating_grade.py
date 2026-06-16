@@ -237,7 +237,7 @@ class FloatingGrade(FloatingABC):
             ("9", RT(" 90%", "y")),
             ("✓", RT(" 100%", "y"))]
 
-        if self._task.config.is_auto:
+        if self._task.config.is_eval_test:
             texto_auto = str(_GradeMsg.AUTO_MODE_LABEL)
         else:
             texto_auto = str(_GradeMsg.MANUAL_MODE_LABEL)
@@ -250,7 +250,7 @@ class FloatingGrade(FloatingABC):
         refactor = "" if not self._task.info.feedback else ("1" if self._task.info.ia_refactor else "0")
 
         self.quantity_input_lines: list[InputLine] = [
-            InputSlide("rate", RT(texto_auto), progression, self._task.info.rate // 10).set_locked(self._task.config.is_auto),
+            InputSlide("rate", RT(texto_auto), progression, self._task.info.rate // 10).set_locked(self._task.config.is_eval_test),
             InputText("study", RT(str(_GradeMsg.STUDY_TIME_LABEL)), str(self._task.info.study)).set_number_only(True),
         ]
         self.support_input_lines: list[InputLine] = [
@@ -317,7 +317,7 @@ class FloatingGrade(FloatingABC):
 
     @staticmethod
     def change_task(task: Task, input_dict: dict[str, InputLine]):
-        if not task.config.is_auto:
+        if not task.config.is_eval_test:
             task.info.rate = int(input_dict["rate"].get_value()) * 10
         task.info.feedback = True
         task.info.friend = input_dict["friend"].get_value()

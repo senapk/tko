@@ -17,5 +17,9 @@ class TaskConfig:
         )
     
     @property
-    def is_auto(self):
+    def is_eval_test(self):
         return self.test == TaskEval.TEST
+    
+    @property
+    def is_eval_self(self):
+        return self.test == TaskEval.SELF
