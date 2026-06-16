@@ -127,10 +127,6 @@ class RepositoryData:
             audit_data = self._safe_load(data, "audit", dict, None)
             if isinstance(audit_data, dict):
                 self.audit.from_dict(audit_data) # type: ignore
-            else:
-                self.audit.enabled = self._safe_load(data, "audit_enabled", bool, self.audit.enabled)
-                legacy_interval = self._safe_load(data, "audit_interval_seconds", int, self.audit.interval_seconds)
-                self.audit.interval_seconds = legacy_interval
             self.lang = self._safe_load(data, "lang", str, self.lang)
             self.selected = self._safe_load(data, "selected", str, self.selected)
             self.selected_index = self._safe_load(data, "selected_index", int, self.selected_index)
@@ -153,8 +149,6 @@ class RepositoryData:
             "expanded": self.expanded,
             "flags": self.flags,
             "audit": self.audit.to_dict(),
-            "audit_enabled": self.audit.enabled,
-            "audit_interval_seconds": self.audit.interval_seconds,
             "lang": self.lang,
             "selected": self.selected,
             "selected_index": self.selected_index,

@@ -52,7 +52,7 @@ def test_load_from_dict_loads_simple_fields_and_sources(tmp_path: Path) -> None:
         "version": "0.2",
         "expanded": ["q1", "q2"],
         "flags": {"show_time": "true"},
-        "audit_enabled": True,
+        "audit": {"enabled": True, "interval_seconds": 120},
         "lang": "py",
         "selected": "repo@task",
         "selected_index": 4,
@@ -73,6 +73,7 @@ def test_load_from_dict_loads_simple_fields_and_sources(tmp_path: Path) -> None:
     assert data.expanded == ["q1", "q2"]
     assert data.flags == {"show_time": "true"}
     assert data.audit_enabled is True
+    assert data.audit_interval_seconds == 120
     assert data.lang == "py"
     assert data.selected == "repo@task"
     assert data.selected_index == 4
@@ -109,7 +110,7 @@ def test_save_to_dict_exports_current_state(tmp_path: Path) -> None:
     assert saved["version"] == "0.2"
     assert saved["expanded"] == ["q1"]
     assert saved["flags"] == {"panel": "logs"}
-    assert saved["audit_enabled"] is True
+    assert saved["audit"] == {"enabled": True, "interval_seconds": None}
     assert saved["lang"] == "cpp"
     assert saved["selected"] == "disc@task1"
     assert saved["selected_index"] == 2

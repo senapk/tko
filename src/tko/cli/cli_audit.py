@@ -102,7 +102,9 @@ def audit_init(
     
     AUDIT_STARTING = Msg(pt="Monitor de auditoria iniciado. Aperte Ctrl+C para finalizar.", 
                       en="Audit watcher started. Press Ctrl+C to stop.")
-
+    if interval is None:
+        interval = repo.audit.interval_seconds
+        
     watcher = RepositoryWatcher(repo)
     watcher.start_watching(log_edits=False, log_audit=True, audit_verbose=True, audit_interval_seconds=interval)
     logger.info(f"{AUDIT_STARTING}")

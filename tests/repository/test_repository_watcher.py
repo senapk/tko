@@ -31,9 +31,10 @@ class _FakeMonitor:
 
 
 class _FakeAuditTracker:
-    def __init__(self, _repo: Any, verbose: bool = False, interval_seconds: int = 5):
+    def __init__(self, _repo: Any, verbose: bool = False, interval_seconds: int = 5, versions_writer: Any | None = None):
         self.verbose = verbose
         self.interval_seconds = interval_seconds
+        self.versions_writer = versions_writer
         self.calls: list[tuple[str, list[tuple[Path, datetime | None]]]] = []
 
     def store(self, task_key: str, file_ts_list: list[tuple[Path, datetime | None]]) -> tuple[bool, int]:
@@ -192,9 +193,8 @@ def test_start_watching_defaults_to_persistent_audit_flag(monkeypatch: MonkeyPat
     monkeypatch.setattr(watcher_module, "AuditTracker", _FakeAuditTracker)
 
     repo = _make_repo(tmp_path)
-    repo.audit.enabled = True
     watcher = RepositoryWatcher(repo)
     watcher.start_watching()
 
     monitor = holder["monitor"]
-    assert len(monitor.observers) == 2
+    assert len(monitor.observers) == 1

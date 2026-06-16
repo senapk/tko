@@ -47,22 +47,25 @@ def test_audit_tracker_stores_snapshots(tmp_path: Path) -> None:
 
 
 
-def test_audit_tracker_ignores_files_outside_src_lang(tmp_path: Path) -> None:
+def test_audit_tracker_accepts_files_outside_task_folder(tmp_path: Path) -> None:
     repo = _FakeRepo(tmp_path)
     task_folder = tmp_path / "disc" / "task03"
     task_folder.mkdir(parents=True)
     (task_folder / "README.md").write_text("meta\n", encoding="utf-8")
-    outside = task_folder / "solver.py"
+
+    outside = tmp_path / "outside" / "solver.py"
+    outside.parent.mkdir(parents=True)
     outside.write_text("print('nope')\n", encoding="utf-8")
 
     tracker = AuditTracker(repo, verbose=False, interval_seconds=0)  # type: ignore[arg-type]
     changed, total_lines = tracker.store("disc@task03", [(outside, datetime(2026, 6, 9, 10, 11, 12))])
 
-    assert changed is False
-    assert total_lines == 0
+    assert changed is True
+    assert total_lines == 1
 
     audit_folder = tmp_path / ".tko" / "audit" / "disc@task03"
-    assert list(audit_folder.glob("*")) == [] if audit_folder.exists() else True
+    copied_file = audit_folder / "solver.py.jsonl"
+    assert copied_file.exists()
 
 
 def test_audit_tracker_ignores_large_or_missing_files(tmp_path: Path) -> None:
@@ -76,7 +79,8 @@ def test_audit_tracker_ignores_large_or_missing_files(tmp_path: Path) -> None:
     big_file.write_text("a" * 200, encoding="utf-8")
     missing = src_lang_folder / "missing.py"
 
-    tracker = AuditTracker(repo, verbose=False, interval_seconds=0, max_file_size_bytes=64)  # type: ignore[arg-type]
+    tracker = AuditTracker(repo, verbose=False, interval_seconds=0)  # type: ignore[arg-type]
+    tracker.max_file_size_bytes = 64
     changed, total_lines = tracker.store("disc@task02", [(big_file, None), (missing, None)])
 
     assert changed is False
