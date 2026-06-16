@@ -173,7 +173,9 @@ class CmdDown:
             return True
 
         origin_drafts_source: Path = CodeFilter.get_source_drafts_dir(self.origin_folder, self.language)
-        if not self.copy_drafts_from(origin_drafts_source, destiny_drafts_folder):
+        default_draft_ok = self.copy_drafts_from(origin_drafts_source, destiny_drafts_folder, self.language)
+        if not default_draft_ok:
+            self.actions.fnprint(f"criando default draft")
             self.actions.create_default_draft(destiny_drafts_folder, self.language)
         if self.task.config.test == TaskEval.SELF:
             self.actions.create_default_draft(destiny_drafts_folder, "md")
@@ -202,21 +204,22 @@ class CmdDown:
                         self.actions.fnprint(RT.parse(f"{_DOWN_FILE_UPDATED}".format(path=self.actions.folder_and_file(destiny_asset))))
 
     
-    def copy_drafts_from(self, origin_drafts_folder: Path, destiny_draft_folder: Path) -> bool:
+    def copy_drafts_from(self, origin_drafts_folder: Path, destiny_draft_folder: Path, language: str) -> bool:
         if not os.path.exists(origin_drafts_folder):
             return False
         destiny_draft_folder.mkdir(exist_ok=True, parents=True)
-        if self.copy_drafts_from_cache(origin_drafts_folder, destiny_draft_folder):
+        if self.copy_drafts_from_cache(origin_drafts_folder, destiny_draft_folder, language):
             return True
         return False
         
 
-    def copy_drafts_from_cache(self, cache_draft_folder: Path, destiny_draft_folder: Path) -> bool:
+    def copy_drafts_from_cache(self, cache_draft_folder: Path, destiny_draft_folder: Path, language: str) -> bool:
         found: bool = False
         for file in cache_draft_folder.iterdir():
             destiny_path = destiny_draft_folder / file.name
             self.actions.compare_and_save_to(Decoder.load(file), destiny_path)
-            found = True
+            if file.suffix == f".{language}":
+                found = True
         return found
         
 
