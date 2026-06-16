@@ -82,12 +82,13 @@ class TaskTree:
         ]
         return self.get_rendered_items(visible_items)
     
-    def get_rendered_items(self, items: list[IsTreeItem] | None = None) -> list[tuple[RT, IsTreeItem]]:
+    def get_rendered_items(self, items: list[IsTreeItem] | None = None, show_selected: bool = True) -> list[tuple[RT, IsTreeItem]]:
         if items is None:
             items = self.items
         matcher = SearchAsc(self.state.search)
+        selected = self.state.selected if show_selected else ""
         return [
-            (self.renderer.render(item, self.state.selected, matcher), item)
+            (self.renderer.render(item, selected, matcher), item)
             for item in items
         ]
     

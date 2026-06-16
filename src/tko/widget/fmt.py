@@ -89,17 +89,12 @@ class Fmt:
         bg: str = style.bg if style.bg is not None else ""
         attrs: str = "".join(style.attrs)
         if Fmt.mono:
+            attrs = ""
             if fg != "":
                 fg = ""
             if bg != "":
                 bg = ""
-                attrs += "X"
-
-
-        # if Fmt.mono:
-        #     fmt = "X" if "X" in style.to_tag() else ""
-        # else:
-        #     fmt = style.to_tag()
+                attrs = "X"
 
         stdscr = Fmt.__scr
         reverse = "X" in attrs

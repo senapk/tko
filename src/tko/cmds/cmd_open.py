@@ -51,7 +51,7 @@ class CmdOpen:
         tree.expand_all()
         tree.update(force_view_all=show_all)
         task_formatter = TaskFormatter(self.settings, self.repo)
-        for item, tree_item in tree.get_rendered_items():
+        for item, tree_item in tree.get_rendered_items(show_selected=False):
             istask = isinstance(tree_item, Task)
             if only_down:
                 if not istask:
