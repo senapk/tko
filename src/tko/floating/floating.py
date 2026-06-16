@@ -57,9 +57,9 @@ class Position:
 
 class Floating(FloatingABC):
     class Time:
-        FAST = 30
-        MEDIUM = 60
-        SLOW = 90
+        FAST = 40
+        MEDIUM = 70
+        SLOW = 110
 
     def __init__(self):
         super().__init__()

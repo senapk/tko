@@ -73,16 +73,12 @@ class RepositoryWatcher:
     def start_watching(
         self,
         log_edits: bool = True,
-        log_audit: bool | None = None,
+        log_audit: bool = False,
         audit_verbose: bool = False,
         audit_interval_seconds: int | None = None,
     ) -> RepositoryWatcher:
         if self.monitor is not None:
             return self
-        if log_audit is None:
-            log_audit = getattr(getattr(self.repo, "audit", None), "enabled", getattr(self.repo, "audit_enabled", False))
-        if audit_interval_seconds is None:
-            audit_interval_seconds = getattr(getattr(self.repo, "audit", None), "interval_seconds", None)
         sources_dir_list: dict[Path, str] = {source.path.work_dir: source.data.name for source in self.repo.remotes}
         self.monitor = FileMonitor(root_directory=self.repo.root_dir)
         if log_edits:
@@ -91,26 +87,17 @@ class RepositoryWatcher:
             self.edit_logger = EditLogger(sources_dir_list=sources_dir_list, logger=self.repo.logger)
             self.monitor.add_observer(interval_seconds=second_interval, on_flush_events=self.edit_logger.on_flush_events)
         if log_audit:
-            logger.debug("Starting audit logger with interval of {} seconds".format(self.default_audit_interval_seconds))
-            second_interval = audit_interval_seconds
-            if second_interval is None or second_interval <= 0:
-                second_interval = self.default_audit_interval_seconds
-            try:
-                self.audit_tracker = AuditTracker(
-                    self.repo,
-                    verbose=audit_verbose,
-                    interval_seconds=second_interval,
-                    versions_writer=self.versions_writer,
-                )
-            except TypeError:
-                # Backward compatibility for test doubles or legacy constructors.
-                self.audit_tracker = AuditTracker(
-                    self.repo,
-                    verbose=audit_verbose,
-                    interval_seconds=second_interval,
-                )
+            if audit_interval_seconds is None:
+                audit_interval_seconds = self.default_audit_interval_seconds
+            logger.debug("Starting audit logger with interval of {} seconds".format(audit_interval_seconds))
+            self.audit_tracker = AuditTracker(
+                self.repo,
+                verbose=audit_verbose,
+                interval_seconds=audit_interval_seconds,
+                versions_writer=self.versions_writer,
+            )
             self.audit_logger = AuditLogger(source_dir_list=sources_dir_list, audit_tracker=self.audit_tracker)
-            self.monitor.add_observer(interval_seconds=second_interval, on_flush_events=self.audit_logger.on_flush_events)
+            self.monitor.add_observer(interval_seconds=audit_interval_seconds, on_flush_events=self.audit_logger.on_flush_events)
 
         self.monitor.init()
         return self

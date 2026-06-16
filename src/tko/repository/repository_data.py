@@ -19,7 +19,7 @@ class AuditConfig:
     enabled: bool = False
     interval_seconds: int | None = None
 
-    def from_dict(self, data: dict[str, Any]) -> "AuditConfig":
+    def from_dict(self, data: dict[str, Any]) -> AuditConfig:
         enabled = data.get("enabled")
         if isinstance(enabled, bool):
             self.enabled = enabled

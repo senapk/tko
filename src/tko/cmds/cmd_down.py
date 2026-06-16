@@ -175,7 +175,6 @@ class CmdDown:
         origin_drafts_source: Path = CodeFilter.get_source_drafts_dir(self.origin_folder, self.language)
         default_draft_ok = self.copy_drafts_from(origin_drafts_source, destiny_drafts_folder, self.language)
         if not default_draft_ok:
-            self.actions.fnprint(f"criando default draft")
             self.actions.create_default_draft(destiny_drafts_folder, self.language)
         if self.task.config.test == TaskEval.SELF:
             self.actions.create_default_draft(destiny_drafts_folder, "md")

@@ -45,38 +45,45 @@ class TaskFormatter:
             return key + title, key, title
         return basic.title, "", basic.title
 
-    def get_task_down_symbol(self, task: Task) -> tuple[str, str]:
+    def get_task_down_test_eval_symbol(self, task: Task) -> tuple[str, str, str]:
+        # state
+        link = Symbols.middle_dot
+        static = Symbols.circle_filled
+        empty = Symbols.square_void
+        down = Symbols.square_filled
+
+        # mode
+        test = "T"
+        manual = "M"
+
+        # result
+        finish = "f"
+        not_init = "."
+
         if task.resource.is_read:
             if task.info.feedback:
-                return ("g", Symbols.task_view)
-            return ("", Symbols.task_view)
+                return (link, manual, finish)
+            return (link, manual, not_init)
+        
         if task.config.test == TaskEval.TEST:
-            if self.is_downloaded_for_lang(task):
-                if task.info.feedback:
-                    return ("g", Symbols.diamond_filled)   # baixou e tem feedback
-                return ("", Symbols.diamond_filled)        # baixou e não tem feedback
-            elif self.is_downloaded(task):
-                if task.info.feedback:
-                    return ("r", Symbols.diamond_void)   # baixou e tem feedback
-                return ("y", Symbols.diamond_void)        # baixou e não tem feedback
-            else:
-                if task.info.feedback:
-                    return ("r", Symbols.diamond_void)       # não baixou e tem feedback
-                return ("", Symbols.diamond_void)              # não baixou e não tem feedback
-        elif task.config.test == TaskEval.SELF:
-            if self.is_downloaded_for_lang(task):
-                if task.info.feedback:
-                    return ("g", Symbols.square_filled)   # baixou e tem feedback
-                return ("", Symbols.square_filled)        # baixou e não tem feedback
-            elif self.is_downloaded(task):
-                if task.info.feedback:
-                    return ("r", Symbols.square_void)   # baixou e tem feedback
-                return ("y", Symbols.square_void)        # baixou e não tem feedback
-            else:
-                if task.info.feedback:
-                    return ("r", Symbols.square_void)       # não baixou e tem feedback
-                return ("", Symbols.square_void)              # não baixou e não tem feedback
-        return ("x", "x")
+            test_mode = test
+        else:
+            test_mode = manual
+
+        
+        if task.resource.is_static_type:
+            state_mode = static
+        elif self.is_downloaded_for_lang(task):
+            state_mode = down
+        else:
+            state_mode = empty
+        
+        if task.info.feedback:
+            feed_mode = finish
+        else:
+            feed_mode = not_init
+
+        return (state_mode, test_mode, feed_mode)
 
     def get_task_help_symbol(self, task: Task) -> tuple[str, str]:
         if task.config.loss == TaskLoss.FREE:

@@ -55,7 +55,6 @@ class FileMonitor:
     def add_observer(self, interval_seconds: int, on_flush_events: FlushCallbackType) -> None:
         observer = FileActionObserver(
             interval_seconds=interval_seconds,
-            
             on_flush_events=on_flush_events
         )
         self.file_action_observers.append(observer)

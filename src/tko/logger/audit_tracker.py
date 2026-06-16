@@ -31,10 +31,9 @@ class AuditTracker:
         verbose: bool,
         interval_seconds: int,
         versions_writer: VersionsWriter | None = None,
-        max_file_size_bytes: int = 1024 * 1024,
     ) -> None:
         self.repo: Repository = repo
-        self.max_file_size_bytes: int = max_file_size_bytes
+        self.max_file_size_bytes: int = 1024 * 1024
         self.verbose: bool = verbose
         self.interval_seconds: int = interval_seconds
         self.versions_writer: VersionsWriter = versions_writer or VersionsWriter()
@@ -49,12 +48,8 @@ class AuditTracker:
         except OSError:
             return False
         try:
-            relative_path = path.resolve().relative_to(task_root.resolve())
+            path.resolve().is_relative_to(task_root.resolve())
         except ValueError:
-            return False
-        if len(relative_path.parts) < 3:
-            return False
-        if path.parent.parent.name != "src":
             return False
         if path.suffix in [".exe", ".bin", ".out"]:
             return False
@@ -154,7 +149,6 @@ class AuditTracker:
             logger.warning(f"Failed to process file {file}: {e}")
             return False, 0
 
-        logger.debug(f"Sending to console: {file} with verbose {self.verbose}")
         if self.verbose:
             hh_mm_ss = timestamp.strftime("%H:%M:%S")
             Console.print(RT.parse(f"[y][[audit]][] {hh_mm_ss} {task_key}"), flush=True)
