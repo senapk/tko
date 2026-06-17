@@ -86,21 +86,21 @@ class RemoteActions:
 
     def remote_list(self):
         remotes = self.repo.remotes
-        Console.print(_REMOTE_EDIT_HINT)
+        Console.print(RT.parse(str(_REMOTE_EDIT_HINT)))
         Console.print(RT.run("y", self.repo.paths.config_file.as_posix()))
         if len(remotes) == 0:
-            Console.print(_REMOTE_NONE_CONFIGURED)
+            Console.print(RT.parse(str(_REMOTE_NONE_CONFIGURED)))
             return
-        Console.print(_REMOTE_CONFIGURED_SOURCES)
+        Console.print(RT.parse(str(_REMOTE_CONFIGURED_SOURCES)))
         for remote in remotes:
             self.show_source(remote)
     
     def show_source(self, remote: Remote):
         status = str(_REMOTE_FILTER_DISABLED) if remote.data.quest_filters is None else str(_REMOTE_FILTER_ENABLED)
-        Console.print(str(_REMOTE_LABEL).format(name=remote.data.name))
-        Console.print(str(_REMOTE_LINK).format(link=remote.data.target))
-        Console.print(str(_REMOTE_INDEX).format(index=remote.data.index))
-        Console.print(str(_REMOTE_QUEST_FILTER).format(status=status))
+        Console.print(RT.parse(str(_REMOTE_LABEL).format(name=remote.data.name)))
+        Console.print(RT.parse(str(_REMOTE_LINK).format(link=remote.data.target)))
+        Console.print(RT.parse(str(_REMOTE_INDEX).format(index=remote.data.index)))
+        Console.print(RT.parse(str(_REMOTE_QUEST_FILTER).format(status=status)))
         if remote.data.quest_filters is not None:
             for f, v in remote.data.quest_filters.items():
                 Console.print(f"    - {f}: {v}")
@@ -185,7 +185,7 @@ class RemoteActions:
 
         repo = self.repo
         if remote_default is not None:
-            Console.print(f"[y] {str(_REMOTE_ADDING_GIT).format(url=remote_default)}")
+            Console.print(RT.parse(f"[y] {str(_REMOTE_ADDING_GIT).format(url=remote_default)}"))
             url: str = ""
             settings = self.settings
             if not settings.has_alias_git(remote_default):
@@ -205,13 +205,13 @@ class RemoteActions:
             if not dir_path.exists() or not dir_path.is_dir():
                 logger.warning(str(_REMOTE_DIR_NOT_FOUND))
                 return False
-            Console.print(f"[y] {str(_REMOTE_ADDING_LOCAL).format(path=dir_path)}")
+            Console.print(RT.parse(f"[y] {str(_REMOTE_ADDING_LOCAL).format(path=dir_path)}"))
             remote = Remote(alias=name)
             remote.data.set_local_source(target=dir_path)
             remote.data.quest_filters = self.fix_filter(filter_quest, filter_to)
             self.repo.data.set_remote(remote)
         elif remote_url is not None:
-            Console.print(f"[y] {str(_REMOTE_ADDING_URL).format(url=remote_url)}")
+            Console.print(RT.parse(f"[y] {str(_REMOTE_ADDING_URL).format(url=remote_url)}"))
             try:
                 self.git_clone_repository(remote_url)
                 remote = Remote(alias=name)
@@ -219,7 +219,7 @@ class RemoteActions:
                 remote.data.quest_filters = self.fix_filter(filter_quest, filter_to)
                 remote.data.is_editable = writeable
                 self.repo.data.set_remote(remote)
-                Console.print(f"[y] {str(_REMOTE_ADDED_SUCCESS).format(name=name)}")
+                Console.print(RT.parse(f"[y] {str(_REMOTE_ADDED_SUCCESS).format(name=name)}"))
             except Warning:
                 logger.exception(str(_REMOTE_CLONE_ERROR))
                 raise Warning(str(_REMOTE_CLONE_FAILED))

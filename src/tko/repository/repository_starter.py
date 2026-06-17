@@ -11,8 +11,8 @@ from tko.repository.git_cache import GitCache
 from tko.config.user_data import UserData
 
 _REPO_STARTER_LANGUAGE_SET = Msg(
-    pt="A linguagem do repositório foi definida como [y]{language}[.].",
-    en="Repository language set to [y]{language}[.].",
+    pt="A linguagem do repositório foi definida como [y]{language}[].",
+    en="Repository language set to [y]{language}[].",
 )
 _REPO_STARTER_OPEN_HINT = Msg(
     pt="Voce pode acessar o repositório com o comando [g]tko open[]",
@@ -23,8 +23,8 @@ _REPO_STARTER_EXISTS = Msg(
     en="A TKO repository already exists in folder [g]{folder}[]",
 )
 _REPO_STARTER_RESET_PROMPT = Msg(
-    pt="Deseja resetar o repositório? [[Y/N]]: ",
-    en="Do you want to reset the repository? [[Y/N]]: ",
+    pt="Deseja resetar o repositório? [[Y/n]]: ",
+    en="Do you want to reset the repository? [[Y/n]]: ",
 )
 _REPO_STARTER_INSIDE_OTHER_REPO = Msg(
     pt="Você está tentando criar um repositório dentro de outro, pois já existe rep em [r]{parent}[]",
