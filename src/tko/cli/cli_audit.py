@@ -6,6 +6,7 @@ from pathlib import Path
 import typer
 
 from tko.config.settings import Settings
+from tko.cli.audit_preview import render_audit_preview, run_audit_preview
 from tko.logger.patch_history import PatchHistory
 from tko.logger.versions_writer import VersionsWriter
 from loguru import logger
@@ -118,6 +119,37 @@ def audit_init(
     finally:
         watcher.stop_watching()
         logger.info(f"{Msg(pt='Monitor de auditoria parado.', en='Audit watcher stopped.')}")
+
+
+@app.command("preview", help="Preview audit snapshots with fzf")
+def audit_preview(
+    ctx: typer.Context,
+    target_list: list[Path] | None = typer.Argument(
+        None,
+        help="Files or directories to preview. Defaults to the repository audit folder.",
+    ),
+    index_file: Path | None = typer.Option(None, "--index-file", hidden=True),
+    preview_index: int | None = typer.Option(None, "--preview-index", hidden=True),
+    mode: str = typer.Option("diff", "--mode", hidden=True),
+) -> None:
+    if preview_index is not None:
+        if index_file is None:
+            raise typer.BadParameter("--index-file is required with --preview-index")
+        render_audit_preview(index_file, preview_index, mode)
+        return
+
+    if not target_list:
+        from tko.cli.common import load_repo
+
+        settings: Settings = ctx.obj
+        repo, _ = load_repo(settings.rs, show_warnings=True, auto_load=True)
+        if repo is None:
+            return
+        target_list = [repo.paths.audit_folder]
+
+    code = run_audit_preview(target_list)
+    if code not in (0, 130):
+        raise typer.Exit(code=code)
 
 
 @app.command("unpack", help="Unpack audit data from a .json or .jsonl file into individual files")

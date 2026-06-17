@@ -7,6 +7,7 @@ import re
 from _pytest.monkeypatch import MonkeyPatch
 from typer.testing import CliRunner
 
+import tko.cli.audit_preview as audit_preview
 from tko.cli.cli_audit import app
 from tko.config.run_settings import RunSettings
 from tko.config.settings import Settings
@@ -191,3 +192,75 @@ def test_audit_set_off_persists_flag(monkeypatch: MonkeyPatch, tmp_path: Path) -
     assert repo.audit.enabled is False
     assert captured["saved"] is True
     assert "Auditoria persistente desabilitada" in combined_output
+
+
+def test_audit_preview_render_first_file_outputs_content(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    runner = CliRunner()
+    index_file = tmp_path / "index"
+    snapshot = tmp_path / "2026-06-10_14-09-01_solver.py"
+    snapshot.write_text("print('ok')\n", encoding="utf-8")
+    index_file.write_text(str(snapshot), encoding="utf-8")
+
+    monkeypatch.setattr(audit_preview, "which", lambda _name: None)
+
+    result = runner.invoke(
+        app,
+        ["preview", "--index-file", str(index_file), "--preview-index", "1"],
+    )
+
+    assert result.exit_code == 0
+    assert "\033[33mElapsed=" in result.output
+    assert "Elapsed=" in result.output
+    assert str(snapshot) in result.output
+    assert "print('ok')" in result.output
+
+
+def test_audit_preview_elapsed_ignores_unpack_index_prefix(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    runner = CliRunner()
+    index_file = tmp_path / "index"
+    first = tmp_path / "0001_2026-06-10_14-09-01_solver.py"
+    second = tmp_path / "0002_2026-06-10_14-10-01_solver.py"
+    first.write_text("print(1)\n", encoding="utf-8")
+    second.write_text("print(2)\n", encoding="utf-8")
+    index_file.write_text(f"{first}\n{second}", encoding="utf-8")
+
+    monkeypatch.setattr(audit_preview, "which", lambda _name: None)
+
+    result = runner.invoke(
+        app,
+        ["preview", "--index-file", str(index_file), "--preview-index", "2"],
+    )
+
+    assert result.exit_code == 0
+    assert "Elapsed=\033[32m00:01:00" in result.output
+
+
+def test_audit_preview_invokes_fzf_with_numbered_files(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    runner = CliRunner()
+    source_dir = tmp_path / "snapshots"
+    source_dir.mkdir()
+    first = source_dir / "2026-06-10_14-09-01_solver.py"
+    second = source_dir / "2026-06-10_14-10-01_solver.py"
+    first.write_text("print(1)\n", encoding="utf-8")
+    second.write_text("print(2)\n", encoding="utf-8")
+    captured: dict[str, Any] = {}
+
+    def fake_run(args: list[str], input: str | None = None, text: bool = False, **_kwargs: Any) -> SimpleNamespace:
+        captured["args"] = args
+        captured["input"] = input
+        captured["text"] = text
+        return SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr(audit_preview, "which", lambda name: "/usr/bin/fzf" if name == "fzf" else None)
+    monkeypatch.setattr(audit_preview.subprocess, "run", fake_run)
+
+    result = runner.invoke(app, ["preview", str(source_dir)])
+
+    assert result.exit_code == 0
+    assert captured["args"][0] == "fzf"
+    assert "--preview" in captured["args"]
+    preview_command = captured["args"][captured["args"].index("--preview") + 1]
+    assert "-m tko.cli.audit_preview" in preview_command
+    assert "--preview-index {1}" in preview_command
+    assert captured["input"] == f"1\t{first}\n2\t{second}"
+    assert captured["text"] is True
