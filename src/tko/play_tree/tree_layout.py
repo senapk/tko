@@ -18,19 +18,30 @@ class TreeLayout:
 
         self.fixed_task_itens_size = 10
         self.use_full_key: bool = False
+        self.insert_quest_keys: bool = False
 
-        self.__key_size: int | None = None
+        self.__quests_key_size: int | None = None
+        self.__task_key_size: int | None = None
 
     def reset(self):
-        self.__key_size = None
+        self.__quests_key_size = None
+        self.__task_key_size = None
 
     @property
-    def key_size(self) -> int:
-        # if self.__key_size is None:
-        self.__calculate()
-        if self.__key_size is None:
+    def quest_key_pad(self) -> int:
+        if self.__quests_key_size is None:
+            self.__calculate()
+        if self.__quests_key_size is None:
             return self.key_size_min
-        return self.__key_size
+        return self.__quests_key_size
+
+    @property
+    def task_key_pad(self) -> int:
+        if self.__task_key_size is None:
+            self.__calculate()
+        if self.__task_key_size is None:
+            return self.key_size_min
+        return self.__task_key_size
     
     @property
     def sentence_cut_size(self) -> int:
@@ -43,10 +54,13 @@ class TreeLayout:
         
     def __calculate(self):
         game = self.game
-        key_sizes: list[int] = []
+        tasks_key_sizes: list[int] = []
+        quests_key_sizes: list[int] = []
 
         for q in game.quests.values():
+            quests_key_sizes.append(len(q.basic.key))
             for t in q.get_tasks():
                 key = t.basic.full_key if self.use_full_key else t.basic.key
-                key_sizes.append(len(key))
-        self.__key_size = max(key_sizes) if key_sizes else self.key_size_min
+                tasks_key_sizes.append(len(key))
+        self.__task_key_size = max(tasks_key_sizes) if tasks_key_sizes else self.key_size_min
+        self.__quests_key_size = max(quests_key_sizes) if quests_key_sizes else self.key_size_min

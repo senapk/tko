@@ -25,13 +25,13 @@ class QuestFormatter:
         percent_text = self.time_formatter.format_percent_3s(pall).set_style("g")
         return percent_text
 
-    def get_quest_full_title(self, quest: Quest, show_skills: bool) -> RT:
+    def get_quest_full_title(self, quest: Quest, show_skills: bool, sep: str = " ") -> RT:
         output = RT(quest.basic.remote_name, "c") + RT(":") + RT(quest.basic.title)
         if show_skills:
             for skill in quest.config.skills:
-                output += RT.run("g", f" +{skill}")
+                output += RT.run("g", f"{sep}+{skill}")
                 if quest.config.factor != 1:
-                    output += RT.run("g", f"*{quest.config.factor}")
+                    output += RT.run("g", f"{sep}*{quest.config.factor}")
         return output
 
     def get_focus_color_quest(self, quest: Quest) -> str:

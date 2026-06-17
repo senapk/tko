@@ -87,10 +87,7 @@ class TaskTree:
             items = self.items
         matcher = SearchAsc(self.state.search)
         selected = self.state.selected if show_selected else ""
-        return [
-            (self.renderer.render(item, selected, matcher), item)
-            for item in items
-        ]
+        return [ (self.renderer.render(item, selected, matcher), item) for item in items ]
     
     def update(self, force_view_all: bool = False):
         tree_filter = TreeFilter(

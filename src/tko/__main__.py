@@ -89,6 +89,7 @@ def main_callback(
     sett.rs.force_update = update
     sett.rs.force_offline = offline
     sett.rs.width = width
+    sett.rs.monochrome = mono
 
     if lang is not None:
         sett.app.ui_language = lang

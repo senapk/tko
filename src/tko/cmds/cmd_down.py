@@ -19,7 +19,10 @@ from tko.util.rt import RT
 from typing import Any
 from tko.util.console import Console
 
-
+_DOWN_OPENING = Msg(
+    pt="# [y]{key}[]\nBaixando na pasta [y]{folder}[]",
+    en="# [y]{key}[]\nDownloading in folder [y]{folder}[]",
+)
 _DOWN_INVALID_REPO_ARG = Msg(
     pt="O parâmetro para o comando tko down deve a pasta onde você iniciou o repositório.",
     en="The argument for tko down must be the folder where you initialized the repository.",
@@ -78,8 +81,8 @@ _DOWN_FILE_EMPTY = Msg(
 )
 
 _DRAFTS_FOUND = Msg(
-    pt="Códigos de resposta encontrados na pasta:\n   {folder}\n Rascunhos não criados. Apague os código antigos\n caso queira baixar novos rascunhos.",
-    en="Response codes found in folder:\n   {folder}\n Drafts not created. Delete the old codes\n if you want to download new drafts.",
+    pt="Códigos de resposta encontrados na pasta:\n   {folder}\n[r]Rascunhos não criados[]. Apague os código antigos\ncaso queira baixar novos rascunhos.",
+    en="Response codes found in folder:\n   {folder}\n[r]Drafts not created[]. Delete the old codes\nif you want to download new drafts.",
 )
 
 class CmdLineDown:
@@ -131,6 +134,7 @@ class CmdDown:
         self.actions = DownActions(self.settings)
         
     def execute(self) -> bool:
+
         if self.task.resource.is_import_type:
             self.download_from_external_remote()
             return True
@@ -151,6 +155,7 @@ class CmdDown:
                 os.rmdir(self.destiny_folder)
 
     def download_from_external_remote(self) -> None:
+        self.actions.fnprint(RT.parse(f"{_DOWN_OPENING}".format(key=self.task_key, folder=self.destiny_folder)))
         self.destiny_folder.mkdir(exist_ok=True, parents=True)
         self.copy_readme()
         self.copy_tests()
@@ -164,7 +169,7 @@ class CmdDown:
         found, destiny_drafts_folder = finder.search_for_solvers()
         if found:
             relative = destiny_drafts_folder.relative_to(Path.cwd(), walk_up=True).as_posix()
-            self.actions.fnprint(f"{_DRAFTS_FOUND}".format(folder=relative))
+            self.actions.fnprint(RT.parse(f"{_DRAFTS_FOUND}".format(folder=relative)))
             return True
         
         if self.task.resource.is_static_type: # working in local remote source, creating only default draft if not found

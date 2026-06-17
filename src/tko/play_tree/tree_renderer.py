@@ -56,22 +56,29 @@ class TreeRenderer:
         head = RBuffer()
         head.add(" ")
         head.add(str(t.game.xp), "y")
-        # head.add(" ")
         state, test, _ = self.task_formatter.get_task_down_test_eval_symbol(t)
         head.add(" ")
         help_style, help_text = self.task_formatter.get_task_help_symbol(t)
         head.add(help_text, help_style)
+        head.add(" ").add(test)
+        head.add(" ").add(state)
         head.add(" ").add(t.game.tier_symbol)
-        head.add(" ").add(test).add(" ").add(state)
         head.add(">" if focused else " ")
+
+        if self.layout.insert_quest_keys:
+            key = t.quest_key
+            if "@" in key:
+                key = key.split("@")[1]
+            head.add(f" #{key:<{self.layout.quest_key_pad}} ", "b")
 
         output = head.to_rt()
         remote_name: str = ""
         if self.layout.use_full_key:
             remote_name = t.basic.remote_name
+
         _, _key, _title = self.task_formatter.get_task_full_title(
             task=t,
-            key_pad=self.layout.key_size,
+            key_pad=self.layout.task_key_pad,
             remote_name=remote_name,
         )
         title = self.task_formatter.color_task_title(_key, _title)

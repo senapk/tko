@@ -35,22 +35,22 @@ class TaskFormatter:
         drafts = finder.load_source_files()
         return len(drafts) > 0
 
-    def get_task_full_title(self, task: Task, key_pad: None | int, pad_char: str = " ", remote_name: str = "") -> tuple[str, str, str]:
+    def get_task_full_title(self, task: Task, key_pad: None | int, sep: str = " ", remote_name: str = "") -> tuple[str, str, str]:
         basic = task.basic
         if key_pad is None:
             key_pad = len(basic.key)
         if not f"@{basic.key}" in basic.title:
-            key = f"{remote_name}@{basic.key}".ljust(key_pad + 1, pad_char) + " "
+            key = f"{remote_name}@{basic.key}".ljust(key_pad + 1, sep) + sep
             title = basic.title
             return key + title, key, title
         return basic.title, "", basic.title
 
     def get_task_down_test_eval_symbol(self, task: Task) -> tuple[str, str, str]:
         # state
-        link = Symbols.middle_dot
-        static = Symbols.circle_filled
-        empty = Symbols.square_void
-        down = Symbols.square_filled
+        link = "l"
+        static = "s" #Symbols.circle_filled
+        empty = "○" #Symbols.square_void
+        down = "●" #Symbols.square_filled
 
         # mode
         test = "T"

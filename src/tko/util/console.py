@@ -89,7 +89,7 @@ class CaptureWriter:
 
 
 class Console:
-    stdout: ClassVar[Writer] = PrintWriter( sys.stdout, RenderMode.COLOR, )
+    stdout: ClassVar[Writer] = PrintWriter( sys.stdout, RenderMode.COLOR)
     stderr: ClassVar[Writer] = PrintWriter( sys.stderr, RenderMode.COLOR)
 
     @staticmethod

@@ -44,12 +44,18 @@ class CmdOpen:
             play.display_need_update()
         play.play()
 
-    def list(self, show_all: bool, only_down: bool, show_quests: bool):
+    def build_tree(self, show_all: bool, full_key: bool, quests_keys: bool = False) -> TaskTree:
         tree = TaskTree(self.settings, self.repo)
-        if not show_quests:
+        if full_key:
             tree.layout.use_full_key = True
+        if quests_keys:
+            tree.layout.insert_quest_keys = True
         tree.expand_all()
         tree.update(force_view_all=show_all)
+        return tree
+
+    def list(self, show_all: bool, only_down: bool, show_quests: bool):
+        tree = self.build_tree(show_all, full_key = not show_quests, quests_keys= not show_quests)
         task_formatter = TaskFormatter(self.settings, self.repo)
         for item, tree_item in tree.get_rendered_items(show_selected=False):
             istask = isinstance(tree_item, Task)

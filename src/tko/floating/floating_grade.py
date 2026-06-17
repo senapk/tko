@@ -77,7 +77,7 @@ class InputLine(ABC):
         return self.SELECTED_COLOR
 
     def get_opening(self):
-        return RT(Symbols.right_triangle_filled if self.focus else " ") + " "
+        return RT(">" if self.focus else " ") + " "
 
     @abstractmethod
     def send_key(self, key: int) -> None:
