@@ -4,28 +4,27 @@ from pathlib import Path
 from typing import Any
 from tko.util.decoder import Decoder
 from tko.i18n import Msg
-from tko.util.rt import RT
 from tko.util.atomic_write_yaml import atomic_write_yaml
 from tko.repository.repository import Repository
 
 
-_REPOSITORY_LOADER_GIT_CONFLICT = Msg(
+_REPOSITORY_LOADER_GIT_CONFLICT = Msg.text(
     pt="Conflito de merge git detectado em {file}.\nResolva o conflito manualmente antes de continuar.",
     en="Git merge conflict detected in {file}.\nPlease resolve the conflict manually before continuing.",
 )
-_REPOSITORY_LOADER_EMPTY_CONFIG_FILE = Msg(
+_REPOSITORY_LOADER_EMPTY_CONFIG_FILE = Msg.text(
     pt="Arquivo de configuração vazio: {file}",
     en="Empty config file: {file}",
 )
-_REPOSITORY_LOADER_YAML_CORRUPTED = Msg(
+_REPOSITORY_LOADER_YAML_CORRUPTED = Msg.parse(
     pt="O arquivo de configuração do repositório [y]{file}[] contém erros de YAML e está [r]corrompido[].\nErro: {error}\nAbra e corrija o conteúdo ou crie um novo.",
     en="The repository configuration file [y]{file}[] contains YAML errors and is [r]corrupted[].\nError: {error}\nOpen and fix the content or create a new one.",
 )
-_REPOSITORY_LOADER_CONFIG_EMPTY = Msg(
+_REPOSITORY_LOADER_CONFIG_EMPTY = Msg.parse(
     pt="O arquivo de configuração do repositório [y]{file}[] está [r]vazio[].\nAbra e corrija o conteúdo ou crie um novo.",
     en="The repository configuration file [y]{file}[] is [r]empty[].\nOpen and fix the content or create a new one.",
 )
-_REPOSITORY_LOADER_CONFIG_CORRUPTED_UNEXPECTED = Msg(
+_REPOSITORY_LOADER_CONFIG_CORRUPTED_UNEXPECTED = Msg.parse(
     pt="O arquivo de configuração do repositório [y]{file}[] está [r]corrompido[].\nErro inesperado: {error}\nAbra e corrija o conteúdo ou crie um novo.",
     en="The repository configuration file [y]{file}[] is [r]corrupted[].\nUnexpected error: {error}\nOpen and fix the content or create a new one.",
 )
@@ -42,7 +41,7 @@ class RepositoryConfig:
         lines = content.splitlines()
         for line in lines:
             if line.startswith("<<<<<<<") or line.startswith("=======") or line.startswith(">>>>>>>"):
-                raise ConfigMergeConflictError(str(_REPOSITORY_LOADER_GIT_CONFLICT).format(file=self.repo.paths.config_file))
+                raise ConfigMergeConflictError(_REPOSITORY_LOADER_GIT_CONFLICT.t().format(file=self.repo.paths.config_file))
     @staticmethod
     def _length(data: Any) -> int:
         if isinstance(data, dict):
@@ -65,16 +64,16 @@ class RepositoryConfig:
                 local_data = yaml.safe_load(backup_content)
 
             if local_data is None or not isinstance(local_data, dict) or self._length(local_data) == 0:
-                raise FileNotFoundError(str(_REPOSITORY_LOADER_EMPTY_CONFIG_FILE).format(file=self.repo.paths.config_file))
+                raise FileNotFoundError(_REPOSITORY_LOADER_EMPTY_CONFIG_FILE.t().format(file=self.repo.paths.config_file))
 
         except ConfigMergeConflictError:
             raise
         except yaml.YAMLError as e:
-            raise Warning(RT.parse(str(_REPOSITORY_LOADER_YAML_CORRUPTED).format(file=self.repo.paths.config_file, error=e)))
+            raise Warning(_REPOSITORY_LOADER_YAML_CORRUPTED.t().format(file=self.repo.paths.config_file, error=e))
         except FileNotFoundError:
-            raise Warning(RT.parse(str(_REPOSITORY_LOADER_CONFIG_EMPTY).format(file=self.repo.paths.config_file)))
+            raise Warning(_REPOSITORY_LOADER_CONFIG_EMPTY.t().format(file=self.repo.paths.config_file))
         except Exception as e:
-            raise Warning(RT.parse(str(_REPOSITORY_LOADER_CONFIG_CORRUPTED_UNEXPECTED).format(file=self.repo.paths.config_file, error=e)))
+            raise Warning(_REPOSITORY_LOADER_CONFIG_CORRUPTED_UNEXPECTED.t().format(file=self.repo.paths.config_file, error=e))
 
         self.repo.data.load_from_dict(local_data)  # type: ignore
         self.repo.flags.from_dict(self.repo.data.flags)  # type: ignore

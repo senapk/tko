@@ -112,6 +112,7 @@ Repositórios de referência:
 - [Criando tarefas e testes](wiki/Criando-Tarefas-e-Testes.md)
 - [Gamificação e progressão](wiki/Gamificacao-e-Progressao.md)
 - [Relizando provas com modo auditoria](wiki/audit.md)
+- [Analisando a timeline de execução de uma tarefa](wiki/audit-preview.md)
 
 ## Uso pelos desenvolvedores
 

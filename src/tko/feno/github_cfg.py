@@ -8,7 +8,7 @@ from pathlib import Path
 from tko.util.console import Console
 
 
-_FENO_GITHUB_CFG_NOT_SET = Msg(
+_FENO_GITHUB_CFG_NOT_SET = Msg.parse(
     pt="fail: arquivo {filename} não definido",
     en="fail: {filename} file not set",
 )

@@ -1,7 +1,7 @@
 from tko.i18n import Msg
 
 
-_LABEL_FACTORY_INDEX_INT_REQUIRED = Msg(
+_LABEL_FACTORY_INDEX_INT_REQUIRED = Msg.text(
     pt="Index on label must be a integer",
     en="Index on label must be a integer",
 )
@@ -16,7 +16,7 @@ class LabelFactory:
         try:
             self._index = int(value)
         except ValueError:
-            raise ValueError(str(_LABEL_FACTORY_INDEX_INT_REQUIRED))
+            raise ValueError(_LABEL_FACTORY_INDEX_INT_REQUIRED.t().plain())
         return self
 
     def label(self, value: str):

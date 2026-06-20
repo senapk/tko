@@ -10,7 +10,7 @@ import curses
 from abc import ABC, abstractmethod
 from tko.util.countdown import Countdown
 
-_FLOATING_INVALID_ALIGN = Msg(
+_FLOATING_INVALID_ALIGN = Msg.text(
     pt="Invalid align {align}",
     en="Invalid align {align}",
 )
@@ -127,7 +127,7 @@ class Floating(FloatingABC):
         self.frame.set_header(RT(text, "/"), "")
         return self
     
-    def set_header_text(self, sentence: RT):
+    def set_header_rt(self, sentence: RT):
         self.frame.set_header(sentence, "")
         return self
     
@@ -135,7 +135,7 @@ class Floating(FloatingABC):
         self.frame.set_footer(RT(text, "/"), "")
         return self
     
-    def set_footer_text(self, sentence: RT):
+    def set_footer_rt(self, sentence: RT):
         self.frame.set_footer(sentence, "")
         return self
     

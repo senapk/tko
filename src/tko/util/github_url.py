@@ -6,11 +6,11 @@ from tko.i18n import Msg
 from tko.util.decoder import Decoder
 
 
-_GITHUB_URL_INVALID_URL = Msg(
+_GITHUB_URL_INVALID_URL = Msg.text(
     pt="Invalid URL",
     en="Invalid URL",
 )
-_GITHUB_URL_INVALID_GITHUB_URL = Msg(
+_GITHUB_URL_INVALID_GITHUB_URL = Msg.text(
     pt="Invalid GitHub URL",
     en="Invalid GitHub URL",
 )
@@ -21,14 +21,14 @@ class GitHubUrl:
         self.url_structure: GithubUrlStructure | None = None
 
         if not url.startswith("https://"):
-            raise ValueError(str(_GITHUB_URL_INVALID_URL))
+            raise ValueError(_GITHUB_URL_INVALID_URL.t().plain())
 
         if url.startswith("https://gist.githubusercontent.com"):
             self.raw_link = url
         else:
             url_structure = GithubUrlStructure()
             if not url_structure.parse(url):
-                raise ValueError(str(_GITHUB_URL_INVALID_GITHUB_URL))
+                raise ValueError(_GITHUB_URL_INVALID_GITHUB_URL.t().plain())
             self.url_structure = url_structure
         self.file = ""
 

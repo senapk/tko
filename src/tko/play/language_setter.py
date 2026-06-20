@@ -10,16 +10,16 @@ from tko.i18n import Msg, set_language as set_ui_language, SUPPORTED_LANGUAGES
 from tko.util.console import Console
 
 class _LangSetterMsg:
-    UI_LANGUAGE_CHANGED = Msg(pt="Idioma da interface alterado para {language}", en="Interface language changed to {language}")
-    LANGUAGE_CHANGED = Msg(pt="Linguagem alterada para {language}", en="Language changed to {language}")
-    LANG_CHOOSE = Msg(pt="Escolha a extensão default para os rascunhos", en="Choose the default extension for drafts")
-    RESET_TKO = Msg(pt="Reinicie o tko para aplicar as mudanças", 
+    UI_LANGUAGE_CHANGED = Msg.text(pt="Idioma da interface alterado para {language}", en="Interface language changed to {language}")
+    LANGUAGE_CHANGED = Msg.text(pt="Linguagem alterada para {language}", en="Language changed to {language}")
+    LANG_CHOOSE = Msg.text(pt="Escolha a extensão default para os rascunhos", en="Choose the default extension for drafts")
+    RESET_TKO = Msg.text(pt="Reinicie o tko para aplicar as mudanças", 
                     en="Restart tko to apply changes")
-    PROMPT = Msg(pt="Escolha entre as opções a seguir [[[y]{options}[]]]: ", 
+    PROMPT = Msg.parse(pt="Escolha entre as opções a seguir [[[y]{options}[]]]: ", 
                  en="Choose from the following options [[[y]{options}[]]]: ")
-    UI_NOT_SET = Msg(pt="[g]Idioma[] padrão da UI ainda não foi definida.", 
+    UI_NOT_SET = Msg.parse(pt="[g]Idioma[] padrão da UI ainda não foi definida.", 
                      en="Default [g]UI language[] has not been set yet.")
-    PROG_LANGUAGE_NOT_SET = Msg(pt="[g]Linguagem de programação[] padrão ainda não foi definida.", 
+    PROG_LANGUAGE_NOT_SET = Msg.parse(pt="[g]Linguagem de programação[] padrão ainda não foi definida.", 
                                 en="Default [g]programming language[] has not been set yet.")
 
 class LanguageSetter:

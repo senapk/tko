@@ -1,7 +1,7 @@
 from tko.i18n import Msg, normalize_language, set_language
 
 
-_CLI_COMMON_NO_REPO = Msg(
+_CLI_COMMON_NO_REPO = Msg.text(
     pt="Nenhum repositório TKO encontrado.",
     en="No TKO repository found.",
 )

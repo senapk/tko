@@ -7,7 +7,7 @@ import curses
 from typing import Callable
 
 
-_INPUT_TEXT_PROMPT = Msg(pt="Digite aqui: ", en="Type here: ")
+_INPUT_TEXT_PROMPT = Msg.text(pt="Digite aqui: ", en="Type here: ")
 
 
 class FloatingInputText(FloatingABC):

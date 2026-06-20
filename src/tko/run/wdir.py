@@ -11,23 +11,23 @@ from pathlib import Path
 from tko.config.settings import Settings
 
 
-_RUN_NO_SOURCE_FILES = Msg(
+_RUN_NO_SOURCE_FILES = Msg.text(
     pt="Nenhum arquivo de código encontrado.",
     en="No source files found.",
 )
-_RUN_AUTOLOAD_FOLDER_NOT_SET = Msg(
+_RUN_AUTOLOAD_FOLDER_NOT_SET = Msg.text(
     pt="fail: pasta de autoload não definida",
     en="fail: autoload folder is not set",
 )
-_RUN_AUTOLOAD_LANG_HINT = Msg(
+_RUN_AUTOLOAD_LANG_HINT = Msg.parse(
     pt="Você não definiu os arquivos diretamente. Use [y]-l[] caso queira especificar a linguagem para autoloading.",
     en="You did not define files directly. Use [y]-l[] if you want to specify the language for autoloading.",
 )
-_RUN_NO_TEST_CASES = Msg(
+_RUN_NO_TEST_CASES = Msg.text(
     pt="Nenhum caso de teste encontrado.",
     en="No test cases found.",
 )
-_RUN_FILTER_INDEX_OUT_OF_BOUNDS = Msg(
+_RUN_FILTER_INDEX_OUT_OF_BOUNDS = Msg.text(
     pt="Índice fora dos limites: {index}",
     en="Index out of bounds: {index}",
 )
@@ -60,7 +60,7 @@ class Wdir:
     
     def autoload(self):
         if self.autoload_folder is None:
-            raise ValueError(str(_RUN_AUTOLOAD_FOLDER_NOT_SET) + " " + str(_RUN_AUTOLOAD_LANG_HINT))
+            raise ValueError(_RUN_AUTOLOAD_FOLDER_NOT_SET.t() + " " + _RUN_AUTOLOAD_LANG_HINT.t())
         source_list, solver_list = WdirTargetResolver.resolve_autoload(self.autoload_folder, self.lang)
         self.setup_solver(solver_list)
         self.source_list = source_list
@@ -79,7 +79,7 @@ class Wdir:
     def build_unit_list(self):
         self.pack_list, loading_failures = WdirUnitsService.load_packs(self.source_list)
         if loading_failures > 0 and loading_failures == len(self.source_list):
-            raise FileNotFoundError(str(_RUN_NO_TEST_CASES))
+            raise FileNotFoundError(_RUN_NO_TEST_CASES.t())
         self.unit_list = WdirUnitsService.merge_unique_units(self.pack_list)
         #self.__number_and_mark_duplicated()
         #self.__remove_duplicated()
@@ -97,7 +97,7 @@ class Wdir:
             if 0 <= index < len(self.unit_list):
                 self.unit_list = [self.unit_list[index]]
             else:
-                raise ValueError(str(_RUN_FILTER_INDEX_OUT_OF_BOUNDS).format(index=index))
+                raise ValueError(_RUN_FILTER_INDEX_OUT_OF_BOUNDS.t().format(index=index))
         return self
 
     def manipulate(self, param: Param.Manip):

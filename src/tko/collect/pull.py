@@ -7,34 +7,16 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from tko.util.rt import RT
-from tko.i18n import Msg
 from tko.util.console import Console
 
-
-
-
-_PULL_UNEXPECTED_ERROR = Msg(
-    pt="Erro inesperado ao executar comando git em {directory}",
-    en="Unexpected error executing git command in {directory}",
-)
-_PULL_UP_TO_DATE = Msg(pt="Up-to-date", en="Up-to-date")
-_PULL_FETCH_LABEL = Msg(pt="Fetch", en="Fetch")
-_PULL_FETCH_FAILED = Msg(pt="Fetch failed: {msg}", en="Fetch failed: {msg}")
-_PULL_UPDATE_LABEL = Msg(pt="Update", en="Update")
-_PULL_FALLBACK_LABEL = Msg(pt="Fallback", en="Fallback")
-_PULL_RESET_FAILED = Msg(pt="Reset failed: {msg}", en="Reset failed: {msg}")
-_PULL_ALL_PARALLEL = Msg(
-    pt="Pull de {count} repositórios ({threads} threads)",
-    en="Pull of {count} repositories ({threads} threads)",
-)
-_PULL_ERROR_IN_REPO = Msg(
-    pt="Erro ao fazer pull em {repo}",
-    en="Error pulling from {repo}",
-)
-_PULL_COMPLETED = Msg(
-    pt="Finalizado em {elapsed:.2f}s",
-    en="Completed in {elapsed:.2f}s",
-)
+_PULL_UNEXPECTED_ERROR: str = "Unexpected error executing git command in {directory}"
+_PULL_UP_TO_DATE: str = "Up-to-date"
+_PULL_FETCH_LABEL: str = "Fetch"
+_PULL_FETCH_FAILED: str = "Fetch failed: {msg}"
+_PULL_UPDATE_LABEL: str = "Update"
+_PULL_FALLBACK_LABEL: str = "Fallback"
+_PULL_ERROR_IN_REPO: str = "Error pulling from {repo}"
+_PULL_COMPLETED: str = "Completed in {elapsed:.2f}s"
 
 
 class Pull:
@@ -53,7 +35,7 @@ class Pull:
         except FileNotFoundError:
             return "", "git not found", 127
         except Exception:
-            logger.exception(f"{_PULL_UNEXPECTED_ERROR}".format(directory=directory))
+            logger.exception(_PULL_UNEXPECTED_ERROR.format(directory=directory))
             return "", "unexpected error", 1
 
     @staticmethod
@@ -109,7 +91,7 @@ class Pull:
             branch
         )
         if not ok:
-            return output + "\n" + f"{_PULL_FETCH_FAILED}".format(msg=msg)
+            return output + "\n" + _PULL_FETCH_FAILED.format(msg=msg)
 
         # 3. Aplicar atualização
         output += RT(f"{_PULL_UPDATE_LABEL}", "y")
@@ -121,13 +103,13 @@ class Pull:
             Pull.git_ok(directory, "clean", "-fd")
             ok, msg = Pull.git_ok(directory, "reset", "--hard", f"origin/{branch}")
             if not ok:
-                return output + "\n" + f"{_PULL_RESET_FAILED}".format(msg=msg)
+                return output + f"\nReset failed: {msg}"
 
         return output + "\n"
 
     @staticmethod
     def pull_all_parallel(repo_list: list[Path], max_workers: int = 10):
-        Console.print(RT(f"\n{_PULL_ALL_PARALLEL}".format(count=len(repo_list), threads=max_workers), "y"))
+        Console.print(RT("\nPull of {count} repositories ({threads} threads)".format(count=len(repo_list), threads=max_workers), "y"))
         start = time.time()
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -140,7 +122,7 @@ class Pull:
                     if output.plain():
                         Console.print(output)
                 except Exception:
-                    logger.exception(f"{_PULL_ERROR_IN_REPO}".format(repo=repo))
+                    logger.exception(_PULL_ERROR_IN_REPO.format(repo=repo))
 
         elapsed = time.time() - start
         Console.print(RT(f"\n{_PULL_COMPLETED}".format(elapsed=elapsed), "y"))

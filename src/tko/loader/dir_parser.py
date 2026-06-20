@@ -10,7 +10,7 @@ from tko.i18n import Msg
 
 
 
-_LOADER_FAILED_TO_LOAD = Msg(
+_LOADER_FAILED_TO_LOAD = Msg.text(
     pt="fail: falha ao carregar {folder}",
     en="fail: failed to load {folder}",
 )
@@ -37,5 +37,5 @@ class DirParser:
                 unit.set_expected(value + ("" if value.endswith("\n") else "\n"))
                 unit_list.append(unit)
         except FileNotFoundError:
-            logger.exception(str(_LOADER_FAILED_TO_LOAD).format(folder=folder))
+            logger.exception(_LOADER_FAILED_TO_LOAD.t().format(folder=folder))
         return unit_list

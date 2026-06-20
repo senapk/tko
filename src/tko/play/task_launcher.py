@@ -19,9 +19,9 @@ from tko.util.param import Param
 
 
 class _TaskLauncherMsg:
-    FOLDER_NOT_FOUND = Msg(pt="Pasta não encontrada", en="Folder not found")
-    NO_SOURCE_FOR_LANG = Msg(pt="Nenhum arquivo de código na linguagem {lang} encontrado.", en="No source file found for language {lang}.")
-    DRAFT_CREATED = Msg(pt="Um arquivo de rascunho foi criado", en="A draft file was created")
+    FOLDER_NOT_FOUND = Msg.text(pt="Pasta não encontrada", en="Folder not found")
+    NO_SOURCE_FOR_LANG = Msg.text(pt="Nenhum arquivo de código na linguagem {lang} encontrado.", en="No source file found for language {lang}.")
+    DRAFT_CREATED = Msg.text(pt="Um arquivo de rascunho foi criado", en="A draft file was created")
 
 
 class TaskLauncher:

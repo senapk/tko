@@ -13,31 +13,31 @@ from tko.util.decoder import Decoder
 from tko.config.user_data import UserData
 
 
-_SETTINGS_GIT_LABEL_NOT_FOUND = Msg(
+_SETTINGS_GIT_LABEL_NOT_FOUND = Msg.parse(
     pt="Repositório git label {alias} não encontrado",
     en="Git repository label {alias} not found",
 )
-_SETTINGS_EMPTY_CONFIG_FILE = Msg(
+_SETTINGS_EMPTY_CONFIG_FILE = Msg.parse(
     pt="Arquivo de configuração vazio: {path}",
     en="Empty config file: {path}",
 )
-_SETTINGS_PATH = Msg(
+_SETTINGS_PATH = Msg.parse(
     pt="Arquivo global configuração:",
     en="Global settings file:",
 )
-_LOG_PATH = Msg(
+_LOG_PATH = Msg.parse(
     pt="Arquivo de log:",
     en="Log file:",
 )
-_CACHE_PATH = Msg(
+_CACHE_PATH = Msg.parse(
     pt="Diretório global de cache:",
     en="Global cache directory:",
 )
-_RESET_LANGUAGES_PATH = Msg(
+_RESET_LANGUAGES_PATH = Msg.parse(
     pt="Configurações de linguagem:",
     en="Language settings:",
 )
-_SETTINGS_REMOTE_SOURCES_REGISTERED = Msg(
+_SETTINGS_REMOTE_SOURCES_REGISTERED = Msg.parse(
     pt="Fontes de tarefas remotas cadastradas:",
     en="Registered remote task sources:",
 )

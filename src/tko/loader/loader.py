@@ -13,11 +13,11 @@ from pathlib import Path
 from tko.util.console import Console
 
 
-_LOADER_TARGET_FORMAT_NOT_SUPPORTED = Msg(
+_LOADER_TARGET_FORMAT_NOT_SUPPORTED = Msg.text(
     pt="fail: formato de target não suportado {source}",
     en="fail: target format not supported {source}",
 )
-_LOADER_UNABLE_TO_FIND = Msg(
+_LOADER_UNABLE_TO_FIND = Msg.text(
     pt="fail: impossível encontrar {source}",
     en="fail: unable to find {source}",
 )
@@ -75,7 +75,7 @@ class Loader:
                     pass
                 return tests
             else:
-                Console.print(str(_LOADER_TARGET_FORMAT_NOT_SUPPORTED).format(source=source))  # make this a raise
+                Console.print(_LOADER_TARGET_FORMAT_NOT_SUPPORTED.t().format(source=source))  # make this a raise
         else:
-            raise FileNotFoundError(str(_LOADER_UNABLE_TO_FIND).format(source=source))
+            raise FileNotFoundError(_LOADER_UNABLE_TO_FIND.t().format(source=source))
         return []

@@ -10,11 +10,11 @@ from pathlib import Path
 
 
 
-_TASK_PARSER_VIEW_EXTERNAL_URL = Msg(
+_TASK_PARSER_VIEW_EXTERNAL_URL = Msg.text(
     pt="Parseando tarefa de leitura com URL externa: {url}",
     en="Parsing read task with external url: {url}",
 )
-_TASK_PARSER_EDIT_EXTERNAL_URL = Msg(
+_TASK_PARSER_EDIT_EXTERNAL_URL = Msg.text(
     pt="Parseando tarefa de execução com URL externa: {url}",
     en="Parsing do task with external url: {url}",
 )

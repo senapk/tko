@@ -15,7 +15,7 @@ from pathlib import Path
 import sys # type: ignore
 
 
-_LOGGER_LOG_FOLDER_NOT_DIR = Msg(
+_LOGGER_LOG_FOLDER_NOT_DIR = Msg.text(
     pt="A pasta de log '{log_folder}' não é um diretório.",
     en="Log folder '{log_folder}' is not a directory.",
 )
@@ -75,7 +75,7 @@ class LogHistory:
         if not log_folder.exists():
             return []
         if not log_folder.is_dir():
-            raise ValueError(str(_LOGGER_LOG_FOLDER_NOT_DIR).format(log_folder=log_folder))
+            raise ValueError(_LOGGER_LOG_FOLDER_NOT_DIR.t().format(log_folder=log_folder))
         files = log_folder.iterdir()
 
         files_path = [f for f in files if f.suffix == '.log']

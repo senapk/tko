@@ -19,68 +19,68 @@ from tko.util.rt import RT
 from typing import Any
 from tko.util.console import Console
 
-_DOWN_OPENING = Msg(
+_DOWN_OPENING = Msg.text(
     pt="# [y]{key}[]\nBaixando na pasta [y]{folder}[]",
     en="# [y]{key}[]\nDownloading in folder [y]{folder}[]",
 )
-_DOWN_INVALID_REPO_ARG = Msg(
+_DOWN_INVALID_REPO_ARG = Msg.text(
     pt="O parâmetro para o comando tko down deve a pasta onde você iniciou o repositório.",
     en="The argument for tko down must be the folder where you initialized the repository.",
 )
-_DOWN_INVALID_REPO_ARG_ACTION = Msg(
+_DOWN_INVALID_REPO_ARG_ACTION = Msg.text(
     pt="Navegue ou passe o caminho até a pasta do repositório e tente novamente.",
     en="Navigate to that folder or pass its path and try again.",
 )
-_CMD_DOWN_ACTIVITY_LINK_NOT_DOWNLOADABLE = Msg(
+_CMD_DOWN_ACTIVITY_LINK_NOT_DOWNLOADABLE = Msg.text(
     pt="Atividade {task_key} é do tipo link, ela não é para download",
     en="Activity {task_key} is a link type and is not downloadable",
 )
-_CMD_DOWN_ACTIVITY_NO_ORIGIN_FOLDER = Msg(
+_CMD_DOWN_ACTIVITY_NO_ORIGIN_FOLDER = Msg.text(
     pt="Atividade {task_key} não possui pasta de origem para download",
     en="Activity {task_key} has no source folder for download",
 )
-_CMD_DOWN_ACTIVITY_NO_DESTINY_FOLDER = Msg(
+_CMD_DOWN_ACTIVITY_NO_DESTINY_FOLDER = Msg.text(
     pt="Atividade {task_key} não possui pasta de destino para download",
     en="Activity {task_key} has no destination folder for download",
 )
-_DOWN_ACTIVITY_ALREADY_PRESENT = Msg(
+_DOWN_ACTIVITY_ALREADY_PRESENT = Msg.text(
     pt="Atividade já está no repositório, precisa baixar nenhum arquivo",
     en="Activity is already in the repository; no files need to be downloaded",
 )
-_DOWN_LINK_HAS_NO_DOWNLOAD = Msg(
+_DOWN_LINK_HAS_NO_DOWNLOAD = Msg.text(
     pt="falha: link para atividade não possui link para download",
     en="fail: activity link does not provide a download link",
 )
-_DOWN_CREATING_NEW_DRAFT_FOLDER = Msg(
+_DOWN_CREATING_NEW_DRAFT_FOLDER = Msg.text(
     pt="Criando nova pasta de rascunhos: {folder}",
     en="Creating new drafts folder: {folder}",
 )
-_DOWN_ACTIVITY_DOWNLOADED_SUCCESS = Msg(
+_DOWN_ACTIVITY_DOWNLOADED_SUCCESS = Msg.text(
     pt="Atividade baixada com sucesso",
     en="Activity downloaded successfully",
 )
-_DOWN_CHOOSE_DRAFT_EXTENSION = Msg(
+_DOWN_CHOOSE_DRAFT_EXTENSION = Msg.text(
     pt="Escolha uma extensão para os rascunhos: [{options}]: ",
     en="Choose a draft extension: [{options}]: ",
 )
-_DOWN_FILE_NEW = Msg(
+_DOWN_FILE_NEW = Msg.text(
     pt="[g](   Novo   )[] {path}",
     en="[g](    New   )[] {path}",
 )
-_DOWN_FILE_UPDATED = Msg(
+_DOWN_FILE_UPDATED = Msg.text(
     pt="[y](Atualizado)[] {path}",
     en="[y]( Updated  )[] {path}",
 )
-_DOWN_FILE_UNCHANGED = Msg(
+_DOWN_FILE_UNCHANGED = Msg.text(
     pt="[b](Inalterado)[] {path}",
     en="[b](Unchanged )[] {path}",
 )
-_DOWN_FILE_EMPTY = Msg(
+_DOWN_FILE_EMPTY = Msg.text(
     pt="[g](  Vazio   )[] {path}",
     en="[g](  Empty   )[] {path}",
 )
 
-_DRAFTS_FOUND = Msg(
+_DRAFTS_FOUND = Msg.text(
     pt="Códigos de resposta encontrados na pasta:\n   {folder}\n[r]Rascunhos não criados[]. Apague os código antigos\ncaso queira baixar novos rascunhos.",
     en="Response codes found in folder:\n   {folder}\n[r]Drafts not created[]. Delete the old codes\nif you want to download new drafts.",
 )
@@ -101,8 +101,8 @@ class CmdLineDown:
         
     def execute(self):
         if not self.rep.paths.config_file.exists():
-            Console.print(f"{_DOWN_INVALID_REPO_ARG}")
-            Console.print(f"{_DOWN_INVALID_REPO_ARG_ACTION}")
+            Console.print(_DOWN_INVALID_REPO_ARG)
+            Console.print(_DOWN_INVALID_REPO_ARG_ACTION)
             return False
     
         CmdDown(self.rep, self.task_key, self.settings).execute()
@@ -117,14 +117,14 @@ class CmdDown:
         self.task: Task = self.repo.game.get_task_throw(self.task_key)
         self.resolver = self.task.path
         if self.task.resource.is_read:
-            raise ValueError(f"{_CMD_DOWN_ACTIVITY_LINK_NOT_DOWNLOADABLE}".format(task_key=self.task_key))
+            raise ValueError(_CMD_DOWN_ACTIVITY_LINK_NOT_DOWNLOADABLE.t().format(task_key=self.task_key))
         
         origin_target = self.resolver.origin_target
         destiny_folder = self.resolver.work_dir
         if origin_target is None:
-            raise ValueError(f"{_CMD_DOWN_ACTIVITY_NO_ORIGIN_FOLDER}".format(task_key=self.task_key))
+            raise ValueError(_CMD_DOWN_ACTIVITY_NO_ORIGIN_FOLDER.t().format(task_key=self.task_key))
         if destiny_folder is None:
-            raise ValueError(f"{_CMD_DOWN_ACTIVITY_NO_DESTINY_FOLDER}".format(task_key=self.task_key))
+            raise ValueError(_CMD_DOWN_ACTIVITY_NO_DESTINY_FOLDER.t().format(task_key=self.task_key))
 
         self.origin_folder: Path = origin_target.parent        
         self.destiny_folder: Path = destiny_folder
@@ -140,9 +140,9 @@ class CmdDown:
             return True
         if self.task.resource.is_static_type:
             if not self.copy_drafts():
-                self.actions.fnprint(f"{_DOWN_ACTIVITY_ALREADY_PRESENT}")
+                self.actions.fnprint(_DOWN_ACTIVITY_ALREADY_PRESENT)
             return False
-        self.actions.fnprint(f"{_DOWN_LINK_HAS_NO_DOWNLOAD}")
+        self.actions.fnprint(_DOWN_LINK_HAS_NO_DOWNLOAD)
         return False
 
     def set_fnprint(self, fnprint: Callable[[str| RT], None]):
@@ -155,21 +155,21 @@ class CmdDown:
                 os.rmdir(self.destiny_folder)
 
     def download_from_external_remote(self) -> None:
-        self.actions.fnprint(RT.parse(f"{_DOWN_OPENING}".format(key=self.task_key, folder=self.destiny_folder)))
+        self.actions.fnprint(_DOWN_OPENING.t().format(key=self.task_key, folder=self.destiny_folder))
         self.destiny_folder.mkdir(exist_ok=True, parents=True)
         self.copy_readme()
         self.copy_tests()
         self.copy_assets()
         self.copy_drafts()
         self.actions.fnprint("")
-        self.actions.fnprint(f"{_DOWN_ACTIVITY_DOWNLOADED_SUCCESS}")
+        self.actions.fnprint(_DOWN_ACTIVITY_DOWNLOADED_SUCCESS)
 
     def copy_drafts(self):
         finder = DraftsFinderCached(self.destiny_folder, self.language)
         found, destiny_drafts_folder = finder.search_for_solvers()
         if found:
             relative = destiny_drafts_folder.relative_to(Path.cwd(), walk_up=True).as_posix()
-            self.actions.fnprint(RT.parse(f"{_DRAFTS_FOUND}".format(folder=relative)))
+            self.actions.fnprint(_DRAFTS_FOUND.t().format(folder=relative))
             return True
         
         if self.task.resource.is_static_type: # working in local remote source, creating only default draft if not found
@@ -202,10 +202,10 @@ class CmdDown:
                 destiny_asset = destiny_assets / asset.name
                 if asset.is_file():
                     if destiny_asset.exists() and filecmp.cmp(asset, destiny_asset, shallow=False):
-                        self.actions.fnprint(RT.parse(f"{_DOWN_FILE_UNCHANGED}".format(path=self.actions.folder_and_file(destiny_asset))))
+                        self.actions.fnprint(_DOWN_FILE_UNCHANGED.t().format(path=self.actions.folder_and_file(destiny_asset)))
                     else:
                         shutil.copy2(asset, destiny_asset)
-                        self.actions.fnprint(RT.parse(f"{_DOWN_FILE_UPDATED}".format(path=self.actions.folder_and_file(destiny_asset))))
+                        self.actions.fnprint(_DOWN_FILE_UPDATED.t().format(path=self.actions.folder_and_file(destiny_asset)))
 
     
     def copy_drafts_from(self, origin_drafts_folder: Path, destiny_draft_folder: Path, language: str) -> bool:
@@ -249,7 +249,7 @@ class CmdDown:
                 self.language = language_def
             else:
                 langs = self.settings.get_languages_settings().get_languages_with_drafts()
-                Console.print(f"{_DOWN_CHOOSE_DRAFT_EXTENSION}".format(options=", ".join(langs.keys())), end="")
+                Console.print(_DOWN_CHOOSE_DRAFT_EXTENSION.t().format(options=", ".join(langs.keys())), end="")
                 self.language = input()
 
 class DownActions:
@@ -269,14 +269,14 @@ class DownActions:
     def compare_and_save_to(self, content: str, path: Path):
         if not os.path.exists(path):
             Decoder.save(path, content)
-            self.fnprint(RT.parse(f"{_DOWN_FILE_NEW}".format(path=self.folder_and_file(path))))
+            self.fnprint(_DOWN_FILE_NEW.t().format(path=self.folder_and_file(path)))
         else:
             path_content = Decoder.load(path)
             if path_content != content:
-                self.fnprint(RT.parse(f"{_DOWN_FILE_UPDATED}".format(path=self.folder_and_file(path))))
+                self.fnprint(_DOWN_FILE_UPDATED.t().format(path=self.folder_and_file(path)))
                 Decoder.save(path, content)
             else:
-                self.fnprint(RT.parse(f"{_DOWN_FILE_UNCHANGED}".format(path=self.folder_and_file(path))))
+                self.fnprint(_DOWN_FILE_UNCHANGED.t().format(path=self.folder_and_file(path)))
 
     def create_default_draft(self, destiny: Path, language: str):
         filename = "draft."
@@ -289,5 +289,5 @@ class DownActions:
                     f.write(lang_drafts[language])
                 else:
                     f.write("")
-            self.fnprint(RT.parse(f"{_DOWN_FILE_EMPTY}".format(path=self.folder_and_file(draft_path, 3))))
+            self.fnprint(_DOWN_FILE_EMPTY.t().format(path=self.folder_and_file(draft_path, 3)))
         return draft_path

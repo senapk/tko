@@ -10,27 +10,27 @@ from tko.util.console import Console
 
 
 
-_FILTER_ACTION_DISABLED_PATH = Msg(
+_FILTER_ACTION_DISABLED_PATH = Msg.parse(
     pt="action: disabled, path: {path}",
     en="action: disabled, path: {path}",
 )
-_FILTER_ACTION_PATH = Msg(
+_FILTER_ACTION_PATH = Msg.parse(
     pt="action: [g]{action}[], path: {path}",
     en="action: [g]{action}[], path: {path}",
 )
-_FILTER_FILE_NOT_FOUND = Msg(
+_FILTER_FILE_NOT_FOUND = Msg.parse(
     pt="Aviso: Arquivo {path} não encontrado",
     en="Warning: File {path} not found",
 )
-_FILTER_TARGET_MUST_BE_FOLDER = Msg(
+_FILTER_TARGET_MUST_BE_FOLDER = Msg.parse(
     pt="Erro: target deve ser uma pasta no modo recursivo",
     en="Error: target must be a folder in recursive mode",
 )
-_FILTER_OUTPUT_FOLDER_REQUIRED = Msg(
+_FILTER_OUTPUT_FOLDER_REQUIRED = Msg.parse(
     pt="Erro: pasta de saída deve ser especificada no modo recursivo",
     en="Error: output folder must be specified in recursive mode",
 )
-_FILTER_OUTPUT_FOLDER_EXISTS = Msg(
+_FILTER_OUTPUT_FOLDER_EXISTS = Msg.parse(
     pt="Erro: pasta de saída já existe",
     en="Error: output folder already exists",
 )

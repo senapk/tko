@@ -6,14 +6,14 @@ import tko.config.app_settings as app
 
 
 class _CalibrateMsg:
-    LEFT = Msg(pt="Esquerda", en="Left")
-    RIGHT = Msg(pt="Direita", en="Right")
-    UP = Msg(pt="Cima", en="Up")
-    DOWN = Msg(pt="Baixo", en="Down")
-    ESC = Msg(pt="Esc", en="Esc")
-    PAGE_UP = Msg(pt="PgUp", en="PageUp")
-    PAGE_DOWN = Msg(pt="PgDn", en="PageDown")
-    BACKSPACE = Msg(pt="Backspace", en="Backspace")
+    LEFT = Msg.text(pt="Esquerda", en="Left")
+    RIGHT = Msg.text(pt="Direita", en="Right")
+    UP = Msg.text(pt="Cima", en="Up")
+    DOWN = Msg.text(pt="Baixo", en="Down")
+    ESC = Msg.text(pt="Esc", en="Esc")
+    PAGE_UP = Msg.text(pt="PgUp", en="PageUp")
+    PAGE_DOWN = Msg.text(pt="PgDn", en="PageDown")
+    BACKSPACE = Msg.text(pt="Backspace", en="Backspace")
 
 
 class FloatingCalibrate(FloatingABC):
@@ -22,7 +22,7 @@ class FloatingCalibrate(FloatingABC):
         self.floating = Floating()
         self.settings = settings
         self.floating.set_header(" Calibrar teclas direcionais ")
-        self.floating.set_footer_text(RT.parse(" Use [y]Enter[] para salvar, [y]q[] para cancelar e [y]r[] para reiniciar. "))
+        self.floating.set_footer_rt(RT.parse(" Use [y]Enter[] para salvar, [y]q[] para cancelar e [y]r[] para reiniciar. "))
         self._index = 0
         self._options = [settings.app.get_key(app.AppKeys.LEFT),
                          settings.app.get_key(app.AppKeys.RIGHT),

@@ -13,15 +13,15 @@ from tko.util.console import Console
 # from tko.util.console import Console
 
 
-_OPEN_INVALID_REPO = Msg(
+_OPEN_INVALID_REPO = Msg.text(
     pt="[r]Erro[]: O comando [g]tko open[] deve ser executado na pasta onde o repositório foi iniciado.",
     en="[r]Error[]: The [g]tko open[] command must run in the folder where the repository was initialized.",
 )
-_OPEN_ACTION_HINT = Msg(
+_OPEN_ACTION_HINT = Msg.text(
     pt="[g]Ação[]: Navegue ou passe o caminho até a pasta do repositório e tente novamente.",
     en="[g]Action[]: Navigate to that folder or pass its path and try again.",
 )
-_NOT_FOUND_HINT = Msg(
+_NOT_FOUND_HINT = Msg.text(
     pt="[r]Erro:[] [y]{repo_dir}[] não contém um repositório do tko",
     en="[r]Error:[] [y]{repo_dir}[] does not contain a tko repository",
 )

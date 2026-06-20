@@ -2,37 +2,11 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from contextlib import contextmanager
-from enum import Enum
 from io import StringIO
 from typing import Any, ClassVar, Protocol, TextIO
 import sys
-
+from tko.util.Renderer import RenderMode, Renderer
 from tko.util.rt import RT
-
-
-class RenderMode(Enum):
-    COLOR = "color"
-    PLAIN = "plain"
-    FLAT = "flat"
-
-
-class Renderer:
-    @staticmethod
-    def render( value: Any, mode: RenderMode ) -> str:
-        if not isinstance(value, RT):
-            return str(value)
-
-        match mode:
-            case RenderMode.PLAIN:
-                return value.plain()
-
-            case RenderMode.COLOR:
-                return value.ansi()
-
-            case RenderMode.FLAT:
-                return value.flat()
-
-        raise ValueError(f"Invalid render mode: {mode}")
 
 
 class Writer(Protocol):
@@ -47,12 +21,10 @@ class PrintWriter:
         self.mode = mode
 
     def write(self, *values: RT, sep: str = " ", end: str = "\n") -> None:
+        renderer = Renderer(self.mode)
         self.file.write(
             sep.join(
-                Renderer.render(
-                    value,
-                    self.mode,
-                )
+                renderer.render(value)
                 for value in values
             )
         )
@@ -69,12 +41,10 @@ class CaptureWriter:
         self.mode = mode
 
     def write( self, *values: RT, sep: str = " ", end: str = "\n" ) -> None:
+        renderer = Renderer(self.mode)
         self.buffer.write(
             sep.join(
-                Renderer.render(
-                    value,
-                    self.mode,
-                )
+                renderer.render(value)
                 for value in values
             )
         )
@@ -89,8 +59,8 @@ class CaptureWriter:
 
 
 class Console:
-    stdout: ClassVar[Writer] = PrintWriter( sys.stdout, RenderMode.COLOR)
-    stderr: ClassVar[Writer] = PrintWriter( sys.stderr, RenderMode.COLOR)
+    stdout: ClassVar[Writer] = PrintWriter(sys.stdout, RenderMode.COLOR)
+    stderr: ClassVar[Writer] = PrintWriter(sys.stderr, RenderMode.COLOR)
 
     @staticmethod
     def reset():

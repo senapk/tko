@@ -45,11 +45,11 @@ def ask() -> str:
 
     return result
 
-_FREERUN_PROMPT_RERUN = Msg(
+_FREERUN_PROMPT_RERUN = Msg.text(
     pt="Para recompilar e reexecutar pressione ENTER",
     en="Press enter to recompile and rerun",
 )
-_FREERUN_PROMPT_BACK = Msg(
+_FREERUN_PROMPT_BACK = Msg.text(
     pt="Para voltar para tela anterior pressione ESC",
     en="To go back, press ESC",
 )
@@ -114,8 +114,8 @@ class Free:
         to_run_again = False
         if wait_input:
             Console.print(RT().center(RawTerminal.get_terminal_size(), "─"))
-            Console.print(RT.parse(str(_FREERUN_PROMPT_RERUN)))
-            Console.print(RT.parse(str(_FREERUN_PROMPT_BACK)))
+            Console.print(_FREERUN_PROMPT_RERUN)
+            Console.print(_FREERUN_PROMPT_BACK)
 
             valor = ask()
             if valor != "esc":

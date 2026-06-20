@@ -26,7 +26,7 @@ from tko.widget.fmt import Fmt
 import curses
 
 
-_PLAY_KEY_NOT_RECOGNIZED = Msg(
+_PLAY_KEY_NOT_RECOGNIZED = Msg.text(
     pt="Tecla char:{char}, code:{code}, não reconhecida",
     en="Key char:{char}, code:{code}, not recognized",
 )
@@ -57,7 +57,7 @@ class Play:
 
     def show_help(self):
         self.fman.add_floating(
-            Floating().set_content_rt(GuiHelpInfo.show()).set_header(f" {Msg(pt="Ajuda", en="Help")} ").set_countdown(100)
+            Floating().set_content_rt(GuiHelpInfo.show()).set_header(f" {Msg.text(pt="Ajuda", en="Help")} ").set_countdown(100)
         )
 
     def save_to_json(self):

@@ -9,11 +9,11 @@ from typing import Any
 
 from tko.repository.remote_sandbox import REMOTE_SANDBOX_INDEX, REMOTE_SANDBOX_NAME, REMOTE_SANDBOX_TARGET
 
-_REMOTE_GIT_CACHE_ROOT_REQUIRED = Msg(
+_REMOTE_GIT_CACHE_ROOT_REQUIRED = Msg.text(
     pt="Git cache and root dir must be set to resolve the path",
     en="Git cache and root dir must be set to resolve the path",
 )
-_REMOTE_SANDBOX_ONLY_TRUE = Msg(
+_REMOTE_SANDBOX_ONLY_TRUE = Msg.text(
     pt="Sandbox source só pode ser definido como True",
     en="Sandbox source can only be set to True",
 )
@@ -27,7 +27,7 @@ class Remote:
     @property
     def path(self) -> RemotePath:
         if self.git_cache is None or self.root_dir is None:
-            raise ValueError(str(_REMOTE_GIT_CACHE_ROOT_REQUIRED))
+            raise ValueError(_REMOTE_GIT_CACHE_ROOT_REQUIRED.t())
         return RemotePath(git_cache=self.git_cache, repo_root_dir=self.root_dir, data=self.data)
 
     
@@ -48,4 +48,4 @@ class Remote:
             self.data.name = REMOTE_SANDBOX_NAME
             self.data.set_local_source(target=Path(REMOTE_SANDBOX_TARGET), is_editable=True, index=REMOTE_SANDBOX_INDEX)
         else:
-            raise ValueError(str(_REMOTE_SANDBOX_ONLY_TRUE))
+            raise ValueError(_REMOTE_SANDBOX_ONLY_TRUE.t())

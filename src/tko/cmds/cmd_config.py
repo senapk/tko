@@ -7,23 +7,23 @@ from tko.i18n import Msg
 from tko.util.rt import RT
 
 
-_CONFIG_IMAGES_STATUS = Msg(
+_CONFIG_IMAGES_STATUS = Msg.parse(
     pt="Imagens agora está: {status}",
     en="Images now is: {status}",
 )
-_CONFIG_DIFF_MODE_SIDE = Msg(
+_CONFIG_DIFF_MODE_SIDE = Msg.parse(
     pt="Modo de diferença agora é: LADO_A_LADO",
     en="Diff mode now is: SIDE_BY_SIDE",
 )
-_CONFIG_DIFF_MODE_DOWN = Msg(
+_CONFIG_DIFF_MODE_DOWN = Msg.parse(
     pt="Modo de diferença agora é: CIMA_BAIXO",
     en="Diff mode now is: UP_DOWN",
 )
-_CONFIG_EDITOR_CHANGED = Msg(
+_CONFIG_EDITOR_CHANGED = Msg.parse(
     pt="Novo comando para abrir arquivos de código: {editor}",
     en="New command to open source files: {editor}",
 )
-_CONFIG_TIMEOUT_CHANGED = Msg(
+_CONFIG_TIMEOUT_CHANGED = Msg.parse(
     pt="Novo timeout: {timeout}",
     en="New timeout: {timeout}",
 )
@@ -50,25 +50,25 @@ class CmdConfig:
             action = True
             settings.app.use_images = param.images == "1"
             status = "True" if param.images == "1" else "False"
-            Console.print(f"{_CONFIG_IMAGES_STATUS}".format(status=status))
+            Console.print(_CONFIG_IMAGES_STATUS.t().format(status=status))
             
         if param.side:
             action = True
             settings.app.diff_mode = DiffMode.SIDE
-            Console.print(f"{_CONFIG_DIFF_MODE_SIDE}")
+            Console.print(_CONFIG_DIFF_MODE_SIDE)
         if param.down:
             action = True
             settings.app.diff_mode = DiffMode.DOWN
-            Console.print(f"{_CONFIG_DIFF_MODE_DOWN}")
+            Console.print(_CONFIG_DIFF_MODE_DOWN)
         if param.editor:
             action = True
             settings.app.editor = param.editor
-            Console.print(f"{_CONFIG_EDITOR_CHANGED}".format(editor=param.editor))
+            Console.print(_CONFIG_EDITOR_CHANGED.t().format(editor=param.editor))
 
         if param.timeout is not None:
             action = True
             settings.app.timeout = param.timeout
-            Console.print(f"{_CONFIG_TIMEOUT_CHANGED}".format(timeout=param.timeout))
+            Console.print(_CONFIG_TIMEOUT_CHANGED.t().format(timeout=param.timeout))
 
         if not action:
             Console.print(RT.parse(f"{settings}"))

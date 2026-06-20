@@ -30,11 +30,11 @@ from tko.util.console import Console
 
 
 
-_TESTER_COMPILE_ERROR_DURING_RUN = Msg(
+_TESTER_COMPILE_ERROR_DURING_RUN = Msg.text(
     pt="CompileError durante execução do tester",
     en="CompileError during tester run",
 )
-_TESTER_PRESS_ENTER_TO_CONTINUE = Msg(
+_TESTER_PRESS_ENTER_TO_CONTINUE = Msg.text(
     pt="Pressione enter para continuar",
     en="Press Enter to continue",
 )

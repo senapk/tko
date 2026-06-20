@@ -22,15 +22,12 @@ from tko.cli.cli_reset import app as reset_app
 from tko.cli.cli_task import app as task_app
 from tko.cli.cli_tool import app as tool_app
 from tko.i18n import Msg, set_language
+from tko.util.Renderer import RenderMode
 from tko.widget.fmt import Fmt
 from tko.util.console import Console
 
 
-_APP_VERSION = Msg(
-    pt="tko {version}",
-    en="tko {version}",
-)
-_APP_KEYBOARD_INTERRUPT = Msg(
+_APP_KEYBOARD_INTERRUPT = Msg.parse(
     pt="Interrupção de teclado",
     en="Keyboard Interrupt",
 )
@@ -72,10 +69,10 @@ def main_callback(
 ):
     from tko.config.settings import Settings
     from tko.util.raw_terminal import RawTerminal
-    from tko.util.console import RenderMode, PrintWriter
+    from tko.util.console import PrintWriter
 
     if version:
-        Console.print(f"{_APP_VERSION}".format(version=__version__))
+        Console.print("tko {version}".format(version=__version__))
         raise typer.Exit()
 
     if width is not None:

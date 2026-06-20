@@ -8,7 +8,7 @@ from tko.repository.repository_paths import RepositoryPaths
 from pathlib import Path
 from tko.util.console import Console
 
-_CLI_COMMON_NO_REPO = Msg(
+_CLI_COMMON_NO_REPO = Msg.text(
     pt="Nenhum repositório TKO encontrado.",
     en="No TKO repository found.",
 )

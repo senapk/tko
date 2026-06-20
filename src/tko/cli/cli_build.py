@@ -5,7 +5,7 @@ from tko.util.console import Console
 from tko.i18n import Msg
 
 
-_CLI_BUILD_UPDATING_DRAFTS = Msg(
+_CLI_BUILD_UPDATING_DRAFTS = Msg.parse(
     pt="Atualizando drafts em {folder}",
     en="Updating drafts in {folder}",
 )
@@ -75,7 +75,7 @@ def build_drafts(ctx: typer.Context):
     changedir = settings.rs.changedir
     here = Path(changedir).resolve()
     
-    Console.print(f"{_CLI_BUILD_UPDATING_DRAFTS}".format(folder=here))
+    Console.print(_CLI_BUILD_UPDATING_DRAFTS.t().format(folder=here))
     source_src = CodeFilter.get_default_src_dir(here)
     drafts_dest = CodeFilter.get_source_drafts_dir(here)
     if source_src.is_dir():

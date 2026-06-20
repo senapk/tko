@@ -11,15 +11,15 @@ from tko.run_build.ts_macro_preprocessor import TypeScriptMacroPreprocessor
 from tko.i18n import Msg
 
 
-_SOLVER_COMMAND_NOT_FOUND = Msg(
+_SOLVER_COMMAND_NOT_FOUND = Msg.text(
     pt="fail: comando '{name}' não foi encontrado",
     en="fail: command '{name}' was not found",
 )
-_SOLVER_EXTENSION_UNRECOGNIZED = Msg(
+_SOLVER_EXTENSION_UNRECOGNIZED = Msg.text(
     pt="Falha: Extensão de arquivo '{suffix}' não reconhecida e sem configuração de linguagem",
     en="Fail: File extension '{suffix}' not recognized and no language configuration found",
 )
-_SOLVER_TS_CONFIG_NOT_FOUND = Msg(
+_SOLVER_TS_CONFIG_NOT_FOUND = Msg.text(
     pt="Falha: Configuração da linguagem 'ts' não encontrada",
     en="Fail: Language configuration for 'ts' not found",
 )
@@ -91,8 +91,8 @@ class SolverBuilder:
 
     def check_tool(self, name: str):
         if shutil.which(name) is None:
-            self.__exec.set_compile_error(RT(str(_SOLVER_COMMAND_NOT_FOUND).format(name=name), "r"))
-            raise CompileError(str(_SOLVER_COMMAND_NOT_FOUND).format(name=name))
+            self.__exec.set_compile_error(_SOLVER_COMMAND_NOT_FOUND.t().format(name=name).set_style("r"))
+            raise CompileError(_SOLVER_COMMAND_NOT_FOUND.t().format(name=name).plain())
 
     def not_compiled(self):
         return not self.__exec.compiled()

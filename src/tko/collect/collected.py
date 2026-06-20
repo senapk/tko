@@ -6,7 +6,7 @@ from typing import Any
 from tko.util.console import Console
 
 
-_COLLECTED_NO_RESUME_DATA = Msg(
+_COLLECTED_NO_RESUME_DATA = Msg.parse(
     pt="No resume data found in the JSON.",
     en="No resume data found in the JSON.",
 )

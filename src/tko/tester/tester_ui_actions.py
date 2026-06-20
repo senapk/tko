@@ -11,19 +11,19 @@ from tko.tester.tester_state import TesterState
 
 
 class _TesterUiActionsMsg:
-    LOCK_TOGGLE = Msg(pt="Função de travamento {}", en="Lock function {}")
-    LOCK_ON = Msg(pt="ligada", en="enabled")
-    LOCK_OFF = Msg(pt="desligada", en="disabled")
+    LOCK_TOGGLE = Msg.text(pt="Função de travamento {}", en="Lock function {}")
+    LOCK_ON = Msg.text(pt="ligada", en="enabled")
+    LOCK_OFF = Msg.text(pt="desligada", en="disabled")
 
-    LIMIT_CHANGED = Msg(pt="Limite de execução alterado para {}", en="Execution limit changed to {}")
+    LIMIT_CHANGED = Msg.text(pt="Limite de execução alterado para {}", en="Execution limit changed to {}")
 
-    DIFF_MODE_CHANGED = Msg(pt="Modo de Diff alterado para {}", en="Diff mode changed to {}")
+    DIFF_MODE_CHANGED = Msg.text(pt="Modo de Diff alterado para {}", en="Diff mode changed to {}")
 
-    IMAGES_MODE_CHANGED = Msg(pt="Modo de Imagens alterado para {}", en="Image mode changed to {}")
-    IMAGES_ON = Msg(pt="ligado", en="enabled")
-    IMAGES_OFF = Msg(pt="desligado", en="disabled")
+    IMAGES_MODE_CHANGED = Msg.text(pt="Modo de Imagens alterado para {}", en="Image mode changed to {}")
+    IMAGES_ON = Msg.text(pt="ligado", en="enabled")
+    IMAGES_OFF = Msg.text(pt="desligado", en="disabled")
 
-    CHAR_NOT_FOUND = Msg(pt="Tecla char:{}, code:{}, não reconhecida", en="Key char:{}, code:{}, not recognized")
+    CHAR_NOT_FOUND = Msg.text(pt="Tecla char:{}, code:{}, não reconhecida", en="Key char:{}, code:{}, not recognized")
 
 
 class TesterUiActions:

@@ -19,18 +19,18 @@ from tko.play.task_launcher import TaskLauncher
 
 
 class _PlayActionMsg:
-    TASK_DELETE_NOT_MATCH = Msg(
+    TASK_DELETE_NOT_MATCH = Msg.text(
         pt="Texto digitado não corresponde ao identificador da tarefa.",
         en="Entered text does not match the task identifier.",
     )
-    TASK_DELETE_SUCCESS = Msg(
+    TASK_DELETE_SUCCESS = Msg.text(
         pt="Pasta {folder} apagada com sucesso.",
         en="Folder {folder} deleted successfully.",
     )
-    DELETE_ERROR = Msg(pt="Erro ao apagar pasta.", en="Error deleting folder.")
-    TASK_NO_LOCAL_FOLDER = Msg(pt="Essa tarefa não possui pasta de código local.", en="This task does not have a local code folder.")
-    DELETE_CONFIRM_PREFIX = Msg(pt="Para apagar essa pasta, digite ", en="To delete this folder, type ")
-    ONLY_TASK_FOLDERS = Msg(pt="Você só pode apagar pastas de tarefas.", en="You can only delete task folders.")
+    DELETE_ERROR = Msg.text(pt="Erro ao apagar pasta.", en="Error deleting folder.")
+    TASK_NO_LOCAL_FOLDER = Msg.text(pt="Essa tarefa não possui pasta de código local.", en="This task does not have a local code folder.")
+    DELETE_CONFIRM_PREFIX = Msg.text(pt="Para apagar essa pasta, digite ", en="To delete this folder, type ")
+    ONLY_TASK_FOLDERS = Msg.text(pt="Você só pode apagar pastas de tarefas.", en="You can only delete task folders.")
 
 
 class PlayActions:

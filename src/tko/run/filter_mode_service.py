@@ -8,7 +8,7 @@ from tko.util.rt import RT
 from tko.util.console import Console
 
 
-_RUN_FILTER_MODE_BANNER = Msg(
+_RUN_FILTER_MODE_BANNER = Msg.text(
     pt=" Entrando no modo de filtragem ",
     en=" Entering filter mode ",
 )

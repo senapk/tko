@@ -8,8 +8,8 @@ from typing import Any
 
 
 
-_REPOSITORY_DATA_LOAD_ERROR = Msg(
-    pt="Error loading data from dictionary",
+_REPOSITORY_DATA_LOAD_ERROR = Msg.text(
+    pt="Erro ao carregar dados do dicionário",
     en="Error loading data from dictionary",
 )
 

@@ -5,11 +5,11 @@ from tko.i18n import Msg
 from tko.repository.remote_data import RemoteData, SourceType
 
 
-_REMOTE_PATH_SOURCE_DIR_NOT_EXISTS = Msg(
+_REMOTE_PATH_SOURCE_DIR_NOT_EXISTS = Msg.text(
     pt="Diretório de origem não existe",
     en="Source directory does not exist",
 )
-_REMOTE_PATH_INDEX_FILE_NOT_EXISTS = Msg(
+_REMOTE_PATH_INDEX_FILE_NOT_EXISTS = Msg.text(
     pt="Arquivo de índice não existe",
     en="Index file does not exist",
 )
@@ -35,7 +35,7 @@ class RemotePath:
     def index_file(self) -> Path:
         source_dir = self.source_dir
         if source_dir is None:
-            raise ValueError(str(_REMOTE_PATH_SOURCE_DIR_NOT_EXISTS) )
+            raise ValueError(_REMOTE_PATH_SOURCE_DIR_NOT_EXISTS.t())
         index_path = source_dir / self.data.index
         return index_path.resolve()
 
@@ -45,6 +45,6 @@ class RemotePath:
         if self.data.is_editable:
             source_dir = self.source_dir
             if source_dir is None:
-                raise ValueError(str(_REMOTE_PATH_SOURCE_DIR_NOT_EXISTS))
+                raise ValueError(_REMOTE_PATH_SOURCE_DIR_NOT_EXISTS.t())
             return source_dir
         return (self.repo_root_dir / self.data.name).resolve()

@@ -13,28 +13,28 @@ from tko.loader.unit_data import UnitData
 
 
 
-_MDPP_MISSING_EXTRACT_VALUE = Msg(
-    pt="missing value for --extract",
+_MDPP_MISSING_EXTRACT_VALUE = Msg.text(
+    pt="faltando valor para --extract",
     en="missing value for --extract",
 )
-_MDPP_INVALID_TESTS_INTEGER = Msg(
-    pt="invalid or missing integer for --tests",
+_MDPP_INVALID_TESTS_INTEGER = Msg.text(
+    pt="valor inválido ou faltando para --tests",
     en="invalid or missing integer for --tests",
 )
-_MDPP_UNRECOGNIZED_TAG = Msg(
-    pt="unrecognized tag '{tag}'",
+_MDPP_UNRECOGNIZED_TAG = Msg.text(
+    pt="tag não reconhecida '{tag}'",
     en="unrecognized tag '{tag}'",
 )
-_MDPP_FILE_NOT_FOUND = Msg(
-    pt="file {path} not found",
+_MDPP_FILE_NOT_FOUND = Msg.text(
+    pt="arquivo {path} não encontrado",
     en="file {path} not found",
 )
-_MDPP_FILE_UPDATED = Msg(
-    pt="file {path} updated",
+_MDPP_FILE_UPDATED = Msg.text(
+    pt="arquivo {path} atualizado",
     en="file {path} updated",
 )
-_MDPP_FILE_NOT_MARKDOWN = Msg(
-    pt="File {path} is not a markdown file",
+_MDPP_FILE_NOT_MARKDOWN = Msg.text(
+    pt="Arquivo {path} não é um arquivo markdown",
     en="File {path} is not a markdown file",
 )
 

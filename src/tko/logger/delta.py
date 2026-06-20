@@ -4,7 +4,7 @@ import enum
 from tko.i18n import Msg
 
 
-_LOGGER_UNKNOWN_ACTION = Msg(
+_LOGGER_UNKNOWN_ACTION = Msg.text(
     pt="Ação desconhecida {action}",
     en="Unknown action {action}",
 )
@@ -54,7 +54,7 @@ class Delta:
         elif mode.action == DeltaAction.with_time_threshold:
             return delta.__create_with_time_threshold(last_item, datetime, mode.minutes_limit)
         else:
-            raise ValueError(str(_LOGGER_UNKNOWN_ACTION).format(action=mode.action))
+            raise ValueError(_LOGGER_UNKNOWN_ACTION.t().format(action=mode.action))
 
     def __create_without_inc_time(self, last_item: Delta | None, datetime: dt.datetime) -> Delta:
         if last_item is None:

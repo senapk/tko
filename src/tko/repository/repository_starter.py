@@ -10,71 +10,71 @@ from tko.util.rt import RT
 from tko.repository.git_cache import GitCache
 from tko.config.user_data import UserData
 
-_REPO_STARTER_LANGUAGE_SET = Msg(
+_REPO_STARTER_LANGUAGE_SET = Msg.parse(
     pt="A linguagem do repositório foi definida como [y]{language}[].",
     en="Repository language set to [y]{language}[].",
 )
-_REPO_STARTER_OPEN_HINT = Msg(
+_REPO_STARTER_OPEN_HINT = Msg.parse(
     pt="Voce pode acessar o repositório com o comando [g]tko open[]",
     en="You can access the repository with the command [g]tko open[]",
 )
-_REPO_STARTER_EXISTS = Msg(
+_REPO_STARTER_EXISTS = Msg.parse(
     pt="Já existe um repositório TKO na pasta [g]{folder}[]",
     en="A TKO repository already exists in folder [g]{folder}[]",
 )
-_REPO_STARTER_RESET_PROMPT = Msg(
+_REPO_STARTER_RESET_PROMPT = Msg.parse(
     pt="Deseja resetar o repositório? [[Y/n]]: ",
     en="Do you want to reset the repository? [[Y/n]]: ",
 )
-_REPO_STARTER_INSIDE_OTHER_REPO = Msg(
+_REPO_STARTER_INSIDE_OTHER_REPO = Msg.parse(
     pt="Você está tentando criar um repositório dentro de outro, pois já existe rep em [r]{parent}[]",
     en="You are trying to create a repository inside another one, because there is already a repo in [r]{parent}[]",
 )
-_REPO_STARTER_DEEP_REPO_WARN_2 = Msg(
+_REPO_STARTER_DEEP_REPO_WARN_2 = Msg.text(
     pt="Porém já existem repositórios TKO abaixo dessa pasta. Mova ou apague-os",
     en="But there are already TKO repositories below that folder. Move or delete them",
 )
-_REPO_STARTER_OVERWRITE_PROMPT = Msg(
+_REPO_STARTER_OVERWRITE_PROMPT = Msg.parse(
     pt="Deseja sobrescrever as configurações do repositório em [y]{folder}[] ? [[Y/n]]: ",
     en="Do you want to overwrite the repository settings in [y]{folder}[] ? [[Y/n]]: ",
 )
-_REPO_STARTER_DEEP_REPO_WARN = Msg(
+_REPO_STARTER_DEEP_REPO_WARN = Msg.parse(
     pt="Você está tentando criar um repositório TKO na pasta [y]{folder}[]",
     en="You are trying to create a TKO repository in folder [y]{folder}[]",
 )
-_REPO_STARTER_EMPTY_REPO = Msg(
+_REPO_STARTER_EMPTY_REPO = Msg.text(
     pt="Criando repositório ...",
     en="Creating repository ...",
 )
 
-_REPO_ASK_DEFAULT_REMOTES = Msg(
+_REPO_ASK_DEFAULT_REMOTES = Msg.parse(
     pt="Você [g]deseja adicionar[] algum dos [g]repositório[] padrão de atividades? [[Y/n]]: ",
     en="Do you [g]want to add[] any of the default activity [g]repositories[]? [[Y/n]]: ",
 )
-_REPO_ASK_DEFAULT_REMOTES_FUP = Msg(
+_REPO_ASK_DEFAULT_REMOTES_FUP = Msg.parse(
     pt="[y]fup[] - Fundamentos de Programação",
     en="[y]fup[] - Programming Fundamentals",
 )
-_REPO_ASK_DEFAULT_REMOTES_POO = Msg(
+_REPO_ASK_DEFAULT_REMOTES_POO = Msg.parse(
     pt="[y]poo[] - Programação Orientada a Objetos",
     en="[y]poo[] - Object Oriented Programming",
 )
-_REPO_ASK_DEFAULT_REMOTES_ED = Msg(
+_REPO_ASK_DEFAULT_REMOTES_ED = Msg.parse(
     pt="[y]ed[] - Estruturas de Dados",
     en="[y]ed[] - Data Structures",
 )
 
-_REPO_NONE_ADDED = Msg(
+_REPO_NONE_ADDED = Msg.parse(
     pt="Nenhum repositório adicionado. Você pode adicionar com o comando [y]{cmd}",
     en="No repository added. You can add with the command [y]{cmd}",
 )
 
-_REPO_INVALID_OPTION = Msg(
+_REPO_INVALID_OPTION = Msg.parse(
     pt="Opção inválida. Por favor, escolha uma opção válida.",
     en="Invalid option. Please, choose a valid option.",
 )
 
-_WITCH_REPO = Msg(
+_WITCH_REPO = Msg.parse(
     pt="Qual repositório você deseja adicionar [[[y]{options}[.]]]: ",
     en="Which repository do you want to add [[[y]{options}[.]]]: ",
 )
@@ -96,28 +96,28 @@ class RepositoryStarter:
         self.repo = repo
         self.create_empty_repo()
         self.language = LanguageSetter.check_prog_lang_in_text_mode(self.settings, self.repo, selected=self.language)
-        Console.print(RT.parse(f"{_REPO_STARTER_LANGUAGE_SET}".format(language=self.language)))
+        Console.print(_REPO_STARTER_LANGUAGE_SET.t().format(language=self.language))
 
         if not self.skip:
             self.ask_about_default_remotes()
 
         RepositoryConfig(repo).save()
-        Console.print(RT.parse(f"{_REPO_STARTER_OPEN_HINT}"))
+        Console.print(_REPO_STARTER_OPEN_HINT.t())
         return True
 
     def ask_about_default_remotes(self):
-        Console.print(RT.parse(f"{_REPO_ASK_DEFAULT_REMOTES}"), end="")
+        Console.print(_REPO_ASK_DEFAULT_REMOTES, end="")
         answer = input().lower()
         if answer == "n":
-            Console.print(RT.parse(f"{_REPO_NONE_ADDED}".format(cmd="[.y] tko remote add LABEL URL")))
+            Console.print(_REPO_NONE_ADDED.t().format(cmd="[.y] tko remote add LABEL URL"))
             return
-        Console.print(RT.parse(f"{_REPO_ASK_DEFAULT_REMOTES_FUP}"))
-        Console.print(RT.parse(f"{_REPO_ASK_DEFAULT_REMOTES_POO}"))
-        Console.print(RT.parse(f"{_REPO_ASK_DEFAULT_REMOTES_ED}"))
+        Console.print(_REPO_ASK_DEFAULT_REMOTES_FUP.t())
+        Console.print(_REPO_ASK_DEFAULT_REMOTES_POO.t())
+        Console.print(_REPO_ASK_DEFAULT_REMOTES_ED.t())
 
         options = ["fup", "poo", "ed", "none"]
         while True: 
-            Console.print(RT.parse(f"{_WITCH_REPO}".format(options=", ".join(options))), end="")
+            Console.print(_WITCH_REPO.t().format(options=", ".join(options)), end="")
             op = input().lower()
             if op in options:
                 if op != "none":
@@ -137,26 +137,26 @@ class RepositoryStarter:
         path_parents = RepositoryPaths.rec_search_for_repo_parents(self.folder)
 
         if path_parents is not None and path_parents.resolve() == self.folder.resolve():
-            Console.print(RT.parse(f"{_REPO_STARTER_EXISTS}".format(folder=self.folder.resolve())))
-            Console.print(RT.parse(f"{_REPO_STARTER_RESET_PROMPT}"), end="")
+            Console.print(_REPO_STARTER_EXISTS.t().format(folder=self.folder.resolve()))
+            Console.print(_REPO_STARTER_RESET_PROMPT.t(), end="")
             op = input().lower()
             if op == "n":
                 return False
 
         elif path_parents is not None:
             if self.folder != path_parents:
-                Console.print(RT.parse(f"{_REPO_STARTER_INSIDE_OTHER_REPO}".format(parent=path_parents)))
-                Console.print(RT.parse(f"{_REPO_STARTER_DEEP_REPO_WARN_2}"))
+                Console.print(_REPO_STARTER_INSIDE_OTHER_REPO.t().format(parent=path_parents))
+                Console.print(_REPO_STARTER_DEEP_REPO_WARN_2.t())
             self.folder = path_parents
-            Console.print(RT.parse(f"{_REPO_STARTER_OVERWRITE_PROMPT}".format(folder=self.folder)), end="")
+            Console.print(_REPO_STARTER_OVERWRITE_PROMPT.t().format(folder=self.folder), end="")
             op = input().lower()
             if op == "n":
                 return False
         else:
             path_subdir_list = RepositoryPaths.rec_search_for_repo_subdir(self.folder)
             if len(path_subdir_list) > 0:
-                Console.print(RT.parse(f"{_REPO_STARTER_DEEP_REPO_WARN}".format(folder=self.folder.resolve())))
-                Console.print(RT.parse(f"{_REPO_STARTER_DEEP_REPO_WARN_2}"))
+                Console.print(_REPO_STARTER_DEEP_REPO_WARN.t().format(folder=self.folder.resolve()))
+                Console.print(_REPO_STARTER_DEEP_REPO_WARN_2.t())
                 for path in path_subdir_list:
                     Console.print(RT.parse(f"- [r]{path}"))
                 return False
@@ -166,4 +166,4 @@ class RepositoryStarter:
     def create_empty_repo(self):
         source = self.repo.create_default_sandbox_source()
         self.repo.data.set_remote(source)
-        Console.print(RT.parse(f"{_REPO_STARTER_EMPTY_REPO}"))
+        Console.print(_REPO_STARTER_EMPTY_REPO.t())

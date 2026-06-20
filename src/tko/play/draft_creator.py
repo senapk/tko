@@ -14,10 +14,10 @@ from tko.config.sandbox_drafts import SandboxDrafts
 
 
 class _DraftMsg:
-    TITLE_PLACEHOLDER = Msg(pt="Digite o título da tarefa aqui", en="Type task title here")
-    FOLDER_EXISTS = Msg(pt="A pasta {folder} já existe.", en="Folder {folder} already exists.")
-    CREATED_AT = Msg(pt="Rascunho criado em {folder}", en="Draft created at {folder}")
-    TITLE_PROMPT = Msg(
+    TITLE_PLACEHOLDER = Msg.text(pt="Digite o título da tarefa aqui", en="Type task title here")
+    FOLDER_EXISTS = Msg.text(pt="A pasta {folder} já existe.", en="Folder {folder} already exists.")
+    CREATED_AT = Msg.text(pt="Rascunho criado em {folder}", en="Draft created at {folder}")
+    TITLE_PROMPT = Msg.text(
         pt="Digite o Título (use @label para definir a chave manualmente)",
         en="Type the Title (use @label to define the key manually)",
     )

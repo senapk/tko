@@ -1,4 +1,3 @@
-from tko.util.rt import RT
 from tko.util.raw_terminal import RawTerminal
 from tko.util.freerun import Free
 from tko.enums.execution_result import ExecutionResult
@@ -11,7 +10,7 @@ from tko.i18n import Msg
 from tko.util.console import Console
 
 
-_RUN_TESTING_LABEL = Msg(
+_RUN_TESTING_LABEL = Msg.text(
     pt=" Testando o código com os casos de teste ",
     en=" Testing code with test cases ",
 )
@@ -39,7 +38,7 @@ class RunExecutor:
 
     def run_tests_on_raw_term(self) -> int:
         if not self.ctx.config.eval_mode:
-            Console.print(RT.parse(f"{_RUN_TESTING_LABEL}").center(RawTerminal.get_terminal_size(), "═"))
+            Console.print(_RUN_TESTING_LABEL.t().center(RawTerminal.get_terminal_size(), "═"))
         
         percent = self.test_loop.run_top_line(self.get_rate)
         self.presenter.print_diff()

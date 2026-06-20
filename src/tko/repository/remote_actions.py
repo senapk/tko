@@ -8,73 +8,73 @@ from tko.util.rt import RT
 from tko.i18n import Msg
 from pathlib import Path
 
-_REMOTE_EDIT_HINT = Msg(
+_REMOTE_EDIT_HINT = Msg.text(
     pt="Você também pode configurar as fontes e filtros manualmente editando o arquivo:",
     en="You can also configure sources and filters manually by editing the file:",
 )
-_REMOTE_NONE_CONFIGURED = Msg(pt="Nenhuma fonte configurada", en="No sources configured")
-_REMOTE_CONFIGURED_SOURCES = Msg(pt="Fontes configuradas:", en="Configured sources:")
-_REMOTE_LABEL = Msg(pt="[y]- Rótulo: {name}", 
+_REMOTE_NONE_CONFIGURED = Msg.text(pt="Nenhuma fonte configurada", en="No sources configured")
+_REMOTE_CONFIGURED_SOURCES = Msg.text(pt="Fontes configuradas:", en="Configured sources:")
+_REMOTE_LABEL = Msg.parse(pt="[y]- Rótulo: {name}", 
                     en="[y]- Label: {name}")
-_REMOTE_LINK = Msg(pt="[y]- Link ou Caminho: {link}", 
+_REMOTE_LINK = Msg.parse(pt="[y]- Link ou Caminho: {link}", 
                    en="[y]- Link or Path: {link}")
-_REMOTE_INDEX = Msg(pt="[y]- Índice: {index}", 
+_REMOTE_INDEX = Msg.parse(pt="[y]- Índice: {index}", 
                     en="[y]- Index: {index}")
-_REMOTE_QUEST_FILTER = Msg(pt="[y]- Filtro Quests: {status}", 
+_REMOTE_QUEST_FILTER = Msg.parse(pt="[y]- Filtro Quests: {status}", 
                            en="[y]- Quest Filter: {status}")
-_REMOTE_FILTER_DISABLED = Msg(pt="Desativado", en="Disabled")
-_REMOTE_FILTER_ENABLED = Msg(pt="Ativado", en="Enabled")
+_REMOTE_FILTER_DISABLED = Msg.text(pt="Desativado", en="Disabled")
+_REMOTE_FILTER_ENABLED = Msg.text(pt="Ativado", en="Enabled")
 
-_REMOTE_REMOVED_SUCCESS = Msg(
+_REMOTE_REMOVED_SUCCESS = Msg.text(
     pt="Fonte {alias} removida com sucesso.",
     en="Source {alias} removed successfully.",
 )
-_REMOTE_NOT_FOUND = Msg(pt="fail: fonte {alias} não encontrada.", en="fail: source {alias} not found.")
-_REMOTE_FILTERS_UPDATED = Msg(
+_REMOTE_NOT_FOUND = Msg.text(pt="fail: fonte {alias} não encontrada.", en="fail: source {alias} not found.")
+_REMOTE_FILTERS_UPDATED = Msg.text(
     pt="Filtros {alias} atualizados com sucesso.",
     en="Filters for {alias} updated successfully.",
 )
-_REMOTE_NAME_EXISTS = Msg(
+_REMOTE_NAME_EXISTS = Msg.text(
     pt="fail: fonte com esse nome já existe.",
     en="fail: a source with this name already exists.",
 )
-_REMOTE_ADDING_GIT = Msg(
+_REMOTE_ADDING_GIT = Msg.text(
     pt="Adicionando fonte remota apontando para repositório git remoto {url}",
     en="Adding remote source pointing to git repository {url}",
 )
-_REMOTE_GIT_ALIAS_NOT_FOUND = Msg(
+_REMOTE_GIT_ALIAS_NOT_FOUND = Msg.text(
     pt="fail: alias git remoto não encontrado.",
     en="fail: remote git alias not found.",
 )
-_REMOTE_CLONE_ERROR = Msg(
+_REMOTE_CLONE_ERROR = Msg.text(
     pt="Erro ao acessar repositório, fonte não foi adicionada",
     en="Error accessing repository, source was not added",
 )
-_REMOTE_CLONE_FAILED = Msg(
+_REMOTE_CLONE_FAILED = Msg.text(
     pt="fail: não foi possível acessar o repositório.",
     en="fail: could not access the repository.",
 )
-_REMOTE_DIR_NOT_FOUND = Msg(
+_REMOTE_DIR_NOT_FOUND = Msg.text(
     pt="fail: diretório remoto não encontrado.",
     en="fail: remote directory not found.",
 )
-_REMOTE_ADDING_LOCAL = Msg(
+_REMOTE_ADDING_LOCAL = Msg.text(
     pt="Adicionando fonte remota apontando para o repositório no diretório {path}",
     en="Adding remote source pointing to repository in directory {path}",
 )
-_REMOTE_ADDING_URL = Msg(
+_REMOTE_ADDING_URL = Msg.text(
     pt="Adicionando fonte remota apontando para repositório git remoto {url}",
     en="Adding remote source pointing to git repository {url}",
 )
-_REMOTE_ADDED_SUCCESS = Msg(
+_REMOTE_ADDED_SUCCESS = Msg.text(
     pt="Fonte remota {name} adicionada com sucesso.",
     en="Remote source {name} added successfully.",
 )
-_REMOTE_CLONING = Msg(
+_REMOTE_CLONING = Msg.text(
     pt="Acessando repositório remoto {link}",
     en="Accessing remote repository {link}",
 )
-_REMOTE_CLONED_SUCCESS = Msg(
+_REMOTE_CLONED_SUCCESS = Msg.text(
     pt="Repositório {link} acessado com sucesso.",
     en="Repository {link} accessed successfully.",
 )
@@ -86,21 +86,21 @@ class RemoteActions:
 
     def remote_list(self):
         remotes = self.repo.remotes
-        Console.print(RT.parse(str(_REMOTE_EDIT_HINT)))
+        Console.print(_REMOTE_EDIT_HINT.t())
         Console.print(RT.run("y", self.repo.paths.config_file.as_posix()))
         if len(remotes) == 0:
-            Console.print(RT.parse(str(_REMOTE_NONE_CONFIGURED)))
+            Console.print(_REMOTE_NONE_CONFIGURED.t())
             return
-        Console.print(RT.parse(str(_REMOTE_CONFIGURED_SOURCES)))
+        Console.print(_REMOTE_CONFIGURED_SOURCES.t())
         for remote in remotes:
             self.show_source(remote)
     
     def show_source(self, remote: Remote):
         status = str(_REMOTE_FILTER_DISABLED) if remote.data.quest_filters is None else str(_REMOTE_FILTER_ENABLED)
-        Console.print(RT.parse(str(_REMOTE_LABEL).format(name=remote.data.name)))
-        Console.print(RT.parse(str(_REMOTE_LINK).format(link=remote.data.target)))
-        Console.print(RT.parse(str(_REMOTE_INDEX).format(index=remote.data.index)))
-        Console.print(RT.parse(str(_REMOTE_QUEST_FILTER).format(status=status)))
+        Console.print(_REMOTE_LABEL.t().format(name=remote.data.name))
+        Console.print(_REMOTE_LINK.t().format(link=remote.data.target))
+        Console.print(_REMOTE_INDEX.t().format(index=remote.data.index))
+        Console.print(_REMOTE_QUEST_FILTER.t().format(status=status))
         if remote.data.quest_filters is not None:
             for f, v in remote.data.quest_filters.items():
                 Console.print(f"    - {f}: {v}")

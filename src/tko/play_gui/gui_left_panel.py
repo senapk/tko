@@ -12,10 +12,10 @@ from tko.game.task import Task
 
 
 class _LeftPanelMsg:
-    SEARCH = Msg(pt=" Busca: ", en=" Search: ")
-    OUTDATED = Msg(pt=" TKO DESATUALIZADO!", en=" TKO OUTDATED!")
-    UPDATE_MESSAGE = Msg(pt=" Atualize com: ", en=" Update with: ")
-    UPDATE_COMMAND = Msg(pt="pipx upgrade tko ", en="pipx upgrade tko ")
+    SEARCH = Msg.text(pt=" Busca: ", en=" Search: ")
+    OUTDATED = Msg.text(pt=" TKO DESATUALIZADO!", en=" TKO OUTDATED!")
+    UPDATE_MESSAGE = Msg.text(pt=" Atualize com: ", en=" Update with: ")
+    UPDATE_COMMAND = Msg.text(pt="pipx upgrade tko ", en="pipx upgrade tko ")
 
 class GuiLeftPanel:
 

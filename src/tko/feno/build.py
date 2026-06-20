@@ -16,11 +16,11 @@ import os
 import shutil
 
 
-_FENO_BUILD_NO_TARGET_SPECIFIED = Msg(
+_FENO_BUILD_NO_TARGET_SPECIFIED = Msg.parse(
     pt="Nenhum target especificado, usando diretório atual",
     en="No target specified, using current directory",
 )
-_FENO_BUILD_TARGET_NOT_DIRECTORY = Msg(
+_FENO_BUILD_TARGET_NOT_DIRECTORY = Msg.parse(
     pt="fail: {target} não é um diretório",
     en="fail: {target} is not a directory",
 )

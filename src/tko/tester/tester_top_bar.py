@@ -16,10 +16,9 @@ from typing import Callable
 from tko.play_gui.gui_top_bar import edit_audit_info
 from tko.util.aligner import Aligner
 
-class _TesterTopBarMsg:
-    RUNNING_LOCKED_ACTIVITY = Msg(pt="Executando atividade travada", en="Running locked activity")
-    NO_TESTS_REGISTERED = Msg(pt="Nenhum teste cadastrado", en="No tests registered")
-    COMPILE_ERROR = Msg(pt="Erro de compilação", en="Compilation error")
+_RUNNING_LOCKED_ACTIVITY = Msg.text(pt=" Executando atividade travada ", en=" Running locked activity ")
+_NO_TESTS_REGISTERED = Msg.text(pt=" Nenhum teste cadastrado ", en=" No tests registered ")
+_COMPILE_ERROR = Msg.text(pt=" Erro de compilação ", en=" Compilation error ")
 
 class TesterTopBar:
 
@@ -58,7 +57,7 @@ class TesterTopBar:
         count_missing = RT(f" ({done}/{full}) ", running_color)
         if state.mode == SeqMode.running:
             if state.locked_index:
-                solvers = RT(f" {str(_TesterTopBarMsg.RUNNING_LOCKED_ACTIVITY)} ", "R")
+                solvers = _RUNNING_LOCKED_ACTIVITY.t().set_style("R")
             else:
                 solvers = count_missing
 
@@ -66,7 +65,7 @@ class TesterTopBar:
         if self.wdir.has_tests:
             sources = Button.info_label(source_names)
         else:
-            sources = Button.info_label(str(_TesterTopBarMsg.NO_TESTS_REGISTERED), "R")
+            sources = Button.info_label(_NO_TESTS_REGISTERED.t().plain(), "R")
 
         left = activity
         center = edit_audit_info(self.edit_fn, self.audit_fn, timed=timed)
@@ -146,7 +145,7 @@ class TesterTopBar:
         unit = state.get_focused_unit(self.wdir)
         info = RT()
         if self.wdir.get_solver().has_compile_error():
-            info = RT(f" {str(_TesterTopBarMsg.COMPILE_ERROR)} ", "R")
+            info = _COMPILE_ERROR.t().set_style("R")
         elif not state.is_all_right() and state.mode != SeqMode.intro:
             info = unit.str(pad=False)
         frame.write(0, 0, info.center(frame.get_dx()))

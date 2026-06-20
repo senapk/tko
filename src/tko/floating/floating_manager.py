@@ -1,7 +1,7 @@
 from tko.floating.floating import FloatingABC, Position
 from tko.floating.floating import Floating
 from tko.util.rt import RT
-from tko.util.console import RenderMode
+from tko.util.Renderer import RenderMode
 
 
 class FloatingManager:

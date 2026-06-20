@@ -14,23 +14,23 @@ from tko.i18n import Msg
 
 
 class _TesterNavigatorMsg:
-    LOCKED_HINT = Msg(
+    LOCKED_HINT = Msg.text(
         pt="{arrow}\nAtividade travada\nAperte {lock_key} para destravar",
         en="{arrow}\nLocked activity\nPress {lock_key} to unlock",
     )
-    SINGLE_SOLVER_1 = Msg(
+    SINGLE_SOLVER_1 = Msg.text(
         pt="Seu projeto só tem um arquivo de solução.",
         en="Your project has only one solution file.",
     )
-    SINGLE_SOLVER_2 = Msg(
+    SINGLE_SOLVER_2 = Msg.text(
         pt="Essa funcionalidade troca qual dos arquivos",
         en="This feature switches which solution file",
     )
-    SINGLE_SOLVER_3 = Msg(
+    SINGLE_SOLVER_3 = Msg.text(
         pt="de solução será o principal.",
         en="will be used as the main one.",
     )
-    NO_LOG_REPO = Msg(
+    NO_LOG_REPO = Msg.text(
         pt="Nenhum repositório de logs encontrado.",
         en="No log repository found.",
     )
@@ -64,7 +64,7 @@ class TesterNavigator:
         if state.locked_index:
             self.fman.add_floating(
                 Floating().bottom().right().set_warning().set_countdown(Floating.Time.FAST)
-                .put_text(str(_TesterNavigatorMsg.LOCKED_HINT).format(arrow="←", lock_key=GuiKeys.lock))
+                .put_text(_TesterNavigatorMsg.LOCKED_HINT.t().format(arrow="←", lock_key=GuiKeys.lock))
             )
             return
         
@@ -82,7 +82,7 @@ class TesterNavigator:
         if state.locked_index:
             self.fman.add_floating(
                 Floating().bottom().right().set_warning().set_countdown(Floating.Time.FAST)
-                .put_text(str(_TesterNavigatorMsg.LOCKED_HINT).format(arrow="→", lock_key=GuiKeys.lock))
+                .put_text(_TesterNavigatorMsg.LOCKED_HINT.t().format(arrow="→", lock_key=GuiKeys.lock))
             )
             return
         if not self.wdir.get_solver().has_compile_error():
@@ -111,9 +111,9 @@ class TesterNavigator:
         if len(solver_names) == 1:
             self.fman.add_floating(
                 Floating().bottom().right().set_warning().set_countdown(Floating.Time.MEDIUM)
-                .put_text(str(_TesterNavigatorMsg.SINGLE_SOLVER_1))
-                .put_text(str(_TesterNavigatorMsg.SINGLE_SOLVER_2))
-                .put_text(str(_TesterNavigatorMsg.SINGLE_SOLVER_3))
+                .put_text(_TesterNavigatorMsg.SINGLE_SOLVER_1.t())
+                .put_text(_TesterNavigatorMsg.SINGLE_SOLVER_2.t())
+                .put_text(_TesterNavigatorMsg.SINGLE_SOLVER_3.t())
             )
             return
         self.task.main_idx = (self.task.main_idx + 1) % len(solver_names)
@@ -140,7 +140,7 @@ class TesterNavigator:
         if self.rep is None:
             self.fman.add_floating(
                 Floating().bottom().right().set_warning().set_countdown(Floating.Time.MEDIUM)
-                .put_text(str(_TesterNavigatorMsg.NO_LOG_REPO))
+                .put_text(_TesterNavigatorMsg.NO_LOG_REPO.t())
             )
             return
         logger = self.rep.logger

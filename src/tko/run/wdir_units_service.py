@@ -9,7 +9,7 @@ from tko.run.unit import Unit
 
 
 
-_RUN_PACK_LOAD_FAILED = Msg(
+_RUN_PACK_LOAD_FAILED = Msg.text(
     pt="Falha ao carregar pacote de unidades em {source}",
     en="Failed to load unit pack from {source}",
 )
@@ -30,7 +30,7 @@ class WdirUnitsService:
                     unit_list.append(unit)
                 pack_list.append(unit_list)
             except FileNotFoundError:
-                logger.exception(str(_RUN_PACK_LOAD_FAILED).format(source=source))
+                logger.exception(_RUN_PACK_LOAD_FAILED.t().format(source=source))
                 loading_failures += 1
         return pack_list, loading_failures
 

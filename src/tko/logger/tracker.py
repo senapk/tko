@@ -11,11 +11,11 @@ from tko.logger.log_sort import LogSort
 from pathlib import Path
 
 
-_TRACKER_NOT_ENOUGH_COLUMNS = Msg(
+_TRACKER_NOT_ENOUGH_COLUMNS = Msg.text(
     pt="Colunas insuficientes para criar um objeto Track.",
     en="Not enough columns to create a Track object.",
 )
-_TRACKER_INVALID_TIMESTAMP_FORMAT = Msg(
+_TRACKER_INVALID_TIMESTAMP_FORMAT = Msg.text(
     pt="Formato de timestamp inválido: {timestamp}. O formato esperado é YYYY-MM-DD_HH-MM-SS.",
     en="Invalid timestamp format: {timestamp}. Expected format is YYYY-MM-DD_HH-MM-SS.",
 )
@@ -43,7 +43,7 @@ class Track:
 
     def column_to_track(self, columns: list[str]):
         if len(columns) < 3:
-            raise ValueError(str(_TRACKER_NOT_ENOUGH_COLUMNS))
+            raise ValueError(_TRACKER_NOT_ENOUGH_COLUMNS.t())
         self.timestamp = columns[0]
         self.result = columns[1]
         self.file_stamp_list = columns[2].split(";")

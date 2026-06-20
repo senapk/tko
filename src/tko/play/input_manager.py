@@ -6,7 +6,7 @@ from tko.config.app_settings import AppSettings, AppKeys
 from tko.i18n import Msg
 
 
-_INPUT_DUPLICATE_KEY = Msg(pt="Chave duplicada {input_key}", en="Duplicate key {input_key}")
+_INPUT_DUPLICATE_KEY = Msg.text(pt="Chave duplicada {input_key}", en="Duplicate key {input_key}")
 
 FN_VOID = Callable[[], None]
 

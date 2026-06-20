@@ -18,27 +18,27 @@ from tko.i18n import Msg
 from tko.util.has_internet import has_internet
 
 
-_GIT_CACHE_CLEARING = Msg(
+_GIT_CACHE_CLEARING = Msg.text(
     pt="Limpando cache git em {cache_dir}...",
     en="Clearing git cache at {cache_dir}...",
 )
 
-_GIT_CACHE_CLONING = Msg(
+_GIT_CACHE_CLONING = Msg.text(
     pt="Repositório não encontrado. Clonando {url} para o cache...",
     en="Repository not found. Cloning {url} into cache...",
 )
 
-_GIT_CACHE_CLONE_FAILED = Msg(
+_GIT_CACHE_CLONE_FAILED = Msg.text(
     pt="Falha ao clonar.",
     en="Failed to clone.",
 )
 
-_GIT_CACHE_UPDATING = Msg(
+_GIT_CACHE_UPDATING = Msg.text(
     pt="Atualizando cache para {url}...",
     en="Updating cache for {url}...",
 )
 
-_GIT_CACHE_UPDATE_FAILED_UPDATE = Msg(
+_GIT_CACHE_UPDATE_FAILED_UPDATE = Msg.text(
     pt="Falha ao atualizar cache para {url}. Use 'tko reset cache' se estiver com problemas.",
     en="Failed to update cache for {url}. Use 'tko reset cache' if you are having issues.",
 )

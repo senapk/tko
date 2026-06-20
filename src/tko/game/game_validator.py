@@ -7,15 +7,15 @@ from tko.i18n import Msg
 
 
 
-_GAME_VALIDATOR_DUPLICATE_KEY = Msg(
+_GAME_VALIDATOR_DUPLICATE_KEY = Msg.text(
     pt="Chave repetida: {task_key}",
     en="Duplicate key: {task_key}",
 )
-_GAME_VALIDATOR_SELF_REF_ERROR = Msg(
+_GAME_VALIDATOR_SELF_REF_ERROR = Msg.text(
     pt="Erro: auto referência {line_number} {line}",
     en="Error: self reference {line_number} {line}",
 )
-_GAME_VALIDATOR_CYCLE_DETECTED = Msg(
+_GAME_VALIDATOR_CYCLE_DETECTED = Msg.text(
     pt="Cycle detected: {visited}",
     en="Cycle detected: {visited}",
 )

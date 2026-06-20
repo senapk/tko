@@ -1,8 +1,6 @@
 from __future__ import annotations
-
-import os
-
 from tko.i18n.message import Msg
+import os
 
 SUPPORTED_LANGUAGES = {"pt-BR", "en"}
 _LANGUAGE_ALIASES = {
@@ -14,9 +12,7 @@ _LANGUAGE_ALIASES = {
     "en_uk": "en",
 }
 
-
 _current_language: str | None = None
-
 
 def normalize_language(language: str | None) -> str:
     if not language:
@@ -43,25 +39,5 @@ def set_language(language: str | None) -> str:
     global _current_language
     _current_language = normalize_language(language)
     return _current_language
-
-class SafeDict(dict[str, object]):
-    def __missing__(self, key: str) -> str:
-        return "{" + key + "}"
-
-# def t(key: Enum | str | Msg, **params: Any) -> str:
-#     language = get_language()
-
-#     if isinstance(key, Msg):
-#         template = key.for_language(language)
-#     else:
-#         key_value = key.value if isinstance(key, Enum) else key
-#         template = str(key_value)
-
-#     if not params:
-#         return template
-
-#     return template.format_map(SafeDict(params))
-
-
 
 __all__ = ["Msg", "normalize_language", "get_language", "set_language",  "SUPPORTED_LANGUAGES"]

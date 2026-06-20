@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Self
 from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import Iterable
@@ -7,7 +8,6 @@ import re
 from tko.util.text_style import TextStyle, ANSI_RESET
 
 Run = tuple[TextStyle, str]  # (style, text)
-
 
 class ParseError(ValueError):
     pass
@@ -60,8 +60,8 @@ class RunBuilder:
     def __iter__(self):
         return iter(self._runs)
 
-    def copy(self) -> RunBuilder:
-        builder = RunBuilder()
+    def copy(self) -> Self:
+        builder = self.__class__()
         builder._runs = self._runs.copy()
         return builder
 
@@ -188,6 +188,7 @@ class RT:
         - O parser apenas produz runs estruturados.
         - A renderização ANSI/plain/flat é responsabilidade de render().
         """
+
         run_builder = RunBuilder()
         buf = ""
         i = 0
@@ -281,7 +282,7 @@ class RT:
         return iter(self.runs)
     
     def __str__(self) -> str:
-        return self.flat()
+        return self.plain()
 
     def __len__(self) -> int:
         return sum(_char_width(ch) for ch, _ in self.iter_chars())
@@ -335,6 +336,23 @@ class RT:
         for style, text in self.runs:
             for ch in text:
                 yield ch, style
+
+    def format(self, *args: object, **kwargs: object) -> RT:
+        """
+        Formata o RT usando os argumentos fornecidos, preservando os estilos.
+        Aplica format em cada run individualmente, mantendo o estilo associado a cada parte do texto.
+
+        Args:
+            *args: Argumentos posicionais para formatação.
+            **kwargs: Argumentos nomeados para formatação.
+        Returns:
+            RT: Um novo RT com o texto formatado e estilos preservados.
+        """
+        formatted_runs: list[Run] = []
+        for style, text in self.runs:
+            formatted_text = text.format(*args, **kwargs)
+            formatted_runs.append((style, formatted_text))
+        return RT.from_runs(formatted_runs)
 
     # Align and truncation methods
 

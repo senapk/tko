@@ -15,15 +15,15 @@ from tko.util.console import Console
 
 app = typer.Typer(help="Audit repository activity", no_args_is_help=True)
 
-_AUDIT_PERSISTENT_ENABLED = Msg(
+_AUDIT_PERSISTENT_ENABLED = Msg.parse(
     pt="Auditoria persistente habilitada",
     en="Persistent audit enabled",
 )
-_AUDIT_PERSISTENT_DISABLED = Msg(
+_AUDIT_PERSISTENT_DISABLED = Msg.parse(
     pt="Auditoria persistente desabilitada",
     en="Persistent audit disabled",
 )
-_AUDIT_PERSISTENT_STATUS = Msg(
+_AUDIT_PERSISTENT_STATUS = Msg.parse(
     pt="Auditoria persistente: {status}",
     en="Persistent audit: {status}",
 )
@@ -77,14 +77,14 @@ def audit_set(
     if not on and not off:
         status = "ON" if repo.audit.enabled else "OFF"
         interval_text = repo.audit.interval_seconds if repo.audit.interval_seconds is not None else "default"
-        Console.print(f"{_AUDIT_PERSISTENT_STATUS}".format(status=f"{status} ({interval_text}s)"))
+        Console.print(_AUDIT_PERSISTENT_STATUS.t().format(status=f"{status} ({interval_text}s)"))
         return
 
     repo.audit.enabled = on
     if interval is not None:
         repo.audit.interval_seconds = interval
     RepositoryConfig(repo).save()
-    Console.print(_AUDIT_PERSISTENT_ENABLED if on else _AUDIT_PERSISTENT_DISABLED)
+    Console.print(_AUDIT_PERSISTENT_ENABLED.t() if on else _AUDIT_PERSISTENT_DISABLED.t())
 
 
 @app.command("init", help="Initialize audit watcher")
@@ -101,7 +101,7 @@ def audit_init(
     if repo is None:
         return
     
-    AUDIT_STARTING = Msg(pt="Monitor de auditoria iniciado. Aperte Ctrl+C para finalizar.", 
+    AUDIT_STARTING = Msg.parse(pt="Monitor de auditoria iniciado. Aperte Ctrl+C para finalizar.", 
                       en="Audit watcher started. Press Ctrl+C to stop.")
     if interval is None:
         interval = repo.audit.interval_seconds
@@ -109,7 +109,7 @@ def audit_init(
     watcher = RepositoryWatcher(repo)
     watcher.start_watching(log_edits=False, log_audit=True, audit_verbose=True, audit_interval_seconds=interval)
     logger.info(f"{AUDIT_STARTING}")
-    OPEN_TKO = Msg(pt='Abra o tko em outro terminal para fazer as tarefas', en='Open tko in another terminal to perform tasks')
+    OPEN_TKO = Msg.parse(pt='Abra o tko em outro terminal para fazer as tarefas', en='Open tko in another terminal to perform tasks')
     Console.print(f"{OPEN_TKO}")
     try:
         while True:
@@ -118,7 +118,7 @@ def audit_init(
         pass
     finally:
         watcher.stop_watching()
-        logger.info(f"{Msg(pt='Monitor de auditoria parado.', en='Audit watcher stopped.')}")
+        logger.info(f"{Msg.parse(pt='Monitor de auditoria parado.', en='Audit watcher stopped.')}")
 
 
 @app.command("preview", help="Preview audit snapshots with fzf")

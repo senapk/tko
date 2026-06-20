@@ -9,7 +9,7 @@ from tko.i18n import Msg
 from tko.play.opener import Opener
 
 
-_RUN_TASK_NOT_DEFINED = Msg(
+_RUN_TASK_NOT_DEFINED = Msg.text(
     pt="Task não definida",
     en="Task not defined",
 )

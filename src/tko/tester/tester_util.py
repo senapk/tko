@@ -8,7 +8,7 @@ from tko.util.symbols import Symbols
 from tko.i18n import Msg
 
 
-_TESTER_TASK_FOLDER_NOT_FOUND = Msg(
+_TESTER_TASK_FOLDER_NOT_FOUND = Msg.text(
     pt="Warning: Pasta da tarefa não encontrada",
     en="Warning: Task folder not found",
 )

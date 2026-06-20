@@ -5,8 +5,8 @@ from tko.util.rt import RT
 import enum
 
 
-_EXECUTION_RESULT_INVALID_TYPE = Msg(
-    pt="Invalid result type",
+_EXECUTION_RESULT_INVALID_TYPE = Msg.parse(
+    pt="Tipo de resultado inválido",
     en="Invalid result type",
 )
 

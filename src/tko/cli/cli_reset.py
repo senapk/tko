@@ -6,7 +6,7 @@ from tko.repository.git_cache import GitCache
 from tko.util.console import Console
 
 
-_RESET_NO_REPO = Msg(
+_RESET_NO_REPO = Msg.parse(
     pt="Nenhum repositório TKO encontrado.",
     en="No TKO repository found.",
 )

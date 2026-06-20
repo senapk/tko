@@ -12,15 +12,15 @@ from tko.util.console import Console
 
 
 
-_WRITER_NO_CHANGES_TEST_FILE = Msg(
+_WRITER_NO_CHANGES_TEST_FILE = Msg.text(
     pt="no changes in test file",
     en="no changes in test file",
 )
-_WRITER_FILE_WROTE = Msg(
+_WRITER_FILE_WROTE = Msg.text(
     pt="file {path} wrote",
     en="file {path} wrote",
 )
-_WRITER_TARGET_NOT_SUPPORTED_BUILD = Msg(
+_WRITER_TARGET_NOT_SUPPORTED_BUILD = Msg.text(
     pt="fail: target {target} do not supported for build operation",
     en="fail: target {target} do not supported for build operation",
 )
@@ -90,13 +90,13 @@ class Writer:
                 _old = Decoder.load(_target)
                 if _old == _new:
                     if not quiet:
-                        Console.print(str(_WRITER_NO_CHANGES_TEST_FILE))
+                        Console.print(_WRITER_NO_CHANGES_TEST_FILE.t())
                     return False
 
             with open(_target, "w", encoding="utf-8") as f:
                 f.write(_new)
                 if not quiet:
-                    Console.print(str(_WRITER_FILE_WROTE).format(path=_target))
+                    Console.print(_WRITER_FILE_WROTE.t().format(path=_target))
                 return True
 
         
@@ -105,6 +105,6 @@ class Writer:
         elif target.suffix in [".tio", ".vpl", ".toml"]:
             save_file(target, unit_list)
         else:
-            logger.error(str(_WRITER_TARGET_NOT_SUPPORTED_BUILD).format(target=target))
+            logger.error(_WRITER_TARGET_NOT_SUPPORTED_BUILD.t().format(target=target))
             return False
         return True

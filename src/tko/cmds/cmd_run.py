@@ -17,11 +17,11 @@ from tko.i18n import Msg
 from tko.util.console import Console
 
 
-_RUN_NO_TEST_CASES = Msg(
+_RUN_NO_TEST_CASES = Msg.text(
     pt="Nenhum caso de teste encontrado.",
     en="No test cases found.",
 )
-_RUN_NO_SOURCE_OR_TESTS = Msg(
+_RUN_NO_SOURCE_OR_TESTS = Msg.text(
     pt="Nenhum arquivo de código ou de teste encontrado.",
     en="No source files or tests found.",
 )

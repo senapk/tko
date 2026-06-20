@@ -7,12 +7,12 @@ from tko.i18n import Msg
 from tko.util.console import Console
 
 
-_TEXT_MUST_BE_STRING = Msg(
-    pt="text must be a string",
+_TEXT_MUST_BE_STRING = Msg.text(
+    pt="text precisa ser uma string",
     en="text must be a string",
 )
-_TEXT_INDEX_OUT_OF_RANGE = Msg(
-    pt="index out of range",
+_TEXT_INDEX_OUT_OF_RANGE = Msg.text(
+    pt="index fora do intervalo",
     en="index out of range",
 )
 

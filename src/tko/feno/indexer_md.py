@@ -6,13 +6,13 @@ from tko.util.console import Console
 
 
 
-_INDEXER_REPLACE_TITLE_README_MISSING = Msg(
-    pt="Error: README file '{readme}' does not exist, cannot replace title.",
+_INDEXER_REPLACE_TITLE_README_MISSING = Msg.parse(
+    pt="Erro: Arquivo README '{readme}' não existe, não é possível substituir o título.",
     en="Error: README file '{readme}' does not exist, cannot replace title.",
 )
 
-_INDEXER_REPLACED_TITLE = Msg(
-    pt="Replaced title in '{readme}' with '{title}'",
+_INDEXER_REPLACED_TITLE = Msg.parse(
+    pt="Título em '{readme}' substituído por '{title}'",
     en="Replaced title in '{readme}' with '{title}'",
 )
 

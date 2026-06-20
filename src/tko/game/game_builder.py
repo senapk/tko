@@ -14,31 +14,31 @@ from icecream import ic  # type: ignore
 
 
 
-_GAME_BUILDER_README_FETCH_ERROR = Msg(
+_GAME_BUILDER_README_FETCH_ERROR = Msg.text(
     pt="Erro ao obter o arquivo README da fonte {name}",
     en="Error fetching README file from source {name}",
 )
-_GAME_BUILDER_SOURCE_NOT_FOUND = Msg(
+_GAME_BUILDER_SOURCE_NOT_FOUND = Msg.text(
     pt="Aviso: fonte {filename} não encontrada no source {name}",
     en="Warning: source {filename} not found in source {name}",
 )
-_GAME_BUILDER_SOURCE_NOT_FOUND_CREATING = Msg(
+_GAME_BUILDER_SOURCE_NOT_FOUND_CREATING = Msg.text(
     pt="Aviso: fonte {filename} não encontrada no source {name}, criando arquivo",
     en="Warning: source {filename} not found in source {name}, creating file",
 )
-_GAME_BUILDER_QUEST_REQUIRES_MISSING = Msg(
+_GAME_BUILDER_QUEST_REQUIRES_MISSING = Msg.text(
     pt="Quest\n{filename}:{line}\n{quest}\nrequer {required} que não existe",
     en="Quest\n{filename}:{line}\n{quest}\nrequires {required} that does not exist",
 )
-_GAME_BUILDER_SOURCE_NO_ORIGIN_DIR = Msg(
+_GAME_BUILDER_SOURCE_NO_ORIGIN_DIR = Msg.text(
     pt="Aviso: fonte {name} não possui diretório de origem",
     en="Warning: source {name} has no source directory",
 )
-_GAME_BUILDER_INDEX_FETCH_ERROR = Msg(
+_GAME_BUILDER_INDEX_FETCH_ERROR = Msg.text(
     pt="Erro ao obter o arquivo de índice da fonte {name}",
     en="Error fetching index file from source {name}",
 )
-_GAME_BUILDER_NO_QUEST_TITLE = Msg(
+_GAME_BUILDER_NO_QUEST_TITLE = Msg.text(
     pt="Sem Quest",
     en="No Quest",
 )
@@ -60,11 +60,11 @@ class GameBuilder:
         try:
             filename: Path = self.remote.path.index_file
             if not self.remote.is_sandbox and not filename.exists():
-                logger.warning(str(_GAME_BUILDER_README_FETCH_ERROR).format(name=self.remote.data.name))
+                logger.warning(_GAME_BUILDER_README_FETCH_ERROR.t().format(name=self.remote.data.name))
                 return False
         except ValueError:
             if not self.remote.is_sandbox:
-                logger.warning(str(_GAME_BUILDER_SOURCE_NO_ORIGIN_DIR).format(name=self.remote.data.name))
+                logger.warning(_GAME_BUILDER_SOURCE_NO_ORIGIN_DIR.t().format(name=self.remote.data.name))
             return False
         self.__ensure_sandbox_readme_fixed(filename)
         ok, content = self.load_content(filename)
@@ -82,7 +82,7 @@ class GameBuilder:
         content: str = ""
         if not filename.exists():
             if not self.remote.is_sandbox:
-                logger.warning(str(_GAME_BUILDER_SOURCE_NOT_FOUND).format(filename=filename, name=self.remote.data.name))
+                logger.warning(_GAME_BUILDER_SOURCE_NOT_FOUND.t().format(filename=filename, name=self.remote.data.name))
                 return False, content
         else:
             content = Decoder.load(filename)
@@ -143,7 +143,7 @@ class GameBuilder:
                     quests[r].requirements.required_by_ptr.append(q)
                 else:
                     logger.warning(
-                        str(_GAME_BUILDER_QUEST_REQUIRES_MISSING).format(filename=filename,
+                        _GAME_BUILDER_QUEST_REQUIRES_MISSING.t().format(filename=filename,
                             line=q.source.line_number,
                             quest=str(q),
                             required=r,
@@ -157,7 +157,7 @@ class GameBuilder:
         editable_source: bool = self.remote.data.is_editable
         source_dir_root: Path | None = self.remote.path.source_dir
         if source_dir_root is None:
-            logger.warning(str(_GAME_BUILDER_SOURCE_NO_ORIGIN_DIR).format(name=alias))
+            logger.warning(_GAME_BUILDER_SOURCE_NO_ORIGIN_DIR.t().format(name=alias))
             return
         git_url: str | None = self.remote.data.git_url
 
@@ -165,7 +165,7 @@ class GameBuilder:
             filename = self.remote.path.index_file
         except ValueError:
             if not self.remote.is_sandbox:
-                logger.exception(str(_GAME_BUILDER_INDEX_FETCH_ERROR).format(name=alias))
+                logger.exception(_GAME_BUILDER_INDEX_FETCH_ERROR.t().format(name=alias))
             return
         for line_num, line in enumerate(lines):
             quest_parser = QuestParser(alias)

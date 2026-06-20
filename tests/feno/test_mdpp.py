@@ -150,9 +150,9 @@ def test_load_parse_tags_and_warnings():
 
         text = "\n".join(messages)
 
-        assert "missing value for --extract" in text
-        assert "invalid or missing integer for --tests" in text
-        assert "unrecognized tag '--unknown'" in text
+        assert "faltando valor para --extract" in text
+        assert "valor inválido ou faltando para --tests" in text
+        assert "tag não reconhecida '--unknown'" in text
 
     finally:
         logger.remove(sink_id)
@@ -278,7 +278,7 @@ something stale
 
         text = "\n".join(messages)
 
-        assert "file missing.py not found" in text
+        assert "arquivo missing.py não encontrado" in text
 
     finally:
         logger.remove(sink_id)

@@ -8,11 +8,11 @@ from tko.i18n import Msg
 
 
 
-_FENO_HTML_MARKDOWN_NOT_FOUND = Msg(
+_FENO_HTML_MARKDOWN_NOT_FOUND = Msg.parse(
     pt="Erro: Arquivo Markdown não encontrado em '{path}'",
     en="Error: Markdown file not found at '{path}'",
 )
-_FENO_HTML_CONVERSION_ERROR = Msg(
+_FENO_HTML_CONVERSION_ERROR = Msg.parse(
     pt="Ocorreu um erro durante a conversão",
     en="An error occurred during conversion",
 )

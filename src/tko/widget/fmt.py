@@ -7,7 +7,7 @@ from tko.i18n import Msg
 from loguru import logger
 
 
-_FMT_NOT_INITIALIZED = Msg(
+_FMT_NOT_INITIALIZED = Msg.text(
     pt="Fmt.__scr não foi inicializado",
     en="Fmt.__scr was not initialized",
 )

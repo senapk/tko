@@ -7,7 +7,7 @@ from tko.logger.log_sort import LogSort
 from tko.repository.repository import Repository
 
 
-_GAME_COORDINATOR_LOADING_REPOSITORY = Msg(
+_GAME_COORDINATOR_LOADING_REPOSITORY = Msg.text(
     pt="Carregando repositório de {root}...",
     en="Loading repository from {root}...",
 )

@@ -10,12 +10,11 @@ from tko.util.aligner import Aligner
 import time
 
 class _TopBarMsg:
-    RECOMMENDED = Msg(pt="Recomendadas", en="Recommended")
-    ALL = Msg(pt="Todas", en="All")
-    GRAPHS = Msg(pt="Gráficos", en="Graphs")
-    LOGS = Msg(pt="Logs", en="Logs")
-    SKILLS = Msg(pt="Trilhas", en="Skills")
-    HELP = Msg(pt="Ajuda", en="Help")
+    RECOMMENDED = Msg.text(pt="Recomendadas", en="Recommended")
+    ALL = Msg.text(pt="Todas", en="All")
+    GRAPHS = Msg.text(pt="Gráficos", en="Graphs")
+    LOGS = Msg.text(pt="Logs", en="Logs")
+    SKILLS = Msg.text(pt="Trilhas", en="Skills")
 
 
 def get_loop_4() -> str:

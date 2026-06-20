@@ -13,10 +13,10 @@ from tko.i18n import Msg
 
 
 class _TaskDownloadMsg:
-    IS_MISSION = Msg(pt="Essa é uma missão.", en="This is a mission.")
-    ONLY_TASKS = Msg(pt="Você só pode baixar tarefas.", en="You can only download tasks.")
-    NOT_IMPORTABLE = Msg(pt="Essa não é uma tarefa de bai xável.", en="This is not a downloadable task.")
-    HEADER = Msg(pt="Baixando tarefa", en="Downloading task")
+    IS_MISSION = Msg.text(pt="Essa é uma missão.", en="This is a mission.")
+    ONLY_TASKS = Msg.text(pt="Você só pode baixar tarefas.", en="You can only download tasks.")
+    NOT_IMPORTABLE = Msg.text(pt="Essa não é uma tarefa de bai xável.", en="This is not a downloadable task.")
+    HEADER = Msg.text(pt="Baixando tarefa", en="Downloading task")
 
 
 class TaskDownloadService:

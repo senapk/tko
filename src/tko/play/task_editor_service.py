@@ -16,18 +16,18 @@ from tko.i18n import Msg
 
 
 class _TaskEditorMsg:
-    CODE_NOT_FOUND = Msg(pt="O arquivo de código não foi encontrado.", en="Code file not found.")
-    CODE_ONLY_DOWNLOADED = Msg(pt="Você só pode abrir o código de tarefas baixadas.", en="You can only open code from downloaded tasks.")
-    OPENING_LINK_LOG = Msg(pt="Opening link for task: {task_key}, URL: {url}", en="Opening link for task: {task_key}, URL: {url}")
-    TARGET_LOG = Msg(pt="Target: {target}", en="Target: {target}")
-    OPENING_LINK = Msg(pt="Abrindo link", en="Opening link")
-    IS_MISSION = Msg(pt="Essa é uma missão.", en="This is a mission.")
-    LINK_ONLY_TASKS = Msg(pt="Você só pode abrir o link de tarefas.", en="You can only open the link for tasks.")
-    VERSIONS_DECOMPRESSED = Msg(
+    CODE_NOT_FOUND = Msg.text(pt="O arquivo de código não foi encontrado.", en="Code file not found.")
+    CODE_ONLY_DOWNLOADED = Msg.text(pt="Você só pode abrir o código de tarefas baixadas.", en="You can only open code from downloaded tasks.")
+    OPENING_LINK_LOG = Msg.text(pt="Opening link for task: {task_key}, URL: {url}", en="Opening link for task: {task_key}, URL: {url}")
+    TARGET_LOG = Msg.text(pt="Target: {target}", en="Target: {target}")
+    OPENING_LINK = Msg.text(pt="Abrindo link", en="Opening link")
+    IS_MISSION = Msg.text(pt="Essa é uma missão.", en="This is a mission.")
+    LINK_ONLY_TASKS = Msg.text(pt="Você só pode abrir o link de tarefas.", en="You can only open the link for tasks.")
+    VERSIONS_DECOMPRESSED = Msg.text(
         pt="As versões da tarefa foram descompactadas em uma pasta temporária",
         en="Task versions have been decompressed to a temporary folder",
     )
-    VERSIONS_OPENING = Msg(pt="Abrindo com o comando: {cmd}", en="Opening with command: {cmd}")
+    VERSIONS_OPENING = Msg.text(pt="Abrindo com o comando: {cmd}", en="Opening with command: {cmd}")
 
 
 class TaskEditorService:

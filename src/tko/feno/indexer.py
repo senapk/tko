@@ -13,25 +13,25 @@ from tko.feno.indexer_md import IndexerMd
 
 type Line = TaskLine | QuestLine | str
 
-_INDEXER_FOUND_READMES = Msg(
+_INDEXER_FOUND_READMES = Msg.parse(
     pt="Encontrados {count} arquivos README.md no diretório base '{base_dir}'",
     en="Found {count} README.md files in base directory '{base_dir}'",
 )
-_INDEXER_MISSING_README_REMOVING = Msg(
-    pt="Warning: README file '[y]{readme}[]' does not exist for task:[b]{task}[], removing from index",
+_INDEXER_MISSING_README_REMOVING = Msg.parse(
+    pt="Aviso: Arquivo README '[y]{readme}[]' não existe para a tarefa:[b]{task}[], removendo do índice",
     en="Warning: README file '[y]{readme}[]' does not exist for task:[b]{task}[], removing from index",
 )
-_INDEXER_MISSING_README_TASK = Msg(
-    pt="Warning: README file '[y]{readme}[]' does not exist for task:[b]{task}[]",
+_INDEXER_MISSING_README_TASK = Msg.parse(
+    pt="Aviso: Arquivo README '[y]{readme}[]' não existe para a tarefa:[b]{task}[]",
     en="Warning: README file '[y]{readme}[]' does not exist for task:[b]{task}[]",
 )
-_INDEXER_MISMATCH_TITLE = Msg(
-    pt="Mismatch title for task:[b]{readme}[]\n\tREADME:'[y]{line_title}[]' != TASK:'[g]{folder_title}[]'",
+_INDEXER_MISMATCH_TITLE = Msg.parse(
+    pt="Título desajustado para a tarefa:[b]{readme}[]\n\tREADME:'[y]{line_title}[]' != TASK:'[g]{folder_title}[]'",
     en="Mismatch title for task:[b]{readme}[]\n\tREADME:'[y]{line_title}[]' != TASK:'[g]{folder_title}[]'",
 )
 
-_INDEXER_MISSING_HOOKS_ADDING = Msg(
-    pt="Found {count} missing hooks, adding to quest '{quest}':",
+_INDEXER_MISSING_HOOKS_ADDING = Msg.parse(
+    pt="Encontrados {count} hooks faltando, adicionando-os à '{quest}':",
     en="Found {count} missing hooks, adding to quest '{quest}':",
 )
 

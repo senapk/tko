@@ -16,15 +16,15 @@ from tko.i18n import Msg
 
 
 
-_GAME_TASK_NOT_FOUND_IN_COURSE = Msg(
+_GAME_TASK_NOT_FOUND_IN_COURSE = Msg.text(
     pt="fail: tarefa '{task_key}' não encontrada no curso",
     en="fail: task '{task_key}' not found in course",
 )
-_GAME_SANDBOX_SOURCE_NOT_FOUND = Msg(
+_GAME_SANDBOX_SOURCE_NOT_FOUND = Msg.text(
     pt="Local sandbox source not found",
     en="Local sandbox source not found",
 )
-_GAME_BUILD_FAILED_FOR_SOURCE = Msg(
+_GAME_BUILD_FAILED_FOR_SOURCE = Msg.text(
     pt="Falha ao construir jogo para a fonte {name}",
     en="Failed to build game for source {name}",
 )

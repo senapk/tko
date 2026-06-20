@@ -1,5 +1,4 @@
 from tko.run.unit import Unit
-from tko.util.rt import RT
 from tko.util.raw_terminal import RawTerminal
 from tko.enums.execution_result import ExecutionResult
 from tko.enums.diff_count import DiffCount
@@ -11,7 +10,7 @@ from tko.i18n import Msg
 from tko.util.console import Console
 
 
-_RUN_NO_CODE_FOUND = Msg(
+_RUN_NO_CODE_FOUND = Msg.text(
     pt="Nenhum arquivo de código encontrado. Listando casos de teste.",
     en="No source files found. Listing test cases.",
 )
@@ -59,7 +58,7 @@ class RunPresenter:
 
     def list_mode(self):
         if not self.ctx.config.eval_mode:
-            Console.print(RT.parse(f"{_RUN_NO_CODE_FOUND}").center(RawTerminal.get_terminal_size(), "╌"), flush=True)
+            Console.print(_RUN_NO_CODE_FOUND.t().center(RawTerminal.get_terminal_size(), "╌"), flush=True)
         Console.print(self.ctx.wdir.resume_splitted())
         for line in self.ctx.wdir.unit_list_resume():
             Console.print(line)

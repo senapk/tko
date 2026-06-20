@@ -10,19 +10,19 @@ import tempfile
 from tko.i18n import Msg
 
 
-_GRADING_README_NOT_FOUND = Msg(
+_GRADING_README_NOT_FOUND = Msg.parse(
     pt="Arquivo README '{file}' não existe.",
     en="README file '{file}' does not exist.",
 )
-_GRADING_NO_PROBLEMS_FOUND = Msg(
+_GRADING_NO_PROBLEMS_FOUND = Msg.parse(
     pt="Nenhum problema encontrado no arquivo de configuração.",
     en="No problems found in the configuration file.",
 )
-_GRADING_RUNNING_PREFIX = Msg(
+_GRADING_RUNNING_PREFIX = Msg.text(
     pt="[TKO RUNNING] ",
     en="[TKO RUNNING] ",
 )
-_GRADING_GRADING_PREFIX = Msg(
+_GRADING_GRADING_PREFIX = Msg.text(
     pt="[TKO GRADING] ",
     en="[TKO GRADING] ",
 )

@@ -13,36 +13,36 @@ import curses
 
 
 class _GradeMsg:
-    NO = Msg(pt="Não", en="No")
-    YES = Msg(pt="Sim", en="Yes")
-    HEADER = Msg(pt=" Utilize os direcionais e texto para marcar", en=" Use arrow keys and text to mark")
-    FOOTER = Msg(pt=" Pressione Enter para confirmar, Esc para cancelar", en=" Press Enter to confirm, Esc to cancel")
-    NOTHING = Msg(pt=" Nada", en=" Nothing")
+    NO = Msg.text(pt="Não", en="No")
+    YES = Msg.text(pt="Sim", en="Yes")
+    HEADER = Msg.text(pt=" Utilize os direcionais e texto para marcar", en=" Use arrow keys and text to mark")
+    FOOTER = Msg.text(pt=" Pressione Enter para confirmar, Esc para cancelar", en=" Press Enter to confirm, Esc to cancel")
+    NOTHING = Msg.text(pt=" Nada", en=" Nothing")
 
-    AUTO_MODE_LABEL = Msg(pt="Taxa de testes que passou na última execução:", en="Percentage of tests that passed in the last run:")
-    MANUAL_MODE_LABEL = Msg(pt="Informe qual percentual da atividade você fez?", en="What percentage of the activity did you complete?")
-    STUDY_TIME_LABEL = Msg(pt="Qual tempo total estimado, estudo + código, em minutos?", en="What is the total estimated time, study + code, in minutes?")
-    FRIEND_LABEL = Msg(pt="Deixe em branco se fez sozinho, ou com o nome de quem ajudou", en="Leave blank if you did it alone, or with the name of who helped")
-    GUIDED_LABEL = Msg(pt="Fez o código copiando da aula ou vídeo aula?", en="Did you code by copying from class or video?")
-    CONCEPT_LABEL = Msg(pt="ESTUDAR conceitos sem gerar a solução do problema?", en="STUDY concepts without generating the problem solution?")
-    PROBLEM_LABEL = Msg(pt="ENTENDER o problema a ser resolvido?", en="UNDERSTAND the problem to be solved?")
-    CODE_LABEL = Msg(pt="GERAR ou CORRIGIR código relacionado ao problema?", en="GENERATE or FIX code related to the problem?")
-    DEBUG_LABEL = Msg(pt="COMPREENDER mensagens de ERRO ou SAÍDA incorreta?", en="UNDERSTAND ERROR messages or incorrect OUTPUT?")
-    REFACTOR_LABEL = Msg(pt="REFATORAR o código só após fazer tudo sozinho?", en="REFACTOR code only after doing everything yourself?")
+    AUTO_MODE_LABEL = Msg.text(pt="Taxa de testes que passou na última execução:", en="Percentage of tests that passed in the last run:")
+    MANUAL_MODE_LABEL = Msg.text(pt="Informe qual percentual da atividade você fez?", en="What percentage of the activity did you complete?")
+    STUDY_TIME_LABEL = Msg.text(pt="Qual tempo total estimado, estudo + código, em minutos?", en="What is the total estimated time, study + code, in minutes?")
+    FRIEND_LABEL = Msg.text(pt="Deixe em branco se fez sozinho, ou com o nome de quem ajudou", en="Leave blank if you did it alone, or with the name of who helped")
+    GUIDED_LABEL = Msg.text(pt="Fez o código copiando da aula ou vídeo aula?", en="Did you code by copying from class or video?")
+    CONCEPT_LABEL = Msg.text(pt="ESTUDAR conceitos sem gerar a solução do problema?", en="STUDY concepts without generating the problem solution?")
+    PROBLEM_LABEL = Msg.text(pt="ENTENDER o problema a ser resolvido?", en="UNDERSTAND the problem to be solved?")
+    CODE_LABEL = Msg.text(pt="GERAR ou CORRIGIR código relacionado ao problema?", en="GENERATE or FIX code related to the problem?")
+    DEBUG_LABEL = Msg.text(pt="COMPREENDER mensagens de ERRO ou SAÍDA incorreta?", en="UNDERSTAND ERROR messages or incorrect OUTPUT?")
+    REFACTOR_LABEL = Msg.text(pt="REFATORAR o código só após fazer tudo sozinho?", en="REFACTOR code only after doing everything yourself?")
 
-    GUIDED_DISCOUNT = Msg(pt="COPIOU:", en="COPIED:")
-    CONCEPT_DISCOUNT = Msg(pt="ESTUDAR:", en="STUDY:")
-    PROBLEM_DISCOUNT = Msg(pt="ENTENDER:", en="UNDERSTAND:")
-    CODE_DISCOUNT = Msg(pt="CORRIGIR:", en="FIX:")
-    DEBUG_DISCOUNT = Msg(pt="DEBUGAR:", en="DEBUG:")
-    REFACTOR_DISCOUNT = Msg(pt="REFATORAR:", en="REFACTOR:")
+    GUIDED_DISCOUNT = Msg.text(pt="COPIOU:", en="COPIED:")
+    CONCEPT_DISCOUNT = Msg.text(pt="ESTUDAR:", en="STUDY:")
+    PROBLEM_DISCOUNT = Msg.text(pt="ENTENDER:", en="UNDERSTAND:")
+    CODE_DISCOUNT = Msg.text(pt="CORRIGIR:", en="FIX:")
+    DEBUG_DISCOUNT = Msg.text(pt="DEBUGAR:", en="DEBUG:")
+    REFACTOR_DISCOUNT = Msg.text(pt="REFATORAR:", en="REFACTOR:")
 
-    SECTION_TITLE = Msg(
+    SECTION_TITLE = Msg.text(
         pt="Pontue de acordo com a última vez que você (re)fez a tarefa do zero (sprint)",
         en="Rate according to the last time you (re)did the task from scratch (sprint)",
     )
-    SECTION_HUMAN_HELP = Msg(pt="Você fez com ajuda humana ou guiado?", en="Did you do it with human help or guided?")
-    SECTION_AI_USAGE = Msg(pt="Você usou IA (LLMs) para", en="Did you use AI (LLMs) for")
+    SECTION_HUMAN_HELP = Msg.text(pt="Você fez com ajuda humana ou guiado?", en="Did you do it with human help or guided?")
+    SECTION_AI_USAGE = Msg.text(pt="Você usou IA (LLMs) para", en="Did you use AI (LLMs) for")
 
 
 _GRADE_LABELS = (
@@ -220,8 +220,8 @@ class FloatingGrade(FloatingABC):
         self._line = 0
         self.floating.set_text_ljust()
         self.floating.frame.set_border_color("g")
-        self.floating.set_header_text(RT(str(_GradeMsg.HEADER), "y/"))
-        self.floating.set_footer_text(RT(str(_GradeMsg.FOOTER), "y/"))
+        self.floating.set_header_rt(RT(str(_GradeMsg.HEADER), "y/"))
+        self.floating.set_footer_rt(RT(str(_GradeMsg.FOOTER), "y/"))
         self.fn_exit = fn_exit
 
         progression: list[tuple[str, RT]] = [

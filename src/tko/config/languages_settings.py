@@ -8,11 +8,11 @@ from pathlib import Path
 
 
 
-_CONFIG_LANG_EMPTY = Msg(
+_CONFIG_LANG_EMPTY = Msg.parse(
     pt="Configurações de linguagem vazias",
     en="Language settings are empty",
 )
-_CONFIG_LANG_LOAD_FAILED = Msg(
+_CONFIG_LANG_LOAD_FAILED = Msg.parse(
     pt="Erro ao carregar as configurações de linguagem {path}, resetando para as configurações padrão",
     en="Error loading language settings {path}, resetting to default settings",
 )
@@ -114,5 +114,5 @@ class LanguagesSettings:
                     draft=settings.get("draft", "")
                 )
         except Exception:
-            logger.exception(str(_CONFIG_LANG_LOAD_FAILED).format(path=self.path))
+            logger.exception(_CONFIG_LANG_LOAD_FAILED.t().format(path=self.path))
         return self
