@@ -22,6 +22,7 @@ class GuiSkillsBar:
         self.obtained_cut = 3
         self.target_cut = 3
         self.available_cut = 3
+        self.overload = 1.1
 
     def get_remote(self):
         try:
@@ -29,52 +30,52 @@ class GuiSkillsBar:
         except IndexError as _:
             return ""
 
-    def make_xp_button(self, size: int) -> RT:
+    # def make_xp_button(self, size: int) -> RT:
 
-        xp_resume = XPResume(self.game.quests, self.get_remote())
-        resume = xp_resume.get_skills_resume()
+    #     xp_resume = XPResume(self.game.quests, self.get_remote())
+    #     resume = xp_resume.get_skills_resume()
 
-        keys_to_remove: list[str] = []
-        for skill, value in resume.obtained.items():
-            if value < 1:
-                keys_to_remove.append(skill)
+    #     keys_to_remove: list[str] = []
+    #     for skill, value in resume.obtained.items():
+    #         if value < 1:
+    #             keys_to_remove.append(skill)
 
-        for key in keys_to_remove:
-            if key in resume.obtained:
-                del resume.obtained[key]
-            if key in resume.target100:
-                del resume.target100[key]
-            if key in resume.all_items:
-                del resume.all_items[key]
+    #     for key in keys_to_remove:
+    #         if key in resume.obtained:
+    #             del resume.obtained[key]
+    #         if key in resume.target100:
+    #             del resume.target100[key]
+    #         if key in resume.all_items:
+    #             del resume.all_items[key]
 
-        qtd = len(resume.obtained)
-        if qtd == 0:
-            text = " Nenhuma habilidade disponível "
-            percent = 0.0
-            return self.style.build_bar(text, percent, size, "W", "W")
+    #     qtd = len(resume.obtained)
+    #     if qtd == 0:
+    #         text = " Nenhuma habilidade disponível "
+    #         percent = 0.0
+    #         return self.style.build_bar(text, percent, size, "W", "W")
 
-        skill_size = int(size / qtd)
+    #     skill_size = int(size / qtd)
 
-        elements: list[RT] = []
-        for skill, _ in resume.all_items.items():
-            text = f"{skill}"
-            perc = resume.obtained.get(skill, 0) / resume.target100.get(skill, 1)
-            done_color = self.colors.main_bar_done
-            todo_color = self.colors.main_bar_todo
-            skill_bar = self.style.build_bar(
-                text=text,
-                percent=perc,
-                length=skill_size - 2,
-                fmt_true=done_color,
-                fmt_false=todo_color,
-            )
-            elements.append(skill_bar)
-        cover_color = "K"
-        xpbar =  RT(" █", cover_color.lower())
-        for skill_bar in elements:
-            xpbar += skill_bar + RT("█", cover_color.lower())
-        xpbar += RT("█", cover_color.lower())
-        return xpbar
+    #     elements: list[RT] = []
+    #     for skill, _ in resume.all_items.items():
+    #         text = f"{skill}"
+    #         perc = resume.obtained.get(skill, 0) / resume.target100.get(skill, 1)
+    #         done_color = self.colors.main_bar_done
+    #         todo_color = self.colors.main_bar_todo
+    #         skill_bar = self.style.build_bar(
+    #             text=text,
+    #             percent=perc,
+    #             length=skill_size - 2,
+    #             fmt_true=done_color,
+    #             fmt_false=todo_color,
+    #         )
+    #         elements.append(skill_bar)
+    #     cover_color = "K"
+    #     xpbar =  RT(" █", cover_color.lower())
+    #     for skill_bar in elements:
+    #         xpbar += skill_bar + RT("█", cover_color.lower())
+    #     xpbar += RT("█", cover_color.lower())
+    #     return xpbar
 
     def get_entry_xp(self, resume: SkillResume, skill: str, target_value: float, dx: int) -> RT:
         obtained_value = resume.obtained.get(skill, 0)
@@ -132,7 +133,7 @@ class GuiSkillsBar:
             elements.append(self.get_entry_xp(skills_resume, skill, max_target * self.target_cut_factor, dx))
 
         # Total bar
-        total_obtained, total_target100, _ = xp_resume.sum_xp(skills_resume)
+        total_obtained, total_target100, _ = xp_resume.sum_xp(skills_resume, self.overload)
         if total_target100 == 0:
             grade = 0
         else:

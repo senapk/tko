@@ -107,10 +107,7 @@ class TreeRenderer:
         body = RBuffer().add(q.ui.ligature.set_style(color))
         done, goal, _ = q.progress.get_obtained_goal_available()
         done = round(done)
-        if done < 100:
-            done_str = f"{done:02}"
-        else:
-            done_str = "……"
+        done_str = f"{done:02}"
         goal = round(goal)
         goal_str = f"{goal:02}"
 

@@ -50,12 +50,14 @@ class XPResume:
         resume.all_items = all_available
         return resume
 
-    def sum_xp(self, resume: SkillResume) -> tuple[float, float, float]:
+    def sum_xp(self, resume: SkillResume, overload: float) -> tuple[float, float, float]:
         total_obtained = 0
         total_target100 = 0
         total_complete = 0
         for key, value in resume.all_items.items():
-            total_obtained += resume.obtained.get(key, 0)
-            total_target100 += resume.target100.get(key, 0)
+            target = resume.target100.get(key, 0)
+            total_target100 += target
+            obtained = resume.obtained.get(key, 0)
+            total_obtained += min(obtained, target * overload)
             total_complete += value
         return total_obtained, total_target100, total_complete

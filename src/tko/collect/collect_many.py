@@ -71,7 +71,7 @@ class CollectMany:
                 continue
             tko_folder = tko_rep_folder_list[0]
             Console.print(CMD_COLLECT_RUNNING_IN.t().format(folder=tko_folder, username=username, padding=padding))
-            if len(tko_rep_folder_list):
+            if len(tko_rep_folder_list) > 1:
                 Console.print(CMD_COLLECT_MULTIPLE_REPOS_FOUND.t())
             output = CollectSingle.collect_to_json(rs, tko_folder, daily=False, resume=True, game=False)
 
