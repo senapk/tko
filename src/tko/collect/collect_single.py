@@ -1,5 +1,6 @@
 from tko.collect.collect_actions import CollectActions
 from tko.collect.collected import Collected
+from tko.collect.task_collected import TaskCollected
 from tko.config.run_settings import RunSettings
 from tko.repository.repository_builder import RepositoryBuilder
 
@@ -51,7 +52,7 @@ class CollectSingle:
                 Console.print(graph)
 
         if param.resume:
-            resume_data = CollectActions.resume(repo)
+            resume_data: dict[str, TaskCollected] = CollectActions.get_resume(repo)
             data.task_resume = resume_data
             if not param.json_output:
                 task_pad = max((len(key) for key in data.task_resume.keys()), default=0) + 2
@@ -68,7 +69,8 @@ class CollectSingle:
                     Console.print(entry)
 
         if param.history:
-            data.task_history = repo.logger.tasks.mount_task_history(repo.game)
+            task_history: list[TaskCollected] = CollectActions.get_task_history(repo)
+            data.task_history = task_history
             if not param.json_output:
                 task_pad = max((len(item.key) for item in data.task_history), default=0) + 2
                 quest_pad = max((len(item.quest) for item in data.task_history), default=0) + 2                

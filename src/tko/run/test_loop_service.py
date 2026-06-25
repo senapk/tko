@@ -2,7 +2,7 @@ from typing import Callable
 
 from tko.enums.execution_result import ExecutionResult
 from tko.logger.log_sort import LogSort
-from tko.collect.task_user_data import TaskUserData
+from tko.collect.task_collected import TaskCollected
 from tko.run.run_context import RunContext
 from tko.run.unit_runner import UnitRunner
 from tko.util.rt import RT
@@ -45,7 +45,7 @@ class TestLoopService:
                 logger = self.ctx.repo.logger
                 log_sort: LogSort | None = logger.tasks.task_dict.get(self.ctx.get_task().basic.full_key, None)
                 if log_sort is not None:
-                    user_data = TaskUserData().setup(log_sort, self.ctx.get_task())
+                    user_data = TaskCollected().setup(log_sort, self.ctx.get_task())
                     Console.print(
                         RT(
                             f"diff:{user_data.resume.versions}, runs:{user_data.resume.executions},",

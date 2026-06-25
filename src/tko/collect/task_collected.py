@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from tko.collect.task_resume import TaskResume
+from tko.collect.task_collected_resume import TaskCollectedResume
 from tko.game.task_info import TaskSelfInfo
 from tko.logger.log_sort import LogSort
 from typing import Any
 from tko.game.task import Task
 
-class TaskUserData:
+class TaskCollected:
     class Key:
         KEY: str = "key"
         QUEST: str = "quest"
@@ -17,7 +17,7 @@ class TaskUserData:
         self.key: str = ""
         self._quest: str = ""
         self.grader: float = 0.0
-        self.resume: TaskResume = TaskResume()
+        self.resume: TaskCollectedResume = TaskCollectedResume()
         self.info: TaskSelfInfo = TaskSelfInfo()
 
     @property
@@ -45,21 +45,39 @@ class TaskUserData:
     def get_kv(self, include_key: bool, include_quest: bool) -> dict[str, Any]:
         output: dict[str, Any] = {}
         if include_key:
-            output[TaskUserData.Key.KEY] = self.key
+            output[TaskCollected.Key.KEY] = self.key
         if include_quest:
-            output[TaskUserData.Key.QUEST] = self.quest
-        output[TaskUserData.Key.GRADER] = f"{round(self.grader):>3}"
+            output[TaskCollected.Key.QUEST] = self.quest
+        output[TaskCollected.Key.GRADER] = f"{round(self.grader):>3}"
         output.update(self.resume.get_kv())
         output.update(self.info.get_kv())
         return output
 
-    def from_kv(self, info: dict[str, str]) -> TaskUserData:
-        self.key = info.get(TaskUserData.Key.KEY, "")
-        self.quest = info.get(TaskUserData.Key.QUEST, "")
-        self.grader = float(info.get(TaskUserData.Key.GRADER, 0.0))
+    def from_kv(self, info: dict[str, str]) -> TaskCollected:
+        self.key = info.get(TaskCollected.Key.KEY, "")
+        self.quest = info.get(TaskCollected.Key.QUEST, "")
+        self.grader = float(info.get(TaskCollected.Key.GRADER, 0.0))
         self.resume.from_kv(info)
         self.info.from_kv(info)
         return self
+    
+    def csv_keys(self):
+        output: list[str] = []
+        output.append(TaskCollected.Key.KEY)
+        output.append(TaskCollected.Key.QUEST)
+        output.append(TaskCollected.Key.GRADER)
+        output.extend(self.resume.get_kv(full=True).keys())
+        output.extend(self.info.get_kv(full=True).keys())
+        return output
+
+    def csv_values(self) -> list[str]:
+        output: list[str] = []
+        output.append(self.key)
+        output.append(self.quest)
+        output.append(f"{round(self.grader):>3}")
+        output.extend(self.resume.get_kv(full=True).values())
+        output.extend(self.info.get_kv(full=True).values())
+        return output
 
     def __str__(self) -> str:
-        return f"{self.Key.KEY}:{self.key}, {self.Key.QUEST}:{self.quest}, {self.Key.GRADER}:{self.grader}, {self.resume.get_kv()}, {self.info.get_kv()})"
+        return f"{self.Key.KEY}:{self.key}, {self.Key.QUEST}:{self.quest}, {self.Key.GRADER}:{self.grader}, {self.resume.get_kv(full=True)}, {self.info.get_kv(full=True)})"

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from tko.collect.quest_game_data import QuestGameData
 from tko.i18n import Msg
-from tko.collect.task_user_data import TaskUserData
+from tko.collect.task_collected import TaskCollected
 from typing import Any
 from tko.util.console import Console
 
@@ -20,8 +20,8 @@ class Collected:
         log_str: str = "log"
 
     def __init__(self):
-        self.task_resume: dict[str, TaskUserData] = {}
-        self.task_history: list[TaskUserData] = []
+        self.task_resume: dict[str, TaskCollected] = {}
+        self.task_history: list[TaskCollected] = []
         self.daily_graph: str = ""
         self.full_log: list[str] = []
         self.game_structure: list[QuestGameData] = []
@@ -34,13 +34,13 @@ class Collected:
         task_resume = json_data.get(Collected.Key.resume_str, None)
         if task_resume is not None:
             for key, value in task_resume.items():
-                collected_resume = TaskUserData()
+                collected_resume = TaskCollected()
                 collected_resume.from_kv(value)
                 self.task_resume[key] = collected_resume
         task_history = json_data.get(Collected.Key.history_str, None)
         if task_history is not None:
             for item in task_history:
-                collected_history = TaskUserData()
+                collected_history = TaskCollected()
                 collected_history.from_kv(item)
                 self.task_history.append(collected_history)
 

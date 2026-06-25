@@ -5,7 +5,7 @@ from tko.logger.log_sort import LogSort
 from tko.logger.delta import Delta
 
 @dataclass
-class TaskResume:
+class TaskCollectedResume:
     class Key:
         INIT: str = "init"
         DURATION: str = "duration"
@@ -31,28 +31,24 @@ class TaskResume:
         self.executions = len(log_sort.exec_list)
 
 
-    def get_kv(self) -> dict[str, Any]:
+    def get_kv(self, full: bool = False) -> dict[str, Any]:
         output: dict[str, Any] = {}
-        output[TaskResume.Key.INIT] = Delta.encode_format(self.init_time) if self.init_time else ""
-        output[TaskResume.Key.DURATION] = Delta.format_hhmmss(self.duration.total_seconds())
-        if self.events > 0:
-            output[TaskResume.Key.EVENTS] = str(self.events)
-        # if self.minutes > 0:
-        #     output[TaskResume.Key.MINUTES] = str(self.minutes)
-        output[TaskResume.Key.VERSIONS] = f"{self.versions:>2}"
-        output[TaskResume.Key.EXECUTIONS] = f"{self.executions:>2}"
-        # if self.lines > 0:
-        #     output[TaskResume.Key.LINES] = str(self.lines)
+        output[TaskCollectedResume.Key.INIT] = Delta.encode_format(self.init_time) if self.init_time else ""
+        output[TaskCollectedResume.Key.DURATION] = Delta.format_hhmmss(self.duration.total_seconds())
+        if full or self.events > 0:
+            output[TaskCollectedResume.Key.EVENTS] = str(self.events)
+        output[TaskCollectedResume.Key.VERSIONS] = f"{self.versions:>2}"
+        output[TaskCollectedResume.Key.EXECUTIONS] = f"{self.executions:>2}"
 
         return output
 
     def from_kv(self, info: dict[str, str]) -> None:
-        init_str = info.get(TaskResume.Key.INIT, "")
+        init_str = info.get(TaskCollectedResume.Key.INIT, "")
         if init_str:
             self.init_time = Delta.decode_format(init_str)
-        duration_str = info.get(TaskResume.Key.DURATION, "")
+        duration_str = info.get(TaskCollectedResume.Key.DURATION, "")
         if duration_str:
             self.duration = Delta.parse_hhmmss(duration_str)
-        self.events = int(info.get(TaskResume.Key.EVENTS, 0))
-        self.versions   = int(info.get(TaskResume.Key.VERSIONS, 0))
-        self.executions = int(info.get(TaskResume.Key.EXECUTIONS, 0))
+        self.events = int(info.get(TaskCollectedResume.Key.EVENTS, 0))
+        self.versions   = int(info.get(TaskCollectedResume.Key.VERSIONS, 0))
+        self.executions = int(info.get(TaskCollectedResume.Key.EXECUTIONS, 0))

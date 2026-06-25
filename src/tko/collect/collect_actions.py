@@ -3,20 +3,29 @@ import sys # type: ignore
 from tko.collect.task_game_data import TaskGameData
 from tko.repository.repository import Repository
 from tko.logger.logger import Logger
-from tko.collect.task_user_data import TaskUserData
+from tko.collect.task_collected import TaskCollected
 from tko.logger.log_sort import LogSort
 from tko.play.daily_graph import DailyGraph
 from tko.collect.quest_game_data import QuestGameData
 
 class CollectActions:
+
     @staticmethod
-    def resume(repo: Repository) -> dict[str, TaskUserData]:
+    def get_task_history(repo: Repository) -> list[TaskCollected]:
+        """
+        Collect task history data from the repository's logger and return a list of TaskCollected objects.
+        """
+        task_history: list[TaskCollected] = repo.logger.tasks.mount_task_history(repo.game)
+        return task_history
+
+    @staticmethod
+    def get_resume(repo: Repository) -> dict[str, TaskCollected]:
         """
         Collect resume data from the repository's logger and return a dictionary mapping task keys to TaskResume objects.
         """
         logger: Logger = repo.logger
         tasks: dict[str, LogSort] = logger.tasks.task_dict
-        resume_dict: dict[str, TaskUserData] = {}
+        resume_dict: dict[str, TaskCollected] = {}
 
         game = repo.game
         quest_map: dict[str, str] = {}
@@ -24,7 +33,7 @@ class CollectActions:
             for task in quest.get_tasks():
                 quest_map[task.basic.full_key] = quest.basic.full_key
         for key, log_sort in tasks.items():
-            resume = TaskUserData().setup(log_sort, repo.game.get_task(key))
+            resume = TaskCollected().setup(log_sort, repo.game.get_task(key))
             resume_dict[key] = resume
         return resume_dict
 
@@ -44,7 +53,7 @@ class CollectActions:
         output: list[QuestGameData] = []
 
         for quest in game.quests.values():
-            output_quest = QuestGameData(quest.basic.full_key)
+            output_quest = QuestGameData(quest.basic.full_key, value=quest.config.factor)
             output.append(output_quest)
             for task in quest.get_tasks():
                 output_quest.tasks.append(TaskGameData(key=task.basic.full_key, value=task.game.xp, is_leet=task.config.is_eval_test))

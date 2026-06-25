@@ -11,8 +11,9 @@ class QuestGameData:
         TASKS: str = "tasks"
         QUESTS: str = "quests"
 
-    def __init__(self, key: str):
+    def __init__(self, key: str, value: float = 1):
         self.key = key
+        self.value = value
         self.tasks: list[TaskGameData] = []
 
     def to_dict(self) -> dict[str, Any]:

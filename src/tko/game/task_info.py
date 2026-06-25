@@ -76,28 +76,28 @@ class TaskSelfInfo:
         self.ia_refactor = kv.get(self.Key.IA_REFACTOR, "0") == "1"
         return self
 
-    def get_kv(self) -> dict[str, str]:
+    def get_kv(self, full: bool = False) -> dict[str, str]:
         kv: dict[str, str] = {}
-        if self.feedback:
-            kv[self.Key.FEEDBACK] = "1"
-        if self.rate != 0:
+        if full or self.feedback:
+            kv[self.Key.FEEDBACK] = "1" if self.feedback else "0"
+        if full or self.rate != 0:
             kv[self.Key.RATE] = str(self.rate)
-        if self.study != 0:
+        if full or self.study != 0:
             kv[self.Key.STUDY_TIME] = str(self.study)
-        if self.friend:
+        if full or self.friend:
             kv[self.Key.FRIEND] = self.friend
-        if self.guided:
-            kv[self.Key.GUIDED] = "1"
-        if self.ia_concept:
-            kv[self.Key.IA_CONCEPT] = "1"
-        if self.ia_problem:
-            kv[self.Key.IA_PROBLEM] = "1"
-        if self.ia_code:
-            kv[self.Key.IA_CODING] = "1"
-        if self.ia_debug:
-            kv[self.Key.IA_DEBUG] = "1"
-        if self.ia_refactor:
-            kv[self.Key.IA_REFACTOR] = "1"
+        if full or self.guided:
+            kv[self.Key.GUIDED] = "1" if self.guided else "0"
+        if full or self.ia_concept:
+            kv[self.Key.IA_CONCEPT] = "1" if self.ia_concept else "0"
+        if full or self.ia_problem:
+            kv[self.Key.IA_PROBLEM] = "1" if self.ia_problem else "0"
+        if full or self.ia_code:
+            kv[self.Key.IA_CODING] = "1" if self.ia_code else "0"
+        if full or self.ia_debug:
+            kv[self.Key.IA_DEBUG] = "1" if self.ia_debug else "0"
+        if full or self.ia_refactor:
+            kv[self.Key.IA_REFACTOR] = "1" if self.ia_refactor else "0"
         return kv
     
     

@@ -1,8 +1,10 @@
-from tko.collect.collect_single import CollectSingle
+from tko.collect.collect_actions import CollectActions
+from tko.collect.task_collected import TaskCollected
 from tko.config.run_settings import RunSettings
+from tko.repository.repository_builder import RepositoryBuilder
 from tko.repository.repository_paths import RepositoryPaths
+
 from tko.util.rt import RT
-from loguru import logger
 from tko.i18n import Msg
 
 import csv
@@ -40,6 +42,7 @@ CMD_COLLECT_SAVING_EXTRACTED_DATA = Msg.parse(
     en="[g]Saving extracted data to {path}[]",
 )
 
+Resume = dict[str, TaskCollected]
 
 class CollectMany:
     @staticmethod
@@ -56,14 +59,14 @@ class CollectMany:
 
 
     @staticmethod
-    def execute(rs: RunSettings, git_dir_list: list[Path], json_path: str | None = None, csv_path: str | None = None, block_prefix: str | None = None):
+    def execute(rs: RunSettings, git_dir_list: list[Path], csv_path: str | None = None):
         git_dir_list = [git_dir for git_dir in git_dir_list if git_dir.is_dir()]
         common_prefix = CollectMany.find_common_prefix([folder.name for folder in git_dir_list])
 
         usernames = [repo.name[len(common_prefix):].strip("/\\") for repo in git_dir_list]
         padding = max(len(username) for username in usernames) + 1
 
-        output_map: dict[str, Any] = {}
+        output_map: dict[str, Resume] = {}
         for git_dir, username in zip(git_dir_list, usernames):
             tko_rep_folder_list = RepositoryPaths.rec_search_for_repo_subdir(git_dir)
             if not tko_rep_folder_list:
@@ -73,27 +76,16 @@ class CollectMany:
             Console.print(CMD_COLLECT_RUNNING_IN.t().format(folder=tko_folder, username=username, padding=padding))
             if len(tko_rep_folder_list) > 1:
                 Console.print(CMD_COLLECT_MULTIPLE_REPOS_FOUND.t())
-            output = CollectSingle.collect_to_json(rs, tko_folder, daily=False, resume=True, game=False)
-
-            try:
-                json_output: dict[str, Any] = json.loads(output) if output != "" else {}
-            except json.JSONDecodeError:
-                logger.exception(CMD_COLLECT_JSON_PARSE_FAILED.t().format(username=username))
+            rs = RunSettings(changedir=tko_folder)
+            rb = RepositoryBuilder(rs)
+            repo, _ = rb.verbose(False).load_config_and_game(True).build()
+            if repo is None:
+                Console.print(RT(f"{username: <{padding}}", "r") + CMD_COLLECT_REPO_NOT_FOUND.t().format(path=tko_folder).set_style("r"))
                 continue
-            if "error" in json_output:
-                Console.print(CMD_COLLECT_ERROR.t().format(error=json_output['error'], username=username, padding=padding))
-                continue
+            
+            output_map[username] = CollectActions.get_resume(repo)
 
-            output_map[username] = json_output["resume"] if "resume" in json_output else {}
-
-        if json_path is not None:
-            with open(json_path, "w", encoding="utf-8") as f:
-                Console.print(CMD_COLLECT_SAVING_EXTRACTED_DATA.t().format(path=json_path))
-                json.dump(output_map, f, indent=4, ensure_ascii=False)
-
-        header_keys = ["username", "key", "quest", "minutes", "versions", "executions", "rate", "study", "self", "friend", "concept", "problem", "code", "debug", "refactor", "guided"]
-        if block_prefix is not None:
-            header_keys = ["block"] + header_keys
+        header_keys = ["username"] +  TaskCollected().csv_keys()
         if csv_path is not None:
             with open(csv_path, "w", encoding="utf-8", newline="") as f:
                 writer = csv.DictWriter(f, fieldnames=header_keys)
@@ -103,26 +95,8 @@ class CollectMany:
                         if "@" in key:
                             key = key.split("@")[1]
 
-                        row: dict[str, Any] = {
-                            "username": student_key,
-                            "key": data.get("key", ""),
-                            "quest": data.get("quest", ""),
-                            "minutes": data.get("minutes", 0),
-                            "versions": data.get("versions", 0),
-                            "executions": data.get("executions", 0),
-                            "rate": round(float(data.get("rate", 0.0))),
-                            "study": data.get("study", 0),
-                            "self": data.get("self", ""),
-                            "friend": data.get("friend", ""),
-                            "concept": data.get("concept", ""),
-                            "problem": data.get("problem", ""),
-                            "code": data.get("code", ""),
-                            "debug": data.get("debug", ""),
-                            "refactor": data.get("refactor", ""),
-                            "guided": data.get("guided", "")
-                        }
-
-                        if block_prefix is not None:
-                            row["block"]= f"{block_prefix}"
+                        row: dict[str, Any] = { "username": student_key }
+                        row.update(data.get_kv(include_key=True, include_quest=True))
+                        row = {k:v for k,v in row.items() if k in header_keys}
                         writer.writerow(row)
             Console.print(CMD_COLLECT_SAVING_EXTRACTED_DATA.t().format(path=csv_path))

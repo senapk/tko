@@ -1,4 +1,4 @@
-from tko.collect.task_user_data import TaskUserData
+from tko.collect.task_collected import TaskCollected
 from tko.config.settings import Settings
 from tko.game.quest import Quest
 from tko.game.task import Task
@@ -28,7 +28,7 @@ class GuiGraphPanel:
         return True, header, graph
     
     def get_history(self) -> tuple[bool, list[RT], list[RT]]:
-        history: list[TaskUserData] = self.repo.logger.tasks.mount_task_history(self.repo.game)
+        history: list[TaskCollected] = self.repo.logger.tasks.mount_task_history(self.repo.game)
         header = [RT.parse(" [r]History ")]
         task_pad = max((len(item.key) for item in history), default=0) + 2
         quest_pad = max((len(item.quest) for item in history), default=0) + 2

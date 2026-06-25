@@ -1,4 +1,4 @@
-from tko.collect.task_user_data import TaskUserData
+from tko.collect.task_collected import TaskCollected
 from tko.logger.log_item_base import LogItemBase
 from tko.logger.log_sort import LogSort
 from tko.logger.delta import DeltaMode, DeltaAction
@@ -34,14 +34,14 @@ class TaskListener:
             log_sort.add_item(mode, item)
             self.task_history.append(log_sort)
 
-    def mount_task_history(self, game: Game) -> list[TaskUserData]:
+    def mount_task_history(self, game: Game) -> list[TaskCollected]:
         history_log_sort: list[LogSort] = self.task_history
-        history_data: list[TaskUserData] = []
+        history_data: list[TaskCollected] = []
         for log_sort in history_log_sort:
             key = log_sort.key
             if key is None:
                 continue
-            taskuserdata = TaskUserData().setup(log_sort, game.get_task(key))
+            taskuserdata = TaskCollected().setup(log_sort, game.get_task(key))
             if taskuserdata.resume.duration > dt.timedelta(seconds=60):
                 history_data.append(taskuserdata)
         return history_data

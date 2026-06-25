@@ -30,53 +30,6 @@ class GuiSkillsBar:
         except IndexError as _:
             return ""
 
-    # def make_xp_button(self, size: int) -> RT:
-
-    #     xp_resume = XPResume(self.game.quests, self.get_remote())
-    #     resume = xp_resume.get_skills_resume()
-
-    #     keys_to_remove: list[str] = []
-    #     for skill, value in resume.obtained.items():
-    #         if value < 1:
-    #             keys_to_remove.append(skill)
-
-    #     for key in keys_to_remove:
-    #         if key in resume.obtained:
-    #             del resume.obtained[key]
-    #         if key in resume.target100:
-    #             del resume.target100[key]
-    #         if key in resume.all_items:
-    #             del resume.all_items[key]
-
-    #     qtd = len(resume.obtained)
-    #     if qtd == 0:
-    #         text = " Nenhuma habilidade disponível "
-    #         percent = 0.0
-    #         return self.style.build_bar(text, percent, size, "W", "W")
-
-    #     skill_size = int(size / qtd)
-
-    #     elements: list[RT] = []
-    #     for skill, _ in resume.all_items.items():
-    #         text = f"{skill}"
-    #         perc = resume.obtained.get(skill, 0) / resume.target100.get(skill, 1)
-    #         done_color = self.colors.main_bar_done
-    #         todo_color = self.colors.main_bar_todo
-    #         skill_bar = self.style.build_bar(
-    #             text=text,
-    #             percent=perc,
-    #             length=skill_size - 2,
-    #             fmt_true=done_color,
-    #             fmt_false=todo_color,
-    #         )
-    #         elements.append(skill_bar)
-    #     cover_color = "K"
-    #     xpbar =  RT(" █", cover_color.lower())
-    #     for skill_bar in elements:
-    #         xpbar += skill_bar + RT("█", cover_color.lower())
-    #     xpbar += RT("█", cover_color.lower())
-    #     return xpbar
-
     def get_entry_xp(self, resume: SkillResume, skill: str, target_value: float, dx: int) -> RT:
         obtained_value = resume.obtained.get(skill, 0)
         target100_value = resume.target100.get(skill, 0)
@@ -93,7 +46,7 @@ class GuiSkillsBar:
         text = RT(f"{skill[:self.name_size]:<{self.name_size}}:{round(obtained_value):>{self.obtained_cut}}/{round(target100_value):>{self.target_cut}}/{round(available_value):>{self.available_cut}}", "X")
         return text + " " + skill_bar
 
-    def get_entry_perc(self, resume: SkillResume, skill: str, value: float, dx: int, cut: int, name_size: int) -> RT:
+    def get_entry_perc(self, resume: SkillResume, skill: str, value: float, dx: int) -> RT:
         obtained_value = round(resume.obtained.get(skill, 0))
         target100_value = round(resume.target100.get(skill, 0))
         complete_value = round(value)
