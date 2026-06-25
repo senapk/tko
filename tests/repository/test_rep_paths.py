@@ -3,8 +3,8 @@ from tko.config.run_settings import RunSettings
 from tko.repository.repository_paths import RepositoryPaths
 
 
-def make_run_settings(tmp_path: Path, local_cache: bool = False) -> RunSettings:
-    return RunSettings(changedir=tmp_path, local_cache=local_cache)
+def make_run_settings(tmp_path: Path) -> RunSettings:
+    return RunSettings(changedir=tmp_path)
 
 
 def test_rec_search_for_repo_parents_returns_none_when_no_repository_exists(tmp_path: Path):
@@ -43,7 +43,7 @@ def test_rec_search_for_repo_subdir_finds_nested_repositories(tmp_path: Path):
 
 
 def test_path_helpers_return_expected_locations(tmp_path: Path):
-    paths = RepositoryPaths(tmp_path, make_run_settings(tmp_path, local_cache=True))
+    paths = RepositoryPaths(tmp_path, make_run_settings(tmp_path))
 
     assert paths.root_dir == tmp_path
     assert paths.track_folder == tmp_path / ".tko" / "track"
@@ -60,7 +60,7 @@ def test_path_helpers_return_expected_locations(tmp_path: Path):
 
 
 def test_config_file_presence_can_be_checked_from_property(tmp_path: Path):
-    paths = RepositoryPaths(tmp_path, make_run_settings(tmp_path, local_cache=True))
+    paths = RepositoryPaths(tmp_path, make_run_settings(tmp_path))
     assert paths.config_file.exists() is False
 
     config_file = paths.config_file

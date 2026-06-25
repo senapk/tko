@@ -70,16 +70,15 @@ def register_main_commands(app: typer.Typer):
         from tko.cmds.cmd_open import CmdOpen
         from tko.config.check_version import CheckVersion
 
-        # app_ctx: AppContext = AppContext.load_from_context(ctx)
-        settings: Settings = ctx.obj
-        # changedir = app_ctx.changedir
-        # update = app_ctx.update
-        # offline = app_ctx.offline
-        
+        settings: Settings = ctx.obj        
         repo, _ = load_repo(settings.rs, show_warnings=True, auto_load=True)
         if repo is None:
             return
-            
+        settings.rs.changedir = repo.root_dir
+        # change dir to repo root dir so that all commands run in the correct context
+        import os
+        os.chdir(repo.root_dir)
+
         from tko.repository.repository_watcher import RepositoryWatcher
         watcher = RepositoryWatcher(repo).start_watching(
             log_audit=(repo.audit.enabled or audit),

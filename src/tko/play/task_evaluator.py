@@ -37,6 +37,5 @@ class TaskEvaluator:
         except IndexError:
             return
         if isinstance(obj, Task):
-            obj = FloatingGrade(obj, lambda task: self.repo.logger.store(LogItemSelf().set_task(task)))
-            obj.id = "self"
+            obj = FloatingGrade(obj, lambda task: self.repo.logger.store(LogItemSelf().set_task(task))).set_id("self")
             self.fman.add_floating(obj)

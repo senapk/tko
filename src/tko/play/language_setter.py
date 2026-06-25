@@ -26,9 +26,9 @@ class LanguageSetter:
     @staticmethod
     def replace_lang_on_repo(options: list[str], repo:Repository) -> None:
         options = sorted(options)
-        Console.print(RT.parse(str(_LangSetterMsg.PROG_LANGUAGE_NOT_SET)))
+        Console.print(_LangSetterMsg.PROG_LANGUAGE_NOT_SET.t())
         while True:
-            Console.print(RT.parse(str(_LangSetterMsg.PROMPT).format(options=", ".join(options))), flush=True, end="")
+            Console.print(_LangSetterMsg.PROMPT.t().format(options=", ".join(options)), flush=True, end="")
             lang = input()
             if lang in options:
                 break

@@ -45,7 +45,7 @@ class FakeRepositoryConfig:
 
 
 def make_settings(tmp_path: Path) -> Settings:
-    return cast(Settings, SimpleNamespace(rs=RunSettings(changedir=tmp_path, local_cache=True)))
+    return cast(Settings, SimpleNamespace(rs=RunSettings(changedir=tmp_path)))
 
 
 def test_validate_path_returns_false_when_user_cancels_reset(monkeypatch: MonkeyPatch, tmp_path: Path):

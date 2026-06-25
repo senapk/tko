@@ -14,7 +14,7 @@ from tko.util.console import Console
 
 def _make_app_context(tmp_path: Path) -> Settings:
     settings = Settings(tmp_path / "settings")
-    settings.rs = RunSettings(changedir=tmp_path, local_cache=True)
+    settings.rs = RunSettings(changedir=tmp_path)
     settings.rs.force_offline = True
     return settings
 
@@ -25,7 +25,10 @@ def test_open_starts_non_audit_watcher(monkeypatch: MonkeyPatch, tmp_path: Path)
     register_main_commands(app)
     ctx = _make_app_context(tmp_path)
 
-    repo_obj = SimpleNamespace(audit=SimpleNamespace(enabled=False, interval_seconds=None))
+    repo_obj = SimpleNamespace(
+        root_dir=tmp_path,
+        audit=SimpleNamespace(enabled=False, interval_seconds=None),
+    )
     captured: dict[str, Any] = {"execute": False, "stopped": False}
 
     def fake_load_repo(*_args: Any, **_kwargs: Any) -> tuple[object, Path]:
@@ -88,7 +91,10 @@ def test_open_uses_persistent_audit_when_enabled(monkeypatch: MonkeyPatch, tmp_p
     register_main_commands(app)
     ctx = _make_app_context(tmp_path)
 
-    repo_obj = SimpleNamespace(audit=SimpleNamespace(enabled=True, interval_seconds=33))
+    repo_obj = SimpleNamespace(
+        root_dir=tmp_path,
+        audit=SimpleNamespace(enabled=True, interval_seconds=33),
+    )
     captured: dict[str, Any] = {"execute": False, "stopped": False}
 
     def fake_load_repo(*_args: Any, **_kwargs: Any) -> tuple[object, Path]:

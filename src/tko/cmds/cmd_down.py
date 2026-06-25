@@ -16,71 +16,70 @@ from pathlib import Path
 from tko.loader.toml_parser import TomlParser
 from tko.i18n import Msg
 from tko.util.rt import RT
-from typing import Any
 from tko.util.console import Console
 
-_DOWN_OPENING = Msg.text(
+_DOWN_OPENING = Msg.parse(
     pt="# [y]{key}[]\nBaixando na pasta [y]{folder}[]",
     en="# [y]{key}[]\nDownloading in folder [y]{folder}[]",
 )
-_DOWN_INVALID_REPO_ARG = Msg.text(
+_DOWN_INVALID_REPO_ARG = Msg.parse(
     pt="O parâmetro para o comando tko down deve a pasta onde você iniciou o repositório.",
     en="The argument for tko down must be the folder where you initialized the repository.",
 )
-_DOWN_INVALID_REPO_ARG_ACTION = Msg.text(
+_DOWN_INVALID_REPO_ARG_ACTION = Msg.parse(
     pt="Navegue ou passe o caminho até a pasta do repositório e tente novamente.",
     en="Navigate to that folder or pass its path and try again.",
 )
-_CMD_DOWN_ACTIVITY_LINK_NOT_DOWNLOADABLE = Msg.text(
+_CMD_DOWN_ACTIVITY_LINK_NOT_DOWNLOADABLE = Msg.parse(
     pt="Atividade {task_key} é do tipo link, ela não é para download",
     en="Activity {task_key} is a link type and is not downloadable",
 )
-_CMD_DOWN_ACTIVITY_NO_ORIGIN_FOLDER = Msg.text(
+_CMD_DOWN_ACTIVITY_NO_ORIGIN_FOLDER = Msg.parse(
     pt="Atividade {task_key} não possui pasta de origem para download",
     en="Activity {task_key} has no source folder for download",
 )
-_CMD_DOWN_ACTIVITY_NO_DESTINY_FOLDER = Msg.text(
+_CMD_DOWN_ACTIVITY_NO_DESTINY_FOLDER = Msg.parse(
     pt="Atividade {task_key} não possui pasta de destino para download",
     en="Activity {task_key} has no destination folder for download",
 )
-_DOWN_ACTIVITY_ALREADY_PRESENT = Msg.text(
+_DOWN_ACTIVITY_ALREADY_PRESENT = Msg.parse(
     pt="Atividade já está no repositório, precisa baixar nenhum arquivo",
     en="Activity is already in the repository; no files need to be downloaded",
 )
-_DOWN_LINK_HAS_NO_DOWNLOAD = Msg.text(
+_DOWN_LINK_HAS_NO_DOWNLOAD = Msg.parse(
     pt="falha: link para atividade não possui link para download",
     en="fail: activity link does not provide a download link",
 )
-_DOWN_CREATING_NEW_DRAFT_FOLDER = Msg.text(
+_DOWN_CREATING_NEW_DRAFT_FOLDER = Msg.parse(
     pt="Criando nova pasta de rascunhos: {folder}",
     en="Creating new drafts folder: {folder}",
 )
-_DOWN_ACTIVITY_DOWNLOADED_SUCCESS = Msg.text(
+_DOWN_ACTIVITY_DOWNLOADED_SUCCESS = Msg.parse(
     pt="Atividade baixada com sucesso",
     en="Activity downloaded successfully",
 )
-_DOWN_CHOOSE_DRAFT_EXTENSION = Msg.text(
-    pt="Escolha uma extensão para os rascunhos: [{options}]: ",
-    en="Choose a draft extension: [{options}]: ",
+_DOWN_CHOOSE_DRAFT_EXTENSION = Msg.parse(
+    pt="Escolha uma [y]extensão[] para os rascunhos: [[{options}]]: ",
+    en="Choose a draft [y]extension[]: [[{options}]]: ",
 )
-_DOWN_FILE_NEW = Msg.text(
+_DOWN_FILE_NEW = Msg.parse(
     pt="[g](   Novo   )[] {path}",
     en="[g](    New   )[] {path}",
 )
-_DOWN_FILE_UPDATED = Msg.text(
+_DOWN_FILE_UPDATED = Msg.parse(
     pt="[y](Atualizado)[] {path}",
     en="[y]( Updated  )[] {path}",
 )
-_DOWN_FILE_UNCHANGED = Msg.text(
+_DOWN_FILE_UNCHANGED = Msg.parse(
     pt="[b](Inalterado)[] {path}",
     en="[b](Unchanged )[] {path}",
 )
-_DOWN_FILE_EMPTY = Msg.text(
+_DOWN_FILE_EMPTY = Msg.parse(
     pt="[g](  Vazio   )[] {path}",
     en="[g](  Empty   )[] {path}",
 )
 
-_DRAFTS_FOUND = Msg.text(
+_DRAFTS_FOUND = Msg.parse(
     pt="Códigos de resposta encontrados na pasta:\n   {folder}\n[r]Rascunhos não criados[]. Apague os código antigos\ncaso queira baixar novos rascunhos.",
     en="Response codes found in folder:\n   {folder}\n[r]Drafts not created[]. Delete the old codes\nif you want to download new drafts.",
 )
@@ -140,9 +139,9 @@ class CmdDown:
             return True
         if self.task.resource.is_static_type:
             if not self.copy_drafts():
-                self.actions.fnprint(_DOWN_ACTIVITY_ALREADY_PRESENT)
+                self.actions.fnprint(_DOWN_ACTIVITY_ALREADY_PRESENT.t())
             return False
-        self.actions.fnprint(_DOWN_LINK_HAS_NO_DOWNLOAD)
+        self.actions.fnprint(_DOWN_LINK_HAS_NO_DOWNLOAD.t())
         return False
 
     def set_fnprint(self, fnprint: Callable[[str| RT], None]):
@@ -162,7 +161,7 @@ class CmdDown:
         self.copy_assets()
         self.copy_drafts()
         self.actions.fnprint("")
-        self.actions.fnprint(_DOWN_ACTIVITY_DOWNLOADED_SUCCESS)
+        self.actions.fnprint(_DOWN_ACTIVITY_DOWNLOADED_SUCCESS.t())
 
     def copy_drafts(self):
         finder = DraftsFinderCached(self.destiny_folder, self.language)
@@ -255,7 +254,7 @@ class CmdDown:
 class DownActions:
     def __init__(self, settings: Settings):
         self.settings = settings
-        self.fnprint: Callable[[Any], None] = Console.print
+        self.fnprint: Callable[[str | RT], None] = Console.print
         self.cache_msgs: list[str] = []
 
     @staticmethod

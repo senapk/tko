@@ -36,8 +36,8 @@ class TaskDownloadService:
         if isinstance(obj, Quest):
             self.fman.add_floating(
                 Floating().bottom().right()
-                .put_text(f"\n{str(_TaskDownloadMsg.IS_MISSION)}")
-                .put_text(f"\n{str(_TaskDownloadMsg.ONLY_TASKS)}\n")
+                .put_text(f"\n{_TaskDownloadMsg.IS_MISSION.t()}")
+                .put_text(f"\n{_TaskDownloadMsg.ONLY_TASKS.t()}\n")
                 .set_error().set_countdown(Floating.Time.FAST)
             )
             return
@@ -48,17 +48,17 @@ class TaskDownloadService:
     def down_task(self, task: Task) -> None:
         if task.resource.is_static_type:
             self.fman.add_floating(
-                Floating().bottom().right().put_text(f"\n{str(_TaskDownloadMsg.NOT_IMPORTABLE)}\n").set_error()
+                Floating().bottom().right().put_text(f"\n{_TaskDownloadMsg.NOT_IMPORTABLE.t()}\n").set_error()
             )
             return
         down_frame = (
-            Floating().bottom().right().set_warning().set_countdown(Floating.Time.FAST)
-            .set_text_ljust().set_header(f" {str(_TaskDownloadMsg.HEADER)} ")
+            Floating().bottom().right().set_warning().set_countdown(Floating.Time.MEDIUM)
+            .set_text_ljust().set_header(f" {_TaskDownloadMsg.HEADER.t()} ")
         )
         self.fman.add_floating(down_frame)
 
         def fnprint(text : str | RT):
-            down_frame.put_text(" " + text)
+            down_frame.put_text(text)
             down_frame.draw()
             Fmt.refresh()
 

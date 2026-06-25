@@ -3,83 +3,11 @@ from shutil import which
 import typer
 from pathlib import Path
 from typing import Optional
+from tko.cli.common import load_repo
+from tko.cli.selector import select_with_fzf, select_with_number
 from tko.game.task import Task
 
 from tko.config.settings import Settings
-
-def select_with_fzf(elements: list[tuple[str, str]], pattern: str | None = None, selected: str | None = None) -> str | None:
-    from subprocess import run
-
-    lines: list[str] = [
-        f"{key}\t{text}"
-        for key, text in elements
-    ]
-
-    args: list[str] = [
-        "fzf",
-        "--exact",
-        "--with-nth=2..",
-        "--delimiter=\t",
-        "--layout=reverse",
-        "--ansi",
-        "--prompt=Select a task> ",
-    ]
-    if pattern is not None:
-        args += [
-            "--query",
-            pattern,
-        ]
-
-    if selected is not None:
-        index = next((i for i, (key, _) in enumerate(elements) if key == selected), None)
-        if index is not None:
-            args += [
-                 f"--bind=load:pos({index + 1})",
-            ]
-
-    result = run(
-        args,
-        input="\n".join(lines),
-        text=True,
-        capture_output=True,
-    )
-
-    if result.returncode == 0:
-        key = result.stdout.split("\t", 1)[0].strip()
-        return key
-    else:
-        print(result.stderr)
-    return None
-
-def select_with_number(elements: list[tuple[str, str]], pattern: str | None = None) -> str | None:
-
-    filtered_elements = [
-        (key, text)
-        for key, text in elements
-        if pattern is None or pattern in text
-    ]
-
-    if not filtered_elements:
-        print("No matching elements found.")
-        return None
-    
-    print("Select an element by number:")
-    for i, (_, text) in enumerate(filtered_elements):
-        print(f"{i + 1:>3}. {text}")
-
-    while True:
-        try:
-            choice = input("Enter the number of your choice (or 'q' to quit): ")
-            if choice.lower() == 'q':
-                return None
-            index = int(choice) - 1
-            if 0 <= index < len(filtered_elements):
-                return filtered_elements[index][0]
-            else:
-                print("Invalid number. Please try again.")
-        except ValueError:
-            print("Invalid input. Please enter a number or 'q' to quit.")
-
 
 def save_key_on_repo(repo_path: Path, key: str):
     key_file = repo_path / ".tko" / ".fzf"
@@ -105,16 +33,18 @@ def task_open(
     from tko.util.pattern_loader import PatternLoader
     from tko.cmds.cmd_run import Run
     
-    settings: Settings = ctx.obj    
+    settings: Settings = ctx.obj
     PatternLoader.pattern = pattern
     param = Param.Basic().set_index(index)
     if settings:
         param.set_diff_mode(settings.app.diff_mode)
+
     if filter:
         param.set_filter(True)
-        
+    repo, _ = load_repo(settings.rs, show_warnings=True, auto_load=True)
+    
     targets = [Path(x) for x in target_list] if target_list else []
-    cmd_run = Run(settings, targets, param, None, )
+    cmd_run = Run(settings=settings, target_list=targets, param=param, language=None, repo=repo)
     cmd_run.set_curses()
     cmd_run.execute()
 
@@ -129,7 +59,7 @@ def task_list(
     from tko.cmds.cmd_open import CmdOpen
     
     settings: Settings = ctx.obj
-    repo, _ = load_repo(settings.rs)
+    repo, _ = load_repo(settings.rs, show_warnings=True, auto_load=True)
     if repo is None:
         return
         
@@ -137,7 +67,7 @@ def task_list(
     action.list(show_all=all, only_down=down, show_quests=quests)
 
 
-@app.command("down", help="Download a task by full key")
+@app.command("down", help="Download a task using key, fzf or number selection")
 def task_down(
     ctx: typer.Context,
     pattern: str | None = typer.Argument(None, help="Task key (e.g. fup@mumia)"),
@@ -148,7 +78,7 @@ def task_down(
     from tko.cmds.cmd_open import CmdOpen
 
     settings: Settings = ctx.obj
-    repo, _ = load_repo(settings.rs)
+    repo, _ = load_repo(settings.rs, show_warnings=True, auto_load=True)
     if repo is None:
         return
     

@@ -47,8 +47,8 @@ class TaskFormatter:
 
     def get_task_down_test_eval_symbol(self, task: Task) -> tuple[str, str, str]:
         # state
-        link = "l"
-        static = "s" #Symbols.circle_filled
+        link = "L"
+        static = "S" #Symbols.circle_filled
         empty = "○" #Symbols.square_void
         down = "●" #Symbols.square_filled
 
@@ -57,7 +57,7 @@ class TaskFormatter:
         manual = "M"
 
         # result
-        finish = "f"
+        finish = "F"
         not_init = "."
 
         if task.resource.is_read:

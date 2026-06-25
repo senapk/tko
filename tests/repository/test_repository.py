@@ -8,8 +8,8 @@ from tko.config.user_data import UserData
 from tko.repository.repository import Repository
 
 
-def make_run_settings(tmp_path: Path, local_cache: bool = True) -> RunSettings:
-    return RunSettings(changedir=tmp_path, local_cache=local_cache)
+def make_run_settings(tmp_path: Path) -> RunSettings:
+    return RunSettings(changedir=tmp_path)
 
 
 def test_repository_uses_recursive_parent_when_found(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
@@ -71,6 +71,6 @@ def test_repository_uses_global_cache_when_local_cache_is_disabled(monkeypatch: 
 
     monkeypatch.setattr(UserData, "global_cache_dir", lambda: global_cache)
 
-    repo = Repository(tmp_path, make_run_settings(tmp_path, local_cache=False), git_cache=None, recursive_search=False)
+    repo = Repository(tmp_path, make_run_settings(tmp_path), git_cache=None, recursive_search=False)
 
     assert repo.git_cache.cache_dir == global_cache

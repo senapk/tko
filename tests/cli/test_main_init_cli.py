@@ -11,7 +11,7 @@ from tko.config.settings import Settings
 
 def _make_app_context(tmp_path: Path) -> Settings:
     settings = Settings(tmp_path / "settings")
-    settings.rs = RunSettings(changedir=tmp_path, local_cache=True)
+    settings.rs = RunSettings(changedir=tmp_path)
     return settings
 
 

@@ -4,7 +4,7 @@ from tko.widget.frame import Frame
 from tko.util.rt import RT
 from tko.widget.fmt import Fmt
 from tko.i18n import Msg
-from typing import Callable
+from typing import Callable, Self
 import enum
 import curses
 from abc import ABC, abstractmethod
@@ -24,6 +24,10 @@ class FloatingType(enum.Enum):
 class FloatingABC(ABC):
     def __init__(self):
         self.id = ""
+
+    def set_id(self, id: str) -> Self:
+        self.id = id
+        return self
 
     @abstractmethod
     def draw(self):

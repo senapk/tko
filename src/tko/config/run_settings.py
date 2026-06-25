@@ -7,11 +7,10 @@ from tko.repository.git_cache import UpdateMode
 @dataclass
 class RunSettings:
     changedir: Path = Path(".")
+    update_mode: UpdateMode = UpdateMode.IF_OLDER
     monochrome: bool = False
-    local_cache: bool = False
     debug_mode: bool = False
     width: int | None = None
-    update_mode = UpdateMode.IF_OLDER
 
 
     @property

@@ -113,13 +113,17 @@ class GuiSkillsBar:
         dy, dx = frame_xp.get_inner()
         xp_resume = XPResume(self.game.quests, self.get_remote())
         skills_resume = xp_resume.get_skills_resume()
+        all_list = [x for x in skills_resume.all_items.values()]
         frame_xp.draw()
 
         elements: list[RT] = []
 
-        max_obtained = max([x for x in skills_resume.obtained.values()])
-        max_target = max([x for x in skills_resume.target100.values()])
-        max_available = max([x for x in skills_resume.all_items.values()])
+        obtained_list = [x for x in skills_resume.obtained.values()]
+        target_list = [x for x in skills_resume.target100.values()]
+
+        max_obtained = max(obtained_list) if len(obtained_list) > 0 else 0
+        max_target = max(target_list) if len(target_list) > 0 else 0
+        max_available = max(all_list) if len(all_list) > 0 else 0
         self.obtained_cut = 3 if max_obtained > 99 else (2 if max_obtained > 9 else 1)
         self.target_cut = 3 if max_target > 99 else 2
         self.available_cut = 3 if max_available > 99 else 2

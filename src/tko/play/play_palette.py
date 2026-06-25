@@ -157,6 +157,6 @@ class PlayPalette:
                 )
                 .set_options(options)
                 .set_exit_on_enter(False)
+                .set_id("palette")
             )
-        obj.id = "palette"
         self.fman.add_floating(obj)

@@ -15,9 +15,7 @@ _CLI_COMMON_NO_REPO = Msg.text(
 
 class RepositoryBuilder:
     def __init__(self, rs: RunSettings):
-        
         self._rs = rs
-        self._dir_path: Path = rs.changedir
         self._verbose: bool = True
         self._load_config_and_game: bool = True
 
@@ -30,12 +28,11 @@ class RepositoryBuilder:
         return self
 
     def build(self) -> tuple[Repository | None, Path]:
-        root_dir = RepositoryPaths.rec_search_for_repo_parents(self._dir_path)
+        root_dir = RepositoryPaths.rec_search_for_repo_parents(self._rs.changedir)
         if root_dir is None:
             if self._verbose:
                 Console.print(str(_CLI_COMMON_NO_REPO))
             return None, Path()
-        self._root_dir = root_dir
         git_cache = GitCache(cache_dir=UserData.global_cache_dir(), update_mode=self._rs.update_mode)
         repo = Repository(root_dir, rs=self._rs, git_cache=git_cache, recursive_search=False)
         if self._load_config_and_game:
