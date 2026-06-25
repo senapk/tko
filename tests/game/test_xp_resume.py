@@ -78,7 +78,7 @@ def test_sum_xp(sample_quests: dict[str, DummyQuest]) -> None:
     total_obtained: float
     total_target100: float
     total_complete: float
-    total_obtained, total_target100, total_complete = xp.sum_xp(resume)
+    total_obtained, total_target100, total_complete = xp.sum_xp(resume, overload=1.1)
     assert isinstance(total_obtained, float)
     assert isinstance(total_target100, float)
     assert isinstance(total_complete, float)
