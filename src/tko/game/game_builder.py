@@ -9,10 +9,6 @@ from tko.repository.remote import Remote
 from tko.util.decoder import Decoder
 from tko.feno.indexer import fix_readme
 from tko.i18n import Msg
-from icecream import ic  # type: ignore
-
-
-
 
 _GAME_BUILDER_README_FETCH_ERROR = Msg.text(
     pt="Erro ao obter o arquivo README da fonte {name}",
@@ -124,8 +120,8 @@ class GameBuilder:
 
     def __calculate_total_xp(self):
         for quest in self.quests.values():
-            if quest.config.goal_xp == 0:
-                quest.config.goal_xp = self.__sum_quest_xp(quest)
+            if quest.game.goal_xp == 0:
+                quest.game.goal_xp = self.__sum_quest_xp(quest)
 
 
     def __create_requirements_pointers(self):
@@ -206,7 +202,7 @@ class GameBuilder:
         for pattern, destiny in quest_filters.items():
             for q in available_quests:
                 if (pattern.lower() in q.basic.title.lower()) or (pattern.lower() == f"@{q.basic.key}".lower()):
-                    if q.config.active is False:
+                    if q.game.active is False:
                         continue
                     if destiny == "":
                         quests.append(q)
@@ -225,11 +221,11 @@ class GameBuilder:
     def filter_by_language_and_empty(self, language: str):
         quests: list[Quest] = []
         for q in self.quests.values():
-            if q.config.active is False:
+            if q.game.active is False:
                 continue
             if len(q.get_tasks()) == 0:
                 continue
-            if len(q.config.languages) == 0 or language in q.config.languages:
+            if len(q.game.languages) == 0 or language in q.game.languages:
                 quests.append(q)
         self.quests = {q.basic.full_key: q for q in quests}
         return self

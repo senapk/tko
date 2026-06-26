@@ -8,7 +8,6 @@ from tko.util.rt import RT
 from tko.i18n import Msg
 
 import csv
-import json
 from pathlib import Path
 from typing import Any
 from tko.util.console import Console

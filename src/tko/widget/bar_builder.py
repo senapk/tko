@@ -19,7 +19,7 @@ class BarBuilder:
         xp_bar = RT(full_line[:done_len], fmt_true) + RT(full_line[done_len:], fmt_false)
         return xp_bar
 
-    def build_progress_xp(self, obtained: float, target100: float, available: float, reference: float, length: int, styles: tuple[str, str, str]) -> RT:
+    def build_progress_xp(self, obtained: float, target100: float, available: float, reference: float, length: int) -> RT:
         """
         Build a progress bar for XP, showing the obtained XP, the target 100% XP, and the available XP.
         obtained < target100 < available < reference

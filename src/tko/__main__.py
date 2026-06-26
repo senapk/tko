@@ -82,7 +82,6 @@ def main_callback(
     sett.load_settings()
     sett.rs.changedir = changedir
     sett.rs.debug_mode = debug
-    sett.rs.local_cache = local_cache
     sett.rs.force_update = update
     sett.rs.force_offline = offline
     sett.rs.width = width

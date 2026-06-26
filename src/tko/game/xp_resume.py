@@ -1,21 +1,16 @@
+from dataclasses import dataclass
+
 from tko.game.quest import Quest
 
+@dataclass(frozen=True)
 class SkillResume:
-    def __init__(self):
-        self.obtained: dict[str, float] = {}
-        self.target100: dict[str, float] = {}
-        self.all_items: dict[str, float] = {}
+    obtained: float
+    target100: float
+    available: float
 
 class XPResume:
-    def __init__(self, quests: dict[str, Quest], remote: str | None = None):
-        self.remote = remote
-        if remote is not None:
-            self.quests: dict[str, Quest] = {}
-            for k, q in quests.items():
-                if q.basic.remote_name == remote:
-                    self.quests[k] =  q
-        else:
-            self.quests = quests
+    def __init__(self, quests: dict[str, Quest]):
+        self.quests = quests
 
     def get_xp_resume(self):
         total = 0
@@ -26,38 +21,47 @@ class XPResume:
             obtained += o
         return obtained, total
 
-    def get_skills_resume(self) -> SkillResume:
-        all_available: dict[str, float] = {}
+    def get_skills_resume(self) -> dict[str, SkillResume]:
+        available: dict[str, float] = {}
         obtained: dict[str, float] = {}
-        target: dict[str, float] = {}
+        target100: dict[str, float] = {}
 
         for q in self.quests.values():
-            for skill in q.config.skills:
-                target[skill] = target.get(skill, 0) + q.config.goal_xp * q.config.factor
+            if q.game.skill is not None:
+                skill = q.game.skill
+                target100[skill] = target100.get(skill, 0) + q.game.goal_xp
             for t in q.get_tasks():
-                for skill in t.game.skills:
-                    if skill == "":
-                        continue
-                    gvalue = (q.config.factor * t.game.xp * t.grader.ratio)
-                    if gvalue < 0.1:
-                        gvalue = 0
-                    obtained[skill] = obtained.get(skill, 0) + gvalue
-                    all_available[skill] = all_available.get(skill, 0) + q.config.factor * t.game.xp
+                skill = t.game.skill
+                if skill is None:
+                    continue
+                gvalue = t.game.xp * t.grader.ratio
+                if gvalue < 0.1:
+                    gvalue = 0
+                obtained[skill] = obtained.get(skill, 0) + gvalue
+                available[skill] = available.get(skill, 0) + t.game.xp
+        output: dict[str, SkillResume] = {}
+        for skill, value in available.items():
+            resume = SkillResume(
+                obtained=obtained.get(skill, 0),
+                target100=target100.get(skill, 0),
+                available=value
+            )
+            output[skill] = resume
 
-        resume = SkillResume()
-        resume.obtained = obtained
-        resume.target100 = target
-        resume.all_items = all_available
-        return resume
+        return output
 
-    def sum_xp(self, resume: SkillResume, overload: float) -> tuple[float, float, float]:
+    def sum_xp(self, resume_dict: dict[str, SkillResume], overload: float) -> SkillResume:
         total_obtained = 0
         total_target100 = 0
-        total_complete = 0
-        for key, value in resume.all_items.items():
-            target = resume.target100.get(key, 0)
+        total_available = 0
+        for resume in resume_dict.values():
+            target = resume.target100
             total_target100 += target
-            obtained = resume.obtained.get(key, 0)
+            obtained = resume.obtained
             total_obtained += min(obtained, target * overload)
-            total_complete += value
-        return total_obtained, total_target100, total_complete
+            total_available += resume.available
+        return SkillResume(
+            obtained=total_obtained,
+            target100=total_target100,
+            available=total_available
+        )

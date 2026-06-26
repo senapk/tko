@@ -13,7 +13,6 @@ from tko.util.rbuffer import RBuffer
 from tko.util.rt import RT
 from tko.util.to_asc import SearchAsc
 
-
 class TreeRenderer:
     def __init__(
         self,
@@ -54,8 +53,7 @@ class TreeRenderer:
 
     def render_task(self, t: Task, focused: bool) -> RT:
         head = RBuffer()
-        head.add(" ")
-        head.add(str(t.game.xp), "y")
+        head.add(f"{t.game.xp:>2}", "y")
         state, test, _ = self.task_formatter.get_task_down_test_eval_symbol(t)
         head.add(" ")
         help_style, help_text = self.task_formatter.get_task_help_symbol(t)

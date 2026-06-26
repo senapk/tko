@@ -28,10 +28,8 @@ class QuestFormatter:
     def get_quest_full_title(self, quest: Quest, show_skills: bool, sep: str = " ") -> RT:
         output = RT(quest.basic.remote_name, "c") + RT(":") + RT(quest.basic.title)
         if show_skills:
-            for skill in quest.config.skills:
-                output += RT.run("g", f"{sep}+{skill}")
-                if quest.config.factor != 1:
-                    output += RT.run("g", f"{sep}*{quest.config.factor}")
+            if quest.game.skill is not None:
+                output += RT.run("g", f"{sep}+{quest.game.skill}")
         return output
 
     def get_focus_color_quest(self, quest: Quest) -> str:

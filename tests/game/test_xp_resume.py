@@ -63,13 +63,13 @@ def test_get_skills_resume(sample_quests: dict[str, DummyQuest]) -> None:
     # Check keys
     assert set(resume.obtained.keys()) == {"python", "oop", "algorithms"}
     assert set(resume.target100.keys()) == {"python", "oop", "algorithms"}
-    assert set(resume.all_items.keys()) == {"python", "oop", "algorithms"}
+    assert set(resume.available.keys()) == {"python", "oop", "algorithms"}
     # Check values are floats
     for v in resume.obtained.values():
         assert isinstance(v, float)
     for v in resume.target100.values():
         assert isinstance(v, float)
-    for v in resume.all_items.values():
+    for v in resume.available.values():
         assert isinstance(v, float)
 
 def test_sum_xp(sample_quests: dict[str, DummyQuest]) -> None:
@@ -85,4 +85,4 @@ def test_sum_xp(sample_quests: dict[str, DummyQuest]) -> None:
     # Should be consistent with resume values
     assert abs(total_obtained - sum(resume.obtained.values())) < 1e-6
     assert abs(total_target100 - sum(resume.target100.values())) < 1e-6
-    assert abs(total_complete - sum(resume.all_items.values())) < 1e-6
+    assert abs(total_complete - sum(resume.available.values())) < 1e-6

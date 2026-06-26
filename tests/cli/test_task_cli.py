@@ -1,6 +1,6 @@
 from pathlib import Path
 from _pytest.monkeypatch import MonkeyPatch
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from typer.testing import CliRunner
 

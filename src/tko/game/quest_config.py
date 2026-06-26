@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 
-class QuestConfig:
+class QuestGame:
     DEFAULT_MIN = 50
     def __init__(self):
         # Percentual minimo para considerar quest completa.
         self._threshold: int = self.DEFAULT_MIN
         self.goal_xp: int = 0
-        self.skills: set[str] = set()
+        self.skill: str | None = None
         self.factor: float = 1.0
         self.languages: set[str] = set()
         self.active: bool = True
