@@ -59,24 +59,24 @@ def test_github_url_download_and_rebase_calls_pipeline(
 
 
 def test_github_url_structure_repository_and_github_urls() -> None:
-    structure = GithubUrlStructure()
-    structure.user = "user"
-    structure.repo = "repo"
-    structure.branch = "main"
-    structure.relative_path = "folder/file.md"
+    structure = GithubUrlStructure(
+        user="user",
+        repo="repo",
+        branch="main",
+        relative_path="folder/file.md",
+        path_type="blob",
+    )
 
     assert structure.repository_url == "https://github.com/user/repo"
     assert structure.github_url == "https://github.com/user/repo/blob/main/folder/file.md"
 
 
 def test_github_url_structure_parses_raw_githubusercontent_url() -> None:
-    structure = GithubUrlStructure()
-
-    ok = structure.parse(
+    structure = GithubUrlStructure.parse(
         "https://raw.githubusercontent.com/user/repo/refs/heads/main/folder/file.md"
     )
 
-    assert ok is True
+    assert structure is not None
     assert structure.user == "user"
     assert structure.repo == "repo"
     assert structure.branch == "main"

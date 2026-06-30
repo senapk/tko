@@ -8,11 +8,13 @@ from tko.util.console import Console
 
 
 def test_rebase_rewrites_image_file_and_folder_links() -> None:
-    structure = GithubUrlStructure()
-    structure.user = "user"
-    structure.repo = "repo"
-    structure.branch = "main"
-    structure.relative_path = "docs"
+    structure = GithubUrlStructure(
+        user="user",
+        repo="repo",
+        branch="main",
+        relative_path="docs",
+        path_type="tree",
+    )
 
     content = "![img](pic.png)\n[folder](sub/)\n[file](readme.md)"
 
@@ -24,11 +26,7 @@ def test_rebase_rewrites_image_file_and_folder_links() -> None:
 
 
 def test_rebase_task_markdown_link_from_github_downloaded_file() -> None:
-    structure = GithubUrlStructure()
-    structure.user = "qxcodefup"
-    structure.repo = "arcade"
-    structure.branch = "main"
-    structure.relative_path = ""
+    structure = GithubUrlStructure(user="qxcodefup", repo="arcade", branch="main")
 
     content = "- [ ]`@tres            :1:main`[Soma de três inteiros](base/tres/README.md)"
 
@@ -59,12 +57,13 @@ def test_convert_or_copy_or_print_prints_when_target_is_none(monkeypatch: Monkey
             return True
 
         def calc_link_for_local_file(self) -> GithubUrlStructure:
-            structure = GithubUrlStructure()
-            structure.user = "user"
-            structure.repo = "repo"
-            structure.branch = "main"
-            structure.relative_path = "docs"
-            return structure
+            return GithubUrlStructure(
+                user="user",
+                repo="repo",
+                branch="main",
+                relative_path="docs",
+                path_type="tree",
+            )
 
     monkeypatch.setattr(link_rebase_mod, "GithubCfg", DummyCfg)
     monkeypatch.setattr(link_rebase_mod.LinkRebase, "rebase", staticmethod(lambda _c, _r: "rebased")) # type: ignore

@@ -1,36 +1,113 @@
 from __future__ import annotations
+from dataclasses import dataclass
+from typing import Literal, Self
 from urllib.parse import urlparse
 
 
+GithubPathType = Literal["blob", "tree"]
+
+
+def _join_url(*parts: str) -> str:
+    clean_parts = [part.strip("/") for part in parts if part.strip("/")]
+    if not clean_parts:
+        return ""
+    first, *rest = clean_parts
+    return "/".join([first, *rest])
+
+
+@dataclass(frozen=True, slots=True)
 class GithubUrlStructure:
-    def __init__(self):
-        self.user: str = ""
-        self.repo: str = ""
-        self.branch: str = ""
-        self.relative_path: str = ""
+    user: str = ""
+    repo: str = ""
+    branch: str = ""
+    relative_path: str = ""
+    path_type: GithubPathType | None = None
 
     @property
     def repository_url(self) -> str:
-        return f"https://github.com/{self.user}/{self.repo}"
+        return _join_url("https://github.com", self.user, self.repo)
+
+    @property
+    def branch_url(self) -> str:
+        if not self.branch:
+            return self.repository_url
+        return _join_url(self.repository_url, "tree", self.branch)
 
     @property
     def github_url(self) -> str:
-        return (
-            f"https://github.com/"
-            f"{self.user}/{self.repo}/blob/"
-            f"{self.branch}/{self.relative_path}"
+        if not self.branch or not self.relative_path:
+            return self.branch_url
+
+        return _join_url(
+            self.repository_url,
+            self.path_type or self._infer_path_type(),
+            self.branch,
+            self.relative_path,
         )
-    
+
     @property
     def raw_github_url(self) -> str:
-        return (
-            f"https://raw.githubusercontent.com/"
-            f"{self.user}/{self.repo}/"
-            f"{self.branch}/{self.relative_path}"
+        if not self.branch:
+            return ""
+        return _join_url(
+            "https://raw.githubusercontent.com",
+            self.user,
+            self.repo,
+            self.branch,
+            self.relative_path,
         )
-    
-    def parse(self, url: str) -> bool:
+
+    @property
+    def relative_folder(self) -> str:
+        if not self.relative_path:
+            return ""
+
+        parts = self.relative_path.split("/")
+        if self.path_type == "tree":
+            return self.relative_path
+        if self.path_type == "blob" or "." in parts[-1]:
+            return "/".join(parts[:-1])
+        return self.relative_path
+
+    @property
+    def raw_base_url(self) -> str:
+        if not self.branch:
+            return ""
+        return _join_url(
+            "https://raw.githubusercontent.com",
+            self.user,
+            self.repo,
+            self.branch,
+            self.relative_folder,
+        )
+
+    @property
+    def github_blob_base_url(self) -> str:
+        if not self.branch:
+            return self.repository_url
+        return _join_url(self.repository_url, "blob", self.branch, self.relative_folder)
+
+    @property
+    def github_tree_base_url(self) -> str:
+        if not self.branch:
+            return self.repository_url
+        return _join_url(self.repository_url, "tree", self.branch, self.relative_folder)
+
+    def with_relative_path(
+        self, relative_path: str, path_type: GithubPathType | None = None
+    ) -> Self:
+        return type(self)(
+            user=self.user,
+            repo=self.repo,
+            branch=self.branch,
+            relative_path=relative_path.strip("/"),
+            path_type=path_type,
+        )
+
+    @classmethod
+    def parse(cls, url: str) -> Self | None:
         parsed = urlparse(url)
+        netloc = parsed.netloc.lower()
 
         parts: list[str] = [
             part
@@ -38,24 +115,57 @@ class GithubUrlStructure:
             if part
         ]
 
-        match parsed.netloc, parts:
-            case (
-                "raw.githubusercontent.com", [user, repo, "refs", "heads", branch, *path],
-            ):
-                self.user = user
-                self.repo = repo
-                self.branch = branch
-                self.relative_path = "/".join(path)
-                return True 
+        match netloc, parts:
+            case "github.com", [user, repo]:
+                return cls(user=user, repo=repo)
 
-            case (
-                "github.com", [user, repo, ("blob" | "tree"), branch, *path],
-            ):
-                self.user = user
-                self.repo = repo
-                self.branch = branch
-                self.relative_path = "/".join(path)
-                return True
+            case "github.com", [user, repo, ("blob" | "tree") as path_type]:
+                return cls(user=user, repo=repo, path_type=path_type)
+
+            case "github.com", [user, repo, ("blob" | "tree") as path_type, branch, *path]:
+                return cls(
+                    user=user,
+                    repo=repo,
+                    branch=branch,
+                    relative_path="/".join(path),
+                    path_type=path_type,
+                )
+
+            case "raw.githubusercontent.com", [user, repo]:
+                return cls(user=user, repo=repo)
+
+            case "raw.githubusercontent.com", [user, repo, "refs", "heads"]:
+                return cls(user=user, repo=repo)
+
+            case "raw.githubusercontent.com", [
+                user,
+                repo,
+                "refs",
+                "heads",
+                branch,
+                *path,
+            ]:
+                return cls(
+                    user=user,
+                    repo=repo,
+                    branch=branch,
+                    relative_path="/".join(path),
+                    path_type="blob" if path else None,
+                )
+
+            case "raw.githubusercontent.com", [user, repo, branch, *path]:
+                return cls(
+                    user=user,
+                    repo=repo,
+                    branch=branch,
+                    relative_path="/".join(path),
+                    path_type="blob" if path else None,
+                )
 
             case _:
-                return False
+                return None
+
+    def _infer_path_type(self) -> GithubPathType:
+        if self.relative_path and "." not in self.relative_path.split("/")[-1]:
+            return "tree"
+        return "blob"

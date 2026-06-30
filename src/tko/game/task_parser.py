@@ -120,8 +120,8 @@ class TaskParser:
                 self.task.resource.external_url = tm.link
                 return self.task
             else:
-                parser = GithubUrlStructure()
-                if parser.parse(tm.link):
+                parser = GithubUrlStructure.parse(tm.link)
+                if parser is not None:
                     task.resource.remote_git = parser.repository_url
                     task.resource.remote_dir = self.remote_dir
                     task.resource.relative_path = Path(parser.relative_path)

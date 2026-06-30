@@ -1,6 +1,7 @@
 from __future__ import annotations
 import sys # type: ignore
 from tko.collect.task_game_data import TaskGameData
+from tko.game.xp_resume import SkillResume, XPResume
 from tko.repository.repository import Repository
 from tko.logger.logger import Logger
 from tko.collect.task_collected import TaskCollected
@@ -36,6 +37,16 @@ class CollectActions:
             resume = TaskCollected().setup(log_sort, repo.game.get_task(key))
             resume_dict[key] = resume
         return resume_dict
+    
+    @staticmethod
+    def get_skills_resume(repo: Repository) -> dict[str, SkillResume]:
+        """
+        Collect skills resume data from the repository's game and return a dictionary mapping skill names to SkillResume objects.
+        """
+        game = repo.game
+        xp_resume = XPResume(game.quests)
+        skills_resume = xp_resume.get_skills_resume()
+        return skills_resume
 
     @staticmethod
     def daily_graph(rep: Repository, width: int, height: int, colored: bool) -> str:

@@ -26,8 +26,8 @@ class GitHubUrl:
         if url.startswith("https://gist.githubusercontent.com"):
             self.raw_link = url
         else:
-            url_structure = GithubUrlStructure()
-            if not url_structure.parse(url):
+            url_structure = GithubUrlStructure.parse(url)
+            if url_structure is None or not url_structure.raw_github_url:
                 raise ValueError(_GITHUB_URL_INVALID_GITHUB_URL.t().plain())
             self.url_structure = url_structure
         self.file = ""

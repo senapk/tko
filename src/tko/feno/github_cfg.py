@@ -18,7 +18,7 @@ class GithubCfg:
     FILENAME = "remote.toml"
     def __init__(self, target: Path, make_remote: bool):
         self.target = target
-        self.remote: GithubUrlStructure = GithubUrlStructure()
+        self.remote: GithubUrlStructure | None = None
         self.cfg_path: Path | None = None
         if make_remote:
             self.__load_cfg_path(target)
@@ -40,8 +40,9 @@ class GithubCfg:
         self.target
         if not target_file.is_relative_to(root_dir):
             raise Exception(f"File not match with {self.FILENAME}")
-        self.remote.relative_path = str(target_file.relative_to(root_dir))
-        return self.remote
+        if self.remote is None:
+            raise Exception("remote not set")
+        return self.remote.with_relative_path(str(target_file.relative_to(root_dir)), "blob")
 
     def __parse_cfg(self):
         if self.cfg_path is None:
@@ -49,9 +50,11 @@ class GithubCfg:
         with open(self.get_cfg_path(), "rb") as f:
             config = tomllib.load(f)
 
-        self.remote.user = config["user"]
-        self.remote.repo = config["repository"]
-        self.remote.branch = config["branch"]
+        self.remote = GithubUrlStructure(
+            user=config["user"],
+            repo=config["repository"],
+            branch=config["branch"],
+        )
 
     def __load_cfg_path(self, target: Path) -> None:
         for path in [target.resolve(), *target.resolve().parents]:

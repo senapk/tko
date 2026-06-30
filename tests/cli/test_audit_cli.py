@@ -201,7 +201,10 @@ def test_audit_preview_render_first_file_outputs_content(monkeypatch: MonkeyPatc
     snapshot.write_text("print('ok')\n", encoding="utf-8")
     index_file.write_text(str(snapshot), encoding="utf-8")
 
-    monkeypatch.setattr(audit_preview, "which", lambda _name: None)
+    def fake_which(_name: str) -> None:
+        return None
+
+    monkeypatch.setattr(audit_preview, "which", fake_which)
 
     result = runner.invoke(
         app,
@@ -224,7 +227,10 @@ def test_audit_preview_elapsed_ignores_unpack_index_prefix(monkeypatch: MonkeyPa
     second.write_text("print(2)\n", encoding="utf-8")
     index_file.write_text(f"{first}\n{second}", encoding="utf-8")
 
-    monkeypatch.setattr(audit_preview, "which", lambda _name: None)
+    def fake_which(_name: str) -> None:
+        return None
+
+    monkeypatch.setattr(audit_preview, "which", fake_which)
 
     result = runner.invoke(
         app,
@@ -251,7 +257,10 @@ def test_audit_preview_invokes_fzf_with_numbered_files(monkeypatch: MonkeyPatch,
         captured["text"] = text
         return SimpleNamespace(returncode=0)
 
-    monkeypatch.setattr(audit_preview, "which", lambda name: "/usr/bin/fzf" if name == "fzf" else None)
+    def fake_which(name: str) -> str | None:
+        return "/usr/bin/fzf" if name == "fzf" else None
+
+    monkeypatch.setattr(audit_preview, "which", fake_which)
     monkeypatch.setattr(audit_preview.subprocess, "run", fake_run)
 
     result = runner.invoke(app, ["preview", str(source_dir)])

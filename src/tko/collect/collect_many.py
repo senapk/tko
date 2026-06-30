@@ -1,6 +1,7 @@
 from tko.collect.collect_actions import CollectActions
 from tko.collect.task_collected import TaskCollected
 from tko.config.run_settings import RunSettings
+from tko.repository.repository import Repository
 from tko.repository.repository_builder import RepositoryBuilder
 from tko.repository.repository_paths import RepositoryPaths
 
@@ -41,7 +42,7 @@ CMD_COLLECT_SAVING_EXTRACTED_DATA = Msg.parse(
     en="[g]Saving extracted data to {path}[]",
 )
 
-Resume = dict[str, TaskCollected]
+TaskResume = dict[str, TaskCollected]
 
 class CollectMany:
     @staticmethod
@@ -56,16 +57,14 @@ class CollectMany:
                 break
         return common
 
-
     @staticmethod
-    def execute(rs: RunSettings, git_dir_list: list[Path], csv_path: str | None = None):
+    def collect_repos(rs: RunSettings, git_dir_list: list[Path]):
         git_dir_list = [git_dir for git_dir in git_dir_list if git_dir.is_dir()]
         common_prefix = CollectMany.find_common_prefix([folder.name for folder in git_dir_list])
 
         usernames = [repo.name[len(common_prefix):].strip("/\\") for repo in git_dir_list]
         padding = max(len(username) for username in usernames) + 1
-
-        output_map: dict[str, Resume] = {}
+        output_map: dict[str, Repository] = {}
         for git_dir, username in zip(git_dir_list, usernames):
             tko_rep_folder_list = RepositoryPaths.rec_search_for_repo_subdir(git_dir)
             if not tko_rep_folder_list:
@@ -75,27 +74,47 @@ class CollectMany:
             Console.print(CMD_COLLECT_RUNNING_IN.t().format(folder=tko_folder, username=username, padding=padding))
             if len(tko_rep_folder_list) > 1:
                 Console.print(CMD_COLLECT_MULTIPLE_REPOS_FOUND.t())
-            rs = RunSettings(changedir=tko_folder)
+            rs = RunSettings(changedir=tko_folder, update_mode=rs.update_mode, monochrome=rs.monochrome, debug_mode=rs.debug_mode)
             rb = RepositoryBuilder(rs)
             repo, _ = rb.verbose(False).load_config_and_game(True).build()
             if repo is None:
                 Console.print(RT(f"{username: <{padding}}", "r") + CMD_COLLECT_REPO_NOT_FOUND.t().format(path=tko_folder).set_style("r"))
                 continue
-            
-            output_map[username] = CollectActions.get_resume(repo)
+            output_map[username] = repo
+        return output_map
 
+    @staticmethod
+    def execute(rs: RunSettings, git_dir_list: list[Path], tasks_path: str | None = None, skills_path: str | None = None):
+        output_map: dict[str, Repository] = CollectMany.collect_repos(rs, git_dir_list)
+
+        
+        resumes_map: dict[str, TaskResume] = {k: CollectActions.get_resume(v) for k, v in output_map.items()}
+        if tasks_path is not None:
+            CollectMany.write_tasks_csv(resumes_map, tasks_path)
+
+        if skills_path is not None:
+            CollectMany.write_skills_csv(output_map, resumes_map, skills_path)
+
+
+    @staticmethod
+    def write_skills_csv(repos_map: dict[str, Repository], resumes_map: dict[str, TaskResume], skills_path: str):
+        pass
+
+
+
+    @staticmethod
+    def write_tasks_csv(resumes_map: dict[str, TaskResume], tasks_path: str):
         header_keys = ["username"] +  TaskCollected().csv_keys()
-        if csv_path is not None:
-            with open(csv_path, "w", encoding="utf-8", newline="") as f:
-                writer = csv.DictWriter(f, fieldnames=header_keys)
-                writer.writeheader()
-                for student_key, info in output_map.items():
-                    for key, data in info.items():
-                        if "@" in key:
-                            key = key.split("@")[1]
+        with open(tasks_path, "w", encoding="utf-8", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=header_keys)
+            writer.writeheader()
+            for student_key, info in resumes_map.items():
+                for key, data in info.items():
+                    if "@" in key:
+                        key = key.split("@")[1]
 
-                        row: dict[str, Any] = { "username": student_key }
-                        row.update(data.get_kv(include_key=True, include_quest=True))
-                        row = {k:v for k,v in row.items() if k in header_keys}
-                        writer.writerow(row)
-            Console.print(CMD_COLLECT_SAVING_EXTRACTED_DATA.t().format(path=csv_path))
+                    row: dict[str, Any] = { "username": student_key }
+                    row.update(data.get_kv(include_key=True, include_quest=True))
+                    row = {k:v for k,v in row.items() if k in header_keys}
+                    writer.writerow(row)
+            Console.print(CMD_COLLECT_SAVING_EXTRACTED_DATA.t().format(path=tasks_path))

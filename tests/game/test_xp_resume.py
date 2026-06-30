@@ -12,24 +12,27 @@ class DummyProgress:
         return self.o, self.t, self.t
 
 class DummyTask:
-    def __init__(self, skills: list[str], xp: float, ratio: float) -> None:
+    def __init__(self, skill: str | None, xp: float, ratio: float) -> None:
         self.game = MagicMock()
-        self.game.skills = skills
+        self.game.skill = skill
         self.game.xp = xp
         self.grader = MagicMock()
         self.grader.ratio = ratio
 
-class DummyQuestConfig:
-    def __init__(self, skills: list[str], goal_xp: float, factor: float) -> None:
-        self.skills: list[str] = skills
-        self.goal_xp: float = goal_xp
-        self.factor: float = factor
-
 class DummyQuest:
-    def __init__(self, name: str, progress: DummyProgress, config: DummyQuestConfig, tasks: list[DummyTask]) -> None:
+    def __init__(
+        self,
+        name: str,
+        progress: DummyProgress,
+        skill: str | None,
+        goal_xp: float,
+        tasks: list[DummyTask],
+    ) -> None:
         self.name: str = name
         self.progress: DummyProgress = progress
-        self.config: DummyQuestConfig = config
+        self.game = MagicMock()
+        self.game.skill = skill
+        self.game.goal_xp = goal_xp
         self._tasks: list[DummyTask] = tasks
     def get_tasks(self) -> list[DummyTask]:
         return self._tasks
@@ -39,16 +42,25 @@ def sample_quests() -> dict[str, DummyQuest]:
     q1 = DummyQuest(
         "q1",
         DummyProgress(10, 20),
-        DummyQuestConfig(["python", "oop"], 100, 1.0),
-        [DummyTask(["python"], 50, 1.0), DummyTask(["oop"], 50, 0.5)]
+        "python",
+        100.0,
+        [DummyTask("python", 50.0, 1.0), DummyTask("oop", 50.0, 0.5)]
     )
     q2 = DummyQuest(
         "q2",
         DummyProgress(5, 10),
-        DummyQuestConfig(["algorithms"], 200, 0.5),
-        [DummyTask(["algorithms"], 100, 1.0)]
+        "algorithms",
+        200.0,
+        [DummyTask("algorithms", 100.0, 1.0), DummyTask(None, 30.0, 1.0)]
     )
-    return {"q1": q1, "q2": q2}
+    q3 = DummyQuest(
+        "q3",
+        DummyProgress(0, 0),
+        "oop",
+        50.0,
+        [],
+    )
+    return {"q1": q1, "q2": q2, "q3": q3}
 
 def test_get_xp_resume(sample_quests: dict[str, DummyQuest]) -> None:
     xp = XPResume(sample_quests) # type: ignore
@@ -58,31 +70,20 @@ def test_get_xp_resume(sample_quests: dict[str, DummyQuest]) -> None:
 
 def test_get_skills_resume(sample_quests: dict[str, DummyQuest]) -> None:
     xp = XPResume(sample_quests) # type: ignore
-    resume: SkillResume = xp.get_skills_resume()
-    assert isinstance(resume, SkillResume)
-    # Check keys
-    assert set(resume.obtained.keys()) == {"python", "oop", "algorithms"}
-    assert set(resume.target100.keys()) == {"python", "oop", "algorithms"}
-    assert set(resume.available.keys()) == {"python", "oop", "algorithms"}
-    # Check values are floats
-    for v in resume.obtained.values():
-        assert isinstance(v, float)
-    for v in resume.target100.values():
-        assert isinstance(v, float)
-    for v in resume.available.values():
-        assert isinstance(v, float)
+    resume: dict[str, SkillResume] = xp.get_skills_resume()
+
+    assert set(resume.keys()) == {"python", "oop", "algorithms"}
+    assert resume["python"] == SkillResume(obtained=50.0, target100=100.0, available=50.0)
+    assert resume["oop"] == SkillResume(obtained=25.0, target100=50.0, available=50.0)
+    assert resume["algorithms"] == SkillResume(obtained=100.0, target100=200.0, available=100.0)
 
 def test_sum_xp(sample_quests: dict[str, DummyQuest]) -> None:
     xp = XPResume(sample_quests) # type: ignore
-    resume: SkillResume = xp.get_skills_resume()
-    total_obtained: float
-    total_target100: float
-    total_complete: float
-    total_obtained, total_target100, total_complete = xp.sum_xp(resume, overload=1.1)
-    assert isinstance(total_obtained, float)
-    assert isinstance(total_target100, float)
-    assert isinstance(total_complete, float)
-    # Should be consistent with resume values
-    assert abs(total_obtained - sum(resume.obtained.values())) < 1e-6
-    assert abs(total_target100 - sum(resume.target100.values())) < 1e-6
-    assert abs(total_complete - sum(resume.available.values())) < 1e-6
+    resume: dict[str, SkillResume] = xp.get_skills_resume()
+    sk_resume = xp.sum_xp(resume, overload=1.1)
+    assert isinstance(sk_resume.obtained, float)
+    assert isinstance(sk_resume.target100, float)
+    assert isinstance(sk_resume.available, float)
+    assert sk_resume.obtained == 175.0
+    assert sk_resume.target100 == 350.0
+    assert sk_resume.available == 200.0

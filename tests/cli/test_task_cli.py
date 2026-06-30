@@ -1,13 +1,11 @@
 from pathlib import Path
 from _pytest.monkeypatch import MonkeyPatch
-from unittest.mock import MagicMock
 
 from typer.testing import CliRunner
 
 from tko.cli.cli_task import app
 from tko.config.run_settings import RunSettings
 from tko.config.settings import Settings
-from tko.repository.repository import Repository
 
 
 def _make_app_context(tmp_path: Path) -> Settings:
@@ -16,13 +14,6 @@ def _make_app_context(tmp_path: Path) -> Settings:
     return settings
 
 
-def _make_repo_mock(tmp_path: Path) -> MagicMock:
-    """Create a mock Repository with required attributes."""
-    repo_mock = MagicMock(spec=Repository)
-    paths_mock = MagicMock()
-    paths_mock.root_dir = tmp_path
-    repo_mock.paths = paths_mock
-    return repo_mock
 
 
 def test_task_down_requires_full_key(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:

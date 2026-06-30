@@ -9,12 +9,13 @@ app = typer.Typer(help="Manage class tasks")
 def class_collect(
     ctx: typer.Context,
     path: list[str] = typer.Argument(..., help="Paths to repos"),
-    csv: str | None = typer.Option(None, "--csv", "-c", help="Path to save the extracted CSV data"),
+    tasks: str | None = typer.Option(None, "--tasks", "-t", help="Path to save the extracted tasks CSV data"),
+    skills: str | None = typer.Option(None, "--skills", "-s", help="Path to save the extracted skills CSV data"),
 ):
     from tko.collect.collect_many import CollectMany
     git_repo_list = [Path(x) for x in path]
     settings: Settings = ctx.obj
-    CollectMany.execute(settings.rs, git_repo_list, csv_path=csv)
+    CollectMany.execute(settings.rs, git_repo_list, tasks_path=tasks, skills_path=skills)
 
 @app.command("pull", help="Perform git pull in many repos using threads")
 def class_pull(
