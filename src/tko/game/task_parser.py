@@ -2,7 +2,7 @@ from __future__ import annotations
 from tko.game.task import Task
 from tko.game.task_enums import TaskType
 from tko.game.task_matcher import TaskMatcher
-from tko.feno.github_url_structure import GithubUrlStructure
+from tko.feno.github_url_structure import GitHubUrlStructure
 from tko.i18n import Msg
 from icecream import ic # type: ignore
 from pathlib import Path
@@ -120,7 +120,7 @@ class TaskParser:
                 self.task.resource.external_url = tm.link
                 return self.task
             else:
-                parser = GithubUrlStructure.parse(tm.link)
+                parser = GitHubUrlStructure.parse(tm.link)
                 if parser is not None:
                     task.resource.remote_git = parser.repository_url
                     task.resource.remote_dir = self.remote_dir

@@ -1,6 +1,7 @@
 
 from enum import Enum
 from pathlib import Path
+from tko.feno.github_url_structure import GitHubUrlStructure
 
 class SourceType(Enum):
     LOCAL_FILE = "local"
@@ -16,14 +17,25 @@ filters: list[str] | None - list of filters to apply when loading quests from th
 """
 
 class RemoteData:
+    DEFAULT_BRANCH = "main"
+
     def __init__(self, name: str = ""):
         self.name: str = name
         self.target: str = ""
         self.source_type: SourceType = SourceType.LOCAL_FILE
         self.is_editable: bool = False
         self.index: str = "README.md"
-        self.branch: str | None = None
+        self._branch: str | None = None
         self.quest_filters: dict[str, str] | None = None # none significa não ter filtro
+
+    @property
+    def branch(self) -> str:
+        return self._branch or self.DEFAULT_BRANCH
+    
+    @branch.setter
+    def branch(self, value: str | None) -> None:
+        if value is not None:
+            self._branch = value
 
     def set_local_source(self, target: Path, is_editable: bool = False, index: str | None = None):
         self.source_type = SourceType.LOCAL_FILE
@@ -43,11 +55,21 @@ class RemoteData:
         return self
         
     @property
+    def origin_full_source(self) -> str:
+        if self.source_type == SourceType.LOCAL_FILE:
+            return (Path(self.target) / self.index).as_posix()
+        if self.source_type == SourceType.GIT_SOURCE:
+            gus = GitHubUrlStructure.parse(self.target)
+            if gus:
+                return gus.set_branch(self.branch).set_relative_path(self.index).github_blob_full_url
+        return "unknown"
+
+
+    @property
     def git_url(self) -> str | None:
         if self.is_git_source:
             return self.target
         return None
-
 
     @property
     def is_git_source(self) -> bool:

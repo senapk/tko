@@ -29,14 +29,20 @@ class GameCoordinator:
             remotes = self.repo.remotes
         else: # update cache if needed
             if self.repo.git_cache.update_mode == UpdateMode.ALWAYS:
-                for remote in remotes:
+                for remote in remotes.values():
                     _ = remote.path.index_file
                 
-        self.repo.game.set_remotes(remotes, self.repo.data.lang)
-        self.repo.game.build(git_cache=self.repo.git_cache, root_dir=self.repo.root_dir)
+        self.repo.game.set_remotes(list(remotes.values()), self.repo.data.lang)
+        self.repo.game.build()
+        self.set_task_globals()
         self._load_tasks_from_log_into_game()
         
         return self
+    
+    def set_task_globals(self):
+        for task in self.repo.game.tasks.values():
+            task.git_cache = self.repo.git_cache
+            task.root_dir = self.repo.root_dir
 
     def _load_tasks_from_log_into_game(self):
         task_dict: dict[str, LogSort] = self.repo.logger.tasks.task_dict

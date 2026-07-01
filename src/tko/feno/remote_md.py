@@ -1,6 +1,6 @@
 import re
 from tko.feno.github_cfg import GithubCfg
-from tko.feno.github_url_structure import GithubUrlStructure
+from tko.feno.github_url_structure import GitHubUrlStructure
 from tko.util.decoder import Decoder
 from pathlib import Path
 from tko.util.console import Console
@@ -42,7 +42,7 @@ class GithubRebase:
         return result
 
     @staticmethod
-    def relative_to_absolute(content: str, rl: GithubUrlStructure):
+    def relative_to_absolute(content: str, rl: GitHubUrlStructure):
         return GithubRebase.__replace_remote(
             content,
             rl.raw_base_url,

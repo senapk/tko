@@ -55,11 +55,11 @@ class GameBuilder:
     def build_from(self, language: str) -> bool:
         try:
             filename: Path = self.remote.path.index_file
-            if not self.remote.is_sandbox and not filename.exists():
+            if not self.remote.is_sandbox() and not filename.exists():
                 logger.warning(_GAME_BUILDER_README_FETCH_ERROR.t().format(name=self.remote.data.name))
                 return False
         except ValueError:
-            if not self.remote.is_sandbox:
+            if not self.remote.is_sandbox():
                 logger.warning(_GAME_BUILDER_SOURCE_NO_ORIGIN_DIR.t().format(name=self.remote.data.name))
             return False
         self.__ensure_sandbox_readme_fixed(filename)
@@ -77,7 +77,7 @@ class GameBuilder:
     def load_content(self, filename: Path) -> tuple[bool, str]:
         content: str = ""
         if not filename.exists():
-            if not self.remote.is_sandbox:
+            if not self.remote.is_sandbox():
                 logger.warning(_GAME_BUILDER_SOURCE_NOT_FOUND.t().format(filename=filename, name=self.remote.data.name))
                 return False, content
         else:
@@ -85,7 +85,7 @@ class GameBuilder:
         return True, content
 
     def __ensure_sandbox_readme_fixed(self, filename: Path):
-        if not self.remote.is_sandbox:
+        if not self.remote.is_sandbox():
             return
         if not filename.parent.exists():
             return
@@ -160,7 +160,7 @@ class GameBuilder:
         try:
             filename = self.remote.path.index_file
         except ValueError:
-            if not self.remote.is_sandbox:
+            if not self.remote.is_sandbox():
                 logger.exception(_GAME_BUILDER_INDEX_FETCH_ERROR.t().format(name=alias))
             return
         for line_num, line in enumerate(lines):
@@ -193,7 +193,7 @@ class GameBuilder:
         self.__get_active_quest().add_task(task)
 
     def add_filtered_quests(self, quest_filters: dict[str, str] | None):
-        if self.remote.is_sandbox:
+        if self.remote.is_sandbox():
             return
         if quest_filters is None or len(quest_filters) == 0:
             return

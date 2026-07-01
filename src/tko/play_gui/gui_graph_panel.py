@@ -28,7 +28,8 @@ class GuiGraphPanel:
         return True, header, graph
     
     def get_history(self) -> tuple[bool, list[RT], list[RT]]:
-        history: list[TaskCollected] = self.repo.logger.tasks.mount_task_history(self.repo.game)
+        remote_paths: dict[str, str] = {remote.data.name: remote.origin_full_source for remote in self.repo.remotes.values()}
+        history: list[TaskCollected] = self.repo.logger.tasks.mount_task_history(self.repo.game, remote_paths)
         header = [RT.parse(" [r]History ")]
         task_pad = max((len(item.key) for item in history), default=0) + 2
         quest_pad = max((len(item.quest) for item in history), default=0) + 2

@@ -64,12 +64,12 @@ class Repository:
         self.data.audit.interval_seconds = value
 
     @property
-    def remotes(self) -> list[Remote]:
-        remotes: list[Remote] = []
+    def remotes(self) -> dict[str, Remote]:
+        remotes: dict[str, Remote] = {}
         for remote in self.data.remotes_raw_list:
             remote.git_cache = self.git_cache
             remote.root_dir = self.root_dir
-            remotes.append(remote)
+            remotes[remote.data.name] = remote
         return remotes
 
     @property
@@ -103,7 +103,7 @@ class Repository:
 
     def create_default_sandbox_source(self) -> Remote:
         source = Remote("")
-        source.is_sandbox = True
+        source.set_sandbox()
         return source
 
 

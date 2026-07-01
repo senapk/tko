@@ -1,6 +1,6 @@
 # from typing import override
 import urllib.request
-from tko.feno.github_url_structure import GithubUrlStructure
+from tko.feno.github_url_structure import GitHubUrlStructure
 from tko.feno.link_rebase import LinkRebase
 from tko.i18n import Msg
 from tko.util.decoder import Decoder
@@ -18,7 +18,7 @@ _GITHUB_URL_INVALID_GITHUB_URL = Msg.text(
 class GitHubUrl:
     def __init__(self, url: str):
         self.raw_link: str | None = ""
-        self.url_structure: GithubUrlStructure | None = None
+        self.url_structure: GitHubUrlStructure | None = None
 
         if not url.startswith("https://"):
             raise ValueError(_GITHUB_URL_INVALID_URL.t().plain())
@@ -26,7 +26,7 @@ class GitHubUrl:
         if url.startswith("https://gist.githubusercontent.com"):
             self.raw_link = url
         else:
-            url_structure = GithubUrlStructure.parse(url)
+            url_structure = GitHubUrlStructure.parse(url)
             if url_structure is None or not url_structure.raw_github_url:
                 raise ValueError(_GITHUB_URL_INVALID_GITHUB_URL.t().plain())
             self.url_structure = url_structure

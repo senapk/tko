@@ -31,10 +31,10 @@ class TaskCollectedResume:
         self.executions = len(log_sort.exec_list)
 
 
-    def get_kv(self, full: bool = False) -> dict[str, Any]:
+    def get_kv(self, full: bool = False, minutes: bool = True) -> dict[str, Any]:
         output: dict[str, Any] = {}
         output[TaskCollectedResume.Key.INIT] = Delta.encode_format(self.init_time) if self.init_time else ""
-        output[TaskCollectedResume.Key.DURATION] = Delta.format_hhmmss(self.duration.total_seconds())
+        output[TaskCollectedResume.Key.DURATION] = (self.duration.total_seconds() / 60) if minutes else Delta.format_hhmmss(self.duration.total_seconds())
         if full or self.events > 0:
             output[TaskCollectedResume.Key.EVENTS] = str(self.events)
         output[TaskCollectedResume.Key.VERSIONS] = f"{self.versions:>2}"

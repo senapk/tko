@@ -30,7 +30,7 @@ class RepositoryWatcher:
         if self.monitor is not None:
             return self
         
-        sources_dir_list: dict[Path, str] = {source.path.work_dir: source.data.name for source in self.repo.remotes}
+        sources_dir_list: dict[Path, str] = {source.path.work_dir: source.data.name for source in self.repo.remotes.values()}
         self.monitor = FileMonitor(root_directory=self.repo.root_dir)
         
         if log_edits:

@@ -16,7 +16,8 @@ class CollectActions:
         """
         Collect task history data from the repository's logger and return a list of TaskCollected objects.
         """
-        task_history: list[TaskCollected] = repo.logger.tasks.mount_task_history(repo.game)
+        remote_paths: dict[str, str] = {remote.data.name: remote.origin_full_source for remote in repo.remotes.values()}
+        task_history: list[TaskCollected] = repo.logger.tasks.mount_task_history(repo.game, remote_paths)
         return task_history
 
     @staticmethod
@@ -34,7 +35,7 @@ class CollectActions:
             for task in quest.get_tasks():
                 quest_map[task.basic.full_key] = quest.basic.full_key
         for key, log_sort in tasks.items():
-            resume = TaskCollected().setup(log_sort, repo.game.get_task(key))
+            resume = TaskCollected().setup(log_sort, repo.game.get_task(key), {remote.data.name: remote.origin_full_source for remote in repo.remotes.values()})
             resume_dict[key] = resume
         return resume_dict
     

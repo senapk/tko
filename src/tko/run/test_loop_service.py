@@ -45,7 +45,7 @@ class TestLoopService:
                 logger = self.ctx.repo.logger
                 log_sort: LogSort | None = logger.tasks.task_dict.get(self.ctx.get_task().basic.full_key, None)
                 if log_sort is not None:
-                    user_data = TaskCollected().setup(log_sort, self.ctx.get_task())
+                    user_data = TaskCollected().setup(log_sort, self.ctx.get_task(), None)
                     Console.print(
                         RT(
                             f"diff:{user_data.resume.versions}, runs:{user_data.resume.executions},",

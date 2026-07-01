@@ -41,7 +41,7 @@ class AuditConfig:
 class RepositoryData:
     def __init__(self):
         self.version: str = ""
-        self.__remotes: list[Remote] = []
+        self.__remotes: dict[str, Remote] = {}
         self.expanded: list[str] = []
         self.flags: dict[str, Any] = {}
         self.audit: AuditConfig = AuditConfig()
@@ -66,27 +66,20 @@ class RepositoryData:
         self.audit.interval_seconds = value
 
     def set_remote(self, source: Remote) -> None:
-        for i, s in enumerate(self.__remotes):
-            if s.data.name == source.data.name:
-                self.__remotes[i] = source
-        self.__remotes.append(source)
+        self.__remotes[source.data.name] = source
 
     def del_remote(self, alias: str) -> bool:
-        __remotes = [s for s in self.__remotes if s.data.name != alias]
-        if len(__remotes) != len(self.__remotes):
-            self.__remotes = __remotes
+        if alias in self.__remotes:
+            del self.__remotes[alias]
             return True
         return False
 
     def get_remote(self, alias: str) -> Remote | None:
-        for s in self.__remotes:
-            if s.data.name == alias:
-                return s
-        return None
+        return self.__remotes.get(alias)
 
     def get_sandbox(self) -> Remote | None:
-        for s in self.__remotes:
-            if s.is_sandbox:
+        for s in self.__remotes.values():
+            if s.is_sandbox():
                 return s
         return None
 
@@ -94,7 +87,7 @@ class RepositoryData:
         sandbox_source = self.get_sandbox()
         if sandbox_source is None:
             sandbox_source = Remote("")
-            sandbox_source.is_sandbox = True
+            sandbox_source.set_sandbox()
             self.set_remote(sandbox_source)
 
     # fonte local é retornada primeiro para garantir que ela seja priorizada em relação a fontes externas
@@ -104,8 +97,8 @@ class RepositoryData:
         self.__ensure_sandbox_source()
         external_sources: list[Remote] = []
         sandbox_source: list[Remote] = []
-        for s in self.__remotes:
-            if s.is_sandbox:
+        for s in self.__remotes.values():
+            if s.is_sandbox():
                 sandbox_source.append(s)
             else:
                 external_sources.append(s)
@@ -135,7 +128,8 @@ class RepositoryData:
             if "sources" in data:
                 source_data: list[dict[str, Any]] = data["sources"]
                 if isinstance(source_data, list): # type: ignore
-                    self.__remotes = [Remote("").load_from_dict(x) for x in source_data]
+                    remotes = [Remote("").load_from_dict(x) for x in source_data]
+                    self.__remotes = {remote.data.name: remote for remote in remotes}
                 else:
                     raise TypeError("The 'sources' field must be a list.")
 
@@ -145,7 +139,7 @@ class RepositoryData:
     def save_to_dict(self) -> dict[str, Any]:
         return {
             "version": self.version,
-            "sources": [x.save_to_dict() for x in self.__remotes],
+            "sources": [x.save_to_dict() for x in self.remotes_raw_list],
             "expanded": self.expanded,
             "flags": self.flags,
             "audit": self.audit.to_dict(),

@@ -56,7 +56,7 @@ class Game:
     
     def get_sandbox_remote_throw(self) -> Remote:
         for s in self.remotes:
-            if s.is_sandbox:
+            if s.is_sandbox():
                 return s
         raise ValueError(str(_GAME_SANDBOX_SOURCE_NOT_FOUND))
 
@@ -65,7 +65,7 @@ class Game:
         self.language = language
         return self
     
-    def build(self, git_cache: GitCache, root_dir: Path):
+    def build(self):
         self.ordered_quests = []
         self.quests = {}
         self.tasks = {}
@@ -85,9 +85,6 @@ class Game:
             for task in gb_tasks.values():
                 self.tasks[task.basic.full_key] = task
         GameValidator(self.quests).validate()
-        for task in self.tasks.values():
-            task.git_cache = git_cache
-            task.root_dir = root_dir
         return self
 
     @staticmethod

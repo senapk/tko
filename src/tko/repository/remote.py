@@ -19,10 +19,18 @@ _REMOTE_SANDBOX_ONLY_TRUE = Msg.text(
 )
 
 class Remote:
-    def __init__(self, alias: str = "", git_cache: GitCache | None = None):
+    def __init__(self, alias: str, git_cache: GitCache | None):
         self.data = RemoteData(name=alias)
         self.git_cache: GitCache | None = git_cache
         self.root_dir: Path | None = None
+
+    @property
+    def alias(self) -> str:
+        return self.data.name
+    
+    @property
+    def origin_full_source(self) -> str:
+        return self.data.origin_full_source
 
     @property
     def path(self) -> RemotePath:
@@ -38,14 +46,9 @@ class Remote:
     def save_to_dict(self) -> dict[str, Any]:
         return RemoteStore(self.data).save_to_dict()
 
-    @property
     def is_sandbox(self) -> bool:
         return self.data.name == REMOTE_SANDBOX_NAME
 
-    @is_sandbox.setter
-    def is_sandbox(self, value: bool):
-        if value:
-            self.data.name = REMOTE_SANDBOX_NAME
-            self.data.set_local_source(target=Path(REMOTE_SANDBOX_TARGET), is_editable=True, index=REMOTE_SANDBOX_INDEX)
-        else:
-            raise ValueError(_REMOTE_SANDBOX_ONLY_TRUE.t())
+    def set_sandbox(self):
+        self.data.name = REMOTE_SANDBOX_NAME
+        self.data.set_local_source(target=Path(REMOTE_SANDBOX_TARGET), is_editable=True, index=REMOTE_SANDBOX_INDEX)

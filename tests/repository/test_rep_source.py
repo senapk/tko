@@ -25,7 +25,7 @@ class FakeGitCache:
 def test_set_is_sandbox_updates_remote_data_fields() -> None:
     remote = Remote("")
 
-    remote.is_sandbox = True
+    remote.set_sandbox()
 
     assert remote.data.name == "sandbox"
     assert remote.data.target == REMOTE_SANDBOX_TARGET

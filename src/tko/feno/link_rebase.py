@@ -1,6 +1,6 @@
 import re
 from tko.feno.github_cfg import GithubCfg
-from tko.feno.github_url_structure import GithubUrlStructure
+from tko.feno.github_url_structure import GitHubUrlStructure
 from tko.util.decoder import Decoder
 from pathlib import Path
 from tko.util.console import Console
@@ -83,7 +83,7 @@ class LinkRebase:
         return result
 
     @staticmethod
-    def rebase(content: str, rl: GithubUrlStructure) -> str:
+    def rebase(content: str, rl: GitHubUrlStructure) -> str:
         return LinkRebase.__replace_remote(
             content,
             rl.raw_base_url,

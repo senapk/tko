@@ -2,7 +2,7 @@ from pathlib import Path
 from _pytest.monkeypatch import MonkeyPatch
 
 import tko.util.github_url as github_url_mod
-from tko.feno.github_url_structure import GithubUrlStructure
+from tko.feno.github_url_structure import GitHubUrlStructure
 from tko.util.github_url import GitHubUrl
 
 
@@ -33,7 +33,7 @@ def test_github_url_download_and_rebase_calls_pipeline(
         calls["load_path"] = path
         return "source content"
 
-    def fake_rebase(content: str, structure: GithubUrlStructure) -> str:
+    def fake_rebase(content: str, structure: GitHubUrlStructure) -> str:
         calls["rebase_content"] = content
         calls["rebase_branch"] = structure.branch
         return "rebased content"
@@ -59,7 +59,7 @@ def test_github_url_download_and_rebase_calls_pipeline(
 
 
 def test_github_url_structure_repository_and_github_urls() -> None:
-    structure = GithubUrlStructure(
+    structure = GitHubUrlStructure(
         user="user",
         repo="repo",
         branch="main",
@@ -72,7 +72,7 @@ def test_github_url_structure_repository_and_github_urls() -> None:
 
 
 def test_github_url_structure_parses_raw_githubusercontent_url() -> None:
-    structure = GithubUrlStructure.parse(
+    structure = GitHubUrlStructure.parse(
         "https://raw.githubusercontent.com/user/repo/refs/heads/main/folder/file.md"
     )
 

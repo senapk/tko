@@ -2,11 +2,11 @@ from dataclasses import FrozenInstanceError
 
 import pytest
 
-from tko.feno.github_url_structure import GithubUrlStructure
+from tko.feno.github_url_structure import GitHubUrlStructure
 
 
 def test_empty_structure_starts_with_blank_fields() -> None:
-    structure = GithubUrlStructure()
+    structure = GitHubUrlStructure()
 
     assert structure.user == ""
     assert structure.repo == ""
@@ -15,7 +15,7 @@ def test_empty_structure_starts_with_blank_fields() -> None:
 
 
 def test_structure_builds_repository_github_and_raw_urls() -> None:
-    structure = GithubUrlStructure(
+    structure = GitHubUrlStructure(
         user="user",
         repo="repo",
         branch="main",
@@ -32,7 +32,7 @@ def test_structure_builds_repository_github_and_raw_urls() -> None:
 
 
 def test_structure_is_immutable() -> None:
-    structure = GithubUrlStructure(user="user", repo="repo")
+    structure = GitHubUrlStructure(user="user", repo="repo")
 
     with pytest.raises(FrozenInstanceError):
         structure.user = "other"  # type: ignore[misc]
@@ -70,7 +70,7 @@ def test_structure_is_immutable() -> None:
 def test_parse_accepts_github_blob_and_tree_urls(
     url: str, relative_path: str, path_type: str, github_url: str
 ) -> None:
-    structure = GithubUrlStructure.parse(url)
+    structure = GitHubUrlStructure.parse(url)
 
     assert structure is not None
     assert structure.user == "user"
@@ -82,7 +82,7 @@ def test_parse_accepts_github_blob_and_tree_urls(
 
 
 def test_parse_accepts_github_repository_without_branch_or_path() -> None:
-    structure = GithubUrlStructure.parse("https://github.com/user/repo")
+    structure = GitHubUrlStructure.parse("https://github.com/user/repo")
 
     assert structure is not None
     assert structure.user == "user"
@@ -96,7 +96,7 @@ def test_parse_accepts_github_repository_without_branch_or_path() -> None:
 
 
 def test_structure_with_path_without_branch_stays_at_repository_url() -> None:
-    structure = GithubUrlStructure(
+    structure = GitHubUrlStructure(
         user="user",
         repo="repo",
         relative_path="folder/file.md",
@@ -108,7 +108,7 @@ def test_structure_with_path_without_branch_stays_at_repository_url() -> None:
 
 
 def test_parse_accepts_raw_url_with_branch_and_without_relative_path() -> None:
-    structure = GithubUrlStructure.parse("https://raw.githubusercontent.com/user/repo/main")
+    structure = GitHubUrlStructure.parse("https://raw.githubusercontent.com/user/repo/main")
 
     assert structure is not None
     assert structure.branch == "main"
@@ -118,7 +118,7 @@ def test_parse_accepts_raw_url_with_branch_and_without_relative_path() -> None:
 
 
 def test_parse_accepts_raw_githubusercontent_refs_heads_url() -> None:
-    structure = GithubUrlStructure.parse(
+    structure = GitHubUrlStructure.parse(
         "https://raw.githubusercontent.com/user/repo/refs/heads/main/folder/file.md"
     )
 
@@ -131,7 +131,7 @@ def test_parse_accepts_raw_githubusercontent_refs_heads_url() -> None:
 
 
 def test_parse_accepts_raw_githubusercontent_url_without_refs_heads() -> None:
-    structure = GithubUrlStructure.parse(
+    structure = GitHubUrlStructure.parse(
         "https://raw.githubusercontent.com/user/repo/main/folder/file.md"
     )
 
@@ -142,7 +142,7 @@ def test_parse_accepts_raw_githubusercontent_url_without_refs_heads() -> None:
 
 
 def test_parse_ignores_query_and_fragment() -> None:
-    structure = GithubUrlStructure.parse(
+    structure = GitHubUrlStructure.parse(
         "https://github.com/user/repo/blob/main/folder/file.md?raw=1#L10"
     )
 
@@ -151,7 +151,7 @@ def test_parse_ignores_query_and_fragment() -> None:
 
 
 def test_with_relative_path_returns_new_structure() -> None:
-    structure = GithubUrlStructure(user="user", repo="repo", branch="main")
+    structure = GitHubUrlStructure(user="user", repo="repo", branch="main")
 
     updated = structure.with_relative_path("docs/readme.md", "blob")
 
@@ -172,4 +172,4 @@ def test_with_relative_path_returns_new_structure() -> None:
     ],
 )
 def test_parse_rejects_unsupported_urls(url: str) -> None:
-    assert GithubUrlStructure.parse(url) is None
+    assert GitHubUrlStructure.parse(url) is None

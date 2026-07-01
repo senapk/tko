@@ -1,4 +1,4 @@
-from tko.feno.github_url_structure import GithubUrlStructure
+from tko.feno.github_url_structure import GitHubUrlStructure
 from tko.i18n import Msg
 from tko.util.rt import RT
 
@@ -18,7 +18,7 @@ class GithubCfg:
     FILENAME = "remote.toml"
     def __init__(self, target: Path, make_remote: bool):
         self.target = target
-        self.remote: GithubUrlStructure | None = None
+        self.remote: GitHubUrlStructure | None = None
         self.cfg_path: Path | None = None
         if make_remote:
             self.__load_cfg_path(target)
@@ -50,7 +50,7 @@ class GithubCfg:
         with open(self.get_cfg_path(), "rb") as f:
             config = tomllib.load(f)
 
-        self.remote = GithubUrlStructure(
+        self.remote = GitHubUrlStructure(
             user=config["user"],
             repo=config["repository"],
             branch=config["branch"],

@@ -63,7 +63,7 @@ class RemoteStore:
             Keys.TYPE: self.data.source_type.value,
             Keys.WRITEABLE: self.data.is_editable,
         }
-        if self.data.branch is not None and self.data.branch != "main":
+        if self.data.branch != RemoteData.DEFAULT_BRANCH:
             output[Keys.BRANCH] = self.data.branch
         output[Keys.QUESTS] = None if self.data.quest_filters is None else { k: v for k, v in self.data.quest_filters.items() }
         return output

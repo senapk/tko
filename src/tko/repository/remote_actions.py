@@ -92,7 +92,7 @@ class RemoteActions:
             Console.print(_REMOTE_NONE_CONFIGURED.t())
             return
         Console.print(_REMOTE_CONFIGURED_SOURCES.t())
-        for remote in remotes:
+        for remote in remotes.values():
             self.show_source(remote)
     
     def show_source(self, remote: Remote):
@@ -179,7 +179,7 @@ class RemoteActions:
             ) -> bool:
         
         remotes = self.repo.remotes
-        if any(remote.data.name == name for remote in remotes):
+        if any(remote.data.name == name for remote in remotes.values()):
             logger.warning(str(_REMOTE_NAME_EXISTS))
             return False
 

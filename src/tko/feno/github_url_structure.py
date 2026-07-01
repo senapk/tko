@@ -1,10 +1,10 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Literal, Self
 from urllib.parse import urlparse
 
 
-GithubPathType = Literal["blob", "tree"]
+GitHubPathType = Literal["blob", "tree"]
 
 
 def _join_url(*parts: str) -> str:
@@ -16,12 +16,18 @@ def _join_url(*parts: str) -> str:
 
 
 @dataclass(frozen=True, slots=True)
-class GithubUrlStructure:
+class GitHubUrlStructure:
     user: str = ""
     repo: str = ""
     branch: str = ""
     relative_path: str = ""
-    path_type: GithubPathType | None = None
+    path_type: GitHubPathType | None = None
+
+    def set_branch(self, branch: str) -> Self:
+        return replace(self, branch=branch)
+    
+    def set_relative_path(self, relative_path: str) -> Self:
+        return replace(self, relative_path=relative_path.strip("/"))
 
     @property
     def repository_url(self) -> str:
@@ -82,6 +88,12 @@ class GithubUrlStructure:
         )
 
     @property
+    def github_blob_full_url(self) -> str:
+        if not self.branch:
+            return self.repository_url
+        return _join_url(self.repository_url, "blob", self.branch, self.relative_path)
+
+    @property
     def github_blob_base_url(self) -> str:
         if not self.branch:
             return self.repository_url
@@ -94,7 +106,7 @@ class GithubUrlStructure:
         return _join_url(self.repository_url, "tree", self.branch, self.relative_folder)
 
     def with_relative_path(
-        self, relative_path: str, path_type: GithubPathType | None = None
+        self, relative_path: str, path_type: GitHubPathType | None = None
     ) -> Self:
         return type(self)(
             user=self.user,
@@ -117,25 +129,25 @@ class GithubUrlStructure:
 
         match netloc, parts:
             case "github.com", [user, repo]:
-                return cls(user=user, repo=repo)
+                return cls(user=user, repo=repo.replace(".git", ""))
 
             case "github.com", [user, repo, ("blob" | "tree") as path_type]:
-                return cls(user=user, repo=repo, path_type=path_type)
+                return cls(user=user, repo=repo.replace(".git", ""), path_type=path_type)
 
             case "github.com", [user, repo, ("blob" | "tree") as path_type, branch, *path]:
                 return cls(
                     user=user,
-                    repo=repo,
+                    repo=repo.replace(".git", ""),
                     branch=branch,
                     relative_path="/".join(path),
                     path_type=path_type,
                 )
 
             case "raw.githubusercontent.com", [user, repo]:
-                return cls(user=user, repo=repo)
+                return cls(user=user, repo=repo.replace(".git", ""))
 
             case "raw.githubusercontent.com", [user, repo, "refs", "heads"]:
-                return cls(user=user, repo=repo)
+                return cls(user=user, repo=repo.replace(".git", ""))
 
             case "raw.githubusercontent.com", [
                 user,
@@ -147,7 +159,7 @@ class GithubUrlStructure:
             ]:
                 return cls(
                     user=user,
-                    repo=repo,
+                    repo=repo.replace(".git", ""),
                     branch=branch,
                     relative_path="/".join(path),
                     path_type="blob" if path else None,
@@ -156,7 +168,7 @@ class GithubUrlStructure:
             case "raw.githubusercontent.com", [user, repo, branch, *path]:
                 return cls(
                     user=user,
-                    repo=repo,
+                    repo=repo.replace(".git", ""),
                     branch=branch,
                     relative_path="/".join(path),
                     path_type="blob" if path else None,
@@ -165,7 +177,7 @@ class GithubUrlStructure:
             case _:
                 return None
 
-    def _infer_path_type(self) -> GithubPathType:
+    def _infer_path_type(self) -> GitHubPathType:
         if self.relative_path and "." not in self.relative_path.split("/")[-1]:
             return "tree"
         return "blob"
