@@ -68,10 +68,10 @@ class PlayActions:
         self.tree.recalculate_layout()
 
     def get_task_folder(self, task: Task) -> Path:
-        folder = task.path.work_dir
-        if folder is None:
+        work_dir = self.repo.task_resolver.work_dir(task)
+        if work_dir is None:
             return Path("")
-        return folder.resolve()
+        return work_dir
 
     def delete_folder_ask(self):
         def delete_folder(text: str):

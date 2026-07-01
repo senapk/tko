@@ -1,7 +1,10 @@
+from pathlib import Path
+
 from tko.config.settings import Settings
 from tko.enums.diff_mode import DiffMode
 from tko.game.task import Task
 from tko.play.gui_actions_names import GuiActionsNames
+from tko.repository.repository import Repository
 from tko.widget.fmt import Fmt
 from tko.widget.frame import Frame
 from tko.play.images import compilling_image, executing_image, images, intro, random_get, success_image
@@ -26,6 +29,7 @@ class TesterRenderer:
     def __init__(
         self,
         settings: Settings,
+        repo: Repository | None,
         wdir: Wdir,
         task: Task,
         fman: FloatingManager,
@@ -33,6 +37,7 @@ class TesterRenderer:
         opener: Opener | None,
     ) -> None:
         self.settings = settings
+        self.repo = repo
         self.wdir = wdir
         self.task = task
         self.fman = fman
@@ -61,8 +66,16 @@ class TesterRenderer:
             else:
                 Fmt.write(i + init_y, 1, info)
 
+    def get_folder(self, task: Task) -> Path:
+        if self.repo is None:
+            return Path(".")
+        folder = self.repo.task_resolver.work_dir(task)
+        if folder is None:
+            return Path(".")
+        return folder
+
     def show_success(self) -> None:
-        folder = str(tester_util.get_folder(self.task).name)
+        folder = self.get_folder(self.task).name
         if self.settings.app.use_images:
             out = random_get(images, folder, "static")
         else:
@@ -70,7 +83,7 @@ class TesterRenderer:
         TesterRenderer.print_centered_image(out, "g")
 
     def show_compilling(self, clear: bool = False) -> None:
-        folder = str(tester_util.get_folder(self.task).name)
+        folder = self.get_folder(self.task).name
         out = random_get(compilling_image, folder, "random")
         TesterRenderer.print_centered_image(out, "y", clear)
 
@@ -150,7 +163,7 @@ class TesterRenderer:
     def draw(self, state: TesterState) -> None:
         self.top_bar.draw(state)
         if state.mode == SeqMode.intro:
-            folder = str(tester_util.get_folder(self.task).name)
+            folder = self.get_folder(self.task).name
             TesterRenderer.print_centered_image(random_get(intro, folder), "y")
         else:
             self.draw_main(state)

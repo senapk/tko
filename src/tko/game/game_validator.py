@@ -36,12 +36,13 @@ class GameValidator:
         for q in self.quests.values():
             for task in q.get_tasks():
                 if task.basic.full_key in keys:
-                    logger.error(
-                        "%s em %s %s, ignorando tarefa",
-                        str(_GAME_VALIDATOR_DUPLICATE_KEY).format(task_key=task.basic.full_key),
-                        task.resource.line_number,
-                        task.resource.line_data,
-                    )
+                    if task.basic.full_key != "sandbox@sandbox":
+                        logger.error(
+                            "ignoring task_key={task_key}, line_number={line_number}, line={line}",
+                            task_key=task.basic.full_key,
+                            line_number=task.location.line_number,
+                            line=task.location.line_data
+                        )
                     continue
                 keys.append(task.basic.full_key)
                 self.tasks[task.basic.full_key] = task

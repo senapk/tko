@@ -5,7 +5,7 @@ from tko.enums.execution_result import ExecutionResult
 from tko.game.task import Task
 from tko.logger.log_item_exec import LogItemExec
 from tko.repository.repository import Repository
-from tko.repository.repository_config import RepositoryConfig
+from tko.repository.repository_config import RepositoryLoader
 from tko.run.unit import Unit
 from tko.run.unit_runner import UnitRunner
 from tko.run.wdir import Wdir
@@ -122,7 +122,7 @@ class TesterExecutionService:
         mode = LogItemExec.Mode.LOCK if state.locked_index else LogItemExec.Mode.FULL
         changes, total_lines = self.store_version(str(percent))
         if self.rep:
-            RepositoryConfig(self.rep).save()
+            RepositoryLoader(self.rep).save()
             self.rep.logger.store(
                 LogItemExec()
                 .set_key(self.task.basic.full_key)

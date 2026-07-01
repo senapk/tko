@@ -1,9 +1,6 @@
 import re
-from tko.feno.github_cfg import GithubCfg
-from tko.feno.github_url_structure import GitHubUrlStructure
-from tko.util.decoder import Decoder
+from tko.util.git_hub_url import GitHubUrl
 from pathlib import Path
-from tko.util.console import Console
 
 class LinkRebase:
 
@@ -83,12 +80,12 @@ class LinkRebase:
         return result
 
     @staticmethod
-    def rebase(content: str, rl: GitHubUrlStructure) -> str:
+    def rebase(content: str, ghu: GitHubUrl) -> str:
         return LinkRebase.__replace_remote(
             content,
-            rl.raw_base_url,
-            rl.github_blob_base_url,
-            rl.github_tree_base_url,
+            ghu.raw_file_url,
+            ghu.blob_url,
+            ghu.tree_url,
             is_local=False,
         )
 
@@ -96,14 +93,3 @@ class LinkRebase:
     def change_to_relative_folder(content: str, relative_folder: Path, preserve_assets: bool = False):
         folder = str(relative_folder)
         return LinkRebase.__replace_remote(content, folder, folder, folder, is_local = True, preserve_assets = preserve_assets)
-
-    @staticmethod
-    def convert_or_copy_or_print(source: Path, target: Path | None, make_remote: bool = False):
-        content: str = Decoder.load(source)
-        cfg = GithubCfg(source, make_remote)
-        if cfg.cfg_exists():
-            content = LinkRebase.rebase(content, cfg.calc_link_for_local_file())
-        if target is not None:
-            Decoder.save(target, content)
-        else:
-            Console.print(content)

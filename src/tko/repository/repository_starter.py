@@ -3,7 +3,7 @@ from tko.play.language_setter import LanguageSetter
 from tko.repository.repository import Repository
 from tko.repository.repository_paths import RepositoryPaths
 from tko.config.settings import Settings
-from tko.repository.repository_config import RepositoryConfig
+from tko.repository.repository_config import RepositoryLoader
 from tko.i18n import Msg
 from tko.util.console import Console
 from tko.util.rt import RT
@@ -94,14 +94,13 @@ class RepositoryStarter:
         git_cache = GitCache(cache_dir=UserData.global_cache_dir(), update_mode=self.settings.rs.update_mode)
         repo = Repository(self.folder, self.settings.rs, git_cache=git_cache)        
         self.repo = repo
-        self.create_empty_repo()
         self.language = LanguageSetter.check_prog_lang_in_text_mode(self.settings, self.repo, selected=self.language)
         Console.print(_REPO_STARTER_LANGUAGE_SET.t().format(language=self.language))
 
         if not self.skip:
             self.ask_about_default_remotes()
 
-        RepositoryConfig(repo).save()
+        RepositoryLoader(repo).save()
         Console.print(_REPO_STARTER_OPEN_HINT.t())
         return True
 
@@ -127,10 +126,7 @@ class RepositoryStarter:
     def add_remote(self, target: str):
         from tko.repository.remote_actions import RemoteActions
         rep_actions = RemoteActions(self.settings, self.repo)
-        rep_actions.remote_add(
-            name=target,
-            remote_default=target, 
-        )
+        rep_actions.remote_add_splitted(name=target, remote_default=target, remote_file=None, remote_url=None, writeable=False)
 
     
     def validate_path(self) -> bool:
@@ -162,8 +158,3 @@ class RepositoryStarter:
                 return False
 
         return True
-    
-    def create_empty_repo(self):
-        source = self.repo.create_default_sandbox_source()
-        self.repo.data.set_remote(source)
-        Console.print(_REPO_STARTER_EMPTY_REPO.t())

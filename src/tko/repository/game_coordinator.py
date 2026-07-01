@@ -1,11 +1,12 @@
 from __future__ import annotations
 from loguru import logger
-from tko.repository.git_cache import UpdateMode
 from tko.i18n import Msg
 from tko.game.task import Task
 from tko.logger.log_sort import LogSort
 from tko.repository.repository import Repository
-
+from tko.repository.remote_resolver import RemoteResolver
+from tko.feno.indexer import fix_readme
+from pathlib import Path
 
 _GAME_COORDINATOR_LOADING_REPOSITORY = Msg.text(
     pt="Carregando repositório de {root}...",
@@ -14,35 +15,25 @@ _GAME_COORDINATOR_LOADING_REPOSITORY = Msg.text(
 
 class GameCoordinator:
 
-    
-
     def __init__(self, repo: Repository): 
         self.repo = repo
 
     def load_game(self) -> GameCoordinator:
         logger.debug(str(_GAME_COORDINATOR_LOADING_REPOSITORY).format(root=self.repo.paths.root_dir))
+        rr = RemoteResolver(self.repo.git_cache, self.repo.paths.root_dir)
         
         remotes = self.repo.remotes
         if not remotes: # load now
-            from tko.repository.repository_config import RepositoryConfig
-            RepositoryConfig(self.repo).load()
+            from tko.repository.repository_config import RepositoryLoader
+            RepositoryLoader(self.repo).load()
             remotes = self.repo.remotes
-        else: # update cache if needed
-            if self.repo.git_cache.update_mode == UpdateMode.ALWAYS:
-                for remote in remotes.values():
-                    _ = remote.path.index_file
-                
-        self.repo.game.set_remotes(list(remotes.values()), self.repo.data.lang)
-        self.repo.game.build()
-        self.set_task_globals()
+        self.ensure_sandbox_readme_fixed(self.repo, rr)
+        self.repo.game.set_remotes(remotes, self.repo.data.lang)
+        self.repo.game.build(remote_resolver = rr)
         self._load_tasks_from_log_into_game()
-        
         return self
     
-    def set_task_globals(self):
-        for task in self.repo.game.tasks.values():
-            task.git_cache = self.repo.git_cache
-            task.root_dir = self.repo.root_dir
+
 
     def _load_tasks_from_log_into_game(self):
         task_dict: dict[str, LogSort] = self.repo.logger.tasks.task_dict
@@ -65,3 +56,18 @@ class GameCoordinator:
                 if exec_list:
                     _, exec_item = exec_list[-1]
                     task.info.rate = exec_item.rate
+
+
+    def ensure_sandbox_readme_fixed(self, repo: Repository, remote_resolver: RemoteResolver):
+        remote = repo.data.get_sandbox()
+        filename, _ = remote_resolver.resolve_index_file(remote, load_git=False)
+        if not filename.parent.exists():
+            return
+        if not filename.exists():
+            filename.parent.mkdir(parents=True, exist_ok=True)
+            with open(filename, "w", encoding="utf-8") as f:
+                f.write(f"# {remote.name}\n\n")
+        work_dir = Path(repo.data.sandbox_dir)
+        if not work_dir.is_absolute():
+            work_dir = (repo.paths.root_dir / work_dir).resolve()
+        fix_readme(filename.resolve(), work_dir, remote.name, verbose=False, load_titles=True)

@@ -200,7 +200,7 @@ def test_initial_clone_failure_returns_none(
         lambda timeout=1: True,
     )
 
-    result = cache.get_remote_dir(
+    result = cache.get_repository_dir(
         "https://example.com/repo.git"
     )
 
@@ -243,7 +243,7 @@ def test_successful_clone_marks_updated(
         fake_clone,
     )
 
-    repo = cache.get_remote_dir(url)
+    repo = cache.get_repository_dir(url)
 
     assert repo is not None
 
@@ -303,7 +303,7 @@ def test_expired_repository_is_updated(
         fake_update,
     )
 
-    cache.get_remote_dir(url)
+    cache.get_repository_dir(url)
 
     assert called
 
@@ -341,7 +341,7 @@ def test_non_expired_repository_is_marked_updated(
         lambda timeout=1: True,
     )
 
-    cache.get_remote_dir(url)
+    cache.get_repository_dir(url)
 
     assert url in cache.updated
 
@@ -385,6 +385,6 @@ def test_failed_update_is_added_to_avoid(
         lambda path: GitResult( ok=False, stderr="boom", ), # type: ignore
     )
 
-    cache.get_remote_dir(url)
+    cache.get_repository_dir(url)
 
     assert url in cache.avoid

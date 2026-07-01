@@ -1,14 +1,11 @@
 from __future__ import annotations
-from pathlib import Path
 
 from tko.game.task_game import TaskGame
 from tko.game.task_grader import TaskGrader
-from tko.game.task_path import TaskPath
 from tko.game.tree_item import TreeBasic, TreeUi
 from tko.game.task_info import TaskSelfInfo
 from tko.game.task_config import TaskConfig
-from tko.game.task_resource import TaskResource
-from tko.repository.git_cache import GitCache
+from tko.game.task_location import TaskLocation
 
 class Task:
     """
@@ -28,20 +25,10 @@ class Task:
         self.ui: TreeUi = TreeUi()
         self.info: TaskSelfInfo = TaskSelfInfo()
         self.config: TaskConfig = TaskConfig()
-        self.resource: TaskResource = TaskResource()
+        self.location: TaskLocation = TaskLocation()
         self.game: TaskGame = TaskGame()
         
         self.main_idx = 0
-        self.git_cache: GitCache | None = None
-        self.root_dir: Path | None = None
-
-    @property
-    def path(self) -> TaskPath:
-        if self.git_cache is None:
-            raise ValueError(f"Git cache is not set for task resolver in {self.basic.full_key}")
-        if self.root_dir is None:
-            raise ValueError(f"Root directory is not set for task resolver in {self.basic.full_key}")
-        return TaskPath(self.git_cache, self.root_dir, self.resource, self.basic)
 
     @property
     def grader(self) -> TaskGrader:
@@ -54,10 +41,8 @@ class Task:
         new_task.ui = self.ui.clone()
         new_task.info = self.info.clone()
         new_task.config = self.config.clone()
-        new_task.resource = self.resource.clone()
+        new_task.location = self.location.clone()
         new_task.game = self.game.clone()
-        new_task.git_cache = self.git_cache
-        new_task.root_dir = self.root_dir
         return new_task
     
     def is_db_empty(self) -> bool:
@@ -65,6 +50,6 @@ class Task:
 
     # @override
     def __str__(self):
-        lnum = str(self.resource.line_number).rjust(3)
+        lnum = str(self.location.line_number).rjust(3)
         key = "" if self.basic.full_key == self.basic.title else self.basic.full_key + " "
-        return f"{lnum} key:{key} title:{self.basic.title} skills:{self.game.skill} remote:{self.resource.raw_link}"
+        return f"{lnum} key:{key} title:{self.basic.title} skills:{self.game.skill} remote:{self.location.raw_link}"

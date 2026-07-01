@@ -45,7 +45,7 @@ class Tester:
     def __init__(self, settings: Settings, repo: Repository | None, wdir: Wdir, task: Task, watcher: RepositoryWatcher | None) -> None:
         self.settings = settings
         self.watcher = watcher
-        self.rep = repo
+        self.repo = repo
         self.wdir = wdir
         self.task = task
         self.app = settings.app
@@ -54,9 +54,9 @@ class Tester:
         self.state    = TesterState(list(wdir.unit_list))
         edit_mode_fn = lambda: self.watcher is not None and self.watcher.edit_logger is not None
         audit_mode_fn = lambda: self.watcher is not None and self.watcher.audit_logger is not None
-        self.top_bar  = TesterTopBar(wdir, task, settings.app, edit_fn=edit_mode_fn, audit_fn=audit_mode_fn)
+        self.top_bar  = TesterTopBar(self.repo, wdir, task, settings.app, edit_fn=edit_mode_fn, audit_fn=audit_mode_fn)
         self.executor = TesterExecutor(settings, repo, wdir, task, fman, self.top_bar)
-        self.renderer = TesterRenderer(settings=settings, wdir=wdir, task=task, fman=fman, top_bar=self.top_bar, opener=None)
+        self.renderer = TesterRenderer(repo=self.repo, settings=settings, wdir=wdir, task=task, fman=fman, top_bar=self.top_bar, opener=None)
         self.navigator = TesterNavigator(settings, repo, wdir, task, fman, self.executor)
         self.palette   = TesterPalette(settings.app, fman, self.navigator)
         self.ui_actions = TesterUiActions(settings, fman, self.navigator, self.palette)
@@ -190,8 +190,8 @@ class Tester:
             with Console.redirect( stdout = writer, stderr = writer):
                 free_run_fn = curses.wrapper(self.main)  # type: ignore[arg-type]
             if free_run_fn is None:
-                if self.rep:
-                    self.rep.logger.store(
+                if self.repo:
+                    self.repo.logger.store(
                         LogItemMove()
                         .set_mode(LogItemMoveMode.BACK)
                             .set_key(self.task.basic.full_key)
@@ -205,8 +205,8 @@ class Tester:
                             break
                     except CompileError:
                         self.state.mode = SeqMode.finished
-                        if self.rep:
-                            self.rep.logger.store(
+                        if self.repo:
+                            self.repo.logger.store(
                                 LogItemExec()
                                     .set_key(self.task.basic.full_key)
                                     .set_mode(LogItemExec.Mode.FREE)

@@ -1,5 +1,8 @@
+from pathlib import Path
+
 from tko.config.app_settings import AppSettings
 from tko.game.task import Task
+from tko.repository.repository import Repository
 from tko.widget.button import Button
 from tko.util.rbuffer import RBuffer
 from tko.widget.frame import Frame
@@ -22,7 +25,8 @@ _COMPILE_ERROR = Msg.text(pt=" Erro de compilação ", en=" Compilation error ")
 
 class TesterTopBar:
 
-    def __init__(self, wdir: Wdir, task: Task, app: AppSettings, edit_fn: Callable[[], bool], audit_fn: Callable[[], bool]) -> None:
+    def __init__(self, repo: Repository | None, wdir: Wdir, task: Task, app: AppSettings, edit_fn: Callable[[], bool], audit_fn: Callable[[], bool]) -> None:
+        self.repo = repo
         self.wdir = wdir
         self.task = task
         self.app = app
@@ -40,7 +44,11 @@ class TesterTopBar:
 
     def build_top_line_header(self, state: TesterState, frame_dx: int, timed: bool) -> RT:
         running_color  = "R"
-        folder   = tester_util.get_folder(self.task)
+        folder = Path()
+        if self.repo is not None:
+            folder   = self.repo.task_resolver.work_dir(self.task)
+        if folder is None:
+            folder = Path()
         activity = Button.info_label(folder.name)
         solver_names = tester_util.get_solver_names(self.wdir)
         solvers_buffer = RBuffer()

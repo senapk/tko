@@ -13,6 +13,7 @@ from tko.config.settings import Settings
 from tko.play.opener import Opener
 from tko.logger.tracker import Tracker
 from tko.i18n import Msg
+from pathlib import Path
 
 
 class _TaskEditorMsg:
@@ -76,11 +77,10 @@ class TaskEditorService:
             return
         if isinstance(obj, Task):
             task: Task = obj
-            url = task.resource.external_url
-            target = task.path.origin_target
-            logger.info(str(_TaskEditorMsg.OPENING_LINK_LOG).format(task_key=task.basic.key, url=url))
-            logger.info(str(_TaskEditorMsg.TARGET_LOG).format(target=target))
-            if url is not None:
+            url = task.location.raw_link
+            origin_target: Path | None = self.repo.task_resolver.origin_file(task, load_git=True)
+            logger.info(str(_TaskEditorMsg.OPENING_LINK_LOG).format(task_key=task.basic.key, url=task.location.raw_link))
+            if task.location.is_http_link:
                 try:
                     self._open_link_without_stdout_stderr(url)
                     self.fman.add_floating(
@@ -91,11 +91,12 @@ class TaskEditorService:
                     )
                 except Exception as _:
                     pass
-            if target is not None:
-                opener = Opener(self.settings)
-                opener.set_fman(self.fman).set_language(self.repo.data.lang)
-                opener.add_files_to_open([target])
-                opener.open_files()
+            elif origin_target is not None:
+                if origin_target.exists():
+                    opener = Opener(self.settings)
+                    opener.set_fman(self.fman).set_language(self.repo.data.lang)
+                    opener.add_files_to_open([origin_target])
+                    opener.open_files()
         elif isinstance(obj, Quest):
             self.fman.add_floating(
                 Floating().bottom().right()

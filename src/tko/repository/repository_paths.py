@@ -1,5 +1,7 @@
 from pathlib import Path
+from typing import Callable
 from tko.config.run_settings import RunSettings
+from tko.repository.repository_data import RepositoryData
 
 class RepositoryPaths:
     CFG_FILE = "repository.yaml"
@@ -10,9 +12,10 @@ class RepositoryPaths:
     LOG_FOLDER = "log"
     CONFIG_FOLDER = ".tko"
 
-    def __init__(self, repo_dir: Path | str, run_settings: RunSettings):
+    def __init__(self, repo_dir: Path | str, run_settings: RunSettings, data_fn: Callable[[], RepositoryData]):
         self.root_dir: Path = Path(repo_dir) if isinstance(repo_dir, str) else repo_dir
         self.run_settings = run_settings
+        self._data_fn = data_fn
 
     @staticmethod
     def __walk_to_root(start: Path):
@@ -39,6 +42,10 @@ class RepositoryPaths:
                 return path
         return None
     
+    @property
+    def sandbox_folder(self) -> Path:
+        return self.root_dir / self._data_fn().sandbox_dir
+
     @property
     def track_folder(self) -> Path:
         return self.root_dir / RepositoryPaths.CONFIG_FOLDER / RepositoryPaths.TRACK_FOLDER

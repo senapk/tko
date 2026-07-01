@@ -90,9 +90,9 @@ class CmdLineDown:
         self.rep = rep
         self.task_key = task_key
         if game is None:
-            from tko.repository.repository_config import RepositoryConfig
+            from tko.repository.repository_config import RepositoryLoader
             from tko.repository.game_coordinator import GameCoordinator
-            RepositoryConfig(self.rep).load()
+            RepositoryLoader(self.rep).load()
             GameCoordinator(self.rep).load_game()
             self.game = self.rep.game
         else:
@@ -114,12 +114,11 @@ class CmdDown:
         self.task_key = task_key
         self.settings = settings
         self.task: Task = self.repo.game.get_task_throw(self.task_key)
-        self.resolver = self.task.path
-        if self.task.resource.is_read:
+        if self.task.location.is_read:
             raise ValueError(_CMD_DOWN_ACTIVITY_LINK_NOT_DOWNLOADABLE.t().format(task_key=self.task_key))
         
-        origin_target = self.resolver.origin_target
-        destiny_folder = self.resolver.work_dir
+        origin_target = self.repo.task_resolver.origin_file(self.task, load_git=True)
+        destiny_folder = self.repo.task_resolver.work_dir(self.task)
         if origin_target is None:
             raise ValueError(_CMD_DOWN_ACTIVITY_NO_ORIGIN_FOLDER.t().format(task_key=self.task_key))
         if destiny_folder is None:
@@ -134,10 +133,10 @@ class CmdDown:
         
     def execute(self) -> bool:
 
-        if self.task.resource.is_import_type:
+        if self.task.location.is_import_type:
             self.download_from_external_remote()
             return True
-        if self.task.resource.is_static_type:
+        if self.task.location.is_static_type:
             if not self.copy_drafts():
                 self.actions.fnprint(_DOWN_ACTIVITY_ALREADY_PRESENT.t())
             return False
@@ -171,7 +170,7 @@ class CmdDown:
             self.actions.fnprint(_DRAFTS_FOUND.t().format(folder=relative))
             return True
         
-        if self.task.resource.is_static_type: # working in local remote source, creating only default draft if not found
+        if self.task.location.is_static_type: # working in local remote source, creating only default draft if not found
             destiny_drafts_folder.mkdir(exist_ok=True, parents=True)
             self.actions.create_default_draft(destiny_drafts_folder, self.language)
             return True

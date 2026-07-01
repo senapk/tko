@@ -2,6 +2,8 @@ from __future__ import annotations
 from pathlib import Path
 from tko.config.run_settings import RunSettings
 from tko.config.user_data import UserData
+from tko.game.task_resolver import TaskResolver
+from tko.repository.remote_resolver import RemoteResolver
 from tko.repository.repository_data import RepositoryData
 from tko.repository.remote import Remote
 from tko.game.game import Game
@@ -34,11 +36,11 @@ class Repository:
             recursive_folder = RepositoryPaths.rec_search_for_repo_parents(folder)
             if recursive_folder is not None:
                 rep_folder = recursive_folder
-        self.paths = RepositoryPaths(rep_folder, rs)
-        self.data: RepositoryData = RepositoryData()
+        self.data: RepositoryData = RepositoryData(rep_folder)
+        self.paths = RepositoryPaths(rep_folder, rs, lambda: self.data)
         self.game = Game()
         self.flags = Flags()
-        self.logger: Logger = Logger(rep_folder, rs)
+        self.logger: Logger = Logger(rep_folder, rs, paths=self.paths)
 
     def found(self):
         return self.paths.config_file.exists()
@@ -56,6 +58,14 @@ class Repository:
         self.data.audit.enabled = value
 
     @property
+    def remote_resolver(self) -> RemoteResolver:
+        return RemoteResolver(self.git_cache, self.paths.root_dir)
+
+    @property
+    def task_resolver(self) -> TaskResolver:
+        return TaskResolver(self.git_cache, self.paths.root_dir)
+
+    @property
     def audit_interval_seconds(self) -> int | None:
         return self.data.audit.interval_seconds
 
@@ -65,12 +75,7 @@ class Repository:
 
     @property
     def remotes(self) -> dict[str, Remote]:
-        remotes: dict[str, Remote] = {}
-        for remote in self.data.remotes_raw_list:
-            remote.git_cache = self.git_cache
-            remote.root_dir = self.root_dir
-            remotes[remote.data.name] = remote
-        return remotes
+        return self.data.get_remotes
 
     @property
     def root_dir(self) -> Path:
@@ -79,9 +84,9 @@ class Repository:
     def get_task_from_task_folder(self, folder: Path) -> Task | None:
         folder = folder.resolve()
         for t in self.game.tasks.values():
-            if t.resource.is_read:
+            if t.location.is_read:
                 continue
-            work_dir = t.path.work_dir
+            work_dir = self.task_resolver.work_dir(t)
             if work_dir is None:
                 continue
             if folder.is_relative_to(work_dir):
@@ -100,12 +105,6 @@ class Repository:
             source = parts[0]
             label = parts[1]
         return self.paths.root_dir / source / label
-
-    def create_default_sandbox_source(self) -> Remote:
-        source = Remote("")
-        source.set_sandbox()
-        return source
-
 
     def __str__(self) -> str:
         return f"data: {self.data}\n"

@@ -28,7 +28,7 @@ class GuiGraphPanel:
         return True, header, graph
     
     def get_history(self) -> tuple[bool, list[RT], list[RT]]:
-        remote_paths: dict[str, str] = {remote.data.name: remote.origin_full_source for remote in self.repo.remotes.values()}
+        remote_paths: dict[str, str] = {remote.name: remote.path_or_url for remote in self.repo.remotes.values()}
         history: list[TaskCollected] = self.repo.logger.tasks.mount_task_history(self.repo.game, remote_paths)
         header = [RT.parse(" [r]History ")]
         task_pad = max((len(item.key) for item in history), default=0) + 2
@@ -36,7 +36,10 @@ class GuiGraphPanel:
         list_data: list[RT] = []            
         for item in history:
             item.resume.events = 0 # hide events for history
-            text = (str(item.get_kv(include_key=False, include_quest=False))
+            kv = item.get_kv(include_key=False, include_quest=False)
+            del kv["remote"]
+            kv["duration"] = f"{kv["duration"]:<5.2f}"
+            text = (str(kv)
                     .replace("'", "").replace("{", "").replace("}", "")
                     .replace("grader: ", "").replace(", init: ", "%, ").replace("duration: ", "").replace("executions: ", "exec: "))
             list_data.append(RT.parse(f"[g]{item.key:<{task_pad}}[.] {item.quest:<{quest_pad}} {text}"))

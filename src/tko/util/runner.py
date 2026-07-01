@@ -26,7 +26,8 @@ class Runner:
                                     stderr=PIPE, 
                                     timeout=timeout, 
                                     shell=shell,
-                                    text=True
+                                    text=True,
+                                    encoding="utf-8",
                                     )
 
             return answer.returncode, answer.stdout, answer.stderr

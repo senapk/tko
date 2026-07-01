@@ -6,7 +6,7 @@ from _pytest.monkeypatch import MonkeyPatch
 
 import tko.repository.repository_config as repository_loader_module
 from tko.repository.repository import Repository
-from tko.repository.repository_config import ConfigMergeConflictError, RepositoryConfig
+from tko.repository.repository_config import ConfigMergeConflictError, RepositoryLoader
 
 
 class FakePaths:
@@ -69,9 +69,9 @@ class FakeRepo:
         self.flags = FakeFlags()
 
 
-def make_loader(root: Path, sources: list[FakeSource] | None = None) -> tuple[RepositoryConfig, FakeRepo]:
+def make_loader(root: Path, sources: list[FakeSource] | None = None) -> tuple[RepositoryLoader, FakeRepo]:
     repo = FakeRepo(root, sources)
-    return RepositoryConfig(cast(Repository, repo)), repo
+    return RepositoryLoader(cast(Repository, repo)), repo
 
 
 def write_text(path: Path, content: str) -> None:

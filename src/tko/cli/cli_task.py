@@ -87,7 +87,7 @@ def task_down(
     items = [
         (elem.basic.full_key, x.plain() if settings.rs.monochrome else x.ansi()) 
         for x, elem in tree.get_rendered_items(show_selected=False)
-        if isinstance(elem, Task) and elem.resource.is_make and elem.resource.is_import_type
+        if isinstance(elem, Task) and elem.location.is_make and elem.location.is_import_type
     ]
     if not items:
         typer.echo("No downloadable tasks found")

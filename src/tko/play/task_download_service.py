@@ -46,7 +46,7 @@ class TaskDownloadService:
         self.down_task(obj)
 
     def down_task(self, task: Task) -> None:
-        if task.resource.is_static_type:
+        if task.location.is_static_type:
             self.fman.add_floating(
                 Floating().bottom().right().put_text(f"\n{_TaskDownloadMsg.NOT_IMPORTABLE.t()}\n").set_error()
             )

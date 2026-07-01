@@ -1,19 +1,13 @@
 from loguru import logger
 import re
-from pathlib import Path
-
-from icecream import ic # type: ignore
-
 from tko.game.game_builder import GameBuilder
 from tko.game.game_validator import GameValidator
 from tko.game.quest import Quest
 from tko.game.task import Task
-from tko.repository.git_cache import GitCache
 from tko.repository.remote import Remote
 from tko.i18n import Msg
-# from typing import override
-
-
+from tko.repository.remote_resolver import RemoteResolver
+from tko.repository.sandbox import Sandbox
 
 
 _GAME_TASK_NOT_FOUND_IN_COURSE = Msg.text(
@@ -38,7 +32,7 @@ def load_html_tags(task: str) -> None | str:
 
 class Game:
     def __init__(self):
-        self.remotes: list[Remote] = []
+        self.remotes: dict[str, Remote] = {}
         self.ordered_quests: list[str] = [] # ordered clusters
         self.quests: dict[str, Quest] = {}  # quests indexed by quest key
         self.tasks: dict[str, Task] = {}  # tasks indexed by task key
@@ -54,30 +48,33 @@ class Game:
             return self.tasks[key]
         return None
     
-    def get_sandbox_remote_throw(self) -> Remote:
-        for s in self.remotes:
-            if s.is_sandbox():
-                return s
-        raise ValueError(str(_GAME_SANDBOX_SOURCE_NOT_FOUND))
-
-    def set_remotes(self, remotes: list[Remote], language: str):
+    def get_sandbox_remote(self) -> Remote | None:
+        if Sandbox.get_sandbox_name() in self.remotes:
+            return self.remotes[Sandbox.get_sandbox_name()]
+        return None
+    
+    def set_remotes(self, remotes: dict[str, Remote], language: str):
         self.remotes = remotes
         self.language = language
         return self
     
-    def build(self):
+    def build(self, remote_resolver: RemoteResolver):
         self.ordered_quests = []
         self.quests = {}
         self.tasks = {}
-        for remote in self.remotes:
-            gb = GameBuilder(remote)
+        for remote in self.remotes.values():
+            index_file, ok = remote_resolver.resolve_index_file(remote, load_git=True)
+            if not ok:
+                logger.warning(str(_GAME_BUILD_FAILED_FOR_SOURCE).format(name=remote.name))
+                continue
+            gb = GameBuilder(index_file, remote.name, remote_import=not remote.is_editable)
             try:
                 gb.build_from(self.language)
             except ValueError:
-                logger.exception(str(_GAME_BUILD_FAILED_FOR_SOURCE).format(name=remote.data.name))
+                logger.exception(str(_GAME_BUILD_FAILED_FOR_SOURCE).format(name=remote.name))
                 continue
             for quest_key in gb.ordered_quests:
-                self.ordered_quests.append(remote.data.name + "@" + quest_key)
+                self.ordered_quests.append(remote.name + "@" + quest_key)
             gb_quests = gb.collect_quests()
             gb_tasks = gb.collect_tasks()
             for quest in gb_quests.values():
@@ -86,6 +83,7 @@ class Game:
                 self.tasks[task.basic.full_key] = task
         GameValidator(self.quests).validate()
         return self
+    
 
     @staticmethod
     def is_reachable_quest(q: Quest, cache: dict[str, bool]):

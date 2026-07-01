@@ -15,6 +15,7 @@ from filelock import FileLock
 from loguru import logger
 
 from tko.i18n import Msg
+from tko.util.git_hub_url import GitHubUrl
 from tko.util.has_internet import has_internet
 
 
@@ -88,7 +89,6 @@ def _git(
             stderr=f"Git command timed out after {e.timeout}s",
         )
 
-
 class GitCache:
     def __init__(
         self,
@@ -141,11 +141,7 @@ class GitCache:
     def _is_valid_repo(self, repo: Path) -> bool:
         return (repo / ".git").exists()
 
-    def _clone(
-        self,
-        url: str,
-        path: Path,
-    ) -> GitResult:
+    def _clone( self, url: str, path: Path, ) -> GitResult:
         result = self.git_fn(
             "clone",
             "--depth",
@@ -166,10 +162,7 @@ class GitCache:
 
         return result
 
-    def _update(
-        self,
-        repo: Path,
-    ) -> GitResult:
+    def _update( self, repo: Path, ) -> GitResult:
         result = self.git_fn(
             "fetch",
             "--prune",
@@ -194,10 +187,7 @@ class GitCache:
 
         return result
 
-    def _is_expired(
-        self,
-        repo: Path,
-    ) -> bool:
+    def _is_expired( self, repo: Path, ) -> bool:
         stamp = self._last_fetch_file(repo)
 
         if not stamp.exists():
@@ -213,17 +203,24 @@ class GitCache:
             > self.max_age.total_seconds()
         )
 
-    def _acquire_lock(
-        self,
-        lock_path: Path,
-    ) -> FileLock:
+    def _acquire_lock( self, lock_path: Path, ) -> FileLock:
         return FileLock(str(lock_path)) # type: ignore
 
-    def get_remote_dir(
-        self,
-        url: str,
-    ) -> Path | None:
+    def git_hub_url_to_path(self, ghu: GitHubUrl, load_git: bool = False) -> tuple[Path, bool]:
+        repo_dir, ok = self.get_repository_dir(ghu.repository_url, load_git=load_git)
+        final_path = repo_dir 
+        if ghu.relative_path is not None:
+            final_path = repo_dir / ghu.relative_path
+        if ok and final_path.exists():
+            return final_path, True
+        return final_path, False
+
+    def get_repository_dir( self, url: str, load_git: bool) -> tuple[Path, bool]:
         target_path = self._repo_dir(url)
+        if not load_git:
+            if target_path.exists():
+                return target_path, True
+            return target_path, False
 
         if not has_internet(1):
             if target_path.exists():
@@ -232,118 +229,72 @@ class GitCache:
                     f"Using cached repository "
                     f"for {url} at {target_path}"
                 )
-                return target_path
+                return target_path, True
 
-            return None
+            return target_path, False
 
         if url in self.avoid:
             if target_path.exists():
-                logger.debug(
-                    f"Skipping update for {url} "
-                    f"due to previous failure. "
-                    f"Using old content."
-                )
-                return target_path
+                logger.debug( f"Skipping update for {url} due to previous failure. Using old content." )
+                return target_path, True
 
-            logger.debug(
-                f"Skipping update for {url} "
-                f"due to previous failure. "
-                f"Directory missing."
-            )
+            logger.debug( f"Skipping update for {url} due to previous failure. Directory missing." )
 
-            return None
+            return target_path, False
 
         if url in self.updated:
-            return target_path
+            return target_path, True
 
         lock_path = self._lock_path(target_path)
 
         with self._acquire_lock(lock_path):
             if url in self.updated:
-                return target_path
+                return target_path, True
 
-            if (
-                target_path.exists()
-                and not self._is_valid_repo(target_path)
-            ):
-                logger.warning(
-                    f"Removing corrupted repository "
-                    f"cache at {target_path}"
-                )
+            if target_path.exists() and not self._is_valid_repo(target_path):
+                logger.warning( f"Removing corrupted repository cache at {target_path}" )
 
-                shutil.rmtree(
-                    target_path,
-                    ignore_errors=True,
-                )
+                shutil.rmtree( target_path, ignore_errors=True )
 
             if not target_path.exists():
-                logger.info(
-                    str(_GIT_CACHE_CLONING).format(url=url,
-                    )
-                )
+                logger.info( _GIT_CACHE_CLONING.t().format(url=url) )
 
-                result = self._clone(
-                    url,
-                    target_path,
-                )
+                result = self._clone( url, target_path )
 
                 if result.ok:
                     self._mark_updated(target_path)
                     self.updated[url] = True
-                    return target_path
+                    return target_path, True
 
-                logger.warning(
-                    str(_GIT_CACHE_CLONE_FAILED)
-                )
+                logger.warning( _GIT_CACHE_CLONE_FAILED.t() )
 
                 logger.debug(result.stderr)
 
                 self.avoid[url] = True
 
-                return None
+                return target_path, False
 
             need_update = False
 
             if self.update_mode == UpdateMode.ALWAYS:
                 need_update = True
 
-            elif (
-                self.update_mode
-                == UpdateMode.IF_OLDER
-                and self._is_expired(target_path)
-            ):
+            elif self.update_mode == UpdateMode.IF_OLDER and self._is_expired(target_path):
                 need_update = True
 
             if need_update:
-                logger.info(
-                    str(_GIT_CACHE_UPDATING).format(url=url,
-                    )
-                )
-
-                result = self._update(
-                    target_path,
-                )
+                logger.info( _GIT_CACHE_UPDATING.t().format(url=url) )
+                result = self._update( target_path )
 
                 if result.ok:
-                    self._mark_updated(
-                        target_path,
-                    )
-
+                    self._mark_updated( target_path )
                     self.updated[url] = True
-
                 else:
-                    logger.warning(
-                        str(_GIT_CACHE_UPDATE_FAILED_UPDATE).format(url=url,
-                        )
-                    )
-
-                    logger.debug(
-                        result.stderr,
-                    )
-
+                    logger.warning( _GIT_CACHE_UPDATE_FAILED_UPDATE.t().format(url=url) )
+                    logger.debug( result.stderr )
                     self.avoid[url] = True
 
             else:
                 self.updated[url] = True
 
-            return target_path
+            return target_path, True

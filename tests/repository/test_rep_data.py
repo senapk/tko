@@ -7,8 +7,8 @@ from tko.repository.remote import Remote
 
 def make_source(name: str, target: str = "base") -> Remote:
     remote = Remote(name)
-    remote.data.name = name
-    remote.data.set_local_source(Path(target), is_editable=False)
+    remote.name = name
+    remote.set_local_source(Path(target), is_editable=False)
     return remote
 
 
@@ -39,10 +39,10 @@ def test_get_sources_ensures_sandbox_and_puts_it_first(tmp_path: Path) -> None:
     data.set_remote(make_source("remote1"))
     data.set_remote(make_source("remote2"))
 
-    sources = data.remotes_raw_list
+    sources = data.get_remotes
 
-    assert sources[0].data.name == "sandbox"
-    assert [source.data.name for source in sources[1:]] == ["remote1", "remote2"]
+    assert sources["sandbox"].name == "sandbox"
+    assert [source.name for source in sources.values() if source.name != "sandbox"] == ["remote1", "remote2"]
 
 
 def test_load_from_dict_loads_simple_fields_and_sources(tmp_path: Path) -> None:
@@ -79,7 +79,7 @@ def test_load_from_dict_loads_simple_fields_and_sources(tmp_path: Path) -> None:
     assert data.selected_index == 4
     loaded_source = data.get_remote("disc")
     assert loaded_source is not None
-    assert loaded_source.data.target == "material"
+    assert loaded_source.target == "material"
 
 
 def test_load_from_dict_ignores_wrong_types_and_does_not_raise(tmp_path: Path) -> None:

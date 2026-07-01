@@ -241,7 +241,6 @@ class Merger:
                 self.quests[found_index].lines.append(line)
         return self.header, self.quests
 
-
 def fix_readme(index: Path, base_dir: Path, default_quest_name: str = "Sem Quest", verbose: bool = True, save_titles: bool = False, load_titles: bool = False) -> None:
     index = index.resolve()
     elements = Elements(index_path=index, base_dir=base_dir, verbose=verbose)

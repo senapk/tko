@@ -2,13 +2,13 @@ from pathlib import Path
 from _pytest.monkeypatch import MonkeyPatch
 
 import tko.feno.link_rebase as link_rebase_mod
-from tko.feno.github_url_structure import GitHubUrlStructure
+from tko.util.git_hub_url import GitHubUrl
 from tko.feno.link_rebase import LinkRebase
 from tko.util.console import Console
 
 
 def test_rebase_rewrites_image_file_and_folder_links() -> None:
-    structure = GitHubUrlStructure(
+    structure = GitHubUrl(
         user="user",
         repo="repo",
         branch="main",
@@ -26,7 +26,7 @@ def test_rebase_rewrites_image_file_and_folder_links() -> None:
 
 
 def test_rebase_task_markdown_link_from_github_downloaded_file() -> None:
-    structure = GitHubUrlStructure(user="qxcodefup", repo="arcade", branch="main")
+    structure = GitHubUrl(user="qxcodefup", repo="arcade", branch="main")
 
     content = "- [ ]`@tres            :1:main`[Soma de três inteiros](base/tres/README.md)"
 
@@ -56,8 +56,8 @@ def test_convert_or_copy_or_print_prints_when_target_is_none(monkeypatch: Monkey
         def cfg_exists(self) -> bool:
             return True
 
-        def calc_link_for_local_file(self) -> GitHubUrlStructure:
-            return GitHubUrlStructure(
+        def calc_link_for_local_file(self) -> GitHubUrl:
+            return GitHubUrl(
                 user="user",
                 repo="repo",
                 branch="main",

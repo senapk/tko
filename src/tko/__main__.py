@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import Literal
 
-from loguru import logger
 from tko.logger.loguru_settings import configure_loguru
     
 import sys
@@ -108,9 +107,9 @@ def main():
     except KeyboardInterrupt:
         Console.print(f"\n\n{_APP_KEYBOARD_INTERRUPT}")
         sys.exit(1)
-    except Warning as w:
-        logger.warning("%s", w)
-        sys.exit(1)
+    # except Warning as w:
+    #     logger.warning("%s", w)
+    #     sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -22,10 +22,10 @@ _LOGGER_LOG_FOLDER_NOT_DIR = Msg.text(
 
 class LogHistory:
 
-    def __init__(self, rep_folder: Path, rs: RunSettings, listeners: list[Callable[[LogItemBase, bool], None]] | None = None):
+    def __init__(self, rep_folder: Path, rs: RunSettings, paths: RepositoryPaths, listeners: list[Callable[[LogItemBase, bool], None]] | None = None):
         if listeners is None:
             listeners = []
-        self.paths = RepositoryPaths(rep_folder, rs)
+        self.paths = paths
         self.log_folder: Path = self.paths.log_folder
         self.listeners: list[Callable[[LogItemBase, bool], None]] = listeners
         self.entries: dict[str, LogItemBase] = {}

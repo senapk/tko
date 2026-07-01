@@ -3,7 +3,7 @@ from tko.repository.repository_watcher import RepositoryWatcher
 from tko.widget.fmt import Fmt
 from tko.play.language_setter import LanguageSetter
 from tko.config.app_settings import ToggleOption
-from tko.repository.repository_config import RepositoryConfig
+from tko.repository.repository_config import RepositoryLoader
 from tko.config.settings import Settings
 from tko.repository.repository import Repository
 from tko.play.gui_keys import GuiKeys
@@ -45,7 +45,7 @@ class Play:
         self.gui = Gui(tree=self.tree, fman=self.fman, watcher=self.watcher)
         self.actions = PlayActions(self.gui)
         self.play_palette = PlayPalette(self.actions)
-        self.loader = RepositoryConfig(repo)
+        self.loader = RepositoryLoader(repo)
 
     def get_left_frame_size(self) -> int:
         _, cols = Fmt.get_lines_cols()

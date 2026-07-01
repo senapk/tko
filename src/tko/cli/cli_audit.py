@@ -64,7 +64,7 @@ def audit_set(
     interval: int | None = typer.Option(None, "--interval", "-i", help="Persistent audit interval in seconds"),
 ) -> None:
     from tko.cli.common import load_repo
-    from tko.repository.repository_config import RepositoryConfig
+    from tko.repository.repository_config import RepositoryLoader
 
     settings: Settings = ctx.obj
     repo, _ = load_repo(settings.rs, show_warnings=True, auto_load=True)
@@ -83,7 +83,7 @@ def audit_set(
     repo.audit.enabled = on
     if interval is not None:
         repo.audit.interval_seconds = interval
-    RepositoryConfig(repo).save()
+    RepositoryLoader(repo).save()
     Console.print(_AUDIT_PERSISTENT_ENABLED.t() if on else _AUDIT_PERSISTENT_DISABLED.t())
 
 
@@ -138,14 +138,10 @@ def audit_preview(
         render_audit_preview(index_file, preview_index, mode)
         return
 
-    if not target_list:
-        from tko.cli.common import load_repo
+    settings: Settings = ctx.obj
 
-        settings: Settings = ctx.obj
-        repo, _ = load_repo(settings.rs, show_warnings=True, auto_load=True)
-        if repo is None:
-            return
-        target_list = [repo.paths.audit_folder]
+    if not target_list:
+        target_list = [settings.rs.changedir]
 
     code = run_audit_preview(target_list)
     if code not in (0, 130):

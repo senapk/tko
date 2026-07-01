@@ -36,8 +36,8 @@ class RepositoryBuilder:
         git_cache = GitCache(cache_dir=UserData.global_cache_dir(), update_mode=self._rs.update_mode)
         repo = Repository(root_dir, rs=self._rs, git_cache=git_cache, recursive_search=False)
         if self._load_config_and_game:
-            from tko.repository.repository_config import RepositoryConfig
+            from tko.repository.repository_config import RepositoryLoader
             from tko.repository.game_coordinator import GameCoordinator
-            RepositoryConfig(repo).load()
+            RepositoryLoader(repo).load()
             GameCoordinator(repo).load_game()
         return repo, root_dir

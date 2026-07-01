@@ -50,9 +50,9 @@ class Settings:
     
     class Defaults:
         alias_git = {
-            "poo": "https://github.com/qxcodepoo/arcade.git",
-            "fup": "https://github.com/qxcodefup/arcade.git",
-            "ed": "https://github.com/qxcodeed/arcade.git"
+            "poo": "https://github.com/qxcodepoo/arcade/blob/main/README.md",
+            "fup": "https://github.com/qxcodefup/arcade/blob/main/README.md",
+            "ed": "https://github.com/qxcodeed/arcade/blob/main/README.md"
         }
 
     # use path_dir None to use default path for tko settings, or set a custom path for the settings file
@@ -108,10 +108,10 @@ class Settings:
         self.dict_alias_git[alias] = git_url
         return self
 
-    def get_alias_git(self, alias: str) -> str:
+    def get_alias_git(self, alias: str) -> str | None:
         if alias in self.dict_alias_git:
             return self.dict_alias_git[alias]
-        raise Warning(f"{_SETTINGS_GIT_LABEL_NOT_FOUND}".format(alias=alias))
+        return None
 
     def has_alias_git(self, alias: str) -> bool:
         return alias in self.dict_alias_git
@@ -126,9 +126,9 @@ class Settings:
             if data is None or not isinstance(data, dict):
                 raise FileNotFoundError(f"{_SETTINGS_EMPTY_CONFIG_FILE}".format(path=settings_file))
             self.data = data
-            self.dict_alias_git: dict[str, str] = dict(self.dict_alias_git) # type: ignore
-            if len(self.dict_alias_git.keys()) == 0: # type: ignore
-                self.dict_alias_git = self.Defaults.alias_git.copy()
+            # self.dict_alias_git: dict[str, str] = dict(self.dict_alias_git) # type: ignore
+            # if len(self.dict_alias_git.keys()) == 0: # type: ignore
+            #     self.dict_alias_git = self.Defaults.alias_git.copy()
             self.app = AppSettings().from_dict(data.get(self.__appcfg, AppSettings())) # type: ignore
             # self.colors = Colors().from_dict(data.get(self.__colors, Colors())) # type: ignore
             file = self.get_languages_file()

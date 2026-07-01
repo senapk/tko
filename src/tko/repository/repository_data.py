@@ -1,11 +1,11 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from loguru import logger
 from tko.i18n import Msg
 from tko.repository.remote import Remote
-
+from tko.repository.sandbox import Sandbox
 from typing import Any
-
+from pathlib import Path
 
 
 _REPOSITORY_DATA_LOAD_ERROR = Msg.text(
@@ -39,8 +39,10 @@ class AuditConfig:
         }
 
 class RepositoryData:
-    def __init__(self):
+    def __init__(self, root_folder: Path):
+        self.root_folder: Path = root_folder
         self.version: str = ""
+        self.sandbox_dir: str = ""
         self.__remotes: dict[str, Remote] = {}
         self.expanded: list[str] = []
         self.flags: dict[str, Any] = {}
@@ -65,44 +67,43 @@ class RepositoryData:
     def audit_interval_seconds(self, value: int | None) -> None:
         self.audit.interval_seconds = value
 
-    def set_remote(self, source: Remote) -> None:
-        self.__remotes[source.data.name] = source
+    def set_remote(self, remote: Remote) -> None:
+        if remote.is_local_source:
+            if not Path(remote.path_or_url).is_absolute():
+                remote = replace(remote, path_or_url=Path(self.root_folder, remote.path_or_url).resolve().as_posix())
+            elif  Path(remote.path_or_url).resolve().is_relative_to(self.root_folder.resolve()):
+                remote = replace(remote, path_or_url=Path(remote.path_or_url).resolve().relative_to(self.root_folder.resolve()).as_posix())
+        self.__remotes[remote.name] = remote
 
-    def del_remote(self, alias: str) -> bool:
-        if alias in self.__remotes:
-            del self.__remotes[alias]
-            return True
-        return False
+    def get_remote(self, name: str) -> Remote | None:
+        return self.__remotes.get(name, None)
 
-    def get_remote(self, alias: str) -> Remote | None:
-        return self.__remotes.get(alias)
+    def get_sandbox(self) -> Remote:
+        remote = self.__remotes.get(Sandbox.get_sandbox_name(), None)
+        if remote is not None:
+            return remote
+        return self.__ensure_sandbox_source()
 
-    def get_sandbox(self) -> Remote | None:
-        for s in self.__remotes.values():
-            if s.is_sandbox():
-                return s
-        return None
-
-    def __ensure_sandbox_source(self) -> None:
-        sandbox_source = self.get_sandbox()
-        if sandbox_source is None:
-            sandbox_source = Remote("")
-            sandbox_source.set_sandbox()
-            self.set_remote(sandbox_source)
+    def __ensure_sandbox_source(self) -> Remote:
+        if Sandbox.get_sandbox_name() in self.__remotes:
+            return self.__remotes[Sandbox.get_sandbox_name()]
+        sandbox_remote = Sandbox.create_default_sandbox_remote()
+        self.__remotes[sandbox_remote.name] = sandbox_remote
+        return sandbox_remote
 
     # fonte local é retornada primeiro para garantir que ela seja priorizada em relação a fontes externas
     # sandbox é sempre a primeira fonte local, para garantir que ela seja priorizada em relação a outras fontes locais
     @property
-    def remotes_raw_list(self) -> list[Remote]:
+    def get_remotes(self) -> dict[str, Remote]:
         self.__ensure_sandbox_source()
-        external_sources: list[Remote] = []
-        sandbox_source: list[Remote] = []
+        external_sources: dict[str, Remote] = {}
+        sandbox_source: dict[str, Remote] = {}
         for s in self.__remotes.values():
-            if s.is_sandbox():
-                sandbox_source.append(s)
+            if Sandbox.is_sandbox(s):
+                sandbox_source[s.name] = s
             else:
-                external_sources.append(s)
-        return sandbox_source + external_sources
+                external_sources[s.name] = s
+        return {**sandbox_source, **external_sources}
 
     def _safe_load(self, data: dict[str, Any], key: str, target_type: type, default_value: Any = None):
         """Helper method to safely load a value from a dictionary."""
@@ -128,18 +129,20 @@ class RepositoryData:
             if "sources" in data:
                 source_data: list[dict[str, Any]] = data["sources"]
                 if isinstance(source_data, list): # type: ignore
-                    remotes = [Remote("").load_from_dict(x) for x in source_data]
-                    self.__remotes = {remote.data.name: remote for remote in remotes}
+                    remotes = [Remote.from_dict(x) for x in source_data]
+                    self.__remotes.clear()
+                    for r in remotes:
+                        self.set_remote(r)
                 else:
                     raise TypeError("The 'sources' field must be a list.")
 
         except (KeyError, TypeError):
             logger.exception(str(_REPOSITORY_DATA_LOAD_ERROR))
 
-    def save_to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "version": self.version,
-            "sources": [x.save_to_dict() for x in self.remotes_raw_list],
+            "sources": [x.to_dict() for x in self.get_remotes.values()],
             "expanded": self.expanded,
             "flags": self.flags,
             "audit": self.audit.to_dict(),

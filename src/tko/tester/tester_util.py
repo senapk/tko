@@ -1,7 +1,5 @@
-from pathlib import Path
 from tko.enums.diff_mode import DiffMode
 from tko.enums.execution_result import ExecutionResult
-from tko.game.task import Task
 from tko.run.wdir import Wdir
 from tko.util.rt import RT
 from tko.util.symbols import Symbols
@@ -37,12 +35,6 @@ def get_time_limit_symbol(timeout: int) -> str:
         return Symbols.infinity
     return str(timeout)
 
-
-def get_folder(task: Task) -> Path:
-    folder = task.path.work_dir
-    if folder is None:
-        raise Warning(str(_TESTER_TASK_FOLDER_NOT_FOUND))
-    return folder
 
 
 def get_solver_names(wdir: Wdir) -> list[str]:

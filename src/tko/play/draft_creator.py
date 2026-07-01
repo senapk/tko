@@ -34,8 +34,11 @@ class DraftCreator:
         self.reload = reload_fn
 
     def create_draft(self):
-        sandbox_source = self.game.get_sandbox_remote_throw()
-        sandbox_folder: Path = sandbox_source.path.work_dir
+        sandbox_source = self.game.get_sandbox_remote()
+        if not sandbox_source:
+            return
+
+        sandbox_folder: Path = self.repo.paths.sandbox_folder
         sandbox_folder.mkdir(parents=True, exist_ok=True)
 
         def find_numbered_draft_id(sandbox_folder: Path) -> int:
@@ -87,8 +90,8 @@ class DraftCreator:
                 f.write(draft)
 
             SandboxDrafts.create_sandbox_draft(folder, title)
-            self.tree.state.selected = f"{sandbox_source.data.name}@{key}"
-            self.tree.state.expanded.add(f"{sandbox_source.data.name}@{sandbox_source.data.name}")
+            self.tree.state.selected = f"{sandbox_source.name}@{key}"
+            self.tree.state.expanded.add(f"{sandbox_source.name}@{sandbox_source.name}")
             self.repo.data.selected = self.tree.state.selected
             self.reload()
             self.fman.add_floating(

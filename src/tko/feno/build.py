@@ -1,7 +1,6 @@
 from tko.feno.title import FenoTitle
 from tko.feno.jsontools import JsonVPL
 from tko.feno.older import Older
-from tko.feno.link_rebase import LinkRebase
 from tko.feno.html import convert_markdown_to_html
 from tko.feno.cases import Cases
 from tko.feno.log import Log
@@ -79,9 +78,9 @@ class Actions:
         Log.verbose(f"Changes in {self.source_dir}")
         return True
 
-    def remote_md(self):
-        LinkRebase.convert_or_copy_or_print(self.source_readme, self.output_readme, self.make_remote)
-        Log.verbose(f"RemoteFile: {self.output_readme}")
+    # def remote_md(self):
+    #     LinkRebase.convert_or_copy_or_print(self.source_readme, self.output_readme, self.make_remote)
+    #     Log.verbose(f"RemoteFile: {self.output_readme}")
 
     def html(self):
         title = FenoTitle.extract_title(self.source_readme)
@@ -169,7 +168,7 @@ def build_all(targets: list[Path], remote: bool, check: bool, erase: bool, brief
             actions.run_local_sh()
             actions.update_markdown()  # se os drafts tiverem mudado o markdown precisa ser atualizado
             if moodle:
-                actions.remote_md()
+                # actions.remote_md()
                 actions.html()
                 actions.build_cases()
                 actions.init_vpl()

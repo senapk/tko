@@ -1,6 +1,6 @@
 # from typing import override
 import urllib.request
-from tko.feno.github_url_structure import GitHubUrlStructure
+from tko.util.git_hub_url import GitHubUrl
 from tko.feno.link_rebase import LinkRebase
 from tko.i18n import Msg
 from tko.util.decoder import Decoder
@@ -15,10 +15,10 @@ _GITHUB_URL_INVALID_GITHUB_URL = Msg.text(
     en="Invalid GitHub URL",
 )
 
-class GitHubUrl:
+class GitHubUrlDownloader:
     def __init__(self, url: str):
         self.raw_link: str | None = ""
-        self.url_structure: GitHubUrlStructure | None = None
+        self.url_structure: GitHubUrl | None = None
 
         if not url.startswith("https://"):
             raise ValueError(_GITHUB_URL_INVALID_URL.t().plain())
@@ -26,8 +26,8 @@ class GitHubUrl:
         if url.startswith("https://gist.githubusercontent.com"):
             self.raw_link = url
         else:
-            url_structure = GitHubUrlStructure.parse(url)
-            if url_structure is None or not url_structure.raw_github_url:
+            url_structure = GitHubUrl.parse(url)
+            if url_structure is None or not url_structure.raw_file_url:
                 raise ValueError(_GITHUB_URL_INVALID_GITHUB_URL.t().plain())
             self.url_structure = url_structure
         self.file = ""
@@ -38,7 +38,7 @@ class GitHubUrl:
             return self.raw_link
         if self.url_structure is None:
             return ""
-        return self.url_structure.raw_github_url
+        return self.url_structure.raw_file_url
 
     def download_and_rebase(self, filename: str):
         [tempfile, __content] = urllib.request.urlretrieve(self.fixed_url, filename)

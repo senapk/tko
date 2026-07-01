@@ -95,9 +95,9 @@ class TrackerLoader: # deprecated
         return output
 
 class OldLogLoader:
-    def __init__(self, rep_folder: Path, rs: RunSettings):
+    def __init__(self, rep_folder: Path, rs: RunSettings, paths: RepositoryPaths):
         self.rep_folder: Path = rep_folder
-        self.paths = RepositoryPaths(rep_folder, rs)
+        self.paths = paths
         self.base_dict: dict[dt.datetime, LogItemBase] = {}
 
         self.merge_old_log_into_base()

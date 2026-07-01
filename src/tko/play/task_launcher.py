@@ -63,7 +63,7 @@ class TaskLauncher:
         self.run_selected_task(task)
 
     def run_selected_task(self, task: Task) -> None:
-        task_folder = task.path.work_dir
+        task_folder = self.repo.task_resolver.work_dir(task)
         if not task_folder:
             raise Warning(str(_TaskLauncherMsg.FOLDER_NOT_FOUND))
         run = Run(settings=self.settings, target_list=[task_folder], param=Param.Basic(), language=self.repo.data.lang, repo=self.repo, watcher=self.gui.watcher)

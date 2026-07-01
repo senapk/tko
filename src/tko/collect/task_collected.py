@@ -40,13 +40,13 @@ class TaskCollected:
         if "@" in value:
             self._quest = value.split("@")[1]
 
-    def setup(self, log_sort: LogSort, task: Task | None, remote_paths: dict[str, str] | None):
+    def setup(self, log_sort: LogSort, task: Task | None, remote_index: dict[str, str] | None):
         key = log_sort.key if log_sort.key else ""
         remote = None
         if "@" in key:
             remote = key.split("@")[0]
-        if remote_paths is not None and remote and remote in remote_paths.keys():
-            self.remote = remote_paths[remote]
+        if remote_index is not None and remote and remote in remote_index.keys():
+            self.remote = remote_index[remote]
         self.key = key
         self.quest = task.quest_key if task else ""
         self.grader = task.grader.full_percent if task else 0.0

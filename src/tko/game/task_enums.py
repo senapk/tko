@@ -13,8 +13,7 @@ class TaskLoss(enum.Enum):
     PART = "part"  # help allowed with partial penalty
     ZERO = "zero"  # if help is given, task is not completed (0% progress)
 
-
 class TaskType(enum.Enum):
+    NULL = "null"
     READ = "read"  # md_file, url, pdf or other resource link, not editable
     MAKE = "make"  # editable task
-    NULL = "null"

@@ -4,6 +4,7 @@ from typing import Optional
 from tko.config.settings import Settings
 from tko.i18n import Msg
 from tko.util.console import Console
+from loguru import logger
 
 
 _CLI_TOOL_MDPP_UPDATING_README = Msg.parse(
@@ -35,18 +36,6 @@ _CLI_TOOL_HTML_OUTPUT_HTML_REQUIRED = Msg.parse(
     en="Error: Output HTML file must have the .html extension",
 )
 
-
-def _build_readme_candidates_from_repo_url(repo_url: str) -> list[str]:
-    # Normalizes common git URL forms to GitHub web URLs and returns branch candidates.
-    normalized: str = repo_url.strip()
-    if normalized.endswith(".git"):
-        normalized = normalized[:-4]
-    if normalized.startswith("git@github.com:"):
-        normalized = "https://github.com/" + normalized[len("git@github.com:") :]
-    normalized = normalized.rstrip("/")
-    return [
-        f"{normalized}/blob/main/README.md",
-    ]
 
 app = typer.Typer(help="Utility tools for one-off operations")
 
@@ -98,7 +87,7 @@ def tool_rebase_links(
     import tempfile
     from urllib.parse import urlparse
     from tko.util.decoder import Decoder
-    from tko.util.github_url import GitHubUrl
+    from tko.util.git_hub_url_downloader import GitHubUrlDownloader
     from tko.feno.link_rebase import LinkRebase
 
     # Determine output filename and path
@@ -117,32 +106,29 @@ def tool_rebase_links(
     if target.startswith("@"):
         alias: str = target[1:]
         settings: Settings = ctx.obj
-        repo_url: str = settings.get_alias_git(alias)
-        candidates: list[str] = _build_readme_candidates_from_repo_url(repo_url)
-
+        file_url: str | None = settings.get_alias_git(alias)
+        if file_url is None:
+            logger.warning(_CLI_TOOL_REBASE_ALIAS_README_FAILED.t().format(alias=alias, error="Alias not found"))
+            return
         last_error: Exception | None = None
-        for candidate in candidates:
-            try:
-                with tempfile.TemporaryDirectory() as tmpdir:
-                    temp_file: str = str(Path(tmpdir) / "temp.md")
-                    remote: GitHubUrl = GitHubUrl(candidate)
-                    remote.download_and_rebase(temp_file)
-                    Console.print(_CLI_TOOL_REBASE_URL_DOWNLOADED.t().format(url=candidate))
-                    Console.print(_CLI_TOOL_REBASE_DONE)
-                    Console.print(_CLI_TOOL_REBASE_SAVED_PATH.t().format(path=output_path))
-                    # Copy from temp to final output
-                    import shutil
-                    shutil.copy(temp_file, output_path)
-                return
-            except Exception as exc:
-                last_error = exc
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            temp_file: str = str(Path(tmpdir) / "temp.md")
+            remote: GitHubUrlDownloader = GitHubUrlDownloader(file_url)
+            remote.download_and_rebase(temp_file)
+            Console.print(_CLI_TOOL_REBASE_URL_DOWNLOADED.t().format(url=file_url))
+            Console.print(_CLI_TOOL_REBASE_DONE)
+            Console.print(_CLI_TOOL_REBASE_SAVED_PATH.t().format(path=output_path))
+            # Copy from temp to final output
+            import shutil
+            shutil.copy(temp_file, output_path)
 
         raise Warning(_CLI_TOOL_REBASE_ALIAS_README_FAILED.t().format(alias=alias, error=last_error))
 
     if target.startswith("https://"):
         with tempfile.TemporaryDirectory() as tmpdir:
             temp_file: str = str(Path(tmpdir) / "temp.md")
-            remote: GitHubUrl = GitHubUrl(target)
+            remote: GitHubUrlDownloader = GitHubUrlDownloader(target)
             remote.download_and_rebase(temp_file)
             Console.print(_CLI_TOOL_REBASE_URL_DOWNLOADED.t().format(url=target))
             Console.print(_CLI_TOOL_REBASE_DONE)

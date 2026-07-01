@@ -14,19 +14,13 @@ class TaskFormatter:
         self.repo = repo
 
     def is_downloaded(self, task: Task) -> bool:
-        try:
-            folder = task.path.work_dir
-        except Exception as _:
-            return False
+        folder = self.repo.task_resolver.work_dir(task)
         if folder is None:
             return False
         return folder.exists()
 
     def is_downloaded_for_lang(self, task: Task):
-        try:
-            folder = task.path.work_dir
-        except Exception as _:
-            return False
+        folder = self.repo.task_resolver.work_dir(task)
         if folder is None:
             return False
 
@@ -60,7 +54,7 @@ class TaskFormatter:
         finish = "F"
         not_init = "."
 
-        if task.resource.is_read:
+        if task.location.is_read:
             if task.info.feedback:
                 return (link, manual, finish)
             return (link, manual, not_init)
@@ -71,7 +65,7 @@ class TaskFormatter:
             test_mode = manual
 
         
-        if task.resource.is_static_type:
+        if task.location.is_static_type:
             state_mode = static
         elif self.is_downloaded_for_lang(task):
             state_mode = down

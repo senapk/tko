@@ -2,13 +2,14 @@ from tko.collect.collect_actions import CollectActions
 from tko.collect.task_collected import TaskCollected
 from tko.config.run_settings import RunSettings
 from tko.config.user_data import UserData
-from tko.config.user_data import UserData
 from tko.game.game import Game
-from tko.repository.git_cache import GitCache
 from tko.repository.remote import Remote
+from tko.repository.remote import Remote
+from tko.repository.remote_resolver import RemoteResolver
 from tko.repository.repository import Repository
 from tko.repository.repository_builder import RepositoryBuilder
 from tko.repository.repository_paths import RepositoryPaths
+from tko.repository.git_cache import GitCache
 
 from tko.util.rt import RT
 from tko.i18n import Msg
@@ -95,14 +96,18 @@ class CollectMany:
         CollectMany.write_tasks_csv(resumes_map, tasks_path)
 
     @staticmethod
-    def load_skills(rs: RunSettings, git_dir_list: list[Path], skills_path: str, remote: str):
-        output_map: dict[str, Repository] = CollectMany.collect_repos(rs, git_dir_list)
-        resumes_map: dict[str, TaskResume] = {k: CollectActions.get_resume(v) for k, v in output_map.items()}
+    def load_skills(rs: RunSettings, git_dir_list: list[Path], skills_path: str, remote_index: str, prog_lang: str):
+        # output_map: dict[str, Repository] = CollectMany.collect_repos(rs, git_dir_list)
+        # resumes_map: dict[str, TaskResume] = {k: CollectActions.get_resume(v) for k, v in output_map.items()}
 
-        git_cache = GitCache(cache_dir=UserData.global_cache_dir(), update_mode=rs.update_mode)
-        remote = Remote("remote", git_cache=git_cache)
-        remote.data = RemoteData(name=remote.name, url=remote.name, type="git", branch="main")
+        remote = Remote(name="remote")
         game = Game()
+        game.set_remotes({"remote": remote}, language=prog_lang)
+        git_cache = GitCache(cache_dir=UserData.global_cache_dir())
+        rr= RemoteResolver(git_cache=git_cache, root_dir=Path("."))
+        game.build(rr)
+        for quest in game.quests.values():
+            print(f"Quest: {quest.basic.full_key}")
 
 
 

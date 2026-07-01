@@ -19,10 +19,10 @@ class Test:
         assert task.basic.key == "label"
         assert task.basic.remote_name == "database"
         assert task.basic.full_key == "database@label"
-        assert task.resource.raw_link == "data/label/r.md"
-        assert task.resource.remote_dir == Path("/source")
-        assert task.resource.relative_path == Path("data/label/r.md")
-        assert task.resource.task_type == TaskType.MAKE
+        assert task.location.raw_link == "data/label/r.md"
+        assert task.location.remote_dir == Path("/source")
+        assert task.location.relative_path == Path("data/label/r.md")
+        assert task.location.task_type == TaskType.MAKE
     
     def test_database_poo(self):
         tp = TaskParser(index_path=Path("/source/arquivo.md"), remote_dir_root=Path("/source"), remote_name="poo")
@@ -31,8 +31,8 @@ class Test:
         assert task.basic.key == "label"
         assert task.basic.remote_name == "poo"
         assert task.basic.full_key == "poo@label"
-        assert task.resource.relative_path == Path("data/label/r.md")
-        assert task.resource.raw_link == "data/label/r.md"
+        assert task.location.relative_path == Path("data/label/r.md")
+        assert task.location.raw_link == "data/label/r.md"
 
 
     def test_STATIC_FILE(self):
@@ -42,8 +42,8 @@ class Test:
         assert task.basic.key == "label"
         assert task.basic.remote_name == "poo"
         assert task.basic.full_key == "poo@label"
-        assert task.resource.relative_path == Path("poo/label/r.md")
-        assert task.resource.raw_link == "poo/label/r.md"
+        assert task.location.relative_path == Path("poo/label/r.md")
+        assert task.location.raw_link == "poo/label/r.md"
 
     def test_file_not_found(self):
         task = (
@@ -70,12 +70,12 @@ class Test:
         )
 
         assert task is not None
-        assert task.resource.task_type == TaskType.MAKE
-        assert task.resource.external_url is None
-        assert task.resource.remote_git == "https://github.com/user/repo"
-        assert task.resource.remote_dir == Path("/source")
-        assert task.resource.relative_path == Path("folder/file.md")
-        assert task.resource.editable_source is False
+        assert task.location.task_type == TaskType.MAKE
+        assert task.location.external_url is None
+        assert task.location.target == "https://github.com/user/repo"
+        assert task.location.remote_dir == Path("/source")
+        assert task.location.relative_path == Path("folder/file.md")
+        assert task.location.remote_import is False
 
     def test_do_task_with_github_tree_url_is_parsed_and_redirected(self):
         tp = TaskParser(
@@ -92,12 +92,12 @@ class Test:
         )
 
         assert task is not None
-        assert task.resource.task_type == TaskType.MAKE
-        assert task.resource.external_url is None
-        assert task.resource.remote_git == "https://github.com/user/repo"
-        assert task.resource.remote_dir == Path("/source")
-        assert task.resource.relative_path == Path("folder/sub")
-        assert task.resource.editable_source is False
+        assert task.location.task_type == TaskType.MAKE
+        assert task.location.external_url is None
+        assert task.location.target == "https://github.com/user/repo"
+        assert task.location.remote_dir == Path("/source")
+        assert task.location.relative_path == Path("folder/sub")
+        assert task.location.remote_import is False
 
     def test_do_task_with_external_non_github_url_becomes_read(self):
         tp = TaskParser(
@@ -114,9 +114,9 @@ class Test:
         )
 
         assert task is not None
-        assert task.resource.task_type == TaskType.READ
-        assert task.resource.external_url == "https://example.com/material"
-        assert task.resource.editable_source is False
+        assert task.location.task_type == TaskType.READ
+        assert task.location.external_url == "https://example.com/material"
+        assert task.location.remote_import is False
 
     def test_parse_line_returns_none_for_non_task_line(self):
         tp = TaskParser(index_path=Path("/source/arquivo.md"), remote_dir_root=Path("/source"), remote_name="poo")
@@ -131,8 +131,8 @@ class Test:
         task = tp.parse_line("- [ ] `@ref :read`[material](https://example.com/material)", 3)
 
         assert task is not None
-        assert task.resource.task_type == TaskType.READ
-        assert task.resource.external_url == "https://example.com/material"
+        assert task.location.task_type == TaskType.READ
+        assert task.location.external_url == "https://example.com/material"
         assert task.config.loss == TaskLoss.FREE
         assert task.config.test == TaskEval.SELF
 

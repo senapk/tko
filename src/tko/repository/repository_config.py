@@ -32,7 +32,7 @@ _REPOSITORY_LOADER_CONFIG_CORRUPTED_UNEXPECTED = Msg.parse(
 class ConfigMergeConflictError(Exception):
     pass
 
-class RepositoryConfig:
+class RepositoryLoader:
     def __init__(self, repo: Repository):
         self.repo = repo
         self._cached_output: dict[str, Any] = {}  # Cache the output in the Repository instance
@@ -51,7 +51,7 @@ class RepositoryConfig:
         else:
             return 0
 
-    def load(self) -> RepositoryConfig:
+    def load(self) -> RepositoryLoader:
         content = Decoder.load(self.repo.paths.config_file)
         self._check_for_merge_conflicts(content)
 
@@ -79,7 +79,7 @@ class RepositoryConfig:
         self.repo.flags.from_dict(self.repo.data.flags)  # type: ignore
 
         # Cache the output after loading
-        self._cached_output = self.repo.data.save_to_dict()
+        self._cached_output = self.repo.data.to_dict()
         return self
 
     @staticmethod
@@ -89,12 +89,12 @@ class RepositoryConfig:
         normalized.pop("selected_index", None)
         return normalized
 
-    def save(self, force: bool = False) -> RepositoryConfig:
+    def save(self, force: bool = False) -> RepositoryLoader:
         self.repo.data.version = "0.2"
         self.repo.data.flags = self.repo.flags.to_dict()
 
         path: Path = Path(self.repo.paths.config_file)
-        payload = self.repo.data.save_to_dict()
+        payload = self.repo.data.to_dict()
 
         # Compare with cached output instead of reading the file
         if not force:

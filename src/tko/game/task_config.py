@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from tko.game.task_enums import TaskEval, TaskLoss
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class TaskConfig:
     test: TaskEval = TaskEval.NULL
     loss: TaskLoss = TaskLoss.NULL

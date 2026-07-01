@@ -1,13 +1,13 @@
 from pathlib import Path
 from _pytest.monkeypatch import MonkeyPatch
 
-import tko.util.github_url as github_url_mod
-from tko.feno.github_url_structure import GitHubUrlStructure
-from tko.util.github_url import GitHubUrl
+import tko.util.git_hub_url_downloader as github_url_mod
+from tko.util.git_hub_url import GitHubUrl
+from tko.util.git_hub_url_downloader import GitHubUrlDownloader
 
 
 def test_github_url_fixed_url_empty_when_state_is_incomplete() -> None:
-    url = GitHubUrl("https://gist.githubusercontent.com/user/abc123/raw/abc/file.md")
+    url = GitHubUrlDownloader("https://gist.githubusercontent.com/user/abc123/raw/abc/file.md")
     url.raw_link = ""
     url.url_structure = None
 
@@ -17,7 +17,7 @@ def test_github_url_fixed_url_empty_when_state_is_incomplete() -> None:
 def test_github_url_download_and_rebase_calls_pipeline(
     monkeypatch: MonkeyPatch, tmp_path: Path
 ) -> None:
-    url = GitHubUrl("https://github.com/user/repo/blob/main/folder/file.md")
+    url = GitHubUrlDownloader("https://github.com/user/repo/blob/main/folder/file.md")
     downloaded = tmp_path / "downloaded.md"
     downloaded.write_text("irrelevant", encoding="utf-8")
     output_file = tmp_path / "out.md"
@@ -33,7 +33,7 @@ def test_github_url_download_and_rebase_calls_pipeline(
         calls["load_path"] = path
         return "source content"
 
-    def fake_rebase(content: str, structure: GitHubUrlStructure) -> str:
+    def fake_rebase(content: str, structure: GitHubUrl) -> str:
         calls["rebase_content"] = content
         calls["rebase_branch"] = structure.branch
         return "rebased content"
@@ -59,7 +59,7 @@ def test_github_url_download_and_rebase_calls_pipeline(
 
 
 def test_github_url_structure_repository_and_github_urls() -> None:
-    structure = GitHubUrlStructure(
+    structure = GitHubUrl(
         user="user",
         repo="repo",
         branch="main",
@@ -68,11 +68,11 @@ def test_github_url_structure_repository_and_github_urls() -> None:
     )
 
     assert structure.repository_url == "https://github.com/user/repo"
-    assert structure.github_url == "https://github.com/user/repo/blob/main/folder/file.md"
+    assert structure.blob_url == "https://github.com/user/repo/blob/main/folder/file.md"
 
 
 def test_github_url_structure_parses_raw_githubusercontent_url() -> None:
-    structure = GitHubUrlStructure.parse(
+    structure = GitHubUrl.parse(
         "https://raw.githubusercontent.com/user/repo/refs/heads/main/folder/file.md"
     )
 

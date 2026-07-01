@@ -5,15 +5,14 @@ import typer
 from tko.config.settings import Settings
 
 app = typer.Typer(help="Manage class tasks")
-collect_app = typer.Typer(help="Collect data from many repositories")
+# collect_app = typer.Typer(help="Collect data from many repositories")
+# app.add_typer(collect_app, name="collect")
 
-app.add_typer(collect_app, name="collect")
-
-@collect_app.command("tasks")
+@app.command("tasks")
 def collect_tasks(
     ctx: typer.Context,
     path: list[str] = typer.Argument(..., help="Paths to repos"),
-    csv: str = typer.Option(None, "--csv", help="Output CSV file"),
+    csv: str = typer.Option(..., "--csv", help="Output CSV file"),
 ):
     from tko.collect.collect_many import CollectMany
 
@@ -22,19 +21,19 @@ def collect_tasks(
 
     CollectMany.load_tasks(settings.rs, repos, tasks_path=csv)
 
-@collect_app.command("skills")
+@app.command("skills")
 def collect_skills(
     ctx: typer.Context,
     path: list[str] = typer.Argument(..., help="Paths to repos"),
-    csv: str | None = typer.Option(None, "--csv", help="Output CSV file"),
-    remote: str | None = typer.Option( None, "--remote", "-r", help="Remote target to load quests"),
+    csv: str = typer.Option(..., "--csv", help="Output CSV file"),
+    remote: str = typer.Option(..., "--remote", "-r", help="Remote target to load quests"),
+    language: str = typer.Option(..., "--lang", "-l", help="Programming language for skills"),
 ):
     from tko.collect.collect_many import CollectMany
 
     settings: Settings = ctx.obj
     repos = [Path(p) for p in path]
-
-    CollectMany.load_skills(settings.rs, repos, skills_path=csv, remote=remote)
+    CollectMany.load_skills(rs=settings.rs, git_dir_list=repos, skills_path=csv, remote_index=remote, prog_lang=language)
 
 @app.command("pull", help="Perform git pull in many repos using threads")
 def class_pull(
