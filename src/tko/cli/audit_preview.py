@@ -8,47 +8,69 @@ from argparse import ArgumentParser
 from datetime import datetime
 from pathlib import Path
 from shutil import which
+from tko.logger.patch_history import PatchHistory
+from tko.logger.versions_writer import VersionsWriter
 
-
-def _sanitize_filename(text: str) -> str:
+def sanitize_filename(text: str) -> str:
     text = text.replace("/", "-").replace(":", "-").replace(" ", "_")
     return re.sub(r"[^A-Za-z0-9_.-]", "_", text)
 
+def build_output_path(folder: Path, index: int, label: str, filename: str) -> Path:
+    sanitized_filename = sanitize_filename(filename)
+    return folder / f"{index:04d}_{label}_{sanitized_filename}"
 
-def _materialize_audit_history(jsonl_file: Path, output_dir: Path) -> list[Path]:
-    from tko.logger.versions_writer import VersionsWriter
+def unpack_patch_history(index: int, json_file: Path, output_dir: Path) -> tuple[int, list[Path]]:
+    patches = PatchHistory().set_json_file(json_file).load_json().restore_all()
+    stem = sanitize_filename(json_file.stem)
+    files: list[Path] = []
+    for i, patch in enumerate(patches, start=1):
+        label = sanitize_filename(patch.label)
+        output_file = build_output_path(output_dir, index + i, label, stem)
+        output_file.write_text(patch.content, encoding="utf-8")
+        files.append(output_file)
+    return index + len(patches), files
 
-    stem = _sanitize_filename(f"{jsonl_file.parent.name}_{jsonl_file.stem}")
+
+def unpack_audit_jsonl(index: int, jsonl_file: Path, output_dir: Path) -> tuple[int, list[Path]]:
+    stem = sanitize_filename(jsonl_file.stem)
+    snapshots = VersionsWriter().load_history(jsonl_file).snapshots
+    files: list[Path] = []
+
+    for i, snapshot in enumerate(snapshots, start=1):
+        label = sanitize_filename(snapshot.timestamp.strftime("%Y-%m-%d_%H-%M-%S"))
+        output_file = build_output_path(output_dir, index + i, label, stem)
+        output_file.write_text(snapshot.content, encoding="utf-8")
+        files.append(output_file)
+    return index + len(snapshots), files
+
+def _materialize_audit_history(index: int, jsonl_file: Path, output_dir: Path) -> tuple[int, list[Path]]:
+    jsonl_file = jsonl_file.resolve()
+    stem = sanitize_filename(f"{jsonl_file.stem}")
     history_dir = output_dir / stem
     history_dir.mkdir(parents=True, exist_ok=True)
     snapshots = VersionsWriter().load_history(jsonl_file).snapshots
     files: list[Path] = []
-
-    for index, snapshot in enumerate(snapshots, start=1):
-        label = _sanitize_filename(snapshot.timestamp.strftime("%Y-%m-%d_%H-%M-%S"))
-        output_file = history_dir / f"{index:04d}_{label}_{stem}"
+    for i, snapshot in enumerate(snapshots, start=1):
+        label = sanitize_filename(snapshot.timestamp.strftime("%Y-%m-%d_%H-%M-%S"))
+        output_file = build_output_path(history_dir, index + i, label, stem)
         output_file.write_text(snapshot.content, encoding="utf-8")
         files.append(output_file)
-
-    return files
+    return index + len(snapshots), files
 
 
 def _collect_preview_files(source_paths: list[Path], output_dir: Path) -> list[Path]:
-    files: list[Path] = []
+    file_list: list[Path] = []
+    index = 0
     for source_path in source_paths:
-        if source_path.is_dir():
-            audit_files = sorted(source_path.rglob("*.jsonl"))
-            if audit_files:
-                for audit_file in audit_files:
-                    files.extend(_materialize_audit_history(audit_file, output_dir))
-            else:
-                files.extend(path for path in source_path.rglob("*") if path.is_file())
-        elif source_path.is_file() and source_path.suffix == ".jsonl":
-            files.extend(_materialize_audit_history(source_path, output_dir))
+        if source_path.is_file() and source_path.suffix == ".jsonl":
+            index, files = _materialize_audit_history(index, source_path, output_dir)
+            file_list.extend(files)
+        elif source_path.is_file() and source_path.suffix == ".json":
+            index, files = unpack_patch_history(index, source_path, output_dir)
+            file_list.extend(files)
         elif source_path.is_file():
-            files.append(source_path)
-
-    return sorted(files)
+            file_list.append(source_path)
+    return sorted(file_list)
 
 
 def _build_preview_index(source_paths: list[Path], index_file: Path, output_dir: Path) -> list[Path]:
@@ -71,7 +93,7 @@ def _preview_command(index_file: Path, mode: str) -> str:
         "-m",
         "tko.cli.audit_preview",
         "--index-file",
-        str(index_file),
+        index_file.as_posix(),
     ]
     return f"{shlex.join(base_args)} --preview-index {{1}} --mode {shlex.quote(mode)}"
 
@@ -145,7 +167,7 @@ def _render_file(path: Path, preview_cols: int) -> str:
                 "--color=always",
                 "--tabs=4",
                 f"--terminal-width={preview_cols}",
-                str(path),
+                path.as_posix(),
             ]
         )
         return "\n".join(output.splitlines()[3:])
@@ -160,8 +182,8 @@ def _render_diff(previous: Path, current: Path, mode: str, preview_cols: int) ->
             "diff",
             "--no-index",
             *_context_args(mode),
-            str(previous),
-            str(current),
+            previous.as_posix(),
+            current.as_posix(),
         ]
     )
 

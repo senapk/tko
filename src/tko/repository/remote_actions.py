@@ -137,6 +137,7 @@ class RemoteActions:
             )
         if ok:
             RepositoryLoader(self.repo).save()
+        return ok
 
     def remote_add_splitted( self, name: str, remote_default: str | None, remote_file: str | None, remote_url: str | None, writeable: bool = False ) -> bool:
         remotes = self.repo.remotes

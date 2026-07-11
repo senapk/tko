@@ -1,4 +1,3 @@
-import re
 import tempfile
 import time
 from pathlib import Path
@@ -6,9 +5,7 @@ from pathlib import Path
 import typer
 
 from tko.config.settings import Settings
-from tko.cli.audit_preview import render_audit_preview, run_audit_preview
-from tko.logger.patch_history import PatchHistory
-from tko.logger.versions_writer import VersionsWriter
+from tko.cli.audit_preview import render_audit_preview, run_audit_preview, unpack_patch_history, unpack_audit_jsonl
 from loguru import logger
 from tko.i18n import Msg
 from tko.util.console import Console
@@ -29,31 +26,6 @@ _AUDIT_PERSISTENT_STATUS = Msg.parse(
 )
 
 
-def _sanitize_filename(text: str) -> str:
-    text = text.replace("/", "-").replace(":", "-").replace(" ", "_")
-    return re.sub(r"[^A-Za-z0-9_.-]", "_", text)
-
-
-def _unpack_patch_history(json_file: Path, output_dir: Path) -> int:
-    patches = PatchHistory().set_json_file(json_file).load_json().restore_all()
-    stem = _sanitize_filename(json_file.stem)
-    for index, patch in enumerate(patches, start=1):
-        label = _sanitize_filename(patch.label)
-        output_file = output_dir / f"{index:04d}_{label}_{stem}"
-        output_file.write_text(patch.content, encoding="utf-8")
-    return len(patches)
-
-
-def _unpack_audit_jsonl(jsonl_file: Path, output_dir: Path) -> int:
-    stem = _sanitize_filename(jsonl_file.stem)
-    snapshots = VersionsWriter().load_history(jsonl_file).snapshots
-
-    for index, snapshot in enumerate(snapshots, start=1):
-        label = _sanitize_filename(snapshot.timestamp.strftime("%Y-%m-%d_%H-%M-%S"))
-        output_file = output_dir / f"{index:04d}_{label}_{stem}"
-        output_file.write_text(snapshot.content, encoding="utf-8")
-
-    return len(snapshots)
 
 
 @app.command("set", help="Enable or disable persistent audit in the repository")
@@ -155,9 +127,9 @@ def audit_unpack(
     output_dir = Path(tempfile.mkdtemp(prefix="tko-audit-unpack-"))
 
     if source_file.suffix == ".json":
-        count = _unpack_patch_history(source_file, output_dir)
+        count, _ = unpack_patch_history(0, source_file, output_dir)
     elif source_file.suffix == ".jsonl":
-        count = _unpack_audit_jsonl(source_file, output_dir)
+        count, _ = unpack_audit_jsonl(0, source_file, output_dir)
     else:
         raise typer.BadParameter("Expected a .json or .jsonl file")
 
