@@ -1,3 +1,5 @@
+from typing import Callable
+from tko.cli.audit_preview import run_audit_preview
 from loguru import logger
 import os
 import subprocess
@@ -11,7 +13,6 @@ from tko.play_tree.task_tree import TaskTree
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
 from tko.play.opener import Opener
-from tko.logger.tracker import Tracker
 from tko.i18n import Msg
 from pathlib import Path
 
@@ -105,28 +106,19 @@ class TaskEditorService:
                 .set_error().set_countdown(Floating.Time.FAST)
             )
 
-    def open_versions(self):
+    def open_versions(self) -> Callable[[], None]:
+        def run(files: list[Path]) -> None:
+            run_audit_preview(files)
+
         try:
             obj = self.tree.get_selected_throw()
             if isinstance(obj, Task):
                 task: Task = obj
                 track_folder = self.repo.paths.get_track_task_folder(task.basic.full_key)
-                tracker = Tracker()
-                tracker.set_folder(track_folder)
-                if task.basic.full_key in self.repo.logger.tasks.task_dict:
-                    log_sort = self.repo.logger.tasks.task_dict[task.basic.full_key]
-                    msg, folder = tracker.unfold_files(log_sort)
-                    cmd = self.settings.app.editor
-                    fullcmd = "{} {}".format(cmd, folder)
-                    outfile = tempfile.NamedTemporaryFile(delete=False)
-                    subprocess.Popen(fullcmd, stdout=outfile, stderr=outfile, shell=True)
-                    self.fman.add_floating(
-                        Floating().bottom().right()
-                        .put_text(f"\n{str(_TaskEditorMsg.VERSIONS_DECOMPRESSED)}")
-                        .put_text(msg)
-                        .put_text(f"{str(_TaskEditorMsg.VERSIONS_OPENING).format(cmd=fullcmd)}\n")
-                    )
+                files = [file for file in track_folder.iterdir() if file.is_file() and file.suffix in (".json", ".jsonl")]
+                return lambda: run(files)
         except IndexError:
             pass
         except Exception:
             pass
+        return lambda: None

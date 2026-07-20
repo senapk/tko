@@ -7,7 +7,6 @@ class TaskGame:
     def __init__(self):
         self.default_min_value: int = 5 # default min grade to complete task
         self._xp: int = 1
-        self._quest_factor: float = 1.0
         self._tier: int = 1
         self.skill: str | None = None
         self.is_reachable: bool = False
@@ -17,7 +16,6 @@ class TaskGame:
         new_task.skill = self.skill
         new_task._xp = self._xp
         new_task._tier = self._tier
-        new_task._quest_factor = self._quest_factor
         new_task.is_reachable = self.is_reachable
         return new_task
 
@@ -54,19 +52,8 @@ class TaskGame:
     def xp(self) -> int:
         if self._xp == 0:
             return 1
-        return round(self._quest_factor * self._xp)
+        return round(self._xp)
     
-    @property
-    def factor(self) -> float:
-        if self._quest_factor == 0:
-            return 1.0
-        return self._quest_factor
-    
-    @factor.setter
-    def factor(self, value: float):
-        if value < 0:
-            value = 1.0
-        self._quest_factor = value
 
     @xp.setter
     def xp(self, value: int):

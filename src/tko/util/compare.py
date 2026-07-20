@@ -8,7 +8,7 @@ import os
 
 class Compare:
     @staticmethod
-    def load_and_save(filename: str, received: str):
+    def load_and_save(filename: str, received: str) -> tuple[str, str]:
         folder = "compare"
         if not os.path.isdir(folder):
             os.mkdir(folder)

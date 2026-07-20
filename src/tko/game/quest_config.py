@@ -8,7 +8,6 @@ class QuestGame:
         self._threshold: int = self.DEFAULT_MIN
         self.goal_xp: int = 0
         self.skill: str | None = None
-        self.factor: float = 1.0
         self.languages: set[str] = set()
         self.active: bool = True
 

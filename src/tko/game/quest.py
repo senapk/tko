@@ -43,7 +43,6 @@ class Quest:
 
     def add_task(self, task: Task):
         task.game.skill = self.game.skill
-        task.game.factor = self.game.factor
         self.__tasks.append(task)
 
     def get_tasks(self):

@@ -13,7 +13,6 @@ def test_rebase_rewrites_image_file_and_folder_links() -> None:
         repo="repo",
         branch="main",
         relative_path="docs",
-        path_type="tree",
     )
 
     content = "![img](pic.png)\n[folder](sub/)\n[file](readme.md)"

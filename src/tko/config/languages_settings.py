@@ -105,7 +105,7 @@ class LanguagesSettings:
         try:
             content = Decoder.load(self.path)
             if content.strip() == "":
-                raise Exception(str(_CONFIG_LANG_EMPTY))
+                return self
             data = tomllib.loads(content)
             for lang_ext, settings in data.items():
                 self.lang_settings[lang_ext] = LanguageSetup(

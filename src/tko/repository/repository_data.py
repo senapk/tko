@@ -77,6 +77,11 @@ class RepositoryData:
 
     def get_remote(self, name: str) -> Remote | None:
         return self.__remotes.get(name, None)
+    
+    def set_sandbox_target(self, target: str) -> None:
+        sandbox_remote = self.get_sandbox()
+        sandbox_remote = replace(sandbox_remote, path_or_url=target)
+        self.set_remote(sandbox_remote)
 
     def get_sandbox(self) -> Remote:
         remote = self.__remotes.get(Sandbox.get_sandbox_name(), None)

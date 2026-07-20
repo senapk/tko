@@ -1,3 +1,5 @@
+from typing import Callable
+
 from tko.game.game import Game
 from tko.repository.repository_watcher import RepositoryWatcher
 from tko.widget.fmt import Fmt
@@ -97,7 +99,7 @@ class Play:
         self.gui.xray_offset = 0
         self.tree.move_right()
 
-    def activate(self):
+    def activate(self) -> Callable[[], None]:
         self.gui.xray_offset = 0
         return self.actions.launcher.select_task()
 
@@ -119,7 +121,7 @@ class Play:
         cman.add_int(curses.KEY_PPAGE, self.page_up)
 
         cman.add_str(GuiKeys.calibrate, lambda: self.fman.add_floating(FloatingCalibrate(self.settings)))
-        cman.add_str(GuiKeys.activate, self.activate) # type: ignore
+        cman.add_str(GuiKeys.activate, self.activate)
         # cman.add_str(GuiKeys.open_url, self.actions.open_link)
         cman.add_str(GuiKeys.down_task, self.actions.downloader.down_remote_task)
         cman.add_str(GuiKeys.images, lambda: self.app.toggle(ToggleOption.IMAGES))

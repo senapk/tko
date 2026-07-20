@@ -24,12 +24,12 @@ class InputManager:
         # stores a function than can return another function
         self.calls: dict[int, Callable[[], FN_VOID] | Callable[[], None]] = {}
 
-    def add_int(self, _key: int, fn: Callable[[], None]):
+    def add_int(self, _key: int, fn: Callable[[], None] | Callable[[], FN_VOID]):
         if _key in self.calls.keys():
             raise ValueError(str(_INPUT_DUPLICATE_KEY).format(input_key=chr(_key)))
         self.calls[_key] = fn
 
-    def add_str(self, str_key: str, fn: Callable[[], None]):
+    def add_str(self, str_key: str, fn: Callable[[], None] | Callable[[], FN_VOID]):
         if str_key != "":
             self.add_int(ord(str_key), fn)
 

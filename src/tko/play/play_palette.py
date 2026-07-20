@@ -124,7 +124,7 @@ class PlayPalette:
         options.append(
             FloatingInputData(
                 lambda: _PaletteMsg.VERSIONS.t().format(symbol=Symbols.action),
-                self.actions.editor.open_versions,
+                self.actions.editor.open_versions(),
                 GuiKeys.unfold_patch
             ).set_exit_on_action(True)
         )

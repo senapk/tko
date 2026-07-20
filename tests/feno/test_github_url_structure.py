@@ -20,7 +20,6 @@ def test_structure_builds_repository_github_and_raw_urls() -> None:
         repo="repo",
         branch="main",
         relative_path="folder/file.md",
-        path_type="blob",
     )
 
     assert structure.repository_url == "https://github.com/user/repo"
@@ -77,7 +76,6 @@ def test_parse_accepts_github_blob_and_tree_urls(
     assert structure.repo == "repo"
     assert structure.branch == "main"
     assert structure.relative_path == relative_path
-    assert structure.path_type == path_type
     assert structure.blob_url == github_url
 
 
@@ -100,7 +98,6 @@ def test_structure_with_path_without_branch_stays_at_repository_url() -> None:
         user="user",
         repo="repo",
         relative_path="folder/file.md",
-        path_type="blob",
     )
 
     assert structure.blob_url == "https://github.com/user/repo"
@@ -127,7 +124,6 @@ def test_parse_accepts_raw_githubusercontent_refs_heads_url() -> None:
     assert structure.repo == "repo"
     assert structure.branch == "main"
     assert structure.relative_path == "folder/file.md"
-    assert structure.path_type == "blob"
 
 
 def test_parse_accepts_raw_githubusercontent_url_without_refs_heads() -> None:
@@ -149,18 +145,6 @@ def test_parse_ignores_query_and_fragment() -> None:
     assert structure is not None
     assert structure.relative_path == "folder/file.md"
 
-
-def test_with_relative_path_returns_new_structure() -> None:
-    structure = GitHubUrl(user="user", repo="repo", branch="main")
-
-    updated = structure.with_relative_path("docs/readme.md", "blob")
-
-    assert structure.relative_path == ""
-    assert updated.relative_path == "docs/readme.md"
-    assert updated.path_type == "blob"
-    assert updated.raw_base_url == "https://raw.githubusercontent.com/user/repo/main/docs"
-    assert updated.github_blob_base_url == "https://github.com/user/repo/blob/main/docs"
-    assert updated.github_tree_base_url == "https://github.com/user/repo/tree/main/docs"
 
 
 @pytest.mark.parametrize(

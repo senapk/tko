@@ -92,7 +92,7 @@ class RepositoryStarter:
             if not self.validate_path():
                 return False
         git_cache = GitCache(cache_dir=UserData.global_cache_dir(), update_mode=self.settings.rs.update_mode)
-        repo = Repository(self.folder, self.settings.rs, git_cache=git_cache)        
+        repo = Repository(self.folder, self.settings.rs, git_cache=git_cache)
         self.repo = repo
         self.language = LanguageSetter.check_prog_lang_in_text_mode(self.settings, self.repo, selected=self.language)
         Console.print(_REPO_STARTER_LANGUAGE_SET.t().format(language=self.language))
@@ -108,27 +108,27 @@ class RepositoryStarter:
         Console.print(_REPO_ASK_DEFAULT_REMOTES, end="")
         answer = input().lower()
         if answer == "n":
-            Console.print(_REPO_NONE_ADDED.t().format(cmd="[.y] tko remote add LABEL URL"))
+            Console.print(_REPO_NONE_ADDED.t().format(cmd="tko remote add LABEL URL"))
             return
         Console.print(_REPO_ASK_DEFAULT_REMOTES_FUP.t())
         Console.print(_REPO_ASK_DEFAULT_REMOTES_POO.t())
         Console.print(_REPO_ASK_DEFAULT_REMOTES_ED.t())
 
         options = ["fup", "poo", "ed", "none"]
-        while True: 
+        while True:
             Console.print(_WITCH_REPO.t().format(options=", ".join(options)), end="")
             op = input().lower()
             if op in options:
                 if op != "none":
                     self.add_remote(op)
-                return 
+                return
 
     def add_remote(self, target: str):
         from tko.repository.remote_actions import RemoteActions
         rep_actions = RemoteActions(self.settings, self.repo)
         rep_actions.remote_add_splitted(name=target, remote_default=target, remote_file=None, remote_url=None, writeable=False)
 
-    
+
     def validate_path(self) -> bool:
         path_parents = RepositoryPaths.rec_search_for_repo_parents(self.folder)
 

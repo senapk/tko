@@ -3,9 +3,8 @@ from tko.game.quest import Quest
 
 class QuestMatcher:
     KEY = "key="
-    SKILLS = "skills="
+    TAG = "tag="
     REQUIRES = "deps="
-    FACTOR = "factor="
     GOAL = "xpgoal="
     MIN = "min="
     LANG = "lang="
@@ -27,22 +26,11 @@ class QuestMatcher:
             self.quest.basic.key = keys[0]
 
     def _process_skills(self, words: list[str]):
-        tags = [w[len(QuestMatcher.SKILLS):] for w in words if w.startswith(QuestMatcher.SKILLS)]
+        tags = [w[len(QuestMatcher.TAG):] for w in words if w.startswith(QuestMatcher.TAG)]
         if tags:
             for t in tags:
                 for x in t.split(","):
                     self.quest.game.skill = x
-        else:
-            # skills antigos (+skill)
-            skills_legacy = [t[1:] for t in words if t[0] == "+"]
-            for sk in skills_legacy:
-                if ":" in sk:
-                    skill_name, skill_value = sk.split(":", 1)
-                    try:
-                        self.quest.game.factor = int(skill_value)
-                    except ValueError:
-                        self.warnings.append(f"Valor de skill inválido para {skill_name} na linha {self.quest.source.line_number} do arquivo {self.quest.source.file}: {skill_value}. Usando valor 1.")
-                    self.quest.game.skill = skill_name
 
         if not self.quest.game.skill and self.quest.basic.key:
             self.quest.game.skill = self.quest.basic.key
@@ -57,16 +45,6 @@ class QuestMatcher:
         required_legacy = [t[1:] for t in words if t[0] == "!"]
         for req_key in required_legacy:
             self.quest.requirements.add_require_key(self.quest.basic.remote_name, req_key)
-
-    def _process_factor(self, words: list[str]):
-        # factor (novo formato)
-        for w in words:
-            if w.startswith(QuestMatcher.FACTOR):
-                try:
-                    multiplier = float(w[len(QuestMatcher.FACTOR):])
-                    self.quest.game.factor = multiplier
-                except Exception:
-                    self.warnings.append(f"Valor de factor inválido na linha {self.quest.source.line_number} do arquivo {self.quest.source.file}: {w[len(QuestMatcher.FACTOR):]}. Ignorando factor.")
 
     def _process_goal(self, words: list[str]):
         for w in words:
@@ -130,7 +108,6 @@ class QuestMatcher:
         self._process_key(words)
         self._process_skills(words)
         self._process_deps(words)
-        self._process_factor(words)
         self._process_goal(words)
         self._process_min(words)
         self._process_languages(words)
@@ -141,8 +118,8 @@ class QuestMatcher:
         # Remove campos já processados para título
         def is_field(w: str) -> bool:
             return (
-                w.startswith(QuestMatcher.KEY) or w.startswith(QuestMatcher.SKILLS) or w.startswith(QuestMatcher.REQUIRES) or
-                w.startswith(QuestMatcher.FACTOR) or w.startswith(QuestMatcher.GOAL) or w.startswith(QuestMatcher.MIN) or
+                w.startswith(QuestMatcher.KEY) or w.startswith(QuestMatcher.TAG) or w.startswith(QuestMatcher.REQUIRES) or
+                w.startswith(QuestMatcher.GOAL) or w.startswith(QuestMatcher.MIN) or
                 w.startswith(QuestMatcher.ACTIVE) or w.startswith(QuestMatcher.LANG) or (w[0] in ["@", "%", "=", "+", "!"])
             )
         words_title = [w for w in words if not is_field(w)]
@@ -157,11 +134,7 @@ class QuestMatcher:
         else:
             output.append(f"{QuestMatcher.REQUIRES}none")
         if quest.game.skill and quest.game.skill != quest.basic.key:
-            output.append(f"{QuestMatcher.SKILLS}{quest.game.skill}")
-        factor: int | float = quest.game.factor
-        if int(factor) == factor:
-            factor = int(factor)
-        output.append(f"{QuestMatcher.FACTOR}{factor}")
+            output.append(f"{QuestMatcher.TAG}{quest.game.skill}")
         output.append(f"{QuestMatcher.GOAL}{quest.game.goal_xp}")
         threshold = quest.game.threshold
         if threshold != quest.game.DEFAULT_MIN:

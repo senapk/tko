@@ -70,7 +70,6 @@ def remote_set(
     ctx: typer.Context,
     name: str = typer.Argument(..., help="Name of the remote"),
     target: Optional[str] = typer.Option(None, "--target", "-t", help="Set a new target for the remote source"),
-    index: Optional[str] = typer.Option(None, "--index", "-i", help="Set a new index for the remote source"),
 ):
     settings: Settings = ctx.obj
     repo, _ = load_repo(settings.rs)
