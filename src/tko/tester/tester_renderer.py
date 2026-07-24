@@ -69,7 +69,7 @@ class TesterRenderer:
     def get_folder(self, task: Task) -> Path:
         if self.repo is None:
             return Path(".")
-        folder = self.repo.task_resolver.work_dir(task)
+        folder = self.repo.task_resolver.target_folder(task)
         if folder is None:
             return Path(".")
         return folder

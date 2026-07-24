@@ -75,7 +75,7 @@ class Repository:
 
     @property
     def remotes(self) -> dict[str, Remote]:
-        return self.data.get_remotes
+        return self.data.get_remotes()
 
     @property
     def root_dir(self) -> Path:
@@ -86,7 +86,7 @@ class Repository:
         for t in self.game.tasks.values():
             if t.location.is_read:
                 continue
-            work_dir = self.task_resolver.work_dir(t)
+            work_dir = self.task_resolver.target_folder(t)
             if work_dir is None:
                 continue
             if folder.is_relative_to(work_dir):

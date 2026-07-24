@@ -15,7 +15,13 @@ class TaskResolver:
     def __remote_work_dir(self, task: Task) -> Path:
         return self.remote_root_dir / task.basic.remote_name / task.basic.key
 
-    def work_dir(self, task: Task) -> Path | None:
+    def target_folder(self, task: Task) -> Path | None:
+        file = self.target_file(task)
+        if file is None:
+            return None
+        return file.parent
+
+    def target_file(self, task: Task) -> Path | None:
         loc = task.location
 
         match (loc.task_type):
@@ -26,7 +32,7 @@ class TaskResolver:
             case TaskType.MAKE:        
                 # if is git url, is import type
                 if loc.remote_import or loc.is_task_from_git:
-                    return self.__remote_work_dir(task)
+                    return self.__remote_work_dir(task) / "README.md"
                 else:
                     return self.__calc_origin_file(loc)
 

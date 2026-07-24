@@ -42,7 +42,8 @@ class RepositoryData:
     def __init__(self, root_folder: Path):
         self.root_folder: Path = root_folder
         self.version: str = ""
-        self.sandbox_dir: str = ""
+        self.__sandbox_dir: str = "sandbox"
+        self.__sandbox_index: str = "sandbox.md"
         self.__remotes: dict[str, Remote] = {}
         self.expanded: list[str] = []
         self.flags: dict[str, Any] = {}
@@ -50,6 +51,22 @@ class RepositoryData:
         self.lang: str = ""
         self.selected: str = ""
         self.selected_index: int = 0
+
+    @property
+    def sandbox_dir(self) -> Path:
+        return (self.root_folder / self.__sandbox_dir).resolve()
+
+    @sandbox_dir.setter
+    def sandbox_dir(self, value: str) -> None:
+        self.__sandbox_dir = value
+
+    @property
+    def sandbox_index_file(self) -> Path:
+        return (self.root_folder / self.__sandbox_index).resolve()
+
+    @sandbox_index_file.setter
+    def sandbox_index_file(self, value: str) -> None:
+        self.__sandbox_index = value
 
     @property
     def audit_enabled(self) -> bool:
@@ -68,6 +85,8 @@ class RepositoryData:
         self.audit.interval_seconds = value
 
     def set_remote(self, remote: Remote) -> None:
+        if remote.name == Sandbox.get_sandbox_name():
+            raise ValueError("Cannot set a remote with the name of the sandbox source.")
         if remote.is_local_source:
             if not Path(remote.path_or_url).is_absolute():
                 remote = replace(remote, path_or_url=Path(self.root_folder, remote.path_or_url).resolve().as_posix())
@@ -77,38 +96,18 @@ class RepositoryData:
 
     def get_remote(self, name: str) -> Remote | None:
         return self.__remotes.get(name, None)
-    
-    def set_sandbox_target(self, target: str) -> None:
-        sandbox_remote = self.get_sandbox()
-        sandbox_remote = replace(sandbox_remote, path_or_url=target)
-        self.set_remote(sandbox_remote)
 
     def get_sandbox(self) -> Remote:
-        remote = self.__remotes.get(Sandbox.get_sandbox_name(), None)
-        if remote is not None:
-            return remote
-        return self.__ensure_sandbox_source()
-
-    def __ensure_sandbox_source(self) -> Remote:
-        if Sandbox.get_sandbox_name() in self.__remotes:
-            return self.__remotes[Sandbox.get_sandbox_name()]
-        sandbox_remote = Sandbox.create_default_sandbox_remote()
-        self.__remotes[sandbox_remote.name] = sandbox_remote
-        return sandbox_remote
+        return Remote.from_local_file(Sandbox.get_sandbox_name(), (self.root_folder / self.__sandbox_index).resolve(), is_editable=True)
 
     # fonte local é retornada primeiro para garantir que ela seja priorizada em relação a fontes externas
     # sandbox é sempre a primeira fonte local, para garantir que ela seja priorizada em relação a outras fontes locais
-    @property
     def get_remotes(self) -> dict[str, Remote]:
-        self.__ensure_sandbox_source()
-        external_sources: dict[str, Remote] = {}
-        sandbox_source: dict[str, Remote] = {}
+        output: dict[str, Remote] = {}
+        output[Sandbox.get_sandbox_name()] = self.get_sandbox()
         for s in self.__remotes.values():
-            if Sandbox.is_sandbox(s):
-                sandbox_source[s.name] = s
-            else:
-                external_sources[s.name] = s
-        return {**sandbox_source, **external_sources}
+            output[s.name] = s
+        return output
 
     def _safe_load(self, data: dict[str, Any], key: str, target_type: type, default_value: Any = None):
         """Helper method to safely load a value from a dictionary."""
@@ -121,6 +120,8 @@ class RepositoryData:
             # Load simple fields
             self.version = self._safe_load(data, "version", str, self.version)
             self.expanded = self._safe_load(data, "expanded", list, self.expanded)
+            self.__sandbox_dir = self._safe_load(data, "sandbox_dir", str, self.__sandbox_dir)
+            self.__sandbox_index = self._safe_load(data, "sandbox_index", str, self.__sandbox_index)
             # self.tasks = self._safe_load(data, "tasks", dict, self.tasks)
             self.flags = self._safe_load(data, "flags", dict, self.flags)
             audit_data = self._safe_load(data, "audit", dict, None)
@@ -137,6 +138,8 @@ class RepositoryData:
                     remotes = [Remote.from_dict(x) for x in source_data]
                     self.__remotes.clear()
                     for r in remotes:
+                        if r.name == Sandbox.get_sandbox_name():
+                            continue
                         self.set_remote(r)
                 else:
                     raise TypeError("The 'sources' field must be a list.")
@@ -147,7 +150,9 @@ class RepositoryData:
     def to_dict(self) -> dict[str, Any]:
         return {
             "version": self.version,
-            "sources": [x.to_dict() for x in self.get_remotes.values()],
+            "sandbox_dir": self.__sandbox_dir,
+            "sandbox_index": self.__sandbox_index,
+            "sources": [x.to_dict() for x in self.get_remotes().values()],
             "expanded": self.expanded,
             "flags": self.flags,
             "audit": self.audit.to_dict(),

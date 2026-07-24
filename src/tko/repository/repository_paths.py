@@ -43,10 +43,6 @@ class RepositoryPaths:
         return None
     
     @property
-    def sandbox_folder(self) -> Path:
-        return self.root_dir / self._data_fn().sandbox_dir
-
-    @property
     def track_folder(self) -> Path:
         return self.root_dir / RepositoryPaths.CONFIG_FOLDER / RepositoryPaths.TRACK_FOLDER
 

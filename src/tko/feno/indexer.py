@@ -151,6 +151,8 @@ class Finder:
 
     def _get_folder_keys(self) -> set[str]:
         keys: set[str] = set()
+        if not self.base_dir.exists():
+            return keys
         for path in self.base_dir.iterdir():
             if path.is_dir():
                 readme = (path / 'README.md').resolve()

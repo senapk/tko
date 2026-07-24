@@ -68,7 +68,7 @@ class PlayActions:
         self.tree.recalculate_layout()
 
     def get_task_folder(self, task: Task) -> Path:
-        work_dir = self.repo.task_resolver.work_dir(task)
+        work_dir = self.repo.task_resolver.target_folder(task)
         if work_dir is None:
             return Path("")
         return work_dir

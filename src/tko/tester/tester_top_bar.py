@@ -46,7 +46,7 @@ class TesterTopBar:
         running_color  = "R"
         folder = Path()
         if self.repo is not None:
-            folder   = self.repo.task_resolver.work_dir(self.task)
+            folder   = self.repo.task_resolver.target_folder(self.task)
         if folder is None:
             folder = Path()
         activity = Button.info_label(folder.name)

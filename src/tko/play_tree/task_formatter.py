@@ -14,13 +14,13 @@ class TaskFormatter:
         self.repo = repo
 
     def is_downloaded(self, task: Task) -> bool:
-        folder = self.repo.task_resolver.work_dir(task)
+        folder = self.repo.task_resolver.target_folder(task)
         if folder is None:
             return False
         return folder.exists()
 
     def is_downloaded_for_lang(self, task: Task):
-        folder = self.repo.task_resolver.work_dir(task)
+        folder = self.repo.task_resolver.target_folder(task)
         if folder is None:
             return False
 
