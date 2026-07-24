@@ -3,6 +3,9 @@ import subprocess
 import os
 from subprocess import PIPE
 
+from tko.util.console import Console
+from tko.util.rt import RT
+
 
 class Runner:
     def __init__(self):
@@ -40,7 +43,5 @@ class Runner:
 
     @staticmethod
     def clear_screen():
-        if os.name == 'nt':
-            os.system('cls')
-        else:
-            os.system('clear')
+        Console.stdout.write(RT("\033[2J\033[H"), end="")
+        Console.stdout.flush()

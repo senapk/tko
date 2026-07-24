@@ -53,17 +53,17 @@ def test_task_folder_helpers_handle_prefixed_and_plain_labels(tmp_path: Path) ->
     assert repo.is_task_folder(tmp_path / "task1") is True
 
 
-def test_create_default_sandbox_source_binds_workspace_and_cache(tmp_path: Path) -> None:
+def test_sandbox_remote_resolves_against_workspace(tmp_path: Path) -> None:
     repo = Repository(tmp_path, make_run_settings(tmp_path), git_cache=None, recursive_search=False)
 
-    source = repo.create_default_sandbox_source()
-    source.git_cache = repo.git_cache
-    source.root_dir = repo.root_dir
+    remote = repo.data.get_sandbox()
+    index_file, found = repo.remote_resolver.resolve_index_file(remote, load_git=False)
 
-    assert source.is_sandbox is True
-    assert source.data.name == "sandbox"
-    assert source.data.target == "sandbox"
-    assert source.path.work_dir == (tmp_path / "sandbox").resolve()
+    assert remote.name == "sandbox"
+    assert remote.path_or_url == "sandbox.md"
+    assert remote.is_editable is True
+    assert index_file == (tmp_path / "sandbox.md").resolve()
+    assert found is False
 
 
 def test_repository_uses_global_cache_when_local_cache_is_disabled(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:

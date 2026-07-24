@@ -1,5 +1,6 @@
 # from typing import override
 import urllib.request
+from tko.util.console import Console
 from tko.util.git_hub_url import GitHubUrl
 from tko.feno.link_rebase import LinkRebase
 from tko.i18n import Msg
@@ -39,6 +40,15 @@ class GitHubUrlDownloader:
         if self.url_structure is None:
             return ""
         return self.url_structure.raw_file_url
+
+    def download(self, filename: str) -> str | None:
+        try:
+            [tempfile, __content] = urllib.request.urlretrieve(self.fixed_url, filename)
+        except Exception as e:
+            Console.print(f"Failed to download {self.fixed_url}: {e}")
+            return None
+        content = Decoder.load(tempfile)
+        return content
 
     def download_and_rebase(self, filename: str):
         [tempfile, __content] = urllib.request.urlretrieve(self.fixed_url, filename)

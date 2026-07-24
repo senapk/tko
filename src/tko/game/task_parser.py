@@ -109,7 +109,7 @@ class TaskParser:
             line_number=line_num,
             line_data=line,
             task_type=tm.resource_type,
-            git_hub_url=GitHubUrl.parse(task.location.raw_link),
+            git_hub_url=GitHubUrl.parse(tm.link),
             remote_import=self.remote_import
         )
 

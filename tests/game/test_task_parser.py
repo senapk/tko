@@ -1,171 +1,118 @@
-import os
 from pathlib import Path
-
-from tko.game.task_enums import TaskEval
+from tko.game.task_enums import TaskEval, TaskLoss, TaskType
 from tko.game.task_parser import TaskParser
-from tko.game.task_enums import TaskLoss
-from tko.game.task_enums import TaskType
-from tko.repository.git_cache import GitCache
-
-class Test:
-    @classmethod
-    def setup_method(cls):
-        os.chdir(Path(__file__).parent)
-
-    def test_database_legacy(self):
-        tp = TaskParser(index_path=Path("/source/arquivo.md"), remote_dir_root=Path("/source"), remote_name="database")
-        task = tp.parse_line("- [ ] [@label complemente](data/label/r.md)", 0)
-        assert task is not None
-        assert task.basic.key == "label"
-        assert task.basic.remote_name == "database"
-        assert task.basic.full_key == "database@label"
-        assert task.location.raw_link == "data/label/r.md"
-        assert task.location.remote_dir == Path("/source")
-        assert task.location.relative_path == Path("data/label/r.md")
-        assert task.location.task_type == TaskType.MAKE
-    
-    def test_database_poo(self):
-        tp = TaskParser(index_path=Path("/source/arquivo.md"), remote_dir_root=Path("/source"), remote_name="poo")
-        task = tp.parse_line("- [ ] [@label complemente](data/label/r.md)", 0)
-        assert task is not None
-        assert task.basic.key == "label"
-        assert task.basic.remote_name == "poo"
-        assert task.basic.full_key == "poo@label"
-        assert task.location.relative_path == Path("data/label/r.md")
-        assert task.location.raw_link == "data/label/r.md"
 
 
-    def test_STATIC_FILE(self):
-        tp = TaskParser(index_path=Path("/source/arquivo.md"), remote_dir_root=Path("/source"), remote_name="poo")
-        task = tp.parse_line("- [ ] [@label complemente](poo/label/r.md)", 0)
-        assert task is not None
-        assert task.basic.key == "label"
-        assert task.basic.remote_name == "poo"
-        assert task.basic.full_key == "poo@label"
-        assert task.location.relative_path == Path("poo/label/r.md")
-        assert task.location.raw_link == "poo/label/r.md"
+def make_parser(remote_import: bool = False) -> TaskParser:
+    return TaskParser(index_path=Path("/source/arquivo.md"), remote_import=remote_import)
 
-    def test_file_not_found(self):
-        task = (
-            TaskParser(index_path=(Path.cwd() / "arquivo.md"), remote_dir_root=Path.cwd(), remote_name="database")
-            .parse_line("- [ ] [@label complemente](database/label/f.md)", 0)
-        )
-        assert task is not None
-        task.root_dir = Path.cwd()
-        task.git_cache = GitCache(Path.cwd() / ".tko" / "cache_test")
-        assert task.path.check_origin_path() is False
 
-    def test_do_task_with_github_blob_url_is_parsed_and_redirected(self):
-        tp = TaskParser(
-            index_path=Path("/source/arquivo.md"),
-            remote_dir_root=Path("/source"),
-            remote_name="poo",
-            remote_git_url="https://github.com/local/repo",
-            editable_source=True,
-        )
+def test_parse_legacy_link_task() -> None:
+    task = make_parser().parse_line("- [ ] [@label complemente](data/label/r.md)", 0)
 
-        task = tp.parse_line(
-            "- [ ] [@label :do complemente](https://github.com/user/repo/blob/main/folder/file.md)",
-            7,
-        )
+    assert task is not None
+    assert task.basic.key == "label"
+    assert task.basic.full_key == "@label"
+    assert task.basic.title == "complemente"
+    assert task.location.raw_link == "data/label/r.md"
+    assert task.location.index_path == Path("/source/arquivo.md")
+    assert task.location.line_number == 0
+    assert task.location.task_type == TaskType.MAKE
+    assert task.location.git_hub_url is None
+    assert task.location.remote_import is False
 
-        assert task is not None
-        assert task.location.task_type == TaskType.MAKE
-        assert task.location.external_url is None
-        assert task.location.target == "https://github.com/user/repo"
-        assert task.location.remote_dir == Path("/source")
-        assert task.location.relative_path == Path("folder/file.md")
-        assert task.location.remote_import is False
 
-    def test_do_task_with_github_tree_url_is_parsed_and_redirected(self):
-        tp = TaskParser(
-            index_path=Path("/source/arquivo.md"),
-            remote_dir_root=Path("/source"),
-            remote_name="poo",
-            remote_git_url="https://github.com/local/repo",
-            editable_source=True,
-        )
+def test_parse_github_blob_url_sets_github_structure() -> None:
+    task = make_parser(remote_import=True).parse_line(
+        "- [ ] `@label type=make` [complemente](https://github.com/user/repo/blob/main/folder/file.md)",
+    )
 
-        task = tp.parse_line(
-            "- [ ] [@label :do complemente](https://github.com/user/repo/tree/main/folder/sub)",
-            8,
-        )
+    assert task is not None
+    assert task.location.task_type == TaskType.MAKE
+    assert task.location.is_task_from_git is True
+    assert task.location.is_import_type is True
+    assert task.location.remote_import is True
+    assert task.location.git_hub_url is not None
+    assert task.location.git_hub_url.repository_url == "https://github.com/user/repo"
+    assert task.location.git_hub_url.relative_path == "folder/file.md"
 
-        assert task is not None
-        assert task.location.task_type == TaskType.MAKE
-        assert task.location.external_url is None
-        assert task.location.target == "https://github.com/user/repo"
-        assert task.location.remote_dir == Path("/source")
-        assert task.location.relative_path == Path("folder/sub")
-        assert task.location.remote_import is False
 
-    def test_do_task_with_external_non_github_url_becomes_read(self):
-        tp = TaskParser(
-            index_path=Path("/source/arquivo.md"),
-            remote_dir_root=Path("/source"),
-            remote_name="poo",
-            remote_git_url="https://github.com/local/repo",
-            editable_source=True,
-        )
+def test_parse_github_tree_url_sets_github_structure() -> None:
+    task = make_parser().parse_line(
+        "- [ ] `@label type=make` [complemente](https://github.com/user/repo/tree/main/folder/sub)",
+    )
 
-        task = tp.parse_line(
-            "- [ ] [@label :do complemente](https://example.com/material)",
-            9,
-        )
+    assert task is not None
+    assert task.location.task_type == TaskType.MAKE
+    assert task.location.is_task_from_git is True
+    assert task.location.git_hub_url is not None
+    assert task.location.git_hub_url.repository_url == "https://github.com/user/repo"
+    assert task.location.git_hub_url.relative_path == "folder/sub"
 
-        assert task is not None
-        assert task.location.task_type == TaskType.READ
-        assert task.location.external_url == "https://example.com/material"
-        assert task.location.remote_import is False
 
-    def test_parse_line_returns_none_for_non_task_line(self):
-        tp = TaskParser(index_path=Path("/source/arquivo.md"), remote_dir_root=Path("/source"), remote_name="poo")
-        assert tp.parse_line("texto comum sem marcador", 1) is None
+def test_external_non_github_url_is_http_link_without_github_structure() -> None:
+    task = make_parser().parse_line(
+        "- [ ] `@label type=make` [complemente](https://example.com/material)",
+        9,
+    )
 
-    def test_parse_line_returns_none_when_key_is_missing(self):
-        tp = TaskParser(index_path=Path("/source/arquivo.md"), remote_dir_root=Path("/source"), remote_name="poo")
-        assert tp.parse_line("- [ ] [titulo sem chave](data/label/r.md)", 2) is None
+    assert task is not None
+    assert task.location.task_type == TaskType.MAKE
+    assert task.location.raw_link == "https://example.com/material"
+    assert task.location.is_http_link is True
+    assert task.location.git_hub_url is None
 
-    def test_read_task_external_url_sets_default_free_and_self(self):
-        tp = TaskParser(index_path=Path("/source/arquivo.md"), remote_dir_root=Path("/source"), remote_name="poo")
-        task = tp.parse_line("- [ ] `@ref :read`[material](https://example.com/material)", 3)
 
-        assert task is not None
-        assert task.location.task_type == TaskType.READ
-        assert task.location.external_url == "https://example.com/material"
-        assert task.config.loss == TaskLoss.FREE
-        assert task.config.test == TaskEval.SELF
+def test_parse_line_returns_none_for_non_task_line() -> None:
+    assert make_parser().parse_line("texto comum sem marcador", 1) is None
 
-    def test_decode_task_types_sets_expected_values(self):
-        tp = TaskParser(index_path=Path("/source/arquivo.md"), remote_dir_root=Path("/source"), remote_name="poo")
-        task = tp.parse_line("- [ ] :15:test:perk:zero [@label title](data/label/r.md)", 0)
 
-        assert task is not None
-        assert task.game.xp == 15
-        assert task.config.test == TaskEval.TEST
-        assert task.config.loss == TaskLoss.ZERO
+def test_parse_line_returns_none_when_key_is_missing() -> None:
+    assert make_parser().parse_line("- [ ] [titulo sem chave](data/label/r.md)", 2) is None
 
-    def test_redirect_from_readme_keeps_absolute_paths(self):
-        tp = TaskParser(index_path=Path("/source/arquivo.md"), remote_dir_root=Path("/source"), remote_name="poo")
-        absolute = "/tmp/file.md"
-        assert tp.redirect_from_readme(absolute) == absolute
 
-    def test_decode_task_types_covers_self_main_side_free_and_part(self):
-        tp = TaskParser(index_path=Path("/source/arquivo.md"), remote_dir_root=Path("/source"), remote_name="poo")
-        task = tp.parse_line("- [ ] :self:free:part [@label title](data/label/r.md)", 0)
+def test_read_task_external_url_sets_default_free_and_self() -> None:
+    task = make_parser().parse_line("- [ ] `@ref type=read`[material](https://example.com/material)", 3)
 
-        assert task is not None
-        # Last tag wins for main/loss in this sequence.
-        assert task.config.test == TaskEval.SELF
-        assert task.config.loss == TaskLoss.PART
+    assert task is not None
+    assert task.location.task_type == TaskType.READ
+    assert task.location.is_read_http_link is True
+    assert task.config.loss == TaskLoss.FREE
+    assert task.config.test == TaskEval.SELF
 
-    def test_parse_line_applies_tags_from_title_and_keeps_plain_words(self):
-        tp = TaskParser(index_path=Path("/source/arquivo.md"), remote_dir_root=Path("/source"), remote_name="poo")
 
-        task = tp.parse_line("- [ ] [@label :self:free titulo](data/label/r.md)", 12)
+def test_decode_task_types_sets_expected_values() -> None:
+    task = make_parser().parse_line("- [ ] :15:test:make:zero [@label title](data/label/r.md)", 0)
 
-        assert task is not None
-        assert task.basic.key == "label"
-        assert task.basic.title == "titulo"
-        assert task.config.test == TaskEval.SELF
-        assert task.config.loss == TaskLoss.FREE
+    assert task is not None
+    assert task.game.xp == 15
+    assert task.config.test == TaskEval.TEST
+    assert task.config.loss == TaskLoss.ZERO
+    assert task.location.task_type == TaskType.MAKE
+
+
+def test_redirect_from_readme_keeps_absolute_paths() -> None:
+    absolute = "/tmp/file.md"
+    assert make_parser().redirect_from_readme(absolute) == absolute
+
+
+def test_redirect_from_readme_resolves_relative_paths() -> None:
+    assert make_parser().redirect_from_readme("folder/file.md") == "/source/folder/file.md"
+
+
+def test_decode_task_types_covers_self_make_free_and_part() -> None:
+    task = make_parser().parse_line("- [ ] :self:free:part:make [@label title](data/label/r.md)", 0)
+
+    assert task is not None
+    assert task.config.test == TaskEval.SELF
+    assert task.config.loss == TaskLoss.PART
+
+
+def test_parse_line_applies_tags_from_title_and_keeps_plain_words() -> None:
+    task = make_parser().parse_line("- [ ] [@label eval=self loss=free titulo](data/label/r.md)", 12)
+
+    assert task is not None
+    assert task.basic.key == "label"
+    assert task.basic.title == "titulo"
+    assert task.config.test == TaskEval.SELF
+    assert task.config.loss == TaskLoss.FREE

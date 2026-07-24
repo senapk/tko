@@ -28,11 +28,9 @@ _AUDIT_PERSISTENT_STATUS = Msg.parse(
 
 
 
-@app.command("set", help="Enable or disable persistent audit in the repository")
-def audit_set(
+@app.command("on", help="Enable persistent audit in the repository")
+def audit_on(
     ctx: typer.Context,
-    on: bool = typer.Option(False, "--on", help="Enable persistent audit"),
-    off: bool = typer.Option(False, "--off", help="Disable persistent audit"),
     interval: int | None = typer.Option(None, "--interval", "-i", help="Persistent audit interval in seconds"),
 ) -> None:
     from tko.cli.common import load_repo
@@ -43,24 +41,32 @@ def audit_set(
     if repo is None:
         return
 
-    if on and off:
-        raise typer.BadParameter("Use only one of --on or --off")
 
-    if not on and not off:
-        status = "ON" if repo.audit.enabled else "OFF"
-        interval_text = repo.audit.interval_seconds if repo.audit.interval_seconds is not None else "default"
-        Console.print(_AUDIT_PERSISTENT_STATUS.t().format(status=f"{status} ({interval_text}s)"))
-        return
-
-    repo.audit.enabled = on
+    repo.audit.enabled = True
     if interval is not None:
         repo.audit.interval_seconds = interval
     RepositoryLoader(repo).save()
-    Console.print(_AUDIT_PERSISTENT_ENABLED.t() if on else _AUDIT_PERSISTENT_DISABLED.t())
+    Console.print(_AUDIT_PERSISTENT_ENABLED.t())
+
+@app.command("off", help="Disable persistent audit in the repository")
+def audit_off(
+    ctx: typer.Context,
+) -> None:
+    from tko.cli.common import load_repo
+    from tko.repository.repository_config import RepositoryLoader
+    settings: Settings = ctx.obj
+    repo, _ = load_repo(settings.rs, show_warnings=True, auto_load=True)
+    if repo is None:
+        return
+    repo.audit.enabled = False
+    repo.audit.interval_seconds = None
+    RepositoryLoader(repo).save()
+    Console.print(_AUDIT_PERSISTENT_DISABLED.t())
 
 
-@app.command("init", help="Initialize audit watcher")
-def audit_init(
+
+@app.command("start", help="Start standalone audit watcher")
+def audit_start(
     ctx: typer.Context,
     interval: int | None = typer.Option(None, "--interval", "-i", help="Snapshot interval in seconds"),
 ):

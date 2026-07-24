@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from io import StringIO
 from typing import Any, ClassVar, Protocol, TextIO
@@ -127,7 +127,7 @@ class Console:
         *,
         stdout: Writer | None = None,
         stderr: Writer | None = None,
-    ) -> Iterator[None]:
+    ) -> Generator[None, None, None]:
         previous_stdout = Console.stdout
         previous_stderr = Console.stderr
 
@@ -150,7 +150,7 @@ class Console:
         *,
         stderr: bool = False,
         mode: RenderMode = RenderMode.PLAIN,
-    ) -> Iterator[CaptureWriter]:
+    ) -> Generator[CaptureWriter, None, None]:
         capture = CaptureWriter(mode)
 
         with Console.redirect(

@@ -33,7 +33,9 @@ class GitHubUrl:
     
     @property
     def relative_path_or_readme(self) -> str:
-        return self.relative_path or "README.md"
+        if self.relative_path is None:
+            return ""
+        return self.relative_path
 
     @property
     def repository_url(self) -> str:
@@ -52,8 +54,17 @@ class GitHubUrl:
         return _join_url( self.repository_url, "blob", self.branch_or_main, self.relative_path_or_readme )
 
     @property
+    def blob_root_url(self) -> str:
+        return _join_url( self.repository_url, "blob", self.branch_or_main)
+
+
+    @property
     def tree_url(self) -> str:
         return _join_url( self.repository_url, "tree", self.branch_or_main, self.relative_path_or_readme )
+
+    @property
+    def tree_root_url(self) -> str:
+        return _join_url( self.repository_url, "tree", self.branch_or_main)
 
     @property
     def raw_file_url(self) -> str:

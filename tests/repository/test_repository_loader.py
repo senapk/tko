@@ -46,7 +46,7 @@ class FakeData:
         self.loaded = data
         self.flags = data.get("flags", {})
 
-    def save_to_dict(self) -> dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return self.saved_payload
 
 

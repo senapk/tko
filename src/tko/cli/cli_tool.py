@@ -4,7 +4,6 @@ from typing import Optional
 from tko.config.settings import Settings
 from tko.i18n import Msg
 from tko.util.console import Console
-from loguru import logger
 
 
 _CLI_TOOL_MDPP_UPDATING_README = Msg.parse(
@@ -77,11 +76,12 @@ def tool_diff(
     cmd_diff(target_a, target_b, side, path)
 
 
-@app.command("rebase-links", help="Rebase markdown links to work from a new path")
+@app.command("rebase", help="Rebase markdown links to work from a new path")
 def tool_rebase_links(
     ctx: typer.Context,
     target: str = typer.Argument(..., help="URL or local path to the source markdown"),
     output: str | None = typer.Option(None, "--output", "-o", help="Output markdown file path (default: current directory with source filename)"),
+    relative: str | None = typer.Option(None, "--relative", "-s", help="If None, the rebase will be done relative to target"),
 ):
     import os
     import tempfile
@@ -108,28 +108,15 @@ def tool_rebase_links(
         settings: Settings = ctx.obj
         file_url: str | None = settings.get_alias_git(alias)
         if file_url is None:
-            logger.warning(_CLI_TOOL_REBASE_ALIAS_README_FAILED.t().format(alias=alias, error="Alias not found"))
+            Console.print(_CLI_TOOL_REBASE_ALIAS_README_FAILED.t().format(alias=alias, error="Alias not found"))
             return
-        last_error: Exception | None = None
-
-        with tempfile.TemporaryDirectory() as tmpdir:
-            temp_file: str = str(Path(tmpdir) / "temp.md")
-            remote: GitHubUrlDownloader = GitHubUrlDownloader(file_url)
-            remote.download_and_rebase(temp_file)
-            Console.print(_CLI_TOOL_REBASE_URL_DOWNLOADED.t().format(url=file_url))
-            Console.print(_CLI_TOOL_REBASE_DONE)
-            Console.print(_CLI_TOOL_REBASE_SAVED_PATH.t().format(path=output_path))
-            # Copy from temp to final output
-            import shutil
-            shutil.copy(temp_file, output_path)
-
-        raise Warning(_CLI_TOOL_REBASE_ALIAS_README_FAILED.t().format(alias=alias, error=last_error))
+        target = file_url
 
     if target.startswith("https://"):
         with tempfile.TemporaryDirectory() as tmpdir:
             temp_file: str = str(Path(tmpdir) / "temp.md")
-            remote: GitHubUrlDownloader = GitHubUrlDownloader(target)
-            remote.download_and_rebase(temp_file)
+            ghu_downloader: GitHubUrlDownloader = GitHubUrlDownloader(target)
+            ghu_downloader.download_and_rebase(temp_file)
             Console.print(_CLI_TOOL_REBASE_URL_DOWNLOADED.t().format(url=target))
             Console.print(_CLI_TOOL_REBASE_DONE)
             Console.print(_CLI_TOOL_REBASE_SAVED_PATH.t().format(path=output_path))

@@ -140,7 +140,7 @@ def test_execute_sets_language_recreates_cache_and_saves_config(monkeypatch: Mon
         return selected or "py"
 
     monkeypatch.setattr(rep_starter_module, "Repository", fake_repository)
-    monkeypatch.setattr(rep_starter_module, "RepositoryConfig", fake_repository_config)
+    monkeypatch.setattr(rep_starter_module, "RepositoryLoader", fake_repository_config)
     monkeypatch.setattr(
         rep_starter_module.LanguageSetter,
         "check_prog_lang_in_text_mode",
@@ -160,7 +160,6 @@ def test_execute_sets_language_recreates_cache_and_saves_config(monkeypatch: Mon
 
     assert starter.repo is repo
     assert starter.language == "py"
-    assert repo.saved_source is not None
     assert created_folders == [tmp_path]
     assert calls["saved"] is True
     assert calls["language_prompt"] is True

@@ -8,7 +8,7 @@ app = typer.Typer(help="Manage class tasks")
 # collect_app = typer.Typer(help="Collect data from many repositories")
 # app.add_typer(collect_app, name="collect")
 
-@app.command("tasks")
+@app.command("tasks", help="Collect tasks report from many repositories")
 def collect_tasks(
     ctx: typer.Context,
     path: list[str] = typer.Argument(..., help="Paths to repos"),
@@ -21,7 +21,7 @@ def collect_tasks(
 
     CollectMany.load_tasks(settings.rs, repos, tasks_path=csv)
 
-@app.command("skills")
+@app.command("skills", help="Collect skills report from many repositories")
 def collect_skills(
     ctx: typer.Context,
     path: list[str] = typer.Argument(..., help="Paths to repos"),

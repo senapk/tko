@@ -1,7 +1,6 @@
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
-import json
 import re
 
 from _pytest.monkeypatch import MonkeyPatch
@@ -11,6 +10,7 @@ import tko.cli.audit_preview as audit_preview
 from tko.cli.cli_audit import app
 from tko.config.run_settings import RunSettings
 from tko.config.settings import Settings
+from tko.logger.patch_history import PatchHistory
 from tko.util.console import Console
 
 
@@ -117,17 +117,10 @@ def test_audit_unpack_jsonl_creates_temp_files(tmp_path: Path) -> None:
 def test_audit_unpack_patch_history_json_creates_temp_files(tmp_path: Path) -> None:
     runner = CliRunner()
     source_file = tmp_path / "solver.py.json"
-    source_file.write_text(
-        json.dumps(
-            {
-                "patches": [
-                    {"label": "2026-06-10_14-00-00", "content": "print(1)\n", "lines": "1"},
-                    {"label": "2026-06-10_14-01-00", "content": "print(2)\n", "lines": "1"},
-                ]
-            }
-        ),
-        encoding="utf-8",
-    )
+    history = PatchHistory().set_json_file(source_file)
+    history.store_version("2026-06-10_14-00-00", "print(1)\n")
+    history.store_version("2026-06-10_14-01-00", "print(2)\n")
+    history.save_json()
 
     with Console.capture() as out:
         result = runner.invoke(app, ["unpack", str(source_file)])
@@ -136,8 +129,9 @@ def test_audit_unpack_patch_history_json_creates_temp_files(tmp_path: Path) -> N
     assert result.exit_code == 0
     output_dir = _extract_output_dir(combined_output)
     extracted_files = sorted(output_dir.iterdir())
-    assert len(extracted_files) == 1
-    assert extracted_files[0].read_text(encoding="utf-8") == "print(2)\n"
+    assert len(extracted_files) == 2
+    assert extracted_files[0].read_text(encoding="utf-8") == "print(1)\n"
+    assert extracted_files[1].read_text(encoding="utf-8") == "print(2)\n"
 
 
 def test_audit_set_on_persists_flag(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
@@ -155,7 +149,7 @@ def test_audit_set_on_persists_flag(monkeypatch: MonkeyPatch, tmp_path: Path) ->
         return self
 
     monkeypatch.setattr("tko.cli.common.load_repo", fake_load_repo)
-    monkeypatch.setattr("tko.repository.repository_config.RepositoryConfig.save", fake_save)
+    monkeypatch.setattr("tko.repository.repository_config.RepositoryLoader.save", fake_save)
 
     with Console.capture() as out:
         result = runner.invoke(app, ["set", "--on"], obj=ctx)
@@ -182,7 +176,7 @@ def test_audit_set_off_persists_flag(monkeypatch: MonkeyPatch, tmp_path: Path) -
         return self
 
     monkeypatch.setattr("tko.cli.common.load_repo", fake_load_repo)
-    monkeypatch.setattr("tko.repository.repository_config.RepositoryConfig.save", fake_save)
+    monkeypatch.setattr("tko.repository.repository_config.RepositoryLoader.save", fake_save)
 
     with Console.capture() as out:
         result = runner.invoke(app, ["set", "--off"], obj=ctx)
@@ -263,7 +257,8 @@ def test_audit_preview_invokes_fzf_with_numbered_files(monkeypatch: MonkeyPatch,
     monkeypatch.setattr(audit_preview, "which", fake_which)
     monkeypatch.setattr(audit_preview.subprocess, "run", fake_run)
 
-    result = runner.invoke(app, ["preview", str(source_dir)])
+    files = [file.as_posix() for file in source_dir.iterdir() if file.is_file()]
+    result = runner.invoke(app, ["preview"] + files)
 
     assert result.exit_code == 0
     assert captured["args"][0] == "fzf"

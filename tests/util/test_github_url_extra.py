@@ -64,7 +64,6 @@ def test_github_url_structure_repository_and_github_urls() -> None:
         repo="repo",
         branch="main",
         relative_path="folder/file.md",
-        path_type="blob",
     )
 
     assert structure.repository_url == "https://github.com/user/repo"

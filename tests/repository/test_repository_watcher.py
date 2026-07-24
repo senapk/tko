@@ -46,14 +46,14 @@ def _make_repo(tmp_path: Path) -> Any:
     def _store(_item: Any) -> None:
         return None
 
-    remote_root = tmp_path / "disc"
     remote = SimpleNamespace(
-        path=SimpleNamespace(work_dir=remote_root),
-        data=SimpleNamespace(name="disc"),
+        name="disc",
     )
+    remote_resolver = SimpleNamespace()
     return SimpleNamespace(
         root_dir=tmp_path,
-        remotes=[remote],
+        remotes={"disc": remote},
+        remote_resolver=remote_resolver,
         ignore_patterns=[],
         paths=SimpleNamespace(config_folder=tmp_path / ".tko"),
         logger=SimpleNamespace(store=_store),

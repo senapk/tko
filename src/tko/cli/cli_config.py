@@ -39,8 +39,8 @@ def config_list(ctx: typer.Context):
 @app.command("sandbox", help="Set default configuration values")
 def config_sandbox(
     ctx: typer.Context,
-    dir : None | str = typer.Option(None, "--dir", help="Set editor command"),
-    index : None | str = typer.Option(None, "--index", help="Enable images [0|1]"),
+    dir : None | str = typer.Option(None, "--dir", help="Set sandbox directory"),
+    index : None | str = typer.Option(None, "--index", help="Set sandbox index file"),
 ):
     settings: Settings = ctx.obj
     settings.rs.force_offline = True

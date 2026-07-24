@@ -201,10 +201,11 @@ def test_initial_clone_failure_returns_none(
     )
 
     result = cache.get_repository_dir(
-        "https://example.com/repo.git"
+        "https://example.com/repo.git",
+        load_git=True,
     )
 
-    assert result is None
+    assert result == (cache.public_repo_dir("https://example.com/repo.git"), False)
 
 
 def test_successful_clone_marks_updated(
@@ -243,9 +244,9 @@ def test_successful_clone_marks_updated(
         fake_clone,
     )
 
-    repo = cache.get_repository_dir(url)
+    repo, ok = cache.get_repository_dir(url, load_git=True)
 
-    assert repo is not None
+    assert ok is True
 
     assert (
         cache.public_last_fetch_file(repo)
@@ -303,7 +304,7 @@ def test_expired_repository_is_updated(
         fake_update,
     )
 
-    cache.get_repository_dir(url)
+    cache.get_repository_dir(url, load_git=True)
 
     assert called
 
@@ -341,7 +342,7 @@ def test_non_expired_repository_is_marked_updated(
         lambda timeout=1: True,
     )
 
-    cache.get_repository_dir(url)
+    cache.get_repository_dir(url, load_git=True)
 
     assert url in cache.updated
 
@@ -385,6 +386,6 @@ def test_failed_update_is_added_to_avoid(
         lambda path: GitResult( ok=False, stderr="boom", ), # type: ignore
     )
 
-    cache.get_repository_dir(url)
+    cache.get_repository_dir(url, load_git=True)
 
     assert url in cache.avoid

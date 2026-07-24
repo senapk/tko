@@ -34,7 +34,7 @@ def build_tests(
     build_cmd = CmdBuild(Path(target), [Path(x) for x in target_list], manip, settings)
     build_cmd.execute()
 
-@app.command("all", help="Build .mapi file")
+@app.command("all", help="Build tests, drafts and update task README.md")
 def build_all(
     targets: list[str] | None = typer.Argument(None, help="directories"),
     check: bool = typer.Option(False, "--check", "-c", help="Check if the file needs to be rebuilt"),

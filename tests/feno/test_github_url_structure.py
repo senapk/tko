@@ -10,8 +10,8 @@ def test_empty_structure_starts_with_blank_fields() -> None:
 
     assert structure.user == ""
     assert structure.repo == ""
-    assert structure.branch == ""
-    assert structure.relative_path == ""
+    assert structure.branch is None
+    assert structure.relative_path is None
 
 
 def test_structure_builds_repository_github_and_raw_urls() -> None:
@@ -24,10 +24,7 @@ def test_structure_builds_repository_github_and_raw_urls() -> None:
 
     assert structure.repository_url == "https://github.com/user/repo"
     assert structure.blob_url == "https://github.com/user/repo/blob/main/folder/file.md"
-    assert (
-        structure.raw_file_url
-        == "https://raw.githubusercontent.com/user/repo/main/folder/file.md"
-    )
+    assert ( structure.raw_file_url == "https://raw.githubusercontent.com/user/repo/main/folder/file.md" )
 
 
 def test_structure_is_immutable() -> None:
@@ -38,36 +35,22 @@ def test_structure_is_immutable() -> None:
 
 
 @pytest.mark.parametrize(
-    ("url", "relative_path", "path_type", "github_url"),
+    ("url", "relative_path", "blob_url"),
     [
         (
             "https://github.com/user/repo/blob/main/folder/file.md",
             "folder/file.md",
-            "blob",
             "https://github.com/user/repo/blob/main/folder/file.md",
         ),
         (
             "https://github.com/user/repo/tree/main/folder/sub",
             "folder/sub",
-            "tree",
-            "https://github.com/user/repo/tree/main/folder/sub",
-        ),
-        (
-            "https://github.com/user/repo/blob/main",
-            "",
-            "blob",
-            "https://github.com/user/repo/tree/main",
-        ),
-        (
-            "https://github.com/user/repo/tree/main/",
-            "",
-            "tree",
-            "https://github.com/user/repo/tree/main",
+            "https://github.com/user/repo/blob/main/folder/sub",
         ),
     ],
 )
 def test_parse_accepts_github_blob_and_tree_urls(
-    url: str, relative_path: str, path_type: str, github_url: str
+    url: str, relative_path: str | None, blob_url: str
 ) -> None:
     structure = GitHubUrl.parse(url)
 
@@ -76,7 +59,7 @@ def test_parse_accepts_github_blob_and_tree_urls(
     assert structure.repo == "repo"
     assert structure.branch == "main"
     assert structure.relative_path == relative_path
-    assert structure.blob_url == github_url
+    assert structure.blob_url == blob_url
 
 
 def test_parse_accepts_github_repository_without_branch_or_path() -> None:
@@ -85,12 +68,12 @@ def test_parse_accepts_github_repository_without_branch_or_path() -> None:
     assert structure is not None
     assert structure.user == "user"
     assert structure.repo == "repo"
-    assert structure.branch == ""
-    assert structure.relative_path == ""
+    assert structure.branch is None
+    assert structure.relative_path is None
     assert structure.repository_url == "https://github.com/user/repo"
-    assert structure.branch_tree_url == "https://github.com/user/repo"
-    assert structure.blob_url == "https://github.com/user/repo"
-    assert structure.raw_file_url == ""
+    assert structure.branch_tree_url == "https://github.com/user/repo/tree/main"
+    assert structure.blob_url == "https://github.com/user/repo/blob/main"
+    assert structure.raw_file_url == "https://raw.githubusercontent.com/user/repo/main"
 
 
 def test_structure_with_path_without_branch_stays_at_repository_url() -> None:
@@ -100,8 +83,8 @@ def test_structure_with_path_without_branch_stays_at_repository_url() -> None:
         relative_path="folder/file.md",
     )
 
-    assert structure.blob_url == "https://github.com/user/repo"
-    assert structure.raw_file_url == ""
+    assert structure.blob_url == "https://github.com/user/repo/blob/main/folder/file.md"
+    assert structure.raw_file_url == "https://raw.githubusercontent.com/user/repo/main/folder/file.md"
 
 
 def test_parse_accepts_raw_url_with_branch_and_without_relative_path() -> None:
@@ -109,8 +92,8 @@ def test_parse_accepts_raw_url_with_branch_and_without_relative_path() -> None:
 
     assert structure is not None
     assert structure.branch == "main"
-    assert structure.relative_path == ""
-    assert structure.blob_url == "https://github.com/user/repo/tree/main"
+    assert structure.relative_path is None
+    assert structure.blob_url == "https://github.com/user/repo/blob/main"
     assert structure.raw_file_url == "https://raw.githubusercontent.com/user/repo/main"
 
 
