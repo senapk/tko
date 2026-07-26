@@ -152,7 +152,7 @@ class RepositoryData:
             "version": self.version,
             "sandbox_dir": self.__sandbox_dir,
             "sandbox_index": self.__sandbox_index,
-            "sources": [x.to_dict() for x in self.get_remotes().values()],
+            "sources": [x.to_dict() for x in self.__remotes.values()],
             "expanded": self.expanded,
             "flags": self.flags,
             "audit": self.audit.to_dict(),

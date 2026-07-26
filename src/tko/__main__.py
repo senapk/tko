@@ -19,7 +19,7 @@ from tko.cli.cli_main import register_main_commands
 from tko.cli.cli_remote import app as remote_app
 from tko.cli.cli_reset import app as reset_app
 from tko.cli.cli_task import app as task_app
-from tko.cli.cli_tool import app as tool_app
+from tko.cli.cli_tool import app as tools_app
 from tko.i18n import Msg, set_language
 from tko.util.Renderer import RenderMode
 from tko.widget.fmt import Fmt
@@ -47,7 +47,7 @@ app.add_typer(reset_app, name="reset")
 app.add_typer(remote_app, name="remote")
 app.add_typer(collect_app, name="collect")
 app.add_typer(class_app, name="class")
-app.add_typer(tool_app, name="tool")
+app.add_typer(tools_app, name="tools")
 
 register_main_commands(app)
 
@@ -62,7 +62,6 @@ def main_callback(
     version: bool = typer.Option(False, "-v", "--version", help="Show version and exit"),
     mono: bool = typer.Option(False, "-m", "--mono", help="Disable colors"),
     debug: bool = typer.Option(False, "-D", "--debug", help="Enable debug mode"),
-    local_cache: bool = typer.Option(False, "-L", "--local-cache", help="Use local cache for remote URL sources"),
     update: bool = typer.Option(False, "-U", "--update", help="Force update remote URL sources"),
     offline: bool = typer.Option(False, "-O", "--offline", help="Disable any update attempts (Offline mode)"),
 ):

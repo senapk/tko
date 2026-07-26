@@ -45,7 +45,7 @@ def config_sandbox(
     settings: Settings = ctx.obj
     settings.rs.force_offline = True
     repo: Repository | None = None
-    repo, _ = load_repo(settings.rs, auto_load=True)
+    repo, _ = load_repo(settings.rs, auto_load=False)
     if repo is None:
         Console.print(RT.parse("No repository loaded."))
         return
