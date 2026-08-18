@@ -59,12 +59,11 @@ class TaskLine:
         return self
 
     def get_pre(self, key_pad: int, fields_pad: int) -> str:
-        _eval = ""
         if self.tm.is_make:
             if self.has_tests():
-                _eval = f" :{TaskEval.TEST.value}"
+                self.tm.eval = TaskEval.TEST
             else:
-                _eval = f" :{TaskEval.SELF.value}"
+                self.tm.eval = TaskEval.SELF
 
         test_icon = "🤖"
         self_icon = "👤"
@@ -92,10 +91,9 @@ class TaskLine:
 
         fields = self.tm.get_filled_fields()
         fields = [f for f in fields if (
-            not f.startswith("@") and 
-            not f.startswith(TaskMatcher.EVAL)
+            not f.startswith("@")
             )]
-        fields = " ".join(fields) + _eval
+        fields = " ".join(fields)
         words = self.tm.raw_pre.replace("`", " ").replace("- [ ]", " ").replace("<!--", " ").replace("-->", " ").split()
         left = " ".join(x for x in words if not self.tm.is_field(x))
         left = filter_icons(left)
@@ -103,7 +101,11 @@ class TaskLine:
         return out
     
     def has_tests(self) -> bool:
-        if self.tm.is_read or self.target_file is None:
+        if self.tm.is_read:
+            return False
+        if self.tm.is_url:
+            return self.tm.eval == TaskEval.TEST
+        if self.target_file is None:
             return False
         return TestsFinder().find_tests(self.target_file.parent)
         # load wdir in this folder and check number os tests
@@ -121,7 +123,7 @@ class TaskLine:
     
     def render_line(self, key_pad: int) -> str:
         # after = f"{_type} {_eval}"
-        fields_pad = len("type=make xp=4 tier=1 loss=part :test")
+        fields_pad = len("type=make xp=4 tier=1 loss=part eval:test")
         ref = "x" if self.tm.is_ref else " "
         link = self.tm.link
         if self.target_file is not None:

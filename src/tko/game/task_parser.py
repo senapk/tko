@@ -97,7 +97,7 @@ class TaskParser:
 
         task.game.xp = tm.xp
         task.game.tier = tm.tier
-        task.config = TaskConfig(test=tm.test, loss=tm.loss)
+        task.config = TaskConfig(test=tm.eval, loss=tm.loss)
         task.basic.title = self.__remove_tags_from_title(tm.title)
 
         if task.basic.key == "":

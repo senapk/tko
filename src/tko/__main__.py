@@ -19,7 +19,7 @@ from tko.cli.cli_main import register_main_commands
 from tko.cli.cli_remote import app as remote_app
 from tko.cli.cli_reset import app as reset_app
 from tko.cli.cli_task import app as task_app
-from tko.cli.cli_tool import app as tools_app
+from tko.cli.cli_tools import app as tools_app
 from tko.i18n import Msg, set_language
 from tko.util.Renderer import RenderMode
 from tko.widget.fmt import Fmt

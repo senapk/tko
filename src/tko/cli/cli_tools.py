@@ -80,28 +80,17 @@ def tool_diff(
 def tool_rebase_links(
     ctx: typer.Context,
     target: str = typer.Argument(..., help="URL or local path to the source markdown"),
-    output: str | None = typer.Option(None, "--output", "-o", help="Output markdown file path (default: current directory with source filename)"),
+    output: str = typer.Option(..., "--output", "-o", help="Output markdown file path (default: current directory with source filename)"),
     relative: str | None = typer.Option(None, "--relative", "-s", help="If None, the rebase will be done relative to target"),
 ):
     import os
     import tempfile
-    from urllib.parse import urlparse
     from tko.util.decoder import Decoder
     from tko.util.git_hub_url_downloader import GitHubUrlDownloader
     from tko.feno.link_rebase import LinkRebase
 
     # Determine output filename and path
-    if output is None:
-        if target.startswith("@"):
-            filename: str = "README.md"
-        elif target.startswith("https://"):
-            parsed_url = urlparse(target)
-            filename = Path(parsed_url.path).name or "README.md"
-        else:
-            filename = Path(target).name
-        output_path: Path = Path(filename)
-    else:
-        output_path = Path(output)
+    output_path = Path(output)
 
     if target.startswith("@"):
         alias: str = target[1:]

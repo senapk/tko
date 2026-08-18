@@ -46,7 +46,7 @@ class TaskMatcher:
         self.loss = TaskLoss.NULL
         self.xp = 1
         self.tier = 1
-        self.test = TaskEval.NULL
+        self.eval = TaskEval.NULL
 
     def match_pattern(self, line: str) -> bool:
         self.raw_line = line
@@ -118,7 +118,7 @@ class TaskMatcher:
         output.append(f"{TaskMatcher.XP}{self.xp}")
         if self.is_make:
             output.append(f"{TaskMatcher.TIER}{self.tier}")
-            output.append(f"{TaskMatcher.EVAL}{self.test.value}")
+            output.append(f"{TaskMatcher.EVAL}{self.eval.value}")
             output.append(f"{TaskMatcher.LOSS}{self.loss.value}")
 
         return output
@@ -137,9 +137,9 @@ class TaskMatcher:
                     self.xp = xp_value
                 continue
             elif item == f"{TaskMatcher.EVAL}{TaskEval.TEST.value}":
-                self.test = TaskEval.TEST
+                self.eval = TaskEval.TEST
             elif item == f"{TaskMatcher.EVAL}{TaskEval.SELF.value}":
-                self.test = TaskEval.SELF
+                self.eval = TaskEval.SELF
             elif item == f"{TaskMatcher.LOSS}{TaskLoss.FREE.value}":
                 self.loss = TaskLoss.FREE
             elif item == f"{TaskMatcher.LOSS}{TaskLoss.PART.value}":
@@ -157,9 +157,9 @@ class TaskMatcher:
             if tag.isdigit():
                 self.xp = int(tag)
             elif tag == TaskEval.TEST.value:
-                self.test = TaskEval.TEST
+                self.eval = TaskEval.TEST
             elif tag == TaskEval.SELF.value:
-                self.test = TaskEval.SELF
+                self.eval = TaskEval.SELF
             elif tag == TaskType.MAKE.value:
                 self.resource_type = TaskType.MAKE
             elif tag == TaskType.READ.value:
@@ -177,12 +177,12 @@ class TaskMatcher:
 
         if self.resource_type == TaskType.READ:
             self.loss = TaskLoss.FREE
-            self.test = TaskEval.SELF
+            self.eval = TaskEval.SELF
         else:
             if self.loss == TaskLoss.NULL:
                 self.loss = TaskLoss.PART
-            if self.test == TaskEval.NULL:
-                self.test = TaskEval.TEST
+            if self.eval == TaskEval.NULL:
+                self.eval = TaskEval.TEST
 
 
     @property
