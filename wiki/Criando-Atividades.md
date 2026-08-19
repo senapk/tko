@@ -108,13 +108,12 @@ Cada quest é definida em uma linha de título markdown, seguida de pares chave-
 
 Exemplo:
 
-    ## Ponteiros em C key=@ptr tag=ponteiro requires=@intro factor=2 total=100 threshold=80 lang=c lang=c++
+    ## Ponteiros em C key=@ptr tag=ponteiro requires=@intro total=100 threshold=80 lang=c lang=c++
 
 **Campos suportados:**
 - `key=@chave`: identificador único da quest
 - `tag=nome`: habilidade/tópico trabalhado (pode repetir para múltiplos)
 - `requires=@outra`: pré-requisito (pode repetir)
-- `factor=valor`: multiplicador de XP das tasks
 - `total=valor`: pontuação-alvo para 100% de completude
 - `threshold=valor`: percentual mínimo para considerar a quest completa
 - `lang=nome`: linguagem de programação específica (pode repetir, ex: lang=c lang=python)
@@ -123,7 +122,6 @@ Exemplo:
 **Regras e padrões:**
 - Apenas `key` é obrigatória.
 - Se `tag` não for definida, será usada a própria `key` como tag.
-- `factor` é opcional, valor padrão é 1.
 - `requires` não é obrigatório, mas é usado para definir dependências e gamificação da disciplina.
 - `total` define o XP (pontuação de tasks) necessário para atingir 100% da quest.
 - `threshold` é opcional, o padrão é 50 (50%) e define o percentual mínimo para considerar a quest completa.
@@ -135,7 +133,7 @@ Exemplo:
 
 **Exemplo completo:**
 
-    ## Estruturas de Repetição key=@loops tag=for tag=while requires=@intro factor=2 total=100 threshold=80 lang=python
+    ## Estruturas de Repetição key=@loops tag=for tag=while requires=@intro total=100 threshold=80 lang=python
 
 
 ## Dependências entre Quests, Tags e Habilidades

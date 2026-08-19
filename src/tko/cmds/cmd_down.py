@@ -125,7 +125,7 @@ class CmdDown:
             raise ValueError(_CMD_DOWN_ACTIVITY_NO_DESTINY_FOLDER.t().format(task_key=self.task_key))
 
         self.origin_folder: Path = origin_target.parent        
-        self.destiny_folder: Path = destiny_folder.parent
+        self.destiny_folder: Path = destiny_folder
        
         self.language: str = ""
         self.check_and_get_language()

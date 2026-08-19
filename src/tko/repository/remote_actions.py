@@ -203,12 +203,15 @@ class RemoteActions:
                 return False
             else:
                 link = ghu
-
-        Console.print(_REMOTE_CLONING.t().format(link=link))
-        _, ok = self.repo.git_cache.get_repository_dir(link.repository_url, load_git=True)
+        if isinstance(link, str):
+            url = link
+        else:
+            url = link.repository_url
+        Console.print(_REMOTE_CLONING.t().format(link=url))
+        _, ok = self.repo.git_cache.get_repository_dir(url, load_git=True)
         if ok:
-            Console.print(_REMOTE_CLONED_SUCCESS.t().format(link=link))
-            logger.info(_REMOTE_CLONED_SUCCESS.t().format(link=link))
+            Console.print(_REMOTE_CLONED_SUCCESS.t().format(link=url))
+            logger.info(_REMOTE_CLONED_SUCCESS.t().format(link=url))
         else:
             Console.print(_REMOTE_CLONE_FAILED.t())
             logger.warning(_REMOTE_CLONE_FAILED.t())

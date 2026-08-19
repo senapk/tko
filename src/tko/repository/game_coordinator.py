@@ -68,4 +68,5 @@ class GameCoordinator:
             filename.parent.mkdir(parents=True, exist_ok=True)
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(f"# {Sandbox.get_sandbox_name()}\n\n")
-        fix_readme(filename.resolve(), basedir, Sandbox.get_sandbox_name(), verbose=False, load_titles=True)
+        if filename.exists():
+            fix_readme(filename.resolve(), basedir, Sandbox.get_sandbox_name(), verbose=False, load_titles=True)
