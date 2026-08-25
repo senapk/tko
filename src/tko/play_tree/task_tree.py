@@ -49,7 +49,7 @@ class TaskTree:
         self.items: list[IsTreeItem] = []
 
     def recalculate_layout(self):
-        self.layout.reset
+        self.layout.reset()
 
     def save_state(self):
         self.state_service.save()

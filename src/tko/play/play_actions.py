@@ -47,7 +47,7 @@ class PlayActions:
 
         self.downloader = TaskDownloadService(self.repo, self.settings, self.fman, self.tree)
         self.editor = TaskEditorService(self.repo, self.settings, self.fman, self.tree)
-        self.evaluator = TaskEvaluator(self.repo, self.fman, self.tree)
+        self.evaluator = TaskEvaluator(self.repo, self.settings, self.fman, self.tree)
         self.draft_creator = DraftCreator(self.repo, self.settings, self.fman, self.tree, self.game, self.reload)
         self.launcher = TaskLauncher(self.repo, self.settings, self.fman, self.tree, gui, self.downloader, self.editor)
 

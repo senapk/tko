@@ -59,6 +59,7 @@ class TreeRenderer:
         head.add(" ").add(test)
         head.add(" ").add(state)
         head.add(" ").add(t.game.tier_symbol)
+
         head.add(">" if focused else " ")
 
         if self.layout.insert_quest_keys:
@@ -91,11 +92,18 @@ class TreeRenderer:
         tail = RBuffer().add(output).add(" ")
 
         value = t.grader.full_percent
-        tail.add(self.time_formatter.format_percent_1s(t.grader.get_rate_percent()))
+        if t.info.boss:
+            tail.add("B")
+        elif t.info.feedback:
+            tail.add("F")
+        else:
+            tail.add("-")
+        
         tail.add(" ").add(self.time_formatter.format_percent_3s(value))
         if self.flags.show_time.is_true():
             h, m = self.time_formatter.get_task_hours_minutes(t)
             tail.add(" ").add(self.time_formatter.format_hours_minutes("g", h, m))
+            
         return tail.to_rt()
 
     def render_quest(self, q: Quest, focused: bool) -> RT:
@@ -107,7 +115,7 @@ class TreeRenderer:
         goal = round(goal)
         goal_str = f"{goal:02}"
 
-        body.add(f" {done_str:>3}/{goal_str:>3}")
+        body.add(f" {done_str:>3}/{goal_str:>3}").add(" ")
         
         body.add(">" if focused else " ")
 

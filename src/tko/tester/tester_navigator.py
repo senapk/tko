@@ -1,9 +1,11 @@
 from tko.config.settings import Settings
+from tko.game.feedback import Feedback
 from tko.game.task import Task
 from tko.logger.log_item_self import LogItemSelf
 from tko.floating.floating import Floating
 from tko.floating.floating_grade import FloatingGrade
 from tko.floating.floating_manager import FloatingManager
+from tko.play.opener import Opener
 from tko.play.gui_keys import GuiKeys
 from tko.tester.tester_executor import TesterExecutor
 from tko.tester.tester_state import TesterState, SeqMode
@@ -144,6 +146,12 @@ class TesterNavigator:
             )
             return
         logger = self.rep.logger
+        feedback = Feedback(self.rep, self.task)
+        feedback_path = feedback.get_feedback_toml_path()
+        feedback_opener = None
+        if feedback_path is not None:
+            opener = Opener(self.settings).set_language(self.rep.data.lang).add_files_to_open([feedback_path])
+            feedback_opener = opener.open_files
         self.fman.add_floating(
-            FloatingGrade(self.task, lambda task: logger.store(LogItemSelf().set_task(task)))
+            FloatingGrade(self.task, lambda task: logger.store(LogItemSelf().set_task(task)), feedback, feedback_opener)
         )
