@@ -32,8 +32,7 @@ class Task:
 
     @property
     def grader(self) -> TaskGrader:
-        return TaskGrader(self.config.loss, self.info)
-
+        return TaskGrader(self.info)
     def clone(self) -> Task:
         new_task = Task()
         new_task.quest_key = self.quest_key

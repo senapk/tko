@@ -1,5 +1,5 @@
 from pathlib import Path
-from tko.game.task_enums import TaskEval, TaskLoss, TaskType
+from tko.game.task_enums import TaskEval, TaskType
 from tko.game.task_parser import TaskParser
 
 
@@ -71,13 +71,12 @@ def test_parse_line_returns_none_when_key_is_missing() -> None:
     assert make_parser().parse_line("- [ ] [titulo sem chave](data/label/r.md)", 2) is None
 
 
-def test_read_task_external_url_sets_default_free_and_self() -> None:
+def test_read_task_external_url_sets_default_self_eval() -> None:
     task = make_parser().parse_line("- [ ] `@ref type=read`[material](https://example.com/material)", 3)
 
     assert task is not None
     assert task.location.task_type == TaskType.READ
     assert task.location.is_read_http_link is True
-    assert task.config.loss == TaskLoss.FREE
     assert task.config.test == TaskEval.SELF
 
 
@@ -87,7 +86,6 @@ def test_decode_task_types_sets_expected_values() -> None:
     assert task is not None
     assert task.game.xp == 15
     assert task.config.test == TaskEval.TEST
-    assert task.config.loss == TaskLoss.ZERO
     assert task.location.task_type == TaskType.MAKE
 
 
@@ -100,12 +98,12 @@ def test_redirect_from_readme_resolves_relative_paths() -> None:
     assert make_parser().redirect_from_readme("folder/file.md") == "/source/folder/file.md"
 
 
-def test_decode_task_types_covers_self_make_free_and_part() -> None:
+def test_decode_task_types_covers_self_and_make_while_ignoring_legacy_loss_tags() -> None:
     task = make_parser().parse_line("- [ ] :self:free:part:make [@label title](data/label/r.md)", 0)
 
     assert task is not None
     assert task.config.test == TaskEval.SELF
-    assert task.config.loss == TaskLoss.PART
+    assert task.location.task_type == TaskType.MAKE
 
 
 def test_parse_line_applies_tags_from_title_and_keeps_plain_words() -> None:
@@ -115,4 +113,3 @@ def test_parse_line_applies_tags_from_title_and_keeps_plain_words() -> None:
     assert task.basic.key == "label"
     assert task.basic.title == "titulo"
     assert task.config.test == TaskEval.SELF
-    assert task.config.loss == TaskLoss.FREE

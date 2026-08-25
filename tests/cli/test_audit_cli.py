@@ -80,7 +80,7 @@ def test_audit_starts_watcher_with_verbose_and_interval(monkeypatch: MonkeyPatch
     monkeypatch.setattr("time.sleep", fake_sleep)
 
     with Console.capture() as out:
-        result = runner.invoke(app, ["init", "--interval", "15"], obj=ctx)
+        result = runner.invoke(app, ["start", "--interval", "15"], obj=ctx)
     combined_output = result.output + out.getvalue()
 
     assert result.exit_code == 0
@@ -152,7 +152,7 @@ def test_audit_set_on_persists_flag(monkeypatch: MonkeyPatch, tmp_path: Path) ->
     monkeypatch.setattr("tko.repository.repository_config.RepositoryLoader.save", fake_save)
 
     with Console.capture() as out:
-        result = runner.invoke(app, ["set", "--on"], obj=ctx)
+        result = runner.invoke(app, ["on"], obj=ctx)
     combined_output = result.output + out.getvalue()
 
     assert result.exit_code == 0
@@ -179,7 +179,7 @@ def test_audit_set_off_persists_flag(monkeypatch: MonkeyPatch, tmp_path: Path) -
     monkeypatch.setattr("tko.repository.repository_config.RepositoryLoader.save", fake_save)
 
     with Console.capture() as out:
-        result = runner.invoke(app, ["set", "--off"], obj=ctx)
+        result = runner.invoke(app, ["off"], obj=ctx)
     combined_output = result.output + out.getvalue()
 
     assert result.exit_code == 0

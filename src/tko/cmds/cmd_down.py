@@ -10,7 +10,6 @@ from tko.game.game import Game
 from tko.util.decoder import Decoder
 from tko.feno.link_rebase import LinkRebase
 from tko.game.task import Task
-from tko.game.task_enums import TaskEval
 from tko.feno.filter import CodeFilter
 from pathlib import Path
 from tko.loader.toml_parser import TomlParser
@@ -179,8 +178,6 @@ class CmdDown:
         default_draft_ok = self.copy_drafts_from(origin_drafts_source, destiny_drafts_folder, self.language)
         if not default_draft_ok:
             self.actions.create_default_draft(destiny_drafts_folder, self.language)
-        if self.task.config.test == TaskEval.SELF:
-            self.actions.create_default_draft(destiny_drafts_folder, "md")
         return True
     
     def copy_readme(self):

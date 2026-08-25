@@ -49,7 +49,6 @@ class TaskCollected:
             self.remote = remote_index[remote]
         self.key = key
         self.quest = task.quest_key if task else ""
-        self.grader = task.grader.full_percent if task else 0.0
 
         self.resume.from_log_sort(log_sort)
         if log_sort.self_list:

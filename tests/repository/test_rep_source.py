@@ -3,17 +3,16 @@ from pathlib import Path
 import pytest
 
 from tko.repository.remote import DEFAULT_INDEX, Remote, SourceType
-from tko.repository.sandbox import REMOTE_NAME, REMOTE_PATH, Sandbox
+from tko.repository.sandbox import REMOTE_NAME, Sandbox
 
 
-def test_create_default_sandbox_remote_sets_remote_data_fields() -> None:
-    remote = Sandbox.create_default_sandbox_remote()
+def test_sandbox_name_matches_reserved_remote_name() -> None:
+    assert Sandbox.get_sandbox_name() == REMOTE_NAME
 
-    assert remote.name == REMOTE_NAME
-    assert remote.path_or_url == REMOTE_PATH
-    assert remote.source_type == SourceType.LOCAL_FILE
-    assert remote.is_editable is True
 
+def test_is_sandbox_checks_remote_name() -> None:
+    assert Sandbox.is_sandbox(Remote(name=REMOTE_NAME)) is True
+    assert Sandbox.is_sandbox(Remote(name="disc")) is False
 
 def test_from_local_file_keeps_absolute_file_path(tmp_path: Path) -> None:
     source_dir = tmp_path / "materials"

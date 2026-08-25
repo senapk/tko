@@ -2,18 +2,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from tko.game.task_enums import TaskEval, TaskLoss
+from tko.game.task_enums import TaskEval
 
 
 @dataclass(frozen=True, slots=True)
 class TaskConfig:
     test: TaskEval = TaskEval.NULL
-    loss: TaskLoss = TaskLoss.NULL
 
     def clone(self) -> TaskConfig:
         return TaskConfig(
             test=self.test,
-            loss=self.loss,
         )
     
     @property

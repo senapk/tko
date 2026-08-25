@@ -1,7 +1,6 @@
 import re
 
 from tko.game.task_enums import TaskEval
-from tko.game.task_enums import TaskLoss
 from tko.game.task_enums import TaskType
 
 def remove_emojis(text: str) -> str:
@@ -43,7 +42,6 @@ class TaskMatcher:
         self.key: str | None = None
 
         self.resource_type = TaskType.NULL
-        self.loss = TaskLoss.NULL
         self.xp = 1
         self.tier = 1
         self.eval = TaskEval.NULL
@@ -119,7 +117,6 @@ class TaskMatcher:
         if self.is_make:
             output.append(f"{TaskMatcher.TIER}{self.tier}")
             output.append(f"{TaskMatcher.EVAL}{self.eval.value}")
-            output.append(f"{TaskMatcher.LOSS}{self.loss.value}")
 
         return output
 
@@ -140,12 +137,6 @@ class TaskMatcher:
                 self.eval = TaskEval.TEST
             elif item == f"{TaskMatcher.EVAL}{TaskEval.SELF.value}":
                 self.eval = TaskEval.SELF
-            elif item == f"{TaskMatcher.LOSS}{TaskLoss.FREE.value}":
-                self.loss = TaskLoss.FREE
-            elif item == f"{TaskMatcher.LOSS}{TaskLoss.PART.value}":
-                self.loss = TaskLoss.PART
-            elif item == f"{TaskMatcher.LOSS}{TaskLoss.ZERO.value}":
-                self.loss = TaskLoss.ZERO
             elif item == f"{TaskMatcher.TYPE}{TaskType.MAKE.value}":
                 self.resource_type = TaskType.MAKE
             elif item == f"{TaskMatcher.TYPE}{TaskType.READ.value}":
@@ -164,23 +155,15 @@ class TaskMatcher:
                 self.resource_type = TaskType.MAKE
             elif tag == TaskType.READ.value:
                 self.resource_type = TaskType.READ
-            elif tag == TaskLoss.FREE.value:
-                self.loss = TaskLoss.FREE
-            elif tag == TaskLoss.PART.value:
-                self.loss = TaskLoss.PART
-            elif tag == TaskLoss.ZERO.value:
-                self.loss = TaskLoss.ZERO
+
 
     def __set_default_values(self):
         if self.resource_type == TaskType.NULL:
             self.resource_type = TaskType.MAKE
 
         if self.resource_type == TaskType.READ:
-            self.loss = TaskLoss.FREE
             self.eval = TaskEval.SELF
         else:
-            if self.loss == TaskLoss.NULL:
-                self.loss = TaskLoss.PART
             if self.eval == TaskEval.NULL:
                 self.eval = TaskEval.TEST
 

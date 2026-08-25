@@ -60,7 +60,7 @@ def test_sandbox_remote_resolves_against_workspace(tmp_path: Path) -> None:
     index_file, found = repo.remote_resolver.resolve_index_file(remote, load_git=False)
 
     assert remote.name == "sandbox"
-    assert remote.path_or_url == "sandbox.md"
+    assert remote.path_or_url == (tmp_path / "sandbox.md").resolve().as_posix()
     assert remote.is_editable is True
     assert index_file == (tmp_path / "sandbox.md").resolve()
     assert found is False

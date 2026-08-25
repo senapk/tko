@@ -49,7 +49,7 @@ def _make_repo(tmp_path: Path) -> Any:
     remote = SimpleNamespace(
         name="disc",
     )
-    remote_resolver = SimpleNamespace()
+    remote_resolver = SimpleNamespace(remote_work_dir=lambda _source: tmp_path / "disc")
     return SimpleNamespace(
         root_dir=tmp_path,
         remotes={"disc": remote},

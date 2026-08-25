@@ -31,7 +31,7 @@ def test_get_sources_ensures_sandbox_and_puts_it_first(tmp_path: Path) -> None:
     data.set_remote(make_source("remote1"))
     data.set_remote(make_source("remote2"))
 
-    sources = data.get_remotes
+    sources = data.get_remotes()
 
     assert sources["sandbox"].name == "sandbox"
     assert [source.name for source in sources.values() if source.name != "sandbox"] == ["remote1", "remote2"]
@@ -105,8 +105,8 @@ def test_save_to_dict_exports_current_state(tmp_path: Path) -> None:
     assert saved["selected_index"] == 2
     assert isinstance(saved["sources"], list)
     sources = cast(list[dict[str, Any]], saved["sources"])
-    assert [source["name"] for source in sources] == ["sandbox", "disc"]
-    assert sources[1] == {
+    assert [source["name"] for source in sources] == ["disc"]
+    assert sources[0] == {
         "name": "disc",
         "type": "local",
         "writeable": False,

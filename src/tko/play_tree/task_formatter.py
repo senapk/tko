@@ -1,10 +1,8 @@
 from tko.cmds.drafts_finder_cached import DraftsFinderCached
 from tko.game.task_enums import TaskEval
 from tko.game.task import Task
-from tko.game.task_enums import TaskLoss
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
-from tko.util.symbols import Symbols
 from tko.util.rt import RT
 
 
@@ -78,15 +76,6 @@ class TaskFormatter:
             feed_mode = not_init
 
         return (state_mode, test_mode, feed_mode)
-
-    def get_task_help_symbol(self, task: Task) -> tuple[str, str]:
-        if task.config.loss == TaskLoss.FREE:
-            return ("g", Symbols.loss_free)
-        if task.config.loss == TaskLoss.PART:
-            return ("y", Symbols.loss_part)
-        if task.config.loss == TaskLoss.ZERO:
-            return ("r", Symbols.loss_zero)
-        return ("", "")
 
     @staticmethod
     def color_task_title(key: str, title: str) -> RT:

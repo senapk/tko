@@ -15,50 +15,48 @@ import curses
 class _GradeMsg:
     NO = Msg.text(pt="Não", en="No")
     YES = Msg.text(pt="Sim", en="Yes")
-    HEADER = Msg.text(pt=" Utilize os direcionais e texto para marcar", en=" Use arrow keys and text to mark")
-    FOOTER = Msg.text(pt=" Pressione Enter para confirmar, Esc para cancelar", en=" Press Enter to confirm, Esc to cancel")
+    HEADER = Msg.text(pt=" Utilize os direcionais e texto para marcar ", en=" Use arrow keys and text to mark ")
+    FOOTER = Msg.text(pt=" Pressione Enter para confirmar, Esc para cancelar ", en=" Press Enter to confirm, Esc to cancel ")
     NOTHING = Msg.text(pt=" Nada", en=" Nothing")
 
     AUTO_MODE_LABEL = Msg.text(pt="Taxa de testes que passou na última execução:", en="Percentage of tests that passed in the last run:")
     MANUAL_MODE_LABEL = Msg.text(pt="Informe qual percentual da atividade você fez?", en="What percentage of the activity did you complete?")
     STUDY_TIME_LABEL = Msg.text(pt="Qual tempo total estimado, estudo + código, em minutos?", en="What is the total estimated time, study + code, in minutes?")
-    FRIEND_LABEL = Msg.text(pt="Deixe em branco se fez sozinho, ou com o nome de quem ajudou", en="Leave blank if you did it alone, or with the name of who helped")
-    GUIDED_LABEL = Msg.text(pt="Fez o código copiando da aula ou vídeo aula?", en="Did you code by copying from class or video?")
-    CONCEPT_LABEL = Msg.text(pt="ESTUDAR conceitos sem gerar a solução do problema?", en="STUDY concepts without generating the problem solution?")
-    PROBLEM_LABEL = Msg.text(pt="ENTENDER o problema a ser resolvido?", en="UNDERSTAND the problem to be solved?")
-    CODE_LABEL = Msg.text(pt="GERAR ou CORRIGIR código relacionado ao problema?", en="GENERATE or FIX code related to the problem?")
-    DEBUG_LABEL = Msg.text(pt="COMPREENDER mensagens de ERRO ou SAÍDA incorreta?", en="UNDERSTAND ERROR messages or incorrect OUTPUT?")
-    REFACTOR_LABEL = Msg.text(pt="REFATORAR o código só após fazer tudo sozinho?", en="REFACTOR code only after doing everything yourself?")
 
-    GUIDED_DISCOUNT = Msg.text(pt="COPIOU:", en="COPIED:")
-    CONCEPT_DISCOUNT = Msg.text(pt="ESTUDAR:", en="STUDY:")
-    PROBLEM_DISCOUNT = Msg.text(pt="ENTENDER:", en="UNDERSTAND:")
-    CODE_DISCOUNT = Msg.text(pt="CORRIGIR:", en="FIX:")
-    DEBUG_DISCOUNT = Msg.text(pt="DEBUGAR:", en="DEBUG:")
-    REFACTOR_DISCOUNT = Msg.text(pt="REFATORAR:", en="REFACTOR:")
+    BOSS_MODE_ON = Msg.parse(
+        pt=
+        "Escolhendo sim, você declara que realizou esta atividade sozinho, como se\n"
+        "estivesse em um ambiente de avaliação, sem pesquisas ou ferramentas não\n"
+        "autorizadas, e que todo o trabalho entregue, mesmo que parcial, foi produzido\n"
+        "a partir do seu próprio conhecimento, por meio de tentativa e erro.",
+        en=
+        "By choosing yes, you declare that you performed this activity alone, as if\n"
+        "you were in an evaluation environment, without research or unauthorized tools,\n"
+        "and that all the work delivered, even if partial, was produced from your,\n"
+        "own knowledge through trial and error."
+    )
+
+    BOSS_MODE_OFF = Msg.parse(
+        pt=
+        "Escolhendo não, você declara que a atividade não foi\n"
+        "realizada integralmente nas condições de avaliação,\n"
+        "podendo ter utilizado pesquisas, ajuda, ferramentas\n"
+        "não autorizadas ou ferramentas de IA.",
+        en=
+        "By choosing no, you declare that the activity was not\n"
+        "fully performed under evaluation conditions,\n"
+        "and that you may have used research, help,\n"
+        "unauthorized tools, or AI tools."
+    )
+
+    BOSS_MODE_LABEL = Msg.text(pt="Você realizou esta atividade em modo de avaliação?", 
+                               en="Did you perform this activity in evaluation mode?")
+
 
     SECTION_TITLE = Msg.text(
         pt="Pontue de acordo com a última vez que você (re)fez a tarefa do zero (sprint)",
         en="Rate according to the last time you (re)did the task from scratch (sprint)",
     )
-    SECTION_HUMAN_HELP = Msg.text(pt="Você fez com ajuda humana ou guiado?", en="Did you do it with human help or guided?")
-    SECTION_AI_USAGE = Msg.text(pt="Você usou IA (LLMs) para", en="Did you use AI (LLMs) for")
-
-
-_GRADE_LABELS = (
-    _GradeMsg.AUTO_MODE_LABEL,
-    _GradeMsg.MANUAL_MODE_LABEL,
-    _GradeMsg.STUDY_TIME_LABEL,
-    _GradeMsg.FRIEND_LABEL,
-    _GradeMsg.GUIDED_LABEL,
-    _GradeMsg.CONCEPT_LABEL,
-    _GradeMsg.PROBLEM_LABEL,
-    _GradeMsg.CODE_LABEL,
-    _GradeMsg.DEBUG_LABEL,
-    _GradeMsg.REFACTOR_LABEL,
-)
-_GRADE_LABEL_WIDTH = max(max(len(label.pt), len(label.en)) for label in _GRADE_LABELS)
-_GRADE_LINE_PAD = _GRADE_LABEL_WIDTH + 10
 
 
 class InputLine(ABC):
@@ -242,39 +240,17 @@ class FloatingGrade(FloatingABC):
         else:
             texto_auto = str(_GradeMsg.MANUAL_MODE_LABEL)
         
-        guided   = "" if not self._task.info.feedback else ("1" if self._task.info.guided else "0")
-        concept  = "" if not self._task.info.feedback else ("1" if self._task.info.ia_concept else "0")
-        problem  = "" if not self._task.info.feedback else ("1" if self._task.info.ia_problem else "0")
-        code     = "" if not self._task.info.feedback else ("1" if self._task.info.ia_code else "0")
-        debug    = "" if not self._task.info.feedback else ("1" if self._task.info.ia_debug else "0")
-        refactor = "" if not self._task.info.feedback else ("1" if self._task.info.ia_refactor else "0")
 
-        self.quantity_input_lines: list[InputLine] = [
-            InputSlide("rate", RT(texto_auto), progression, self._task.info.rate // 10).set_locked(self._task.config.is_eval_test),
-            InputText("study", RT(str(_GradeMsg.STUDY_TIME_LABEL)), str(self._task.info.study)).set_number_only(True),
-        ]
-        self.support_input_lines: list[InputLine] = [
-            InputText("friend", RT(str(_GradeMsg.FRIEND_LABEL)), self._task.info.friend),
-            InputBoolean("guided",  RT(str(_GradeMsg.GUIDED_LABEL)) + "      " + RT("   " + str(_GradeMsg.GUIDED_DISCOUNT), "g") + self.get_discount("guided"), guided),
-        ]
-        self.quality_input_lines: list[InputLine] = [
-            InputBoolean("concept", RT(str(_GradeMsg.CONCEPT_LABEL)) + "" + RT("  " + str(_GradeMsg.CONCEPT_DISCOUNT), "g") + self.get_discount("concept"), concept),
-            InputBoolean("problem", RT(str(_GradeMsg.PROBLEM_LABEL)) + "              " + RT(" " + str(_GradeMsg.PROBLEM_DISCOUNT), "g") + self.get_discount("problem"), problem),
-            InputBoolean("code",    RT(str(_GradeMsg.CODE_LABEL)) + " " + RT(" " + str(_GradeMsg.CODE_DISCOUNT), "g") + self.get_discount("code"), code),
-            InputBoolean("debug",   RT(str(_GradeMsg.DEBUG_LABEL)) + " " + RT("  " + str(_GradeMsg.DEBUG_DISCOUNT), "g") + self.get_discount("debug"), debug),
-            InputBoolean("refactor",RT(str(_GradeMsg.REFACTOR_LABEL)) + "    " + RT("" + str(_GradeMsg.REFACTOR_DISCOUNT), "g") + self.get_discount("refactor"), refactor),
-        ]
-        self.all_input_lines: list[InputLine] = self.quantity_input_lines + self.support_input_lines + self.quality_input_lines
-        self.input_dict: dict[str, InputLine] = {line.id: line for line in self.all_input_lines}
+        all_input_lines: list[InputLine] = []
+        all_input_lines.append(InputSlide("rate", RT(texto_auto), progression, self._task.info.rate // 10).set_locked(self._task.config.is_eval_test))
+        all_input_lines.append(InputText("study", RT(str(_GradeMsg.STUDY_TIME_LABEL)), str(self._task.info.study)).set_number_only(True))
+        boss_init = ""
+        if self._task.info.feedback:
+            boss_init = "1" if self._task.info.boss else "0"
+        all_input_lines.append(InputBoolean("boss", RT(str(_GradeMsg.BOSS_MODE_LABEL)), boss_init))
 
-    def get_discount(self, tag: str) -> RT:
-        grade_dict = self._task.grader.grades
-        value = grade_dict.get(self._task.config.loss.value, {}).get(tag, 100)
-        size = 5
-        if value == 100:
-            return RT(" " * size, "g")
-        else:
-            return RT(f"-{100 - value}%".ljust(size), "y")
+        self.all_input_lines = all_input_lines
+        self.input_dict: dict[str, InputLine] = {line.id: line for line in all_input_lines}
 
     def set_focus(self):
         for i, line in enumerate(self.all_input_lines):
@@ -291,25 +267,28 @@ class FloatingGrade(FloatingABC):
         self.set_focus()
         content = self.floating.content
         content.clear()
-        content.append(RT(f"         {str(_GradeMsg.SECTION_TITLE)}         "))
-        width = 90
-        pad = _GRADE_LINE_PAD
+        # content.append(RT(f"         {str(_GradeMsg.SECTION_TITLE)}         "))
+        width = 80
+        pad = 60
         dummy_task = self._task.clone()
         self.change_task(dummy_task, self.input_dict)
-        full_percent = dummy_task.grader.full_percent
-        somatorio = RT(f'{round(full_percent):>3}% ', 'g')
-
-        content.append(RT("╔") + (RT(" Tarefa:") + somatorio).center(width, "═"))
-        left_side = "║ "
-        for line in self.quantity_input_lines:
-            content.append(RT(left_side) + line.get_text(pad))
-        content.append(RT("╠═") + RT(f" {str(_GradeMsg.SECTION_HUMAN_HELP)} ").center(width, "═"))
-        for line in self.support_input_lines:
-            content.append(RT(left_side) + line.get_text(pad))
-        content.append(RT("╠═") + RT(f" {str(_GradeMsg.SECTION_AI_USAGE)} ").center(width, "═"))
-        for line in self.quality_input_lines:
-            content.append(RT(left_side) + line.get_text(pad))
-        content.append(RT("╚═══════════════════════════════════════════════════════════").ljust(width, "═"))
+        
+        # content.append(RT("╔") + (RT(" Tarefa")).center(width, "═"))
+        left_side = " "
+        
+        content.append(RT(left_side) + self.input_dict["rate"].get_text(pad))
+        content.append(RT(left_side) + self.input_dict["study"].get_text(pad))
+        content.append(RT(left_side) + self.input_dict["boss"].get_text(pad))
+        content.append(RT("═") + RT(f" {str(Msg.text(pt='LEIA COM ATENÇÃO', en='READ CAREFULLY'))} ", "y").center(width, "═"))
+        if self.input_dict["boss"].get_value() == "1":
+            for line in _GradeMsg.BOSS_MODE_ON.pt.splitlines():
+                content.append(RT(left_side) + line.center(width))
+        elif self.input_dict["boss"].get_value() == "0":
+            for line in _GradeMsg.BOSS_MODE_OFF.pt.splitlines():
+                content.append(RT(left_side) + line.center(width))
+        else:
+            for _ in range(4):
+                content.append(RT(""))
 
     def draw(self):
         self.update_content()
@@ -320,14 +299,9 @@ class FloatingGrade(FloatingABC):
         if not task.config.is_eval_test:
             task.info.rate = int(input_dict["rate"].get_value()) * 10
         task.info.feedback = True
-        task.info.friend = input_dict["friend"].get_value()
-        task.info.guided = input_dict["guided"].get_value() == "1"
-        task.info.ia_concept = input_dict["concept"].get_value() == "1"
-        task.info.ia_code = input_dict["code"].get_value() == "1"
-        task.info.ia_debug = input_dict["debug"].get_value() == "1"
-        task.info.ia_problem = input_dict["problem"].get_value() == "1"
-        task.info.ia_refactor = input_dict["refactor"].get_value() == "1"
+
         task.info.set_study(input_dict["study"].get_value())
+        task.info.boss = input_dict["boss"].get_value() == "1"
 
     def send_key_up(self):
         self._line = max(self._line - 1, 0)

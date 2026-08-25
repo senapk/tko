@@ -56,8 +56,6 @@ class TreeRenderer:
         head.add(f"{t.game.xp:>2}", "y")
         state, test, _ = self.task_formatter.get_task_down_test_eval_symbol(t)
         head.add(" ")
-        help_style, help_text = self.task_formatter.get_task_help_symbol(t)
-        head.add(help_text, help_style)
         head.add(" ").add(test)
         head.add(" ").add(state)
         head.add(" ").add(t.game.tier_symbol)

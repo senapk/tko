@@ -84,8 +84,8 @@ class LinkRebase:
         return LinkRebase.__replace_remote(
             content,
             ghu.raw_file_url,
-            ghu.blob_root_url,
-            ghu.tree_root_url,
+            ghu.blob_url,
+            ghu.tree_url,
             is_local=False,
         )
 
