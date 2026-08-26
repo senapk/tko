@@ -75,7 +75,7 @@ class GameBuilder:
     def __sum_quest_xp(self, quest: Quest):
         total = 0
         for t in quest.get_tasks():
-            total += t.game.xp
+            total += t.game.gain
         return total
 
     def __calculate_total_xp(self):

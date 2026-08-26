@@ -16,7 +16,7 @@ class QuestProgress:
         tasks_info: list[QuestGrader.Elem] = []
         for task in self._tasks_getter():
             percent = task.grader.full_percent
-            tasks_info.append(QuestGrader.Elem(task.game.xp, percent))
+            tasks_info.append(QuestGrader.Elem(task.game.gain, percent))
         obtained, available = QuestGrader.calc_xp_earned_total(tasks_info)
         goal = self._goal_xp()
         if goal == 0:

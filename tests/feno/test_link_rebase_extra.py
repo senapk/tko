@@ -29,3 +29,33 @@ def test_rebase_task_markdown_link_from_github_downloaded_file() -> None:
     result = LinkRebase.rebase(content, structure)
 
     assert "- [ ]`@tres            :1:main`[Soma de três inteiros](https://github.com/qxcodefup/arcade/blob/main/base/tres/README.md)" in result
+
+
+def test_rebase_uses_parent_folder_for_root_readme_url() -> None:
+    structure = GitHubUrl(
+        user="qxcodepoo",
+        repo="arcade",
+        branch="main",
+        relative_path="README.md",
+    )
+
+    content = "- [ ] `@+main` [Criando a Main](wiki/main/README.md)"
+
+    result = LinkRebase.rebase(content, structure)
+
+    assert "[Criando a Main](https://github.com/qxcodepoo/arcade/blob/main/wiki/main/README.md)" in result
+
+
+def test_rebase_uses_parent_folder_for_nested_markdown_url() -> None:
+    structure = GitHubUrl(
+        user="user",
+        repo="repo",
+        branch="main",
+        relative_path="docs/guide.md",
+    )
+
+    content = "[next](chapter/page.md)"
+
+    result = LinkRebase.rebase(content, structure)
+
+    assert result == "[next](https://github.com/user/repo/blob/main/docs/chapter/page.md)"

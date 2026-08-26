@@ -69,4 +69,4 @@ class GameCoordinator:
             with open(filename, "w", encoding="utf-8") as f:
                 f.write(f"# {repo.data.sandbox_name}\n\n")
         if filename.exists():
-            fix_readme(filename.resolve(), basedir, remote.name, verbose=False, load_titles=True)
+            fix_readme(index=filename.resolve(), base_dir=basedir, verbose=False, load_titles=True)

@@ -243,7 +243,7 @@ class Merger:
                 self.quests[found_index].lines.append(line)
         return self.header, self.quests
 
-def fix_readme(index: Path, base_dir: Path, default_quest_name: str = "Sem Quest", verbose: bool = True, save_titles: bool = False, load_titles: bool = False) -> None:
+def fix_readme(index: Path, base_dir: Path, verbose: bool = True, save_titles: bool = False, load_titles: bool = False) -> None:
     index = index.resolve()
     elements = Elements(index_path=index, base_dir=base_dir, verbose=verbose)
     elements.load_lines()
@@ -254,6 +254,7 @@ def fix_readme(index: Path, base_dir: Path, default_quest_name: str = "Sem Quest
     missing_entries = finder.create_tasks_from_unused_dirs()
     
     merger = Merger(elements)
+    default_quest_name = base_dir.name
     header, quests = merger.insert_missing_tasks(default_quest_name, missing_entries)
     
     renderer = Renderer(index_path=index)

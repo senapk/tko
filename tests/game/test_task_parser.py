@@ -84,7 +84,7 @@ def test_decode_task_types_sets_expected_values() -> None:
     task = make_parser().parse_line("- [ ] :15:test:make:zero [@label title](data/label/r.md)", 0)
 
     assert task is not None
-    assert task.game.xp == 15
+    assert task.game.gain == 15
     assert task.config.test == TaskEval.TEST
     assert task.location.task_type == TaskType.MAKE
 

@@ -37,45 +37,33 @@ class TaskFormatter:
             return key + title, key, title
         return basic.title, "", basic.title
 
-    def get_task_down_test_eval_symbol(self, task: Task) -> tuple[str, str, str]:
+    def get_task_down_test_eval_symbol(self, task: Task) -> tuple[str, str]:
         # state
-        link = "L"
-        static = "S" #Symbols.circle_filled
+        read = "R"
+        static = "X" #Symbols.circle_filled
         empty = "○" #Symbols.square_void
         down = "●" #Symbols.square_filled
 
         # mode
         test = "T"
-        manual = "M"
+        selF = "S"
 
-        # result
-        finish = "F"
-        not_init = "."
-
-        if task.location.is_read:
-            if task.info.feedback:
-                return (link, manual, finish)
-            return (link, manual, not_init)
         
         if task.config.test == TaskEval.TEST:
             test_mode = test
         else:
-            test_mode = manual
+            test_mode = selF
 
-        
-        if task.location.is_static_type:
+        if task.location.is_read:
+            state_mode = read
+        elif task.location.is_static_type:
             state_mode = static
         elif self.is_downloaded_for_lang(task):
             state_mode = down
         else:
             state_mode = empty
         
-        if task.info.feedback:
-            feed_mode = finish
-        else:
-            feed_mode = not_init
-
-        return (state_mode, test_mode, feed_mode)
+        return (state_mode, test_mode)
 
     @staticmethod
     def color_task_title(key: str, title: str) -> RT:

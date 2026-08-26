@@ -20,9 +20,9 @@ def remove_emojis(text: str) -> str:
 
 class TaskMatcher:
     TYPE = "type="
-    TIER = "tier="
-    XP = "xp="
-    LOSS = "loss="
+    GAIN = "gain="
+    HARD = "hard="
+    SIZE = "size="
     EVAL = "eval="
 
 
@@ -42,8 +42,9 @@ class TaskMatcher:
         self.key: str | None = None
 
         self.resource_type = TaskType.NULL
-        self.xp = 1
-        self.tier = 1
+        self.gain = 1
+        self.hard = 1
+        self.size = 1
         self.eval = TaskEval.NULL
 
     def match_pattern(self, line: str) -> bool:
@@ -99,11 +100,7 @@ class TaskMatcher:
 
     @staticmethod
     def is_field(v: str) -> bool:
-        return (
-            v.startswith("@") or v.startswith(":") or 
-            v.startswith(TaskMatcher.TYPE) or v.startswith(TaskMatcher.XP) or v.startswith(TaskMatcher.TIER) or 
-            v.startswith(TaskMatcher.LOSS) or v.startswith(TaskMatcher.EVAL)
-        )
+        return ( v.startswith("@") or v.startswith(":") or ("=" in v and len(v.split("=")) == 2))
 
     def get_filled_fields(self) -> list[str]:
         output: list[str] = []
@@ -113,25 +110,37 @@ class TaskMatcher:
         if self.resource_type != TaskType.NULL:
             output.append(f"{TaskMatcher.TYPE}{self.resource_type.value}")
 
-        output.append(f"{TaskMatcher.XP}{self.xp}")
+        output.append(f"{TaskMatcher.GAIN}{self.gain}")
         if self.is_make:
-            output.append(f"{TaskMatcher.TIER}{self.tier}")
+            output.append(f"{TaskMatcher.HARD}{self.hard}")
+            output.append(f"{TaskMatcher.SIZE}{self.size}")
             output.append(f"{TaskMatcher.EVAL}{self.eval.value}")
+
 
         return output
 
     def __parse_fields(self, words: list[str]):
         for item in words:
             item = item.lower()
-            if item.startswith(TaskMatcher.TIER):
-                tier_value = self.parse_int(item[len(TaskMatcher.TIER):])
-                if tier_value is not None:
-                    self.tier = tier_value
+            if item.startswith(TaskMatcher.HARD):
+                if hard_value := self.parse_int(item[len(TaskMatcher.HARD):]):
+                    self.hard = hard_value
                 continue
-            if item.startswith(TaskMatcher.XP):
-                xp_value = self.parse_int(item[len(TaskMatcher.XP):])
-                if xp_value is not None:
-                    self.xp = xp_value
+            if item.startswith("tier="):
+                if hard_value := self.parse_int(item[len("tier="):]):
+                    self.hard = hard_value
+                continue
+            if item.startswith(TaskMatcher.GAIN):
+                if gain_value := self.parse_int(item[len(TaskMatcher.GAIN):]):
+                    self.gain = gain_value
+                continue
+            if item.startswith("xp="):
+                if gain_value := self.parse_int(item[len("xp="):]):
+                    self.gain = gain_value
+                continue
+            if item.startswith(TaskMatcher.SIZE):
+                if size_value := self.parse_int(item[len(TaskMatcher.SIZE):]):
+                    self.size = size_value
                 continue
             elif item == f"{TaskMatcher.EVAL}{TaskEval.TEST.value}":
                 self.eval = TaskEval.TEST
@@ -146,7 +155,7 @@ class TaskMatcher:
         for tag in items:
             # if c is digit, set xp
             if tag.isdigit():
-                self.xp = int(tag)
+                self.gain = int(tag)
             elif tag == TaskEval.TEST.value:
                 self.eval = TaskEval.TEST
             elif tag == TaskEval.SELF.value:

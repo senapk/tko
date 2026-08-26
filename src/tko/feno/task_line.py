@@ -90,9 +90,7 @@ class TaskLine:
             return s
 
         fields = self.tm.get_filled_fields()
-        fields = [f for f in fields if (
-            not f.startswith("@")
-            )]
+        fields = [f for f in fields if not f.startswith("@")]
         fields = " ".join(fields)
         words = self.tm.raw_pre.replace("`", " ").replace("- [ ]", " ").replace("<!--", " ").replace("-->", " ").split()
         left = " ".join(x for x in words if not self.tm.is_field(x))
@@ -123,7 +121,7 @@ class TaskLine:
     
     def render_line(self, key_pad: int) -> str:
         # after = f"{_type} {_eval}"
-        fields_pad = len("type=make xp=4 tier=1 loss=part eval:test")
+        fields_pad = len("type=make gain=4 hard=1 size=1 eval=test")
         ref = "x" if self.tm.is_ref else " "
         link = self.tm.link
         if self.target_file is not None:

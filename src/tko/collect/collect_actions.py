@@ -68,6 +68,6 @@ class CollectActions:
             output_quest = QuestGameData(quest.basic.full_key)
             output.append(output_quest)
             for task in quest.get_tasks():
-                output_quest.tasks.append(TaskGameData(key=task.basic.full_key, value=task.game.xp, is_leet=task.config.is_eval_test))
+                output_quest.tasks.append(TaskGameData(key=task.basic.full_key, value=task.game.gain, is_leet=task.config.is_eval_test))
         return output
     

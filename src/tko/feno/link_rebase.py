@@ -1,6 +1,6 @@
 import re
 from tko.util.git_hub_url import GitHubUrl
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 class LinkRebase:
 
@@ -81,6 +81,11 @@ class LinkRebase:
 
     @staticmethod
     def rebase(content: str, ghu: GitHubUrl) -> str:
+        relative_path = ghu.relative_path
+        if relative_path and PurePosixPath(relative_path).suffix:
+            parent = PurePosixPath(relative_path).parent
+            ghu = ghu.set_relative_path(None if str(parent) == "." else str(parent))
+
         return LinkRebase.__replace_remote(
             content,
             ghu.raw_file_url,

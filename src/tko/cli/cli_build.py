@@ -60,7 +60,6 @@ def build_index(
     fix_readme(
         index=Path(index), 
         base_dir=Path(base), 
-        default_quest_name="sandbox", 
         verbose=True, 
         save_titles=save, 
         load_titles=load

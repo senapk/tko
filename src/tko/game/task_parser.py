@@ -95,8 +95,9 @@ class TaskParser:
         if tm.key is not None:
             task.basic.key = tm.key
 
-        task.game.xp = tm.xp
-        task.game.tier = tm.tier
+        task.game.gain = tm.gain
+        task.game.hard = tm.hard
+        task.game.size = tm.size
         task.config = TaskConfig(test=tm.eval)
         task.basic.title = self.__remove_tags_from_title(tm.title)
 

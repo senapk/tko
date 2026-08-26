@@ -25,7 +25,7 @@ class QuestLine:
         return self.qp.quest.basic.key
 
     def _calc_ref_sum(self) -> int:
-        return sum(l.tm.xp for l in self.lines if isinstance(l, TaskLine) and l.tm.is_ref)
+        return sum(l.tm.gain for l in self.lines if isinstance(l, TaskLine) and l.tm.is_ref)
 
     def render_line(self):
         qf = QuestMatcher(self.qp.quest)

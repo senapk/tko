@@ -21,10 +21,6 @@ class RemoteResolver:
         self.repo_root_dir: Path = root_dir.resolve()
 
     def remote_work_dir(self, remote: Remote) -> Path:
-        if remote.is_editable:
-            path, ok = self.resolve_index_file(remote, load_git=True)
-            if ok:
-                return path.parent
         return self.repo_root_dir / remote.name
     
     def resolve_index_file(self, remote: Remote, load_git: bool) -> tuple[Path , bool]:
