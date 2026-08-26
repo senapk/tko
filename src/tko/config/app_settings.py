@@ -31,8 +31,6 @@ class AppSettings:
     last_tko_check_update: str = ""
     last_version: str = ""
     panel_size_percent: float = 60.0
-    sandbox_dir: str = "sandbox"
-    sandbox_index: str = "sandbox.md"
 
     keys: dict[AppKeys, int] = field(default_factory=lambda: {
         AppKeys.LEFT: curses.KEY_LEFT,
@@ -105,7 +103,5 @@ class AppSettings:
             f"- Editor      : {self.editor}",
             f"- Images      : {self.use_images}",
             f"- Timeout     : {self.timeout}",
-            f"- SandboxDir  : {self.sandbox_dir}",
-            f"- SandboxIndex: {self.sandbox_index}",
         ]
         return "\n".join(output)

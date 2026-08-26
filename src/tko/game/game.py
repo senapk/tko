@@ -7,7 +7,6 @@ from tko.game.task import Task
 from tko.repository.remote import Remote
 from tko.i18n import Msg
 from tko.repository.remote_resolver import RemoteResolver
-from tko.repository.sandbox import Sandbox
 
 
 _GAME_TASK_NOT_FOUND_IN_COURSE = Msg.text(
@@ -47,12 +46,7 @@ class Game:
         if key in self.tasks:
             return self.tasks[key]
         return None
-    
-    def get_sandbox_remote(self) -> Remote | None:
-        if Sandbox.get_sandbox_name() in self.remotes:
-            return self.remotes[Sandbox.get_sandbox_name()]
-        return None
-    
+        
     def set_remotes(self, remotes: dict[str, Remote], language: str):
         self.remotes = remotes
         self.language = language

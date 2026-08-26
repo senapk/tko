@@ -3,7 +3,6 @@ from dataclasses import dataclass, replace
 from loguru import logger
 from tko.i18n import Msg
 from tko.repository.remote import Remote
-from tko.repository.sandbox import Sandbox
 from typing import Any
 from pathlib import Path
 
@@ -42,8 +41,8 @@ class RepositoryData:
     def __init__(self, root_folder: Path):
         self.root_folder: Path = root_folder
         self.version: str = ""
-        self.__sandbox_dir: str = "sandbox"
-        self.__sandbox_index: str = "sandbox.md"
+        self.sandbox_name: str = "sandbox"
+        self.sandbox_index: str = "sandbox.md"
         self.__remotes: dict[str, Remote] = {}
         self.expanded: list[str] = []
         self.flags: dict[str, Any] = {}
@@ -52,21 +51,10 @@ class RepositoryData:
         self.selected: str = ""
         self.selected_index: int = 0
 
-    @property
-    def sandbox_dir(self) -> Path:
-        return (self.root_folder / self.__sandbox_dir).resolve()
-
-    @sandbox_dir.setter
-    def sandbox_dir(self, value: str) -> None:
-        self.__sandbox_dir = value
 
     @property
     def sandbox_index_file(self) -> Path:
-        return (self.root_folder / self.__sandbox_index).resolve()
-
-    @sandbox_index_file.setter
-    def sandbox_index_file(self, value: str) -> None:
-        self.__sandbox_index = value
+        return (self.root_folder / self.sandbox_index).resolve()
 
     @property
     def audit_enabled(self) -> bool:
@@ -85,7 +73,7 @@ class RepositoryData:
         self.audit.interval_seconds = value
 
     def set_remote(self, remote: Remote) -> None:
-        if remote.name == Sandbox.get_sandbox_name():
+        if remote.name == self.sandbox_name:
             raise ValueError("Cannot set a remote with the name of the sandbox source.")
         if remote.is_local_source:
             if not Path(remote.path_or_url).is_absolute():
@@ -98,13 +86,13 @@ class RepositoryData:
         return self.__remotes.get(name, None)
 
     def get_sandbox(self) -> Remote:
-        return Remote.from_local_file(Sandbox.get_sandbox_name(), (self.root_folder / self.__sandbox_index).resolve(), is_editable=True)
+        return Remote.from_local_file(self.sandbox_name, (self.root_folder / self.sandbox_index).resolve(), is_editable=True)
 
     # fonte local é retornada primeiro para garantir que ela seja priorizada em relação a fontes externas
     # sandbox é sempre a primeira fonte local, para garantir que ela seja priorizada em relação a outras fontes locais
     def get_remotes(self) -> dict[str, Remote]:
         output: dict[str, Remote] = {}
-        output[Sandbox.get_sandbox_name()] = self.get_sandbox()
+        output[self.sandbox_name] = self.get_sandbox()
         for s in self.__remotes.values():
             output[s.name] = s
         return output
@@ -120,8 +108,8 @@ class RepositoryData:
             # Load simple fields
             self.version = self._safe_load(data, "version", str, self.version)
             self.expanded = self._safe_load(data, "expanded", list, self.expanded)
-            self.__sandbox_dir = self._safe_load(data, "sandbox_dir", str, self.__sandbox_dir)
-            self.__sandbox_index = self._safe_load(data, "sandbox_index", str, self.__sandbox_index)
+            self.sandbox_name = self._safe_load(data, "sandbox_name", str, self.sandbox_name)
+            self.sandbox_index = self._safe_load(data, "sandbox_index", str, self.sandbox_index)
             # self.tasks = self._safe_load(data, "tasks", dict, self.tasks)
             self.flags = self._safe_load(data, "flags", dict, self.flags)
             audit_data = self._safe_load(data, "audit", dict, None)
@@ -138,7 +126,7 @@ class RepositoryData:
                     remotes = [Remote.from_dict(x) for x in source_data]
                     self.__remotes.clear()
                     for r in remotes:
-                        if r.name == Sandbox.get_sandbox_name():
+                        if r.name == self.sandbox_name:
                             continue
                         self.set_remote(r)
                 else:
@@ -150,8 +138,8 @@ class RepositoryData:
     def to_dict(self) -> dict[str, Any]:
         return {
             "version": self.version,
-            "sandbox_dir": self.__sandbox_dir,
-            "sandbox_index": self.__sandbox_index,
+            "sandbox_name": self.sandbox_name,
+            "sandbox_index": self.sandbox_index,
             "sources": [x.to_dict() for x in self.__remotes.values()],
             "expanded": self.expanded,
             "flags": self.flags,

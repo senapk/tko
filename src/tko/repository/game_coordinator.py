@@ -7,8 +7,6 @@ from tko.repository.repository import Repository
 from tko.repository.remote_resolver import RemoteResolver
 from tko.feno.indexer import fix_readme
 
-from tko.repository.sandbox import Sandbox
-
 _GAME_COORDINATOR_LOADING_REPOSITORY = Msg.text(
     pt="Carregando repositório de {root}...",
     en="Loading repository from {root}...",
@@ -60,13 +58,15 @@ class GameCoordinator:
 
 
     def ensure_sandbox_readme_fixed(self, repo: Repository, remote_resolver: RemoteResolver):
-        basedir = repo.data.sandbox_dir
-        filename = repo.data.sandbox_index_file
+        remote = repo.data.get_sandbox()
+        basedir = remote_resolver.remote_work_dir(remote)
+        filename = remote_resolver.resolve_index_file(remote, load_git=False)[0]
+
         if not filename.parent.exists():
             return
         if basedir.exists() and not filename.exists():
             filename.parent.mkdir(parents=True, exist_ok=True)
             with open(filename, "w", encoding="utf-8") as f:
-                f.write(f"# {Sandbox.get_sandbox_name()}\n\n")
+                f.write(f"# {repo.data.sandbox_name}\n\n")
         if filename.exists():
-            fix_readme(filename.resolve(), basedir, Sandbox.get_sandbox_name(), verbose=False, load_titles=True)
+            fix_readme(filename.resolve(), basedir, remote.name, verbose=False, load_titles=True)

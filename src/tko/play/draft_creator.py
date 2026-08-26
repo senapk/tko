@@ -38,7 +38,7 @@ class DraftCreator:
         if not sandbox_source:
             return
 
-        sandbox_folder: Path = self.repo.data.sandbox_dir
+        sandbox_folder: Path = self.repo.data.sandbox_name
         sandbox_folder.mkdir(parents=True, exist_ok=True)
 
         def find_numbered_draft_id(sandbox_folder: Path) -> int:
