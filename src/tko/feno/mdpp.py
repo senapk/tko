@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
 import re
 import enum
 from loguru import logger
@@ -20,6 +21,14 @@ _MDPP_MISSING_EXTRACT_VALUE = Msg.text(
 _MDPP_INVALID_TESTS_INTEGER = Msg.text(
     pt="valor inválido ou faltando para --tests",
     en="invalid or missing integer for --tests",
+)
+_MDPP_MUTUALLY_EXCLUSIVE_TESTS = Msg.text(
+    pt="--tests-tio e --tests-table são mutuamente exclusivos",
+    en="--tests-tio and --tests-table are mutually exclusive",
+)
+_MDPP_DEPRECATED_TESTS_TABLE = Msg.text(
+    pt="a combinação --tests --table está depreciada, use --tests-table",
+    en="the combination --tests --table is deprecated, use --tests-table",
 )
 _MDPP_UNRECOGNIZED_TAG = Msg.text(
     pt="tag não reconhecida '{tag}'",
@@ -106,12 +115,13 @@ class TocMaker:
 
     
     @staticmethod
-    def execute_toch(content: str) -> str:
+    def execute_toc_table(content: str) -> str:
         entries = TocMaker.extract_entries(content)
         links = [b for (a, b) in entries if a == 2]
         table = ["--" for _ in links]
         return " | ".join(links) + "\n" + " | ".join(table)
         
+    execute_toch = execute_toc_table
 
     @staticmethod
     def execute_toc(content: str) -> str:
@@ -131,10 +141,22 @@ class Toc:
             subst = r"<!-- toc -->\n<!-- toc -->"
         return re.sub(regex, subst, content, 0, re.MULTILINE | re.DOTALL)
 
+class TocTable:
+    @staticmethod
+    def execute(content: str, action: Action = Action.RUN) -> str:
+        regex = r"<!-- toc-table -->\n" + r"(.*?)" + r"<!-- toc-table -->"
+        if action == Action.RUN:
+            new_toc = TocMaker.execute_toc_table(content)
+            subst = r"<!-- toc-table -->\n" + new_toc + r"\n<!-- toc-table -->"
+        else:
+            subst = r"<!-- toc-table -->\n<!-- toc-table -->"
+        content = re.sub(regex, subst, content, 0, re.MULTILINE | re.DOTALL)
+        return Toch.execute(content, action)
+
 class Toch:
     @staticmethod
     def execute(content: str, action: Action = Action.RUN) -> str:
-        regex = r"<!-- toch -->\n" + r"(.*?)"+ r"<!-- toch -->"
+        regex = r"<!-- toch -->\n" + r"(.*?)" + r"<!-- toch -->"
         if action == Action.RUN:
             new_toc = TocMaker.execute_toch(content)
             subst = r"<!-- toch -->\n" + new_toc + r"\n<!-- toch -->"
@@ -158,8 +180,11 @@ class Links:
                         output += "  " * depth + "- " + entry.name + "\n"
                         output += traverse_directory(entry, depth + 1)
                     else:
-                        path = entry.resolve().relative_to(readme_dir)
-                        output += "  " * depth + "- [" + entry.name + "](" + path.as_posix() + ")\n"
+                        try:
+                            rel_path = entry.resolve().relative_to(readme_dir).as_posix()
+                        except ValueError:
+                            rel_path = Path(os.path.relpath(entry.resolve(), readme_dir)).as_posix()
+                        output += "  " * depth + "- [" + entry.name + "](" + rel_path + ")\n"
             return output
         
         origin = readme_dir / filter_dir
@@ -203,23 +228,50 @@ class Links:
 @dataclass
 class LoadParams:
     extract: str | None = None
-    rmcom: bool = False
-    fenced: str | None = None
     filter: bool = False
-    table: bool = False
-    tests: int | None = None
+    rm_comments: bool = False
+    tests_tio: int | None = None
+    tests_table: int | None = None
+    fenced: str | None = None
+
+    @property
+    def rmcom(self) -> bool:
+        return self.rm_comments
+
+    @rmcom.setter
+    def rmcom(self, value: bool) -> None:
+        self.rm_comments = value
+
+    @property
+    def tests(self) -> int | None:
+        return self.tests_tio
+
+    @tests.setter
+    def tests(self, value: int | None) -> None:
+        self.tests_tio = value
+
+    @property
+    def table(self) -> bool:
+        return self.tests_table is not None
+
+    @table.setter
+    def table(self, value: bool) -> None:
+        if value and self.tests_tio is not None:
+            self.tests_table = self.tests_tio
+            self.tests_tio = None
 
 class Load:
     @staticmethod
     def extract_between_tags(content: str, tag: str) -> str:
-        regex = r"\[\[" + tag + r"\]\].*?^(.*)^[\S ]*\[\[" + tag + r"\]\]"
-        matches = re.finditer(regex, content, re.MULTILINE | re.DOTALL)
-        for match in matches:
+        escaped = re.escape(tag)
+        regex = r"\[\[" + escaped + r"\]\].*?\r?\n(.*?)^[^\r\n]*?\[\[" + escaped + r"\]\]"
+        match = re.search(regex, content, re.MULTILINE | re.DOTALL)
+        if match:
             return match.group(1)
         return ""
 
     @staticmethod
-    def rmcom(target: Path, content: str) -> str:
+    def rm_comments(target: Path, content: str) -> str:
         com = "//"
         if target.suffix == ".py":
             com = "#"
@@ -231,6 +283,8 @@ class Load:
             if not line.lstrip().startswith(com):
                 output.append(line)
         return "\n".join(output)
+
+    rmcom = rm_comments
     
     @staticmethod
     def __get_value(tokens: list[str], index: int) -> str | None:
@@ -245,50 +299,105 @@ class Load:
         params = LoadParams()
         tokens = tag_str.split()
         
+        raw_tests_tio: int | None = None
+        raw_tests_table: int | None = None
+        raw_tests: int | None = None
+        had_legacy_table: bool = False
+        mutually_exclusive_error: bool = False
+
         i = 0
         while i < len(tokens):
             token = tokens[i]
             
-            if token  == "--fenced":
+            if token == "--fenced":
                 value = Load.__get_value(tokens, i)
                 if value:
                     params.fenced = value
-                    i += 1 # Consome o valor
+                    i += 1  # Consome o valor
                 else:
-                    params.fenced = "" # Se não houver valor, apenas ativa o fenced sem linguagem específica
-            elif token == "--table":
-                params.table = True
+                    params.fenced = ""  # Se não houver valor, apenas ativa o fenced sem linguagem específica
             elif token == "--extract":
                 val = Load.__get_value(tokens, i)
                 if val:
                     params.extract = val
-                    i += 1 # Consome o valor
+                    i += 1  # Consome o valor
                 else:
                     logger.warning(str(_MDPP_MISSING_EXTRACT_VALUE))
-            elif token == "--tests":
-                val = Load.__get_value(tokens, i)
-                try:
-                    if val:
-                        params.tests = int(val)
-                        i += 1 # Consome o valor
-                    else:
-                        raise ValueError
-                except ValueError:
-                    logger.warning(str(_MDPP_INVALID_TESTS_INTEGER))
-
-            elif token == "--rmcom":
-                params.rmcom = True
-
             elif token == "--filter":
                 params.filter = True
-
+            elif token in ("--rm-comments", "--rmcom"):
+                params.rm_comments = True
+            elif token == "--tests-tio":
+                val = Load.__get_value(tokens, i)
+                if val is not None:
+                    try:
+                        parsed = int(val)
+                        if parsed < 0:
+                            raise ValueError
+                        raw_tests_tio = parsed
+                        i += 1
+                    except ValueError:
+                        logger.warning(str(_MDPP_INVALID_TESTS_INTEGER))
+                        i += 1
+                else:
+                    raw_tests_tio = 0
+            elif token == "--tests-table":
+                val = Load.__get_value(tokens, i)
+                if val is not None:
+                    try:
+                        parsed = int(val)
+                        if parsed < 0:
+                            raise ValueError
+                        raw_tests_table = parsed
+                        i += 1
+                    except ValueError:
+                        logger.warning(str(_MDPP_INVALID_TESTS_INTEGER))
+                        i += 1
+                else:
+                    raw_tests_table = 0
+            elif token == "--tests":
+                val = Load.__get_value(tokens, i)
+                if val is not None:
+                    try:
+                        parsed = int(val)
+                        if parsed < 0:
+                            raise ValueError
+                        raw_tests = parsed
+                        i += 1
+                    except ValueError:
+                        logger.warning(str(_MDPP_INVALID_TESTS_INTEGER))
+                        i += 1
+                else:
+                    raw_tests = 0
+            elif token == "--table":
+                had_legacy_table = True
             elif token.startswith("--"):
                 logger.warning(str(_MDPP_UNRECOGNIZED_TAG).format(tag=token))
             
-            i += 1 # Sempre avança para o próximo token
-            
-            # if params.tests is not None and not params.table:
-            #     params.fenced = "py"
+            i += 1  # Sempre avança para o próximo token
+
+        if (raw_tests_tio is not None or raw_tests is not None) and (raw_tests_table is not None):
+            logger.warning(str(_MDPP_MUTUALLY_EXCLUSIVE_TESTS))
+            mutually_exclusive_error = True
+
+        if not mutually_exclusive_error:
+            if raw_tests_table is not None:
+                params.tests_table = raw_tests_table
+                if had_legacy_table:
+                    logger.warning(str(_MDPP_DEPRECATED_TESTS_TABLE))
+            elif raw_tests_tio is not None:
+                params.tests_tio = raw_tests_tio
+                if had_legacy_table:
+                    logger.warning(str(_MDPP_DEPRECATED_TESTS_TABLE))
+            elif raw_tests is not None:
+                if had_legacy_table:
+                    logger.warning(str(_MDPP_DEPRECATED_TESTS_TABLE))
+                    params.tests_table = raw_tests
+                else:
+                    params.tests_tio = raw_tests
+            elif had_legacy_table:
+                logger.warning(str(_MDPP_UNRECOGNIZED_TAG).format(tag="--table"))
+
         return params
 
     @staticmethod
@@ -353,21 +462,28 @@ class Load:
 
         data = Decoder.load(abspath)
 
+        # 1. extract
         if params.extract:
             tag = params.extract
             data = Load.extract_between_tags(data, tag)
+        # 2. filter
         if params.filter:
             data = Filter(Path(rel_path)).process(data)
-        if params.rmcom:
-            data = Load.rmcom(abspath, data)
-        if params.tests is not None:
-            data = Load.generate_tests_from_test_toml(data, abspath, params.tests, params.table)
+        # 3. remove comments
+        if params.rm_comments:
+            data = Load.rm_comments(abspath, data)
+        # 4. tests-tio OR tests-table
+        if params.tests_tio is not None:
+            data = Load.generate_tests_from_test_toml(data, abspath, params.tests_tio, use_table=False)
+        elif params.tests_table is not None:
+            data = Load.generate_tests_from_test_toml(data, abspath, params.tests_table, use_table=True)
+        # 5. fenced
         if params.fenced is not None:
             if params.fenced == "":
-                lang = abspath.suffix[1:]
+                lang = abspath.suffix[1:] if abspath.suffix.startswith(".") else ""
             else:
                 lang = params.fenced
-            data = f"```{lang}\n{data}\n```"
+            data = f"```{lang}\n{data.rstrip()}\n```"
 
         # Garante que termine com apenas uma quebra de linha
         return data.rstrip()
@@ -396,13 +512,16 @@ class Load:
 class Save:
     @staticmethod
     # execute filename and content
-    def execute(file_content: str) -> None:
+    def execute(file_content: str, target_dir: Path | None = None) -> None:
         regex = r"\[\]\(save\)\[\]\((.*?)\)\n```[a-z]*\n(.*?)```\n\[\]\(save\)"
         matches = re.finditer(regex, file_content, re.MULTILINE | re.DOTALL)
         content_old = ""        
         for match in matches:
-            path = Path(match.group(1))
+            path_str = match.group(1)
             content = match.group(2)
+            path = Path(path_str)
+            if not path.is_absolute() and target_dir is not None:
+                path = (target_dir / path).resolve()
             exists = path.is_file()
             if exists:
                 content_old = Decoder.load(path)
@@ -442,17 +561,14 @@ class Mdpp:
         if not found:
             return False
         updated = original
-        updated_toc = Toc.execute(updated, action)
-        updated_toc = Toch.execute(updated_toc, action)
-        if updated != updated_toc:
-            updated = updated_toc
+        updated = Toc.execute(updated, action)
+        updated = TocTable.execute(updated, action)
         updated = Load.execute(updated, target_dir, action)
         updated = Links.execute(target, updated, action)
-        Save.execute(updated)
+        Save.execute(updated, target_dir)
         
         if updated != original:
             Decoder.save(path, updated)
-            # hook = os.path.abspath(path).split(os.sep)[-2]
             return True
 
         return False

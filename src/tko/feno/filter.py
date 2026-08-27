@@ -1,6 +1,9 @@
 from loguru import logger
 from pathlib import Path
+import re
 import shutil
+from dataclasses import dataclass
+from enum import Enum
 from tko.i18n import Msg
 from tko.util.rt import RT
 from tko.util.decoder import Decoder
@@ -35,109 +38,196 @@ _FILTER_OUTPUT_FOLDER_EXISTS = Msg.parse(
     en="Error: output folder already exists",
 )
 
+class Mode(Enum):
+    KEEP = "KEEP"
+    DROP = "DROP"
+    COM = "COM"
+    UNC = "UNC"
+
+    @classmethod
+    def from_token(cls, token: str) -> "Mode | None":
+        return {
+            "@KEEP": cls.KEEP,
+            "@DROP": cls.DROP,
+            "@COM": cls.COM,
+            "@UNC": cls.UNC,
+            "ADD!": cls.KEEP,
+            "DEL!": cls.DROP,
+            "COM!": cls.COM,
+            "ACT!": cls.UNC,
+        }.get(token)
+
+
+# Backwards compatibility attributes
+Mode.ADD = Mode.KEEP  # type: ignore[attr-defined]
+Mode.DEL = Mode.DROP  # type: ignore[attr-defined]
+Mode.ACT = Mode.UNC  # type: ignore[attr-defined]
+Mode.opts = ["@KEEP", "@DROP", "@COM", "@UNC", "ADD!", "DEL!", "COM!", "ACT!"]  # type: ignore[attr-defined]
+
+
+@dataclass
 class Mark:
-    def __init__(self, marker: str, indent: int):
-        self.marker: str = marker
-        self.indent: int = indent
+    mode: Mode
+    indent: int
 
-    # @override
     def __str__(self):
-        return f"{self.marker}:{self.indent}"
+        return f"{self.mode.value}:{self.indent}"
 
-class Mode:
-    ADD = "ADD!"
-    COM = "COM!"
-    ACT = "ACT!"
-    DEL = "DEL!"
-    opts = [ADD, COM, ACT, DEL]
+
+@dataclass
+class Directive:
+    mode: Mode
+    inline: bool
+    code: str
+
 
 def get_comment(filename: Path) -> str:
     com = "//"
-    if filename.suffix == ".py":
+    if filename.suffix in [".py", ".sh", ".bash", ".toml", ".yaml", ".yml", ".tio", ".r", ".rb"]:
         com = "#"
-    elif filename.suffix == ".hs":
+    elif filename.suffix in [".hs", ".sql", ".lua"]:
         com = "--"
     elif filename.suffix == ".puml":
         com = "'"
     return com
 
+
+def is_offset_in_string(line: str, offset: int, com: str) -> bool:
+    in_quote: str | None = None
+    escaped = False
+    for i, ch in enumerate(line):
+        if i >= offset:
+            break
+        if in_quote is not None:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == in_quote:
+                in_quote = None
+        else:
+            if com != "'" and ch in ('"', "'", "`"):
+                in_quote = ch
+            elif com == "'" and ch == '"':
+                in_quote = ch
+            elif line.startswith(com, i):
+                return False
+    return in_quote is not None
+
+
 class Filter:
     def __init__(self, filename: Path):
         self.filename = filename
-        self.stack = [Mark(Mode.ADD, 0)]
+        self.stack = [Mark(Mode.KEEP, 0)]
         self.com = get_comment(filename)
-        self.tab_char = "\t" if filename.suffix == ".go" else " "
 
-    def get_marker(self) -> str:
-        return self.stack[-1].marker
+    def current_mark(self) -> Mark:
+        return self.stack[-1]
 
-    def get_indent(self) -> int:
-        return self.stack[-1].indent
+    @staticmethod
+    def indent_text(line: str) -> str:
+        return line[: len(line) - len(line.lstrip(" \t"))]
 
-    def outside_scope(self, line: str):
+    @staticmethod
+    def indent_column(line: str, tab_size: int = 4) -> int:
+        return len(Filter.indent_text(line).expandtabs(tab_size))
+
+    def parse_directive(self, line: str) -> Directive | None:
         stripped = line.strip()
-        left_spaces = len(line) - len(line.lstrip())
-        return stripped != "" and left_spaces < self.get_indent()
+        if stripped == "":
+            return None
 
-    def has_single_mode_cmd(self, line: str) -> bool:
-        stripped = line.strip()
-        for marker in Mode.opts:
-            if stripped == self.com + " " + marker:
-                return True
-        return False
+        # Check block directive (line contains only the comment tag)
+        if stripped.startswith(self.com):
+            payload = stripped[len(self.com):].strip()
+            mode = Mode.from_token(payload)
+            if mode is not None:
+                return Directive(mode, inline=False, code="")
 
-    def change_mode(self, line: str):
-        with_left = line.rstrip()
-        marker = with_left.lstrip()[len(self.com) + 1:]
-        len_spaces = len(with_left) - len(self.com + marker + " ")
-        while len(self.stack) > 0 and self.stack[-1].indent >= len_spaces:
-            self.stack.pop()
-        self.stack.append(Mark(marker, len_spaces))
+        # Check inline directive at the end of the line
+        pattern = rf"(?:^|[\t ]){re.escape(self.com)}\s*(@KEEP|@DROP|@COM|@UNC|ADD!|DEL!|COM!|ACT!)\s*$"
+        match = re.search(pattern, line)
+        if match:
+            start_idx = line.find(self.com, match.start())
+            if not is_offset_in_string(line, start_idx, self.com):
+                token = match.group(1)
+                mode = Mode.from_token(token)
+                if mode is not None:
+                    code = line[:start_idx].rstrip()
+                    if code.strip() == "":
+                        return Directive(mode, inline=False, code="")
+                    return Directive(mode, inline=True, code=code)
 
-    def search_temp_mode(self, line: str) -> tuple[str, int, str]:
-        for marker in Mode.opts:
-            if line.rstrip().endswith(self.com + " " + marker):
-                count: int = 0
-                for i in range(len(line)):
-                    if line[i] == " ":
-                        count += 1
-                    else:
-                        break
-                return marker, count, line[:-len(self.com + marker + " ")].rstrip()
-        return "---", 0, line
+        return None
+
+    def comment_line(self, line: str) -> str:
+        if line.strip() == "":
+            return line
+        indent = self.indent_text(line)
+        return f"{indent}{self.com} {line[len(indent):]}"
+
+    def uncomment_line(self, line: str) -> str:
+        if line.strip() == "":
+            return line
+        indent = self.indent_text(line)
+        body = line[len(indent):]
+        if body.startswith(self.com + " "):
+            return f"{indent}{body[len(self.com) + 1:]}"
+        if body.startswith(self.com):
+            return f"{indent}{body[len(self.com):]}"
+        return line
 
     def __process(self, content: str) -> str:
+        if not content:
+            return ""
+
         lines = content.splitlines()
         output: list[str] = []
-        for line in lines:
-            while self.outside_scope(line):
-                self.stack.pop()
-            if self.has_single_mode_cmd(line):
-                self.change_mode(line)
-                continue
-            marker: str = self.get_marker()
-            indent: int = self.get_indent()
-            temp_marker, temp_indent, line = self.search_temp_mode(line)
-            if temp_marker != "---":
-                marker = temp_marker
-                indent = temp_indent
+        self.stack = [Mark(Mode.KEEP, 0)]
 
-            if marker == Mode.DEL:
+        for line in lines:
+            if line.strip() == "":
+                mode = self.stack[-1].mode
+                if mode != Mode.DROP:
+                    output.append(line)
                 continue
-            elif marker == Mode.ADD:
-                output.append(line)
-            elif marker == Mode.ACT:
-                prefix = self.tab_char * indent + self.com + " "
-                if not line.startswith(prefix):
-                    prefix = prefix[:-1]
-                line = line.replace(prefix, self.tab_char * indent, 1)
-                output.append(line)
-            elif marker == Mode.COM:
-                line = self.tab_char * indent + self.com + " " + line[indent:]
-                output.append(line)
+
+            column = self.indent_column(line)
+
+            # Pop scopes closed by reduced indentation
+            while len(self.stack) > 1 and column < self.stack[-1].indent:
+                self.stack.pop()
+
+            directive = self.parse_directive(line)
+
+            if directive is not None and not directive.inline:
+                # Block directive: pop any scope at same or deeper level
+                while len(self.stack) > 1 and column <= self.stack[-1].indent:
+                    self.stack.pop()
+                self.stack.append(Mark(directive.mode, column))
+                continue
+
+            if directive is not None and directive.inline:
+                mode = directive.mode
+                source_line = directive.code
+            else:
+                mode = self.stack[-1].mode
+                source_line = line
+
+            if mode == Mode.DROP:
+                continue
+            elif mode == Mode.KEEP:
+                output.append(source_line)
+            elif mode == Mode.COM:
+                output.append(self.comment_line(source_line))
+            elif mode == Mode.UNC:
+                output.append(self.uncomment_line(source_line))
+
+        if not output:
+            return ""
 
         return "\n".join(output) + "\n"
-    
+
     def process(self, content: str) -> str:
         return self.__process(content)
 

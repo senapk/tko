@@ -1,56 +1,59 @@
 # mdpp - Guia Completo de Uso
 
-O `mdpp` e um pre-processador de Markdown usado para atualizar blocos dinamicos em arquivos `.md`.
+O `mdpp` é um pré-processador de Markdown usado para atualizar blocos dinâmicos em arquivos `.md`.
 
-No TKO, ele esta disponivel no comando:
+No TKO, ele está disponível no comando:
 
 ```bash
 tko tool mdpp [targets...] [--clean] [--quiet]
 ```
 
-Se nenhum `target` for passado, o comportamento padrao e processar `README.md` no diretorio atual.
+Se nenhum `target` for passado, o comportamento padrão é processar `README.md` no diretório atual.
 
 ---
 
-## 1. Comando e Modos
+## 1. Visão Geral da DSL
 
-### Comando
+O `mdpp` oferece ações e diretivas estruturadas:
+
+- `toc` — gera sumário hierárquico
+- `toc-table` — gera sumário horizontal em tabela (alias legado: `toch`)
+- `links PATH` — insere links para arquivos e diretórios
+- `load PATH [OPTIONS]` — carrega e transforma conteúdo de arquivos
+- `save` — grava blocos de código Markdown de volta em arquivos
+- `clean` — limpa o conteúdo gerado, preservando os marcadores
+
+---
+
+## 2. Comando e Modos
+
+### Modo RUN (padrão)
+
+Atualiza e gera o conteúdo dinâmico entre os marcadores:
 
 ```bash
 tko tool mdpp README.md
 ```
 
-Ou varios arquivos:
+Ou em múltiplos arquivos:
 
 ```bash
 tko tool mdpp README.md docs/aula.md docs/guia.md
 ```
 
-### Modo RUN (padrao)
-
-Atualiza/gera conteudo entre marcadores.
-
-```bash
-tko tool mdpp README.md
-```
-
 ### Modo CLEAN
 
-Limpa os blocos gerados, mantendo apenas os marcadores.
+Limpa os blocos gerados, mantendo apenas os marcadores iniciais e finais:
 
 ```bash
 tko tool mdpp README.md --clean
 ```
 
-### Quiet
-
-Existe a flag `--quiet` na CLI, mas no fluxo atual ela nao altera a saida do `mdpp`.
-
 ---
 
-## 2. Diretiva TOC
+## 3. Diretiva TOC
 
-Gera uma lista hierarquica com base em cabecalhos Markdown (`##`, `###`, ...).
+Gera uma lista hierárquica com base em cabeçalhos Markdown (`##`, `###`, ...).
 
 Marcador:
 
@@ -62,63 +65,63 @@ Marcador:
 Exemplo:
 
 ```md
-# Titulo
+# Título Principal
 
 <!-- toc -->
 <!-- toc -->
 
-## Secao 1
-### Subsecao 1.1
-## Secao 2
+## Seção 1
+### Subseção 1.1
+## Seção 2
 ```
 
-Saida gerada:
+Saída gerada:
 
 ```md
 <!-- toc -->
-- [Secao 1](#secao-1)
-	- [Subsecao 1.1](#subsecao-11)
-- [Secao 2](#secao-2)
+- [Seção 1](#secao-1)
+  - [Subseção 1.1](#subsecao-11)
+- [Seção 2](#secao-2)
 <!-- toc -->
 ```
 
-Observacoes:
-
-- Linhas de cabecalho dentro de code fences sao ignoradas.
-- Cabecalhos que contenham `[]()` sao ignorados no TOC.
-- O `# Titulo` (nivel 1) nao entra na lista final de `toc`.
+Observações:
+- Linhas de cabeçalho dentro de blocos de código (code fences) são ignoradas.
+- Cabeçalhos que contenham `[]()` são ignorados no TOC.
+- O cabeçalho de nível 1 (`# Título`) não entra na lista final de `toc`.
 
 ---
 
-## 3. Diretiva TOCH
+## 4. Diretiva TOC-TABLE
 
-Gera uma tabela horizontal de links somente com cabecalhos de nivel 2 (`##`).
+Gera uma tabela horizontal de links contendo exclusivamente cabeçalhos de nível 2 (`##`).
 
-Marcador:
+Marcador recomendado:
 
 ```md
-<!-- toch -->
-<!-- toch -->
+<!-- toc-table -->
+<!-- toc-table -->
 ```
 
-Exemplo de saida:
+*(Marcador legado `<!-- toch -->` continua sendo suportado como alias).*
+
+Exemplo de saída:
 
 ```md
-<!-- toch -->
-[Secao 1](#secao-1) | [Secao 2](#secao-2)
+<!-- toc-table -->
+[Seção 1](#secao-1) | [Seção 2](#secao-2)
 -- | --
-<!-- toch -->
+<!-- toc-table -->
 ```
 
-Observacao:
-
-- Cabecalhos `###` ou maiores nao entram no `toch`.
+Observação:
+- Cabeçalhos `###` ou maiores não entram no `toc-table`.
 
 ---
 
-## 4. Diretiva LINKS
+## 5. Diretiva LINKS
 
-Lista arquivos e subpastas de um diretorio com links relativos ao diretorio do arquivo Markdown processado.
+Lista recursivamente arquivos e subpastas de um diretório com links relativos ao diretório do arquivo Markdown.
 
 Sintaxe:
 
@@ -134,304 +137,207 @@ Exemplo:
 <!-- links -->
 ```
 
-Com uma estrutura:
+Com a estrutura de arquivos:
 
 ```text
 README.md
 exemplos/
-	base.md
-	avancado/
-		lista.md
+    base.md
+    avancado/
+        lista.md
 ```
 
-Saida:
+Saída gerada:
 
 ```md
 <!-- links exemplos -->
 - [base.md](exemplos/base.md)
 - avancado
-	- [lista.md](exemplos/avancado/lista.md)
+  - [lista.md](exemplos/avancado/lista.md)
 <!-- links -->
 ```
 
-Observacoes:
-
-- Entradas iniciadas com `.` (ocultas) sao ignoradas.
-- Em `--clean`, o bloco volta para:
-
-```md
-<!-- links exemplos -->
-<!-- links -->
-```
+Observações:
+- Arquivos e diretórios ocultos (iniciados com `.`) são ignorados.
+- Em modo `--clean`, o bloco retorna para `<!-- links exemplos -->\n<!-- links -->`.
 
 ---
 
-## 5. Diretiva LOAD
+## 6. Diretiva LOAD
 
-Carrega conteudo de arquivo para dentro do Markdown, com opcoes de transformacao.
+Carrega o conteúdo de um arquivo para dentro do Markdown, aplicando opções e transformações opcionais.
 
 Sintaxe base:
 
 ```md
-<!-- load caminho/do/arquivo -->
+<!-- load caminho/do/arquivo [OPCOES] -->
 <!-- load -->
 ```
 
-Exemplo simples:
+### 6.1 Opções de Modificação
 
-```md
-<!-- load src/main.py -->
-<!-- load -->
-```
+- `--extract TAG`: extrai exclusivamente o trecho delimitado por `[[TAG]] ... [[TAG]]`. Suporta múltiplas linhas e tags comentadas (ex.: `// [[TAG]]`, `# [[TAG]]`).
+- `--filter`: aplica o filtro de visibilidade do TKO (`@KEEP`, `@DROP`, `@COM`, `@UNC`).
+- `--rm-comments`: remove linhas que contenham comentários de código no início (`#` para `.py`, `'` para `.puml`, `//` para outras linguagens). *(Alias legado: `--rmcom`)*.
+- `--fenced`: envolve o conteúdo carregado em um bloco de código Markdown com linguagem inferida pela extensão do arquivo.
+- `--fenced LANG`: envolve o conteúdo carregado em um bloco de código com a linguagem `LANG` especificada explicitamente (ex.: `--fenced py`, `--fenced cpp`, `--fenced ts`).
 
-### 5.1 Flags de LOAD
+### 6.2 Opções de Geração de Testes (TOML)
 
-Use flags apos o caminho:
+Para arquivos TOML de testes, o `mdpp` oferece duas ações de formato independentes e mutuamente exclusivas:
 
-```md
-<!-- load src/main.py --fenced --rmcom -->
-<!-- load -->
-```
+- `--tests-tio`: gera todos os casos de teste no formato TIO padrão (`>>>>>>>> INSERT ... ======== EXPECT ... <<<<<<<< FINISH`).
+- `--tests-tio N`: gera os primeiros `N` casos de teste no formato TIO (`N > 0`; `N = 0` gera todos).
+- `--tests-table`: gera todos os casos de teste formatados como tabela Markdown/HTML (`<table>`).
+- `--tests-table N`: gera os primeiros `N` casos de teste formatados como tabela Markdown/HTML (`N > 0`; `N = 0` gera todos).
 
-Flags disponiveis:
+> **Atenção:** As opções `--tests-tio` e `--tests-table` são mutuamente exclusivas. Não utilize ambas no mesmo bloco `load`.
 
-- `--fenced`: envolve a saida em code fence com linguagem baseada na extensao do arquivo.
-- `--extract TAG`: extrai somente o trecho entre `[[TAG]] ... [[TAG]]`.
-- `--rmcom`: remove linhas de comentario no inicio da linha (apos espacos).
-	- `.py` usa `#`
-	- `.puml` usa `'`
-	- outros usam `//`
-- `--filter`: aplica o filtro do `tko.feno.filter` no conteudo.
-- `--tests N`: interpreta arquivo como TOML de testes e gera tabela HTML Entrada/Saida.
-	- `N = 0`: usa todos os casos
-	- `N > 0`: limita aos primeiros `N`
+#### Compatibilidade Legada de Testes:
+- `--tests` e `--tests N` são aceitos como aliases legados para `--tests-tio` e `--tests-tio N`.
+- A antiga combinação `--tests --table` está depreciada e mapeia para `--tests-table` com aviso de depreciação.
 
-### 5.2 Exemplo com --fenced
+### 6.3 Ordem do Pipeline de Transformação
 
-Entrada:
-
-```md
-<!-- load script.py --fenced -->
-<!-- load -->
-```
-
-Saida:
-
-~~~md
-<!-- load script.py --fenced -->
-```py
-print('hello')
-```
-
-<!-- load -->
-~~~
-
-### 5.3 Exemplo com --extract
-
-Arquivo origem:
+Independentemente da ordem em que as flags são escritas na diretiva, as transformações do `load` são executadas sempre na seguinte ordem fixa:
 
 ```text
-linha fora
-[[demo]]
-apenas este bloco
-[[demo]]
-linha fora
+extract
+   ↓
+filter
+   ↓
+remove comments (--rm-comments)
+   ↓
+tests (--tests-tio OU --tests-table)
+   ↓
+fenced (--fenced / --fenced LANG)
+```
+
+Exemplo de equivalência:
+
+```md
+<!-- load src/solver.py --filter --rm-comments --fenced -->
+```
+
+possui o mesmo resultado que:
+
+```md
+<!-- load src/solver.py --fenced --rm-comments --filter -->
+```
+
+### 6.4 Exemplos de LOAD
+
+#### Exemplo com `--extract` e `--fenced`:
+
+Arquivo de origem (`src/app.py`):
+
+```python
+# [[solution]]
+def soma(a: int, b: int) -> int:
+    return a + b
+# [[solution]]
 ```
 
 Markdown:
 
 ```md
-<!-- load origem.txt --extract demo -->
+<!-- load src/app.py --extract solution --fenced -->
 <!-- load -->
 ```
 
-Resultado: somente `apenas este bloco`.
+Resultado:
 
-### 5.4 Exemplo com --tests
+````md
+<!-- load src/app.py --extract solution --fenced -->
+```py
+def soma(a: int, b: int) -> int:
+    return a + b
+```
+<!-- load -->
+````
 
-Arquivo TOML:
+#### Exemplo com `--tests-tio`:
+
+Arquivo `tests.toml`:
 
 ```toml
 [[tests]]
-input = '''
-1
-2
-'''
-output = '''
-3
-'''
+input = "1 2"
+output = "3"
 
 [[tests]]
-input = '''
-a
-'''
-output = '''
-b
-'''
+input = "4 5"
+output = "9"
 ```
 
 Markdown:
 
 ```md
-<!-- load tests.toml --tests 1 -->
+<!-- load tests.toml --tests-tio 1 -->
 <!-- load -->
 ```
 
-Saida: uma tabela HTML com a primeira dupla Entrada/Saida.
+Resultado:
 
-Observacoes de LOAD:
-
-- O caminho e relativo ao diretorio do `.md` processado.
-- Se o arquivo nao existir, o bloco fica vazio e um warning e emitido.
-- Em `--clean`, o bloco volta para:
-
-```md
-<!-- load ... -->
-<!-- load -->
+````md
+<!-- load tests.toml --tests-tio 1 -->
+```py
+>>>>>>>> INSERT
+1 2
+======== EXPECT
+3
+<<<<<<<< FINISH
 ```
+<!-- load -->
+````
 
 ---
 
-## 6. Diretiva SAVE
+## 7. Diretiva SAVE
 
-Permite salvar em arquivo o conteudo de um bloco fenced dentro do Markdown.
+Permite extrair o conteúdo de um bloco Markdown fenced e salvá-lo em arquivo no disco.
 
 Sintaxe:
 
 ~~~md
 [](save)[](caminho/do/arquivo.txt)
 ```text
-conteudo a salvar
+conteúdo a salvar
 ```
 [](save)
 ~~~
 
 Comportamento:
-
-- Se arquivo nao existir, cria.
-- Se existir e o conteudo for diferente, atualiza.
-- Se for igual, nao regrava.
-
-Observacao:
-
-- O padrao de linguagem do fence aceita somente letras minusculas (`[a-z]*`).
+- Se o arquivo não existir, é criado.
+- Se o arquivo existir e o conteúdo for diferente, é atualizado.
+- Se o conteúdo já for idêntico, a gravação é ignorada.
+- Caminhos relativos são resolvidos a partir do diretório do arquivo `.md`.
 
 ---
 
-## 7. Regras de Links e Anchors
+## 8. Pipeline Completo do Arquivo
 
-No TOC/TOCH, os anchors sao gerados por normalizacao:
+Ao processar um documento `.md` com `tko tool mdpp`, a ordem das diretivas executadas é:
 
-- remove prefixo de `#` do cabecalho
-- converte para minusculas
-- espaco/hifen viram `-`
-- `_` e preservado
-- caracteres nao alfanumericos (exceto `_` e `-`) sao removidos
-- comentarios HTML e `[](...)` na linha sao removidos antes
+1. `Toc.execute` (`<!-- toc -->`)
+2. `TocTable.execute` (`<!-- toc-table -->` e `<!-- toch -->`)
+3. `Load.execute` (`<!-- load ... -->`)
+4. `Links.execute` (`<!-- links ... -->`)
+5. `Save.execute` (`[](save)...[](save)`)
 
-Exemplo:
-
-```text
-### Title With <!-- comment -->
-```
-
-Anchor:
-
-```text
-title-with-
-```
+Se houver alterações no texto final, o arquivo Markdown é regravado de forma atômica/segura.
 
 ---
 
-## 8. Pipeline Interno do Mdpp
-
-Para cada arquivo `.md`, a ordem de processamento e:
-
-1. `Toc.execute`
-2. `Toch.execute`
-3. `Load.execute`
-4. `Links.execute`
-5. `Save.execute`
-
-Se o conteudo final mudar, o arquivo Markdown e regravado.
-
----
-
-## 9. Erros e Warnings Comuns
-
-- Arquivo alvo sem extensao `.md`:
-	- `Warning: File ... is not a markdown file`
-- Arquivo alvo inexistente:
-	- `Warning: File ... not found`
-- `--extract` sem valor:
-	- `warning: missing value for --extract`
-- `--tests` invalido:
-	- `warning: invalid or missing integer for --tests`
-- Flag desconhecida em `load`:
-	- `warning: unrecognized tag '--alguma-coisa'`
-- Arquivo de `load` inexistente:
-	- `warning: file ... not found`
-
----
-
-## 10. Exemplo Completo
-
-~~~md
-# Minha Tarefa
-
-<!-- toc -->
-<!-- toc -->
-
-<!-- toch -->
-<!-- toch -->
-
-## Codigo
-
-<!-- load src/solver.py --fenced --rmcom -->
-<!-- load -->
-
-## Casos
-
-<!-- load tests.toml --tests 0 -->
-<!-- load -->
-
-## Materiais
-
-<!-- links docs -->
-<!-- links -->
-
-[](save)[](docs/trecho.txt)
-```text
-Gerado automaticamente
-```
-[](save)
-~~~
-
-Rodando:
-
-```bash
-tko tool mdpp README.md
-```
-
-Limpando blocos gerados:
-
-```bash
-tko tool mdpp README.md --clean
-```
-
----
-
-## 11. Uso Programatico (Python)
+## 9. Uso Programático em Python
 
 ```python
 from pathlib import Path
 from tko.feno.mdpp import Mdpp, Action
 
+# Executar transformações
 Mdpp.update_file(Path("README.md"), Action.RUN)
+
+# Limpar blocos gerados
 Mdpp.update_file(Path("README.md"), Action.CLEAN)
 ```
-
-Retorno:
-
-- `True` se o arquivo foi modificado
-- `False` se nao houve alteracao ou ocorreu validacao que impediu processamento

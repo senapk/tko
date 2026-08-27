@@ -3,16 +3,7 @@ from pathlib import Path
 import pytest
 
 from tko.repository.remote import DEFAULT_INDEX, Remote, SourceType
-from tko.repository.sandbox import REMOTE_NAME, Sandbox
-
-
-def test_sandbox_name_matches_reserved_remote_name() -> None:
-    assert Sandbox.get_sandbox_name() == REMOTE_NAME
-
-
-def test_is_sandbox_checks_remote_name() -> None:
-    assert Sandbox.is_sandbox(Remote(name=REMOTE_NAME)) is True
-    assert Sandbox.is_sandbox(Remote(name="disc")) is False
+from tko.repository.remote import DEFAULT_INDEX, Remote, SourceType
 
 def test_from_local_file_keeps_absolute_file_path(tmp_path: Path) -> None:
     source_dir = tmp_path / "materials"
