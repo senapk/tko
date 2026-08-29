@@ -1,8 +1,9 @@
 from tko.feno.title import FenoTitle
-from tko.feno.jsontools import JsonVPL
 from tko.feno.older import Older
 from tko.feno.html import convert_markdown_to_html
 from tko.feno.cases import Cases
+from tko.feno.git_hub_cfg import GithubCfg
+from tko.feno.link_rebase import LinkRebase
 from tko.feno.log import Log
 from tko.feno.mdpp import Mdpp
 from tko.feno.filter import DeepFilter
@@ -36,10 +37,8 @@ class Actions:
         self.cache = source_dir / ".cache"
         self.output_readme = self.cache / "README.md"
         self.output_cases = self.cache / "tests.vpl"
-        self.output_drafts = self.cache / "drafts"
+        self.output_starter = self.cache / "starter"
         self.output_html = self.cache / "README.html"
-        self.mapi_json = self.cache / "mapi.json"
-        self.vpl: JsonVPL | None = None
         self.make_remote: bool = False
         self.use_pandoc: bool = False
 
@@ -67,20 +66,46 @@ class Actions:
         os.makedirs(self.cache)
         return self
 
-    def need_rebuild(self):
-        if not os.path.exists(self.mapi_json):
+    def _latest_source_file(self) -> Path:
+        files = [
+            path
+            for path in self.source_dir.rglob("*")
+            if path.is_file() and self.cache not in path.parents
+        ]
+        if not files:
+            return self.source_dir
+        return max(files, key=lambda path: path.stat().st_mtime)
+
+    def need_rebuild(self, moodle: bool = False):
+        artifact = self.output_cases if moodle else self.output_starter
+        if not os.path.exists(artifact):
             return True
-        older = Older.find_older([self.source_dir, self.mapi_json])
-        if older == self.mapi_json:
+        older = Older.find_older([self._latest_source_file(), artifact])
+        if older == artifact:
             return False
 
         Log.resume("Changes ", end="")
         Log.verbose(f"Changes in {self.source_dir}")
         return True
 
-    # def remote_md(self):
-    #     LinkRebase.convert_or_copy_or_print(self.source_readme, self.output_readme, self.make_remote)
-    #     Log.verbose(f"RemoteFile: {self.output_readme}")
+    def remote_md(self):
+        content = Decoder.load(self.source_readme)
+        if self.make_remote:
+            cfg = GithubCfg(self.source_dir, self.make_remote)
+            if cfg.remote is not None:
+                try:
+                    relative_readme = self.source_readme.resolve().relative_to(cfg.get_cfg_path().parent)
+                    remote = cfg.remote.set_relative_path(relative_readme.as_posix())
+                    content = LinkRebase.rebase(content, remote)
+                except ValueError:
+                    pass
+        else:
+            relative_folder = Path(os.path.relpath(self.source_readme.parent, self.output_readme.parent))
+            content = LinkRebase.change_to_relative_folder(content, relative_folder)
+
+        Decoder.save(self.output_readme, content)
+        Log.resume("Readme ", end="")
+        Log.verbose(f"Readme file: {self.output_readme}")
 
     def html(self):
         title = FenoTitle.extract_title(self.source_readme)
@@ -100,7 +125,7 @@ class Actions:
             Log.resume("Drafts ", end="")
             Log.verbose(f"Drafts dir: {source_src}")
             filter = DeepFilter().set_indent(4)
-            filter.execute(source_src, self.output_drafts, 5)
+            filter.execute(source_src, self.output_starter, 5)
 
     def run_local_sh(self):
         actual_chdir = os.getcwd()
@@ -110,19 +135,6 @@ class Actions:
             subprocess.run("bash local.sh", shell=True)
             os.chdir(actual_chdir)
             Log.resume("Local.sh ", end="")
-
-    def init_vpl(self):
-        html_content = Decoder.load(self.output_html)
-        # md_content = Decoder.load(self.remote_readme)
-        self.vpl = JsonVPL(self.title, html_content)
-        self.vpl.set_tests(self.output_cases)
-        if self.vpl.load_drafts(self.output_drafts):
-            Log.resume("Drafts ", end="")
-
-    def create_mapi(self):
-        Decoder.save(self.mapi_json, str(self.vpl) + "\n")
-        Log.resume("Mapi ", end="")
-        Log.verbose(f"Mapi  file: {self.mapi_json}")
 
     def clean(self, erase: bool):
         if erase:
@@ -162,17 +174,15 @@ def build_all(targets: list[Path], remote: bool, check: bool, erase: bool, brief
         actions.create_cache()
         actions.update_markdown()
 
-        if not check or actions.need_rebuild():
+        if not check or actions.need_rebuild(moodle):
             actions.recreate_cache()  # erase .cache
             actions.copy_drafts()
             actions.run_local_sh()
             actions.update_markdown()  # se os drafts tiverem mudado o markdown precisa ser atualizado
             if moodle:
-                # actions.remote_md()
+                actions.remote_md()
                 actions.html()
                 actions.build_cases()
-                actions.init_vpl()
-                actions.create_mapi()
             actions.clean(erase)
 
         Log.resume("]")

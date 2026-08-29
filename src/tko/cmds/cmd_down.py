@@ -174,7 +174,7 @@ class CmdDown:
             self.actions.create_default_draft(destiny_drafts_folder, self.language)
             return True
 
-        origin_drafts_source: Path = CodeFilter.get_source_drafts_dir(self.origin_folder, self.language)
+        origin_drafts_source: Path = CodeFilter.get_source_starter_dir(self.origin_folder, self.language)
         default_draft_ok = self.copy_drafts_from(origin_drafts_source, destiny_drafts_folder, self.language)
         if not default_draft_ok:
             self.actions.create_default_draft(destiny_drafts_folder, self.language)

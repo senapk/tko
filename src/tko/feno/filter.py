@@ -420,11 +420,15 @@ class CodeFilter:
                 Console.print(content)
 
     @staticmethod
-    def get_source_drafts_dir(source_dir: Path, language: str | None = None) -> Path:
+    def get_source_starter_dir(source_dir: Path, language: str | None = None) -> Path:
         if language is None:
-            return source_dir / ".cache" / "drafts"
+            return source_dir / ".cache" / "starter"
         else:
-            return source_dir / ".cache" / "drafts" / language
+            return source_dir / ".cache" / "starter" / language
+
+    @staticmethod
+    def get_source_drafts_dir(source_dir: Path, language: str | None = None) -> Path:
+        return CodeFilter.get_source_starter_dir(source_dir, language)
 
     @staticmethod
     def get_default_src_dir(source_dir: Path) -> Path:

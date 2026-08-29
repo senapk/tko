@@ -13,7 +13,7 @@ O comando tko build all roda um pipeline de preparacao de artefatos por pasta al
 No fluxo padrao, ele:
 
 - Atualiza markdown com o preprocessador mdpp.
-- Gera drafts em .cache/drafts a partir de src usando filtro por marcadores.
+- Gera starters em .cache/starter a partir de src usando filtro por marcadores.
 - Pode executar local.sh quando existir.
 - Atualiza markdown novamente (para refletir mudancas causadas pelo passo anterior).
 
@@ -22,7 +22,7 @@ No fluxo moodle (opcional), ele tambem:
 - Gera README rebaseado para remoto/local.
 - Gera HTML do enunciado.
 - Gera arquivo de testes.
-- Monta mapi.json para uso com o VPL do Moodle
+- Mantem os starters filtrados por linguagem em `.cache/starter`.
 
 ## Comando e opcoes
 
@@ -42,7 +42,7 @@ Opcoes principais:
 
 - -c, --check: so reconstrui quando detectar mudancas.
 - -b, --brief: reduz logs.
-- -m, --moodle: ativa pipeline de artefatos Moodle (html, tests.vpl, mapi.json).
+- -m, --moodle: ativa pipeline de artefatos Moodle (README rebaseado, html, tests.vpl e starters).
 - -l, --local: nao usa configuracao remota para links absolutos.
 - -e, --erase: apaga arquivos temporarios de saida (README.md, README.html, tests.vpl em .cache).
 
@@ -54,15 +54,23 @@ Para cada alvo (diretorio):
 2. Garante pasta .cache.
 3. Executa mdpp no README da origem.
 4. Se precisar rebuild (ou sem --check), limpa .cache e segue:
-5. Gera drafts com DeepFilter de src para .cache/drafts.
+5. Gera starters com DeepFilter de src para .cache/starter.
 6. Executa local.sh (se existir).
 7. Executa mdpp novamente.
 8. Se --moodle:
    - rebase de links (README para .cache/README.md)
    - gera .cache/README.html
    - gera .cache/tests.vpl
-   - monta .cache/mapi.json
 9. Se --erase, remove alguns artefatos temporarios.
+
+## Artefatos gerados
+
+No modo Moodle, os artefatos ficam dentro da pasta `.cache` da tarefa:
+
+- `.cache/README.md`: copia especial do README da tarefa, com links locais reescritos. Imagens apontam para `raw.githubusercontent.com`; links para arquivos apontam para `github.com/.../blob`; links para pastas apontam para `github.com/.../tree`.
+- `.cache/README.html`: HTML gerado a partir de `.cache/README.md`, usado como enunciado no Moodle.
+- `.cache/tests.vpl`: arquivo de casos gerado a partir do `README.md` e dos arquivos `.tio`, `.vpl` e `.toml` encontrados na tarefa.
+- `.cache/starter/<linguagem>/...`: starters filtrados a partir de `src/<linguagem>/...`, preservando a estrutura de arquivos por linguagem.
 
 ## Relacao com mdpp, filter e rascunhos
 
@@ -78,19 +86,19 @@ tko tool mdpp README.md
 
 ### filter e drafts
 
-O build usa DeepFilter sobre src e envia resultado para .cache/drafts.
+O build usa DeepFilter sobre src e envia resultado para .cache/starter.
 
 Relaciona-se ao comando manual:
 
 ```bash
-tko tool filter src -r -o .cache/drafts
+tko tool filter src -r -o .cache/starter
 ```
 
 Observacao: no build, o filtro e chamado pelo pipeline interno, com indentacao configurada, focando geracao de drafts.
 
 ### rascunhos
 
-Os rascunhos usados no mapeamento de tarefa sao carregados de .cache/drafts durante a montagem de artefatos no modo moodle.
+Os rascunhos usados como starters ficam em .cache/starter durante a montagem de artefatos no modo moodle.
 
 ## Exemplo rapido (repositorio da disciplina)
 
@@ -114,7 +122,7 @@ tko build all . -c -m
   - atualizacao de markdown e drafts.
 
 - build all com -m:
-  - geracao de artefatos para publicacao/empacotamento (html, tests.vpl, mapi.json).
+  - geracao de artefatos para publicacao/empacotamento (README rebaseado, html, tests.vpl e starters).
 
 ## Observacoes importantes
 
