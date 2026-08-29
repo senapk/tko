@@ -17,8 +17,8 @@ class _GradeMsg:
     NO = Msg.text(pt="Não", en="No")
     YES = Msg.text(pt="Sim", en="Yes")
     HEADER = Msg.text(pt=" Utilize os direcionais e texto para marcar ", en=" Use arrow keys and text to mark ")
-    FOOTER = Msg.text(pt=" Pressione Enter para confirmar, Esc para cancelar ", 
-                      en=" Press Enter to confirm, Esc to cancel ")
+    FOOTER = Msg.text(pt=" Enter confirma, # abre feedback, Esc cancela ",
+                      en=" Enter confirms, # opens feedback, Esc cancels ")
     NOTHING = Msg.text(pt=" Nada", en=" Nothing")
 
     AUTO_MODE_LABEL = Msg.text(pt="Taxa de testes que passou na última execução:", en="Percentage of tests that passed in the last run:")
@@ -291,11 +291,10 @@ class FloatingGrade(FloatingABC):
         self.fn_exit = fn_exit
         self.feedback = feedback
         self.feedback_opener = feedback_opener
+        self.feedback_required = feedback is not None
 
         if self.feedback is not None:
-            if self.feedback.ensure_feedback_file():
-                self.open_feedback()
-            else:
+            if not self.feedback.ensure_feedback_file():
                 self.feedback = None
 
         progression: list[tuple[str, RT]] = [
@@ -418,12 +417,16 @@ class FloatingGrade(FloatingABC):
         elif key == ord("!"):
             if self.feedback is not None:
                 self.feedback.reset_feedback_file()
+        elif key == ord("#"):
+            self.open_feedback()
         elif key == curses.KEY_DOWN or key == ord("\t"):
             self.send_key_down()
         elif key == ord('\n'):
             if self.line != len(self.all_input_lines) - 1:
                 self.send_key_down()
             else:
+                if self.feedback_required and self.feedback is None:
+                    return -1
                 if self.feedback is not None:
                     feedback_status, _ = self.feedback.get_feedback_status()
                     if feedback_status != FeedbackStatus.FILLED:

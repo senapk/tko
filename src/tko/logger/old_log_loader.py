@@ -8,6 +8,7 @@ from tko.logger.log_item_move import LogItemMove, LogItemMoveMode
 from tko.logger.log_item_self import LogItemSelf
 from tko.logger.patch_history import PatchHistory, PatchInfo
 from tko.logger.tracker import Tracker, Track
+from tko.logger.versions_writer import VersionsWriter
 from tko.repository.repository_paths import RepositoryPaths
 from tko.util.decoder import Decoder
 import datetime as dt
@@ -43,15 +44,26 @@ class TrackerLoader: # deprecated
     @staticmethod
     def load_file_versions(task_track_folder: str) -> dict[str, dict[str, PatchInfo]]:
         files: list[str] = os.listdir(task_track_folder)
-        files = [f for f in files if f.endswith(Tracker.extension)]
+        files = [f for f in files if f.endswith(".json") or f.endswith(".jsonl")]
         file_versions: dict[str, dict[str, PatchInfo]] = {}
         for f in files:
-            file_name = f[:-len(Tracker.extension)]
             file_path = os.path.join(task_track_folder, f)
             if not os.path.isfile(file_path):
                 continue
             try:
-                patch_history: list[PatchInfo] = PatchHistory().set_json_file(file_path).load_json().restore_all()
+                if f.endswith(".jsonl"):
+                    file_name = f[:-len(".jsonl")]
+                    snapshots = VersionsWriter().load_history(Path(file_path)).snapshots
+                    patch_history = [
+                        PatchInfo(
+                            snapshot.timestamp.strftime("%Y-%m-%d_%H-%M-%S"),
+                            snapshot.content,
+                        )
+                        for snapshot in snapshots
+                    ]
+                else:
+                    file_name = f[:-len(".json")]
+                    patch_history = PatchHistory().set_json_file(file_path).load_json().restore_all()
                 file_versions[file_name] = {}
                 for patch in patch_history:
                     file_versions[file_name][patch.label] = patch

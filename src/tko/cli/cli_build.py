@@ -54,7 +54,8 @@ def build_index(
     index: Path = typer.Argument(..., help="Path to index Markdown file"),
     base: str = typer.Argument(..., help="Directory with the task problems"),
     save: bool = typer.Option(False, "--save", help="Save README.md task title's inside task problems"),
-    load: bool = typer.Option(False, "--load", help="Load README.md task title's from task problems")
+    load: bool = typer.Option(False, "--load", help="Load README.md task title's from task problems"),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Remove invalid local task entries without asking"),
 ):
     from tko.feno.indexer import fix_readme
     fix_readme(
@@ -62,7 +63,8 @@ def build_index(
         base_dir=Path(base), 
         verbose=True, 
         save_titles=save, 
-        load_titles=load
+        load_titles=load,
+        yes=yes,
     )
 
 @app.command("drafts", help="Create drafts for TKO task using src dir")

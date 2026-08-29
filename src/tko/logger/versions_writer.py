@@ -273,7 +273,7 @@ class VersionsWriter:
         audit_file: Path,
         content: str,
         timestamp: datetime | None = None,
-    ) -> None:
+    ) -> bool:
         history = self._history(audit_file)
 
         hash_value = self._hash(content)
@@ -282,7 +282,7 @@ class VersionsWriter:
             history.snapshots
             and hash_value == history.current_hash
         ):
-            return
+            return False
 
         now = timestamp or datetime.now()
 
@@ -332,3 +332,4 @@ class VersionsWriter:
                 content=content,
             )
         )
+        return True

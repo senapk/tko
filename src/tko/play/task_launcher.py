@@ -20,6 +20,7 @@ from tko.util.param import Param
 
 class _TaskLauncherMsg:
     FOLDER_NOT_FOUND = Msg.text(pt="Pasta não encontrada", en="Folder not found")
+    TASK_NOT_FOUND = Msg.text(pt="A tarefa não existe", en="Task does not exist")
     NO_SOURCE_FOR_LANG = Msg.text(pt="Nenhum arquivo de código na linguagem {lang} encontrado.", en="No source file found for language {lang}.")
     DRAFT_CREATED = Msg.text(pt="Um arquivo de rascunho foi criado", en="A draft file was created")
 
@@ -63,6 +64,15 @@ class TaskLauncher:
         self.run_selected_task(task)
 
     def run_selected_task(self, task: Task) -> None:
+        task_file = self.repo.task_resolver.target_file(task)
+        if task_file is not None and not task_file.exists():
+            self.fman.add_floating(
+                Floating().bottom().right()
+                .put_text(f"\n{str(_TaskLauncherMsg.TASK_NOT_FOUND)}\n{task_file}\n")
+                .set_error().set_countdown(Floating.Time.MEDIUM)
+            )
+            return
+
         task_folder = self.repo.task_resolver.target_folder(task)
         if not task_folder:
             raise Warning(str(_TaskLauncherMsg.FOLDER_NOT_FOUND))

@@ -29,6 +29,7 @@ class TesterExecutor:
         self.task = task
         self.fman = fman
         self.top_bar = top_bar
+        self.tracker = Tracker()
         self.execution_service = TesterExecutionService(
             settings=settings,
             rep=rep,
@@ -49,13 +50,12 @@ class TesterExecutor:
         if self.rep is None:
             return False, 0
         track_folder = self.rep.paths.get_track_task_folder(self.task.basic.full_key)
-        tracker = Tracker()
-        tracker.set_folder(track_folder)
+        self.tracker.set_folder(track_folder)
         if not self.wdir.solver:
             return False, 0
-        tracker.set_files(self.wdir.solver.args_list)
-        tracker.set_result(result)
-        return tracker.store()
+        self.tracker.set_files(self.wdir.solver.args_list)
+        self.tracker.set_result(result)
+        return self.tracker.store()
 
     def process_one(self, state: TesterState) -> None:
         self.execution_service.process_one(state)

@@ -31,6 +31,7 @@ class _PlayActionMsg:
     TASK_NO_LOCAL_FOLDER = Msg.text(pt="Essa tarefa não possui pasta de código local.", en="This task does not have a local code folder.")
     DELETE_CONFIRM_PREFIX = Msg.text(pt="Para apagar essa pasta, digite ", en="To delete this folder, type ")
     ONLY_TASK_FOLDERS = Msg.text(pt="Você só pode apagar pastas de tarefas.", en="You can only delete task folders.")
+    TASK_NOT_FOUND = Msg.text(pt="A tarefa não existe.", en="Task does not exist.")
 
 
 class PlayActions:
@@ -64,7 +65,15 @@ class PlayActions:
     def reload(self):
         DraftsFinderCached.reset_cache()
         from tko.repository.game_coordinator import GameCoordinator
-        GameCoordinator(self.repo).load_game()
+        try:
+            GameCoordinator(self.repo).load_game()
+        except FileNotFoundError as err:
+            self.fman.add_floating(
+                Floating().bottom().right()
+                .put_text(f"\n{str(_PlayActionMsg.TASK_NOT_FOUND)}\n{err}\n")
+                .set_error().set_countdown(Floating.Time.MEDIUM)
+            )
+            return
         self.tree.recalculate_layout()
 
     def get_task_folder(self, task: Task) -> Path:

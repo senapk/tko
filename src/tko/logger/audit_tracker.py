@@ -134,11 +134,13 @@ class AuditTracker:
             return False, 0
 
         try:
-            self.versions_writer.write(
+            changed = self.versions_writer.write(
                 audit_file=output_file,
                 content=content,
                 timestamp=timestamp,
             )
+            if not changed:
+                return False, 0
             
             last_content = LastElement(timestamp=timestamp, hash_value=hash_value).to_json()
             with audit_last_file.open("w", encoding="utf-8") as f:

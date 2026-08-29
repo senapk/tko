@@ -4,6 +4,7 @@ import argparse
 import csv
 from pathlib import Path
 from tko.logger.patch_history import PatchHistory
+from tko.logger.versions_writer import VersionsWriter
 from tko.i18n import Msg
 from tko.util.decoder import Decoder
 import tempfile
@@ -52,12 +53,13 @@ class Track:
 
 class Tracker:
     log_file = "track.csv"
-    extension = ".json"
+    extension = ".jsonl"
 
     def __init__(self):
         self._result: str = "None"
         self._files: list[Path] = []
         self._folder: Path = Path()
+        self._versions_writer: VersionsWriter = VersionsWriter()
 
     def unfold_files(self, log_sort: LogSort) -> tuple[str, str]:
         output = "\n"
@@ -75,10 +77,21 @@ class Tracker:
         with tempfile.TemporaryDirectory(delete=False) as temp_dir:
             for file in os.listdir(self._folder):
                 path = os.path.join(self._folder, file)
-                if not file.endswith(".json"):
+                if not (file.endswith(".json") or file.endswith(".jsonl")):
                     continue
-                ph = PatchHistory().set_json_file(path).load_json()
-                complete = ph.restore_all()
+                if file.endswith(".jsonl"):
+                    complete = [
+                        PatchInfo(
+                            snapshot.timestamp.strftime("%Y-%m-%d_%H-%M-%S"),
+                            snapshot.content,
+                        )
+                        for snapshot in VersionsWriter().load_history(Path(path)).snapshots
+                    ]
+                    filename = file[:-len(".jsonl")]
+                else:
+                    ph = PatchHistory().set_json_file(path).load_json()
+                    complete = ph.restore_all()
+                    filename = file[:-len(".json")]
                 for i, patch in enumerate(complete):
                     key = patch.label
                     rate = timestamp_rate.get(key, "000")
@@ -88,7 +101,7 @@ class Tracker:
                     except ValueError as _:
                         pass
                     result = rate.rjust(3, "0")
-                    output_file = os.path.join(temp_dir, f"{patch.label}__rate-{result}__{file[:-5]}")
+                    output_file = os.path.join(temp_dir, f"{patch.label}__rate-{result}__{filename}")
                     if i < 5 or i == len(complete) - 1:
                         output += f"  Extraindo: {output_file}\n"
                     elif i == 5:
@@ -133,17 +146,22 @@ class Tracker:
     # return timestamp of the last version of the file
     def save_file_with_timestamp_prefix(self, timestamp: str, file: Path) -> tuple[str, bool, int]:
         filename = os.path.basename(file)
-        ph = PatchHistory()
         json_file = os.path.join(self._folder, f"{filename}{Tracker.extension}")
-        ph.set_json_file(json_file)
-        ph.load_json()
 
         content = Decoder.load(file)
-        last_version = ph.store_version(timestamp, content)
-        if last_version == timestamp:
-            ph.save_json()
+        changed = self._versions_writer.write(
+            audit_file=Path(json_file),
+            content=content,
+            timestamp=self.get_timestamp_from_string(timestamp),
+        )
+        if changed:
             return timestamp, True, len(content.splitlines())
-        return last_version, False, len(content.splitlines())
+
+        history = self._versions_writer.load_history(Path(json_file))
+        if history.snapshots:
+            last_version = history.snapshots[-1].timestamp.strftime("%Y-%m-%d_%H-%M-%S")
+            return last_version, False, len(content.splitlines())
+        return timestamp, False, len(content.splitlines())
 
     # return True if any file was changed
     def store(self) -> tuple[bool, int]:

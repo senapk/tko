@@ -95,7 +95,7 @@ class DraftCreator:
                 f.write(draft)
 
             SandboxDrafts.create_sandbox_draft(folder, title)
-            fix_readme(index=index_file, base_dir=sandbox_folder, verbose=False, load_titles=True)
+            fix_readme(index=index_file, base_dir=sandbox_folder, verbose=False, load_titles=True, yes=True)
             self.tree.state.selected = f"{authoring_source.name}@{key}"
             self.tree.state.expanded.add(f"{authoring_source.name}@{authoring_source.name}")
             self.repo.data.selected = self.tree.state.selected

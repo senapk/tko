@@ -43,7 +43,7 @@ def test_identify_source_and_solver_targets_raises_when_target_missing(tmp_path:
     resolver = _resolver()
     missing = tmp_path / "missing.tio"
 
-    with pytest.raises(Warning, match="não encontrado"):
+    with pytest.raises(FileNotFoundError, match="não encontrado"):
         resolver.identify_source_and_solver_targets([missing])
 
 

@@ -34,6 +34,14 @@ _INDEXER_MISSING_HOOKS_ADDING = Msg.parse(
     pt="Encontrados {count} hooks faltando, adicionando-os à '{quest}':",
     en="Found {count} missing hooks, adding to quest '{quest}':",
 )
+_INDEXER_REMOVE_MISSING_LOCAL_TASKS = Msg.text(
+    pt="Remover entradas de tarefas locais inválidas? [s/N] ",
+    en="Remove invalid local task entries? [y/N] ",
+)
+_INDEXER_REMOVED_MISSING_LOCAL_TASKS = Msg.parse(
+    pt="Removidas {count} entradas de tarefas locais inválidas.",
+    en="Removed {count} invalid local task entries.",
+)
 
 class Elements:
     def __init__(self, index_path: Path, base_dir: Path, verbose: bool = True):
@@ -66,18 +74,34 @@ class Elements:
             else:
                 Console.print(f"STR: {line}")
 
-    def validate_local_targets_exist(self) -> bool:
-        ok: bool = True
+    def missing_local_targets(self) -> list[tuple[int, TaskLine]]:
+        missing: list[tuple[int, TaskLine]] = []
         for i, line in enumerate(self.lines):
             if not isinstance(line, TaskLine):
                 continue
-            if line.target_file is not None:
-                if not line.tm.is_url and not line.target_file.exists():
-                    message = str(_INDEXER_MISSING_LOCAL_FILE).format(file=line.target_file, task=line.key)
-                    if self.verbose:
-                        Console.print(RT(f" {self.index_path}:{i + 1} - ", "r") + RT.parse(message))
-                    ok = False
-        return ok
+            if line.target_file is None or line.tm.is_url or line.target_file.exists():
+                continue
+            missing.append((i, line))
+        return missing
+
+    def print_missing_local_targets(self, missing: list[tuple[int, TaskLine]]) -> None:
+        for i, line in missing:
+            message = str(_INDEXER_MISSING_LOCAL_FILE).format(file=line.target_file, task=line.key)
+            Console.print(RT(f" {self.index_path}:{i + 1} - ", "r") + RT.parse(message))
+
+    def remove_missing_local_targets(self, missing: list[tuple[int, TaskLine]]) -> None:
+        indexes = {i for i, _ in missing}
+        self.lines = [line for i, line in enumerate(self.lines) if i not in indexes]
+
+    def ask_remove_missing_local_targets(self, missing: list[tuple[int, TaskLine]]) -> None:
+        if not missing:
+            return
+        self.print_missing_local_targets(missing)
+        answer = input(_INDEXER_REMOVE_MISSING_LOCAL_TASKS.t())
+        if answer.strip().lower() not in {"s", "sim", "y", "yes"}:
+            return
+        self.remove_missing_local_targets(missing)
+        Console.print(str(_INDEXER_REMOVED_MISSING_LOCAL_TASKS).format(count=len(missing)))
 
     def fix_titles(self, save_titles: bool = False, load_titles: bool = False) -> None:
         for line in self.lines:
@@ -254,12 +278,17 @@ class Merger:
                 self.quests[found_index].lines.append(line)
         return self.header, self.quests
 
-def fix_readme(index: Path, base_dir: Path, verbose: bool = True, save_titles: bool = False, load_titles: bool = False) -> None:
+def fix_readme(index: Path, base_dir: Path, verbose: bool = True, save_titles: bool = False, load_titles: bool = False, yes: bool = False) -> None:
     index = index.resolve()
     elements = Elements(index_path=index, base_dir=base_dir, verbose=verbose)
     elements.load_lines()
-    if verbose and not elements.validate_local_targets_exist():
-        return
+    missing = elements.missing_local_targets()
+    if yes:
+        elements.remove_missing_local_targets(missing)
+        if verbose and missing:
+            Console.print(str(_INDEXER_REMOVED_MISSING_LOCAL_TASKS).format(count=len(missing)))
+    elif verbose:
+        elements.ask_remove_missing_local_targets(missing)
     elements.fix_titles(save_titles, load_titles)
 
     finder = Finder(elements)

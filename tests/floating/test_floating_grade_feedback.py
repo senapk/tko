@@ -55,7 +55,7 @@ def test_final_enter_keeps_floating_open_when_feedback_is_not_filled() -> None:
 
     floating.process_input(ord("\n"))
 
-    assert opened == 1
+    assert opened == 0
     assert feedback.ensure_calls == 1
     assert feedback.status_calls == 1
     assert floating.is_enable() is True
@@ -78,11 +78,30 @@ def test_final_enter_closes_and_stores_task_when_feedback_is_filled() -> None:
 
     floating.process_input(ord("\n"))
 
-    assert opened == 1
+    assert opened == 0
     assert feedback.status_calls == 1
     assert floating.is_enable() is False
     assert exited == [task]
     assert task.info.feedback is True
+
+
+def test_hash_opens_feedback_file_on_demand() -> None:
+    task = _Task()
+    feedback = _Feedback(FeedbackStatus.NOT_FILLED)
+    opened = 0
+
+    def opener() -> None:
+        nonlocal opened
+        opened += 1
+
+    floating = FloatingGrade(cast(Any, task), feedback=cast(Any, feedback), feedback_opener=opener)
+
+    assert opened == 0
+
+    floating.process_input(ord("#"))
+
+    assert opened == 1
+    assert floating.is_enable() is True
 
 
 def test_final_enter_stays_open_when_feedback_file_cannot_be_created() -> None:
@@ -107,8 +126,9 @@ def test_update_content_aligns_input_separators_in_english() -> None:
         task = Task()
         task.info.rate = 20
         task.info.study = 5
+        feedback = _Feedback(FeedbackStatus.NOT_FILLED)
 
-        floating = FloatingGrade(task)
+        floating = FloatingGrade(task, feedback=cast(Any, feedback))
         floating.update_content()
 
         lines = [line.plain() for line in floating.floating.content[:3]]

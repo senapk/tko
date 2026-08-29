@@ -5,14 +5,14 @@ from tko.logger.log_item_exec import LogItemExec
 class RunTracker:
     def __init__(self, ctx: RunContext):
         self.ctx = ctx
+        self.tracker = Tracker()
 
     def store_exec_diff(self, rate: str) -> tuple[bool, int]:
-        tracker = Tracker()
         if self.ctx.track_folder is not None:
-            tracker.set_folder(self.ctx.track_folder)
-            tracker.set_files(self.ctx.wdir.get_solver().args_list)
-            tracker.set_result(rate)
-            has_changes, total_lines = tracker.store()
+            self.tracker.set_folder(self.ctx.track_folder)
+            self.tracker.set_files(self.ctx.wdir.get_solver().args_list)
+            self.tracker.set_result(rate)
+            has_changes, total_lines = self.tracker.store()
             return has_changes, total_lines
         return False, 0
 

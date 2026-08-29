@@ -18,7 +18,7 @@ def test_index_line_accepts_windows_separator_for_readme(tmp_path: Path) -> None
     assert tl.target_file == (index_path.parent / "user_001" / "README.md").resolve()
 
 
-def test_fix_readme_raises_for_broken_local_target(tmp_path: Path) -> None:
+def test_fix_readme_yes_removes_broken_local_target(tmp_path: Path) -> None:
     from tko.feno.indexer import fix_readme
 
     index_path = tmp_path / "README.md"
@@ -38,10 +38,51 @@ def test_fix_readme_raises_for_broken_local_target(tmp_path: Path) -> None:
     )
     index_path.write_text(original_content, encoding="utf-8")
 
-    with pytest.raises(FileNotFoundError, match="t_broken"):
-        fix_readme(index=index_path, base_dir=base_dir, verbose=False)
+    fix_readme(index=index_path, base_dir=base_dir, verbose=False, yes=True)
 
-    assert index_path.read_text(encoding="utf-8") == original_content
+    content = index_path.read_text(encoding="utf-8")
+    assert "@t1" in content
+    assert "@t_broken" not in content
+
+
+def test_fix_readme_interactive_keeps_broken_local_target_when_user_declines(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from tko.feno.indexer import fix_readme
+
+    index_path = tmp_path / "README.md"
+    base_dir = tmp_path / "base"
+    base_dir.mkdir()
+
+    index_path.write_text(
+        "# Disciplina\n\n"
+        "- [ ] `@t_broken` [Quebrada](base/t_broken/README.md)\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr("builtins.input", lambda _prompt: "n")
+
+    fix_readme(index=index_path, base_dir=base_dir, verbose=True)
+
+    assert "@t_broken" in index_path.read_text(encoding="utf-8")
+
+
+def test_fix_readme_interactive_removes_broken_local_target_when_user_confirms(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from tko.feno.indexer import fix_readme
+
+    index_path = tmp_path / "README.md"
+    base_dir = tmp_path / "base"
+    base_dir.mkdir()
+
+    index_path.write_text(
+        "# Disciplina\n\n"
+        "- [ ] `@t_broken` [Quebrada](base/t_broken/README.md)\n",
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr("builtins.input", lambda _prompt: "s")
+
+    fix_readme(index=index_path, base_dir=base_dir, verbose=True)
+
+    assert "@t_broken" not in index_path.read_text(encoding="utf-8")
 
 
 def test_fix_readme_indexes_new_dirs(tmp_path: Path) -> None:

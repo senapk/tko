@@ -115,6 +115,8 @@ class TaskEditorService:
             if isinstance(obj, Task):
                 task: Task = obj
                 track_folder = self.repo.paths.get_track_task_folder(task.basic.full_key)
+                if not track_folder.exists():
+                    return lambda: None
                 files = [file for file in track_folder.iterdir() if file.is_file() and file.suffix in (".json", ".jsonl")]
                 return lambda: run(files)
         except IndexError:

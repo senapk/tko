@@ -11,6 +11,7 @@ from tko.cli.cli_audit import app
 from tko.config.run_settings import RunSettings
 from tko.config.settings import Settings
 from tko.logger.patch_history import PatchHistory
+from tko.logger.tracker import Tracker
 from tko.util.console import Console
 
 
@@ -124,6 +125,29 @@ def test_audit_unpack_patch_history_json_creates_temp_files(tmp_path: Path) -> N
 
     with Console.capture() as out:
         result = runner.invoke(app, ["unpack", str(source_file)])
+    combined_output = result.output + out.getvalue()
+
+    assert result.exit_code == 0
+    output_dir = _extract_output_dir(combined_output)
+    extracted_files = sorted(output_dir.iterdir())
+    assert len(extracted_files) == 2
+    assert extracted_files[0].read_text(encoding="utf-8") == "print(1)\n"
+    assert extracted_files[1].read_text(encoding="utf-8") == "print(2)\n"
+
+
+def test_audit_unpack_tracker_jsonl_creates_temp_files(tmp_path: Path) -> None:
+    runner = CliRunner()
+    source = tmp_path / "solver.py"
+    source.write_text("print(1)\n", encoding="utf-8")
+    track_folder = tmp_path / ".tko" / "track" / "disc@task01"
+
+    tracker = Tracker().set_folder(track_folder).set_files([source]).set_result("100")
+    tracker.store()
+    source.write_text("print(2)\n", encoding="utf-8")
+    tracker.store()
+
+    with Console.capture() as out:
+        result = runner.invoke(app, ["unpack", str(track_folder / "solver.py.jsonl")])
     combined_output = result.output + out.getvalue()
 
     assert result.exit_code == 0
