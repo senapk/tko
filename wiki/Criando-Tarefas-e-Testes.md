@@ -15,7 +15,7 @@ As tarefas tambem podem apontar para arquivos em repositorios remotos (por URL),
 
 ## Reuso com repositorio remoto
 
-Quando voce usa uma fonte remota (por exemplo um `README.md` hospedado no GitHub), o comando abaixo reescreve links relativos para links absolutos e prontos para reuso:
+Quando voce usa uma fonte Git externa (por exemplo um `README.md` hospedado no GitHub), o comando abaixo reescreve links relativos para links absolutos e prontos para reuso:
 
 ```bash
 tko tool rebase-links @fup

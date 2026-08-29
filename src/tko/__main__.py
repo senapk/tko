@@ -16,7 +16,7 @@ from tko.cli.cli_class import app as class_app
 from tko.cli.cli_collect import app as collect_app
 from tko.cli.cli_config import app as config_app
 from tko.cli.cli_main import register_main_commands
-from tko.cli.cli_remote import app as remote_app
+from tko.cli.cli_source import app as source_app
 from tko.cli.cli_reset import app as reset_app
 from tko.cli.cli_task import app as task_app
 from tko.cli.cli_tools import app as util_app
@@ -44,7 +44,7 @@ app.add_typer(audit_app, name="audit")
 app.add_typer(task_app, name="task")
 app.add_typer(config_app, name="config")
 app.add_typer(reset_app, name="reset")
-app.add_typer(remote_app, name="remote")
+app.add_typer(source_app, name="source")
 app.add_typer(collect_app, name="collect")
 app.add_typer(class_app, name="class")
 app.add_typer(util_app, name="util")
@@ -62,7 +62,7 @@ def main_callback(
     version: bool = typer.Option(False, "-v", "--version", help="Show version and exit"),
     mono: bool = typer.Option(False, "-m", "--mono", help="Disable colors"),
     debug: bool = typer.Option(False, "-D", "--debug", help="Enable debug mode"),
-    update: bool = typer.Option(False, "-U", "--update", help="Force update remote URL sources"),
+    update: bool = typer.Option(False, "-U", "--update", help="Force update external URL sources"),
     offline: bool = typer.Option(False, "-O", "--offline", help="Disable any update attempts (Offline mode)"),
 ):
     from tko.config.settings import Settings

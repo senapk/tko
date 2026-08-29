@@ -38,8 +38,8 @@ _RESET_LANGUAGES_PATH = Msg.parse(
     en="Language settings:",
 )
 _SETTINGS_REMOTE_SOURCES_REGISTERED = Msg.parse(
-    pt="Fontes de tarefas remotas cadastradas:",
-    en="Registered remote task sources:",
+    pt="Fontes de tarefas cadastradas:",
+    en="Registered task sources:",
 )
 
 class Settings:

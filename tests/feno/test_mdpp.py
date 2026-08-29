@@ -1,6 +1,6 @@
 from loguru import logger
 from pathlib import Path
-from tko.feno.mdpp import TocMaker, Toc, TocTable, Toch, Load, Links, Action, Save, Mdpp, LoadParams
+from tko.feno.mdpp import TocMaker, Toc, TocTable, Toch, Load, Links, Action, Save, Mdpp
 
 def test_toc_maker_get_md_link():
     assert TocMaker.get_md_link("## Hello World") == "hello-world"

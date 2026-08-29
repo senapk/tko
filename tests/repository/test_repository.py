@@ -37,7 +37,7 @@ def test_found_and_inside_repo_checks(tmp_path: Path) -> None:
 
     config = repo.paths.config_file
     config.parent.mkdir(parents=True, exist_ok=True)
-    config.write_text("version: '0.2'\n", encoding="utf-8")
+    config.write_text('version = "0.3"\n', encoding="utf-8")
 
     assert repo.found() is True
 
@@ -53,16 +53,17 @@ def test_task_folder_helpers_handle_prefixed_and_plain_labels(tmp_path: Path) ->
     assert repo.is_task_folder(tmp_path / "task1") is True
 
 
-def test_sandbox_remote_resolves_against_workspace(tmp_path: Path) -> None:
+def test_authoring_remote_resolves_against_workspace(tmp_path: Path) -> None:
     repo = Repository(tmp_path, make_run_settings(tmp_path), git_cache=None, recursive_search=False)
 
-    remote = repo.data.get_sandbox()
+    remote = repo.data.get_authoring_remote()
+    assert remote is not None
     index_file, found = repo.remote_resolver.resolve_index_file(remote, load_git=False)
 
-    assert remote.name == "sandbox"
-    assert remote.path_or_url == (tmp_path / "sandbox.md").resolve().as_posix()
+    assert remote.name == "labs"
+    assert remote.path_or_url == "README.md"
     assert remote.is_editable is True
-    assert index_file == (tmp_path / "sandbox.md").resolve()
+    assert index_file == (tmp_path / "README.md").resolve()
     assert found is False
 
 

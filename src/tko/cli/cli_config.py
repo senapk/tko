@@ -1,9 +1,6 @@
 import typer
 
-from tko.cli.common import load_repo
 from tko.config.settings import Settings
-from tko.repository.repository import Repository
-from tko.repository.repository_config import RepositoryLoader
 from tko.util.console import Console
 from tko.util.rt import RT
 
@@ -34,29 +31,6 @@ def config_set(
 def config_list(ctx: typer.Context):
     settings: Settings = ctx.obj
     Console.print(RT.parse(str(settings)))
-
-
-@app.command("sandbox", help="Set default configuration values")
-def config_sandbox(
-    ctx: typer.Context,
-    dir : None | str = typer.Option(None, "--dir", help="Set sandbox directory"),
-    index : None | str = typer.Option(None, "--index", help="Set sandbox index file"),
-):
-    settings: Settings = ctx.obj
-    settings.rs.force_offline = True
-    repo: Repository | None = None
-    repo, _ = load_repo(settings.rs, auto_load=False)
-    if repo is None:
-        Console.print(RT.parse("No repository loaded."))
-        return
-    if dir is not None:
-        Console.print(RT.parse(f"Sandbox directory set to: {dir}"))
-        repo.data.sandbox_name = dir
-    if index is not None:
-        repo.data.sandbox_index = index
-        Console.print(RT.parse(f"Sandbox index set to: {index}"))
-    if dir is not None or index is not None:
-        RepositoryLoader(repo).save()
 
 
 if __name__ == "__main__":

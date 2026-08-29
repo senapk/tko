@@ -47,19 +47,19 @@ _REPO_STARTER_EMPTY_REPO = Msg.text(
     en="Creating repository ...",
 )
 
-_REPO_ASK_DEFAULT_REMOTES = Msg.parse(
+_REPO_ASK_DEFAULT_SOURCES = Msg.parse(
     pt="Você [g]deseja adicionar[] algum dos [g]repositório[] padrão de atividades? [[Y/n]]: ",
     en="Do you [g]want to add[] any of the default activity [g]repositories[]? [[Y/n]]: ",
 )
-_REPO_ASK_DEFAULT_REMOTES_FUP = Msg.parse(
+_REPO_ASK_DEFAULT_SOURCES_FUP = Msg.parse(
     pt="[y]fup[] - Fundamentos de Programação",
     en="[y]fup[] - Programming Fundamentals",
 )
-_REPO_ASK_DEFAULT_REMOTES_POO = Msg.parse(
+_REPO_ASK_DEFAULT_SOURCES_POO = Msg.parse(
     pt="[y]poo[] - Programação Orientada a Objetos",
     en="[y]poo[] - Object Oriented Programming",
 )
-_REPO_ASK_DEFAULT_REMOTES_ED = Msg.parse(
+_REPO_ASK_DEFAULT_SOURCES_ED = Msg.parse(
     pt="[y]ed[] - Estruturas de Dados",
     en="[y]ed[] - Data Structures",
 )
@@ -98,21 +98,29 @@ class RepositoryStarter:
         Console.print(_REPO_STARTER_LANGUAGE_SET.t().format(language=self.language))
 
         if not self.skip:
-            self.ask_about_default_remotes()
+            self.ask_about_default_sources()
+
+        authoring = repo.data.get_authoring_remote() if hasattr(repo.data, "get_authoring_remote") else None
+        if authoring is not None:
+            index_file, _ = repo.remote_resolver.resolve_index_file(authoring, load_git=False)
+            index_file.parent.mkdir(parents=True, exist_ok=True)
+            if not index_file.exists():
+                index_file.write_text(f"# {authoring.name}\n\n", encoding="utf-8")
+            repo.remote_resolver.source_activity_dir(authoring).mkdir(parents=True, exist_ok=True)
 
         RepositoryLoader(repo).save()
         Console.print(_REPO_STARTER_OPEN_HINT.t())
         return True
 
-    def ask_about_default_remotes(self):
-        Console.print(_REPO_ASK_DEFAULT_REMOTES, end="")
+    def ask_about_default_sources(self):
+        Console.print(_REPO_ASK_DEFAULT_SOURCES, end="")
         answer = input().lower()
         if answer == "n":
-            Console.print(_REPO_NONE_ADDED.t().format(cmd="tko remote add LABEL URL"))
+            Console.print(_REPO_NONE_ADDED.t().format(cmd="tko source add LABEL URI"))
             return
-        Console.print(_REPO_ASK_DEFAULT_REMOTES_FUP.t())
-        Console.print(_REPO_ASK_DEFAULT_REMOTES_POO.t())
-        Console.print(_REPO_ASK_DEFAULT_REMOTES_ED.t())
+        Console.print(_REPO_ASK_DEFAULT_SOURCES_FUP.t())
+        Console.print(_REPO_ASK_DEFAULT_SOURCES_POO.t())
+        Console.print(_REPO_ASK_DEFAULT_SOURCES_ED.t())
 
         options = ["fup", "poo", "ed", "none"]
         while True:
@@ -120,13 +128,13 @@ class RepositoryStarter:
             op = input().lower()
             if op in options:
                 if op != "none":
-                    self.add_remote(op)
+                    self.add_default_source(op)
                 return
 
-    def add_remote(self, target: str):
-        from tko.repository.remote_actions import RemoteActions
-        rep_actions = RemoteActions(self.settings, self.repo)
-        rep_actions.remote_add_splitted(name=target, remote_default=target, remote_file=None, remote_url=None, writeable=False)
+    def add_default_source(self, target: str):
+        from tko.repository.source_actions import SourceActions
+        source_actions = SourceActions(self.settings, self.repo)
+        source_actions.add_default_source(label=target, default_alias=target)
 
 
     def validate_path(self) -> bool:

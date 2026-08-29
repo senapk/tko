@@ -26,7 +26,7 @@ class GameCoordinator:
             from tko.repository.repository_config import RepositoryLoader
             RepositoryLoader(self.repo).load()
             remotes = self.repo.remotes
-        self.ensure_sandbox_readme_fixed(self.repo, rr)
+        self.ensure_managed_readmes_fixed(self.repo, rr)
         self.repo.game.set_remotes(remotes, self.repo.data.lang)
         self.repo.game.build(remote_resolver = rr)
         self._load_tasks_from_log_into_game()
@@ -57,16 +57,18 @@ class GameCoordinator:
                     task.info.rate = exec_item.rate
 
 
-    def ensure_sandbox_readme_fixed(self, repo: Repository, remote_resolver: RemoteResolver):
-        remote = repo.data.get_sandbox()
-        basedir = remote_resolver.remote_work_dir(remote)
-        filename = remote_resolver.resolve_index_file(remote, load_git=False)[0]
+    def ensure_managed_readmes_fixed(self, repo: Repository, remote_resolver: RemoteResolver):
+        for remote in repo.remotes.values():
+            if not remote_resolver.is_local_internal(remote):
+                continue
+            basedir = remote_resolver.remote_work_dir(remote)
+            filename = remote_resolver.resolve_index_file(remote, load_git=False)[0]
 
-        if not filename.parent.exists():
-            return
-        if basedir.exists() and not filename.exists():
-            filename.parent.mkdir(parents=True, exist_ok=True)
-            with open(filename, "w", encoding="utf-8") as f:
-                f.write(f"# {repo.data.sandbox_name}\n\n")
-        if filename.exists():
-            fix_readme(index=filename.resolve(), base_dir=basedir, verbose=False, load_titles=True)
+            if not filename.parent.exists():
+                continue
+            if basedir.exists() and not filename.exists():
+                filename.parent.mkdir(parents=True, exist_ok=True)
+                with open(filename, "w", encoding="utf-8") as f:
+                    f.write(f"# {remote.name}\n\n")
+            if filename.exists():
+                fix_readme(index=filename.resolve(), base_dir=basedir, verbose=False, load_titles=True)

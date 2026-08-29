@@ -21,7 +21,7 @@ tko --version
 tko --help
 ```
 
-Se `--help` listar comandos como `task`, `build`, `class`, `remote`, a instalação está ok.
+Se `--help` listar comandos como `task`, `build`, `class`, `source`, a instalação está ok.
 
 ## 3) Como rodar os testes do projeto TKO?
 

@@ -169,7 +169,7 @@ class CmdDown:
             self.actions.fnprint(_DRAFTS_FOUND.t().format(folder=relative))
             return True
         
-        if self.task.location.is_static_type: # working in local remote source, creating only default draft if not found
+        if self.task.location.is_static_type: # working in managed/local source, creating only default draft if not found
             destiny_drafts_folder.mkdir(exist_ok=True, parents=True)
             self.actions.create_default_draft(destiny_drafts_folder, self.language)
             return True

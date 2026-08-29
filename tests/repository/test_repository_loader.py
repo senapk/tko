@@ -15,6 +15,10 @@ class FakePaths:
 
     @property
     def config_file(self) -> Path:
+        return self.root / ".tko" / "repository.toml"
+
+    @property
+    def legacy_config_file(self) -> Path:
         return self.root / ".tko" / "repository.yaml"
 
     @property
@@ -84,26 +88,26 @@ def test_load_config_uses_main_file_and_sets_source_globals(tmp_path: Path):
     loader, repo = make_loader(tmp_path, [source])
     write_text(
         repo.paths.config_file,
-        "flags:\n  panel: logs\nlang: py\nsources: []\n",
+        '[preferences]\npanel = "logs"\nlang = "py"\n',
     )
 
     returned = loader.load()
 
     assert returned is loader
-    assert repo.data.loaded == {"flags": {"panel": "logs"}, "lang": "py", "sources": []}
-    assert repo.flags.loaded == {"panel": "logs"}
+    assert repo.data.loaded == {"preferences": {"panel": "logs", "lang": "py"}}
+    assert repo.flags.loaded == {}
     assert source.globals_args is None
 
 
 def test_load_config_falls_back_to_backup_when_main_file_is_empty(tmp_path: Path):
     loader, repo = make_loader(tmp_path)
     write_text(repo.paths.config_file, "")
-    write_text(repo.paths.config_backup_file, "flags:\n  show_time: false\n")
+    write_text(repo.paths.config_backup_file, "[preferences]\nshow_time = false\n")
 
     loader.load()
 
-    assert repo.data.loaded == {"flags": {"show_time": False}}
-    assert repo.flags.loaded == {"show_time": False}
+    assert repo.data.loaded == {"preferences": {"show_time": False}}
+    assert repo.flags.loaded == {}
 
 
 def test_load_config_raises_for_merge_conflict(tmp_path: Path):
@@ -114,11 +118,11 @@ def test_load_config_raises_for_merge_conflict(tmp_path: Path):
         loader.load()
 
 
-def test_load_config_raises_warning_for_invalid_yaml(tmp_path: Path):
+def test_load_config_raises_warning_for_invalid_toml(tmp_path: Path):
     loader, repo = make_loader(tmp_path)
-    write_text(repo.paths.config_file, "flags: [unterminated\n")
+    write_text(repo.paths.config_file, "flags = [unterminated\n")
 
-    with pytest.raises(Warning, match="contém erros de YAML"):
+    with pytest.raises(Warning, match="corrompido"):
         loader.load()
 
 
@@ -136,16 +140,16 @@ def test_save_config_sets_version_and_writes_flags(monkeypatch: MonkeyPatch, tmp
     repo.data.saved_payload = {"sources": [{"name": "sandbox"}], "lang": "py"}
     captured: dict[str, Any] = {}
 
-    def fake_atomic_write_yaml(path: Path, payload: dict[str, Any]) -> None:
+    def fake_atomic_write_toml(path: Path, payload: dict[str, Any]) -> None:
         captured["path"] = path
         captured["payload"] = payload
 
-    monkeypatch.setattr(repository_loader_module, "atomic_write_yaml", fake_atomic_write_yaml)
+    monkeypatch.setattr(repository_loader_module, "atomic_write_toml", fake_atomic_write_toml)
 
     returned = loader.save()
 
     assert returned.repo is repo
-    assert repo.data.version == "0.2"
+    assert repo.data.version == "0.3"
     assert repo.data.flags == {"show_time": "true"}
     assert captured["path"] == repo.paths.config_file
     assert captured["payload"] == repo.data.saved_payload
@@ -157,21 +161,21 @@ def test_save_config_skips_write_when_payload_is_unchanged(monkeypatch: MonkeyPa
     repo.data.saved_payload = {"sources": [{"name": "sandbox"}], "lang": "py"}
     write_text(
         repo.paths.config_file,
-        "sources:\n- name: sandbox\nlang: py\n",
+        '[[sources]]\nname = "sandbox"\nlang = "py"\n',
     )
     loader.load()
 
     calls = {"count": 0}
 
-    def fake_atomic_write_yaml(path: Path, payload: dict[str, Any]) -> None:
+    def fake_atomic_write_toml(path: Path, payload: dict[str, Any]) -> None:
         calls["count"] += 1
 
-    monkeypatch.setattr(repository_loader_module, "atomic_write_yaml", fake_atomic_write_yaml)
+    monkeypatch.setattr(repository_loader_module, "atomic_write_toml", fake_atomic_write_toml)
 
     returned = loader.save()
 
     assert returned.repo is repo
-    assert repo.data.version == "0.2"
+    assert repo.data.version == "0.3"
     assert repo.data.flags == {"show_time": "true"}
     assert calls["count"] == 0
 
@@ -186,7 +190,7 @@ def test_save_config_skips_write_when_only_selected_fields_change(monkeypatch: M
     }
     write_text(
         repo.paths.config_file,
-        "sources:\n- name: sandbox\nlang: py\nselected: repo@q1@t1\nselected_index: 3\n",
+        '[[sources]]\nname = "sandbox"\nlang = "py"\nselected = "repo@q1@t1"\nselected_index = 3\n',
     )
     loader.load()
     repo.data.saved_payload = {
@@ -198,10 +202,10 @@ def test_save_config_skips_write_when_only_selected_fields_change(monkeypatch: M
 
     calls = {"count": 0}
 
-    def fake_atomic_write_yaml(path: Path, payload: dict[str, Any]) -> None:
+    def fake_atomic_write_toml(path: Path, payload: dict[str, Any]) -> None:
         calls["count"] += 1
 
-    monkeypatch.setattr(repository_loader_module, "atomic_write_yaml", fake_atomic_write_yaml)
+    monkeypatch.setattr(repository_loader_module, "atomic_write_toml", fake_atomic_write_toml)
 
     returned = loader.save()
 
@@ -219,7 +223,7 @@ def test_save_config_writes_when_only_selected_fields_change_and_force_is_true(m
     }
     write_text(
         repo.paths.config_file,
-        "sources:\n- name: sandbox\nlang: py\nselected: repo@q1@t1\nselected_index: 3\n",
+        '[[sources]]\nname = "sandbox"\nlang = "py"\nselected = "repo@q1@t1"\nselected_index = 3\n',
     )
     loader.load()
     repo.data.saved_payload = {
@@ -231,10 +235,10 @@ def test_save_config_writes_when_only_selected_fields_change_and_force_is_true(m
 
     calls = {"count": 0}
 
-    def fake_atomic_write_yaml(path: Path, payload: dict[str, Any]) -> None:
+    def fake_atomic_write_toml(path: Path, payload: dict[str, Any]) -> None:
         calls["count"] += 1
 
-    monkeypatch.setattr(repository_loader_module, "atomic_write_yaml", fake_atomic_write_yaml)
+    monkeypatch.setattr(repository_loader_module, "atomic_write_toml", fake_atomic_write_toml)
 
     returned = loader.save(force=True)
 

@@ -22,6 +22,34 @@ class RemoteResolver:
 
     def remote_work_dir(self, remote: Remote) -> Path:
         return self.repo_root_dir / remote.name
+
+    def is_local_internal(self, remote: Remote) -> bool:
+        if remote.source_type != SourceType.LOCAL_FILE:
+            return False
+        path = self.resolve_local_uri(remote.path_or_url)
+        return path.is_relative_to(self.repo_root_dir)
+
+    def is_editable_index(self, remote: Remote) -> bool:
+        if remote.source_type != SourceType.LOCAL_FILE:
+            return False
+        return self.is_local_internal(remote)
+
+    def source_activity_dir(self, remote: Remote) -> Path:
+        return self.remote_work_dir(remote)
+
+    def resolve_local_uri(self, uri: str) -> Path:
+        path = Path(uri)
+        if path.is_absolute():
+            return path.resolve()
+        return (self.repo_root_dir / path).resolve()
+
+    def serialize_uri(self, remote: Remote) -> str:
+        if remote.source_type == SourceType.GIT_SOURCE:
+            return remote.path_or_url
+        path = self.resolve_local_uri(remote.path_or_url)
+        if path.is_relative_to(self.repo_root_dir):
+            return path.relative_to(self.repo_root_dir).as_posix()
+        return path.as_posix()
     
     def resolve_index_file(self, remote: Remote, load_git: bool) -> tuple[Path , bool]:
         if remote.source_type == SourceType.GIT_SOURCE:
@@ -33,9 +61,5 @@ class RemoteResolver:
                 return folder, False
             return folder / ghu.relative_path, True
         else:
-            path = Path(remote.path_or_url)
-            if path.is_absolute():
-                path = path.resolve()
-            else:
-                path = (self.repo_root_dir / path).resolve()
+            path = self.resolve_local_uri(remote.path_or_url)
             return path, path.exists()

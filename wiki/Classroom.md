@@ -7,9 +7,9 @@
 - Distribua o link da tarefa para os alunos criarem seus repositórios da atividade.
 - Envie para os alunos o link ou comando de configuração da atividade.
   - Exemplo para carregar apenas as atividades de seleção do repositório oficial de fup de Quixadá:
-    - ex: tko remote add fup @fup --quest seleção
+    - ex: tko source add fup @fup
   - Para apontar para seu repositório personalizado, o comando seria algo como:
-    - ex: `tko remote add origin https://github.com/<seu-usuario>/<seu-repositorio>`
+    - ex: `tko source add origin https://github.com/<seu-usuario>/<seu-repositorio>`
 - Os alunos resolvem as tarefas localmente usando o TKO
 - O TKO registra eventos de execução e atividade
 - Os alunos fazem commits e push diários para salvar a evolução

@@ -4,7 +4,8 @@ from tko.config.run_settings import RunSettings
 from tko.repository.repository_data import RepositoryData
 
 class RepositoryPaths:
-    CFG_FILE = "repository.yaml"
+    CFG_FILE = "repository.toml"
+    LEGACY_CFG_FILE = "repository.yaml"
     OLD_HISTORY_FILE = "history.csv"
     TASK_LOG_FILE = "task_log.csv"
     TRACK_FOLDER = "track"
@@ -32,13 +33,19 @@ class RepositoryPaths:
             cfg.parent.parent
             for cfg in folder.rglob(f"{RepositoryPaths.CONFIG_FOLDER}/{RepositoryPaths.CFG_FILE}")
         ]
+        repos.extend(
+            cfg.parent.parent
+            for cfg in folder.rglob(f"{RepositoryPaths.CONFIG_FOLDER}/{RepositoryPaths.LEGACY_CFG_FILE}")
+            if cfg.parent.parent not in repos
+        )
         return repos
 
     @staticmethod
     def rec_search_for_repo_parents(folder: Path) -> Path | None:
         for path in RepositoryPaths.__walk_to_root(folder):
             target: Path = path / RepositoryPaths.CONFIG_FOLDER / RepositoryPaths.CFG_FILE
-            if target.is_file():
+            legacy_target: Path = path / RepositoryPaths.CONFIG_FOLDER / RepositoryPaths.LEGACY_CFG_FILE
+            if target.is_file() or legacy_target.is_file():
                 return path
         return None
     
@@ -62,6 +69,10 @@ class RepositoryPaths:
     @property
     def config_file(self) -> Path:
         return self.root_dir / RepositoryPaths.CONFIG_FOLDER / RepositoryPaths.CFG_FILE
+
+    @property
+    def legacy_config_file(self) -> Path:
+        return self.root_dir / RepositoryPaths.CONFIG_FOLDER / RepositoryPaths.LEGACY_CFG_FILE
     
     @property
     def config_backup_file(self) -> Path:

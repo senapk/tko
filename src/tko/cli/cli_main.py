@@ -98,7 +98,7 @@ def register_main_commands(app: typer.Typer):
     def init_cmd( # type: ignore
         ctx: typer.Context,
         language: Optional[str] = typer.Option(None, "--language", "-l", help="Default repository language (e.g. py, cpp, java, go)"),
-        skip: bool = typer.Option(False, "--skip-remotes", "-s", help="Skip asking about default remotes")
+        skip: bool = typer.Option(False, "--skip-sources", "--skip-remotes", "-s", help="Skip asking about default sources")
     ):
         from tko.repository.repository_starter import RepositoryStarter
         

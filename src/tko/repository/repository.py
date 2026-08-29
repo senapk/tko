@@ -43,7 +43,7 @@ class Repository:
         self.logger: Logger = Logger(rep_folder, rs, paths=self.paths)
 
     def found(self):
-        return self.paths.config_file.exists()
+        return self.paths.config_file.exists() or self.paths.legacy_config_file.exists()
 
     @property
     def audit(self):
@@ -76,6 +76,10 @@ class Repository:
     @property
     def remotes(self) -> dict[str, Remote]:
         return self.data.get_remotes()
+
+    @property
+    def sources(self) -> dict[str, Remote]:
+        return self.data.get_sources()
 
     @property
     def root_dir(self) -> Path:

@@ -11,6 +11,7 @@ from tko.config.settings import Settings
 from tko.i18n import Msg
 from tko.util.rt import RT
 from tko.config.sandbox_drafts import SandboxDrafts
+from tko.feno.indexer import fix_readme
 
 
 class _DraftMsg:
@@ -34,11 +35,15 @@ class DraftCreator:
         self.reload = reload_fn
 
     def create_draft(self):
-        sandbox_source = self.game.get_sandbox_remote()
-        if not sandbox_source:
+        authoring_source = self.repo.data.get_authoring_remote()
+        if not authoring_source:
             return
+        index_file, _ = self.repo.remote_resolver.resolve_index_file(authoring_source, load_git=False)
+        index_file.parent.mkdir(parents=True, exist_ok=True)
+        if not index_file.exists():
+            index_file.write_text(f"# {authoring_source.name}\n\n", encoding="utf-8")
 
-        sandbox_folder: Path = self.repo.data.sandbox_name
+        sandbox_folder: Path = self.repo.remote_resolver.source_activity_dir(authoring_source)
         sandbox_folder.mkdir(parents=True, exist_ok=True)
 
         def find_numbered_draft_id(sandbox_folder: Path) -> int:
@@ -90,8 +95,9 @@ class DraftCreator:
                 f.write(draft)
 
             SandboxDrafts.create_sandbox_draft(folder, title)
-            self.tree.state.selected = f"{sandbox_source.name}@{key}"
-            self.tree.state.expanded.add(f"{sandbox_source.name}@{sandbox_source.name}")
+            fix_readme(index=index_file, base_dir=sandbox_folder, verbose=False, load_titles=True)
+            self.tree.state.selected = f"{authoring_source.name}@{key}"
+            self.tree.state.expanded.add(f"{authoring_source.name}@{authoring_source.name}")
             self.repo.data.selected = self.tree.state.selected
             self.reload()
             self.fman.add_floating(

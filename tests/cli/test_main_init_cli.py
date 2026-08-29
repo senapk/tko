@@ -42,7 +42,7 @@ def test_init_passes_arguments_to_repository_starter(monkeypatch: MonkeyPatch, t
 
     monkeypatch.setattr("tko.repository.repository_starter.RepositoryStarter", DummyStarter)
 
-    result = runner.invoke(app, ["init", "--skip-remotes", "--language", "py"], obj=ctx)
+    result = runner.invoke(app, ["init", "--skip-sources", "--language", "py"], obj=ctx)
 
     assert result.exit_code == 0
     assert captured["settings"] is ctx

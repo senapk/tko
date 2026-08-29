@@ -8,7 +8,7 @@ Objetivo: conectar repositório do professor e abrir tarefas.
 
 ```bash
 tko init
-tko remote add poo https://github.com/exemplo/disciplina-poo
+tko source add poo https://github.com/exemplo/disciplina-poo
 tko open
 ```
 

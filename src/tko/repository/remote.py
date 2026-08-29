@@ -9,6 +9,7 @@ from loguru import logger
 class Keys:
     NAME = "name"
     PATH_OR_URL = "path_or_url"
+    URI = "uri"
     WRITEABLE = "writeable"
     TYPE = "type"
 
@@ -52,6 +53,15 @@ class Remote:
         )
 
     @staticmethod
+    def from_uri(name: str, uri: str, is_editable: bool = False) -> Remote:
+        if GitHubUrl.parse(uri) is not None:
+            remote = Remote.from_git_file(name, uri)
+            if remote is None:
+                raise ValueError(f"Invalid git source: {uri}")
+            return remote
+        return Remote.from_local_file(name, Path(uri), is_editable=is_editable)
+
+    @staticmethod
     def from_git_file(name: str, target: str, branch: str | None = None, index: str | None = None) -> Remote | None:
         gus = GitHubUrl.parse(target)
         if gus is None:
@@ -93,6 +103,8 @@ class Remote:
             name = data[Keys.NAME]
         if Keys.PATH_OR_URL in data and isinstance(data[Keys.PATH_OR_URL], str):
             path_or_url = data[Keys.PATH_OR_URL]
+        if Keys.URI in data and isinstance(data[Keys.URI], str):
+            path_or_url = data[Keys.URI]
         if Keys.WRITEABLE in data and isinstance(data[Keys.WRITEABLE], bool):
             is_editable = data[Keys.WRITEABLE]
 
@@ -116,8 +128,6 @@ class Remote:
                 source_type = SourceType.GIT_SOURCE
         else:
             source_type = SourceType.LOCAL_FILE
-        if name == "sandbox": # for backward compatibility, to remove in the future
-            is_editable = True
         if Keys.INDEX in data and isinstance(data[Keys.INDEX], str):
             index = data[Keys.INDEX]
         else:

@@ -7,7 +7,7 @@ Este guia descreve o fluxo completo de criação, publicação e consumo de tare
 O modelo do TKO é descentralizado e baseado em Git:
 
 1. O professor cria tarefas no próprio repositório.
-2. O aluno conecta o repositório remoto no TKO local.
+2. O aluno conecta a fonte de atividades no TKO local.
 3. O TKO sincroniza periodicamente e exibe novas atividades.
 
 ## Fluxo do professor
@@ -50,7 +50,7 @@ Primeira configuração no ambiente local:
 
 2. Adicionar remoto da disciplina:
 
-   tko remote add <alias> <url_git_do_professor>
+   tko source add <label> <url_git_do_professor>
 
 3. Abrir interface de tarefas:
 
@@ -62,7 +62,7 @@ Internamente, o TKO trabalha com clone e cache local dos repositórios remotos.
 
 Comportamento padrão:
 
-1. No primeiro acesso, faz clone da fonte remota.
+1. No primeiro acesso, faz clone da fonte Git externa.
 2. Mantém cache por 1 hora.
 3. Após 1 hora, ao abrir o TKO novamente, tenta atualizar (pull/sync).
 4. Se o professor publicou novas atividades, elas passam a aparecer para os alunos.
@@ -84,7 +84,7 @@ Comportamento padrão:
 ### Aluno quer estudar fora de disciplina
 
 - Pode adicionar remotos públicos de trilhas e atividades.
-- Segue o mesmo fluxo de init, remote add e open.
+- Segue o mesmo fluxo de init, source add e open.
 
 ## Guias relacionados
 

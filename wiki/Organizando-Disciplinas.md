@@ -33,8 +33,8 @@ cd rep-git-bloco-a
 
 # cria sua pasta de tarefas do tko vazia para esse bloco de atividades
 tko init
-# Define a fonte remota de onde as tarefas serão carregadas, por exemplo:
-tko remote add ed @ed # para carregar todos repositório padrão de Estrutura de dados
+# Define a fonte de onde as tarefas serão carregadas, por exemplo:
+tko source add ed @ed # para carregar todos repositório padrão de Estrutura de dados
 
 # abre sua pasta de tarefas de forma interativa
 tko open

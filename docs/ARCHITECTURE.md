@@ -30,7 +30,7 @@ Subapps principais:
 - task
 - config
 - reset
-- remote
+- source
 - collect
 - class
 - tool

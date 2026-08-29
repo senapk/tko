@@ -10,7 +10,7 @@ Primeira configuração:
 
 ```bash
 tko init
-tko remote add <alias> <url_git_do_professor>
+tko source add <label> <url_git_do_professor>
 tko open
 ```
 
@@ -79,12 +79,12 @@ Fluxos de turma/disciplina.
 tko class --help
 ```
 
-## remote
+## source
 
 Gerência de fontes remotas/repositórios.
 
 ```bash
-tko remote --help
+tko source --help
 ```
 
 ## config

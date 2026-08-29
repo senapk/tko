@@ -44,7 +44,7 @@ tko --help
 Saída esperada:
 
 - O comando `tko --version` deve mostrar a versão instalada.
-- O comando `tko --help` deve listar os comandos principais (`task`, `build`, `class`, `remote`, ...).
+- O comando `tko --help` deve listar os comandos principais (`task`, `build`, `class`, `source`, ...).
 
 Se `tko` não for encontrado após instalar com `pipx`, rode:
 
