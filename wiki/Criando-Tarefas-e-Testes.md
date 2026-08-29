@@ -18,7 +18,7 @@ As tarefas tambem podem apontar para arquivos em repositorios remotos (por URL),
 Quando voce usa uma fonte Git externa (por exemplo um `README.md` hospedado no GitHub), o comando abaixo reescreve links relativos para links absolutos e prontos para reuso:
 
 ```bash
-tko tool rebase-links @fup
+tko tool rebase @fup -o README.fup.md
 ```
 
 Isso facilita reaproveitar trilhas e listas de tarefas ja publicadas em outro repositorio, sem quebrar links internos.
@@ -56,14 +56,17 @@ Consulte: [Markdown Preprocessor](tools/mdpp.md).
 Exemplo:
 
 ```md
-- [ ]`@tres xp:1 type:make`[Soma de tres inteiros](base/tres/README.md)
+- [ ] `@tres gain=1 hard=1 size=1 type=make eval=test` [Soma de tres inteiros](base/tres/README.md)
 ```
 
 Partes:
 
 - `@tres`: chave da tarefa.
-- `xp:1`: XP da tarefa.
-- `type:make`: tipo da tarefa (consumo ou producao).
+- `gain=1`: valor pedagogico da tarefa.
+- `hard=1`: dificuldade da tarefa.
+- `size=1`: tamanho ou extensao da tarefa.
+- `type=make`: tipo da tarefa (producao).
+- `eval=test`: modo de avaliacao por testes automaticos.
 - `[Soma de tres inteiros]`: texto do link.
 - `(base/tres/README.md)`: link para o enunciado.
 
@@ -76,7 +79,7 @@ Regra importante da chave:
 Exemplo de tarefa de consumo:
 
 ```md
-- [ ]`@video_intro xp:1 type=read`[Video de introducao](https://exemplo.com/video)
+- [ ] `@video_intro gain=1 type=read eval=self` [Video de introducao](https://exemplo.com/video)
 ```
 
 ## Tipos e marcadores
@@ -87,8 +90,10 @@ Consulte a referencia completa em:
 
 Resumo util:
 
-- Politica de perda: `loss:free`, `loss:part`, `loss:zero`.
-- Modo de avaliacao: `eval:test`, `eval:self`.
+- Ganho pedagogico: `gain=1`.
+- Dificuldade: `hard=1`.
+- Tamanho: `size=1`.
+- Modo de avaliacao: `eval=test`, `eval=self`.
 
 ## Como criar uma nova tarefa (passo a passo)
 
@@ -103,7 +108,7 @@ Exemplo de execucao local:
 mkdir base/minha_tarefa
 # adicionar elementos na pasta, como README.md e tests.toml
 cd base/minha_tarefa
-tko task run
+tko run
 ```
 
 ## Como escrever testes
@@ -138,7 +143,7 @@ Exemplo:
 
 ```bash
 mkdir pasta
-tko build pasta tests.toml
+tko build tests pasta tests.toml
 ls pasta
 ```
 
@@ -147,7 +152,7 @@ Serao gerados arquivos como `00.in`, `00.sol`, `01.in`, `01.sol`.
 Para rodar a partir da pasta descompactada:
 
 ```bash
-tko task run Solver.java pasta
+tko run Solver.java pasta
 ```
 
 ## Convertendo entre formatos
@@ -195,7 +200,7 @@ Para formatos de maratona, voce pode adaptar para o padrao esperado:
 - Evite mudar chave de tarefa depois de publicada.
 - Mantenha enunciado claro com exemplo de entrada e saida.
 - Crie testes cobrindo caso simples, borda e caso invalido (quando aplicavel).
-- Use XP e trilha para progressao gradual da disciplina.
+- Use `gain`, `hard`, `size` e quests para progressao gradual da disciplina.
 
 ## Organizacao recomendada
 
@@ -208,7 +213,7 @@ Para formatos de maratona, voce pode adaptar para o padrao esperado:
 - A linha da tarefa aponta para link valido.
 - O enunciado abre corretamente no TKO.
 - Os testes executam localmente.
-- O nivel de dificuldade bate com XP e trilha.
+- O nivel de dificuldade bate com `gain`, `hard`, `size` e a quest.
 - O titulo esta claro para os alunos.
 
 ## Guias relacionados

@@ -70,22 +70,22 @@ Cada task é definida em uma linha markdown, seguida de pares chave-valor:
 
 Exemplo:
 
-    - [ ] key=@t1 xp=10 type=task path=main eval=auto loss=part
-    - [ ] @t2 xp=5 type=read path=side eval=self loss=free
+    - [ ] `@t1 gain=10 hard=2 size=1 type=make eval=test` [Soma](base/soma/README.md)
+    - [ ] `@t2 gain=5 type=read eval=self` [Material de apoio](https://exemplo.com/material)
 
 **Campos suportados:**
-- `key=@chave` ou `@chave`: identificador único da task
-- `xp=valor`: valor em pontos/XP da tarefa
-- `type=task` ou `type=read`: tipo da tarefa (produção ou consumo)
-- `path=main` ou `path=side`: categoria/trilha da tarefa
-- `eval=auto` ou `eval=self`: modo de avaliação
-- `loss=zero`, `loss=part`, `loss=free`: política de penalidade por consulta
+- `@chave`: identificador único da task
+- `gain=valor`: valor pedagógico da tarefa
+- `hard=valor`: dificuldade da tarefa
+- `size=valor`: tamanho ou extensão da tarefa
+- `type=make` ou `type=read`: tipo da tarefa (produção ou consumo)
+- `eval=test` ou `eval=self`: modo de avaliação
 
 **Notas:**
-- Apenas key é obrigatória.
+- Apenas `@chave` é obrigatória.
 - Campos podem aparecer em qualquer ordem.
 - Campos não obrigatórios assumem valores padrão.
-- Sintaxe antiga ainda é suportada por compatibilidade, mas recomenda-se o novo formato.
+- Sintaxe antiga (`xp=`, `tier=` e marcadores com `:`) ainda é suportada por compatibilidade, mas recomenda-se o novo formato.
 
 ------------------------------------------------------------------------
 
@@ -108,23 +108,23 @@ Cada quest é definida em uma linha de título markdown, seguida de pares chave-
 
 Exemplo:
 
-    ## Ponteiros em C key=@ptr tag=ponteiro requires=@intro total=100 threshold=80 lang=c lang=c++
+    ## Ponteiros em C key=@ptr tag=ponteiro deps=@intro xpgoal=100 min=80% lang=c lang=c++
 
 **Campos suportados:**
 - `key=@chave`: identificador único da quest
-- `tag=nome`: habilidade/tópico trabalhado (pode repetir para múltiplos)
-- `requires=@outra`: pré-requisito (pode repetir)
-- `total=valor`: pontuação-alvo para 100% de completude
-- `threshold=valor`: percentual mínimo para considerar a quest completa
+- `tag=nome`: habilidade/tópico trabalhado
+- `deps=@outra`: pré-requisito (pode repetir ou separar por vírgula)
+- `xpgoal=valor`: pontuação-alvo para 100% de completude
+- `min=valor%`: percentual mínimo para considerar a quest completa
 - `lang=nome`: linguagem de programação específica (pode repetir, ex: lang=c lang=python)
 - `active=true|false`: define se a quest está ativa (default: true). Se `active=false`, a quest e suas questões são desabilitadas e não participam da gamificação.
 
 **Regras e padrões:**
 - Apenas `key` é obrigatória.
 - Se `tag` não for definida, será usada a própria `key` como tag.
-- `requires` não é obrigatório, mas é usado para definir dependências e gamificação da disciplina.
-- `total` define o XP (pontuação de tasks) necessário para atingir 100% da quest.
-- `threshold` é opcional, o padrão é 50 (50%) e define o percentual mínimo para considerar a quest completa.
+- `deps` não é obrigatório, mas é usado para definir dependências e gamificação da disciplina.
+- `xpgoal` define o XP necessário para atingir 100% da quest.
+- `min` é opcional, o padrão é 50% e define o percentual mínimo para considerar a quest completa.
 - `lang` é opcional, define as linguagens de programação específicas da quest.
 
 **Notas:**
@@ -133,7 +133,7 @@ Exemplo:
 
 **Exemplo completo:**
 
-    ## Estruturas de Repetição key=@loops tag=for tag=while requires=@intro total=100 threshold=80 lang=python
+    ## Estruturas de Repetição key=@loops tag=for deps=@intro xpgoal=100 min=80% lang=python
 
 
 ## Dependências entre Quests, Tags e Habilidades
@@ -141,7 +141,7 @@ Exemplo:
 As **quests** podem declarar duas informações importantes:
 
 1. **Quais tópicos/habilidades são trabalhados** (usando `tag=nome`)
-2. **Quais quests precisam ser concluídas antes** (usando `requires=@outra`)
+2. **Quais quests precisam ser concluídas antes** (usando `deps=@outra`)
 
 Essas informações são definidas diretamente no cabeçalho da missão usando os campos chave-valor.
 
@@ -153,14 +153,14 @@ Esse formato tem duas vantagens importantes:
 
 ## Exemplo de definição de habilidades e dependências
 
-As habilidades/tópicos são declarados usando `tag=nome` (pode repetir para múltiplos):
+As habilidades/tópicos são declarados usando `tag=nome`:
 
 ```md
 ## Missão: Operações key=@operations tag=basic
-## Missão: Seleção 1 key=@selection1 tag=if requires=@operations
-## Missão: Seleção 2 key=@selection2 tag=if requires=@selection1
-## Missão: Repetição1 key=@repetition1 tag=for requires=@selection2
-## Missão: Repetição2 key=@repetition2 tag=for requires=@repetition1
+## Missão: Seleção 1 key=@selection1 tag=if deps=@operations
+## Missão: Seleção 2 key=@selection2 tag=if deps=@selection1
+## Missão: Repetição1 key=@repetition1 tag=for deps=@selection2
+## Missão: Repetição2 key=@repetition2 tag=for deps=@repetition1
 ```
 
 Esse conjunto define o seguinte grafo de progressão:

@@ -8,13 +8,14 @@ Componentes principais no fluxo de tarefas:
 
 - `TaskParser`: interpreta cada linha do indice e cria `Task`.
 - `Task`: agrega metadados, configuracao, recurso e estado de jogo.
-- `TaskResource`: guarda origem do enunciado (local/remoto/url) e caminho relativo.
+- `TaskLocation`: guarda origem do enunciado, tipo da atividade, linha do indice e informacoes de importacao remota.
 - `TaskMatcher`: faz o parse da sintaxe markdown da linha.
 
 Arquivos importantes:
 
 - `src/tko/game/task_parser.py`
 - `src/tko/game/task.py`
+- `src/tko/game/task_location.py`
 
 ## Repositorio remoto e reuso de indices
 
@@ -26,10 +27,10 @@ Uma linha de tarefa pode apontar para arquivo local ou URL remota.
 Para preparar um indice remoto com links absolutos e reutilizaveis, use:
 
 ```bash
-tko tool rebase-links @fup
+tko tool rebase @fup -o README.fup.md
 ```
 
-O fluxo de `rebase-links` evita links relativos quebrados ao transportar um `README.md` entre repositorios.
+O fluxo de `rebase` evita links relativos quebrados ao transportar um `README.md` entre repositorios.
 
 ## Solucoes, drafts e ferramentas auxiliares
 
@@ -57,40 +58,46 @@ Capacidades relevantes para autoria de tarefas:
 
 ## Tipos de recurso
 
-No parser, tarefas podem cair em:
+No parser, tarefas podem ser classificadas por `TaskType`:
 
-- `VIEW`: leitura ou consulta de recurso externo/local.
-- `EDIT`: tarefa de producao/execucao com fonte local/remota.
+- `READ`: leitura ou consulta de recurso externo/local.
+- `MAKE`: tarefa de producao/execucao com fonte local/remota.
 
 Regra de chave:
 
 - A chave sempre inicia com `@`.
-- O tipo da atividade e definido pelos marcadores `:do` e `:read`.
+- O tipo da atividade e definido por `type=make` ou `type=read`.
 
-Para links HTTP em tarefas de edicao:
+Para links HTTP em tarefas de producao:
 
 - Se for URL GitHub reconhecida, o parser extrai `repository_url` e `relative_path`.
-- Se nao reconhecer, converte para `VIEW` e usa `external_url`.
+- Se for `type=read`, o link e tratado como recurso de consulta.
 
 ## Regras de tags e defaults
 
-`TaskParser.decode_task_types()` interpreta tags como:
+`TaskMatcher` interpreta campos como:
 
-- XP numerico (`:1`, `:2`, ...)
-- Trilha (`main`, `side`, `perk`)
-- Perda (`free`, `part`, `zero`)
-- Tipo de teste (`test`, `self`)
+- `@chave`: identificador da task.
+- `gain=valor`: valor pedagogico, compativel com `xp=`.
+- `hard=valor`: dificuldade, compativel com `tier=`.
+- `size=valor`: tamanho ou extensao.
+- `type=make` ou `type=read`: tipo da atividade.
+- `eval=test` ou `eval=self`: modo de avaliacao.
 
-Defaults aplicados em `__parse_task_types()`:
+Defaults aplicados pelo parser:
 
-- Para `VIEW`/`:read`: `loss=FREE`, `test=SELF`.
-- Para `EDIT`/`:do`: `loss=PART`, `test=TEST`.
+- `gain=1`, `hard=1`, `size=1`.
+- `type=make`, se o tipo nao for informado.
+- `eval=test` para `type=make`.
+- `eval=self` para `type=read`.
+
+Sintaxes antigas com `:read`, `:make`, `:test`, `:self`, `xp=` e `tier=` ainda sao aceitas por compatibilidade, mas novas documentacoes e exemplos devem usar os campos chave-valor canonicos.
 
 ## Como adicionar um novo marcador/tag
 
 1. Defina a semantica no dominio (enum ou regra).
-2. Atualize `TaskParser.decode_task_types()`.
-3. Ajuste defaults se necessario em `__parse_task_types()`.
+2. Atualize `TaskMatcher` para reconhecer o campo ou marcador.
+3. Ajuste defaults se necessario no fluxo de parse.
 4. Escreva testes unitarios cobrindo:
    - parse valido
    - fallback/default

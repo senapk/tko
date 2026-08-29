@@ -4,10 +4,10 @@ O modo de auditoria registra snapshots periodicos dos arquivos que o aluno edita
 
 Hoje o comportamento e:
 
-- A auditoria so funciona enquanto o aluno estiver com `tko open` em execucao.
+- A auditoria funciona enquanto houver um watcher ativo, seja pelo `tko open --audit`, pela auditoria persistente ligada com `tko audit on`, ou pelo monitor em foreground iniciado com `tko audit start`.
 - Os snapshots sao gerados periodicamente pelo watcher do repositorio.
 - Apenas arquivos dentro de `src/lang/...` da tarefa entram na auditoria.
-- Cada snapshot e uma copia completa do arquivo, sem diff incremental.
+- O historico de cada arquivo auditado e salvo em um arquivo `.jsonl`.
 - Os arquivos ficam em `.tko/audit/<source@task>/`.
 
 ## Configurando o tempo entre snapshots
@@ -15,10 +15,10 @@ Hoje o comportamento e:
 No modo explícito de auditoria, use `--interval` no comando:
 
 ```bash
-tko audit --interval 60
+tko audit start --interval 60
 ```
 
-Se o parâmetro não for informado, o valor padrão é `60` segundos.
+Se o parâmetro não for informado, o TKO usa o intervalo configurado no repositorio ou o valor padrão da ferramenta.
 
 Observacoes:
 
@@ -29,23 +29,30 @@ Observacoes:
 A auditoria depende do watcher iniciado no comando:
 
 ```bash
+tko open --audit
+```
+
+Tambem e possivel habilitar a auditoria persistente no repositorio e depois abrir o TKO normalmente:
+
+```bash
+tko audit on --interval 20
 tko open
 ```
 
-Se quiser iniciar auditoria explícita em foreground (com logs de snapshots no terminal), use `tko audit`.
+Se quiser iniciar auditoria explícita em foreground (com logs de snapshots no terminal), use `tko audit start`.
 
-## Modo manual em foreground (`tko audit`)
+## Modo manual em foreground (`tko audit start`)
 
 Quando quiser transparência total no terminal, use:
 
 ```bash
-tko audit
+tko audit start
 ```
 
 Esse comando inicia o watcher com auditoria ligada e fica em foreground mostrando os snapshots salvos, por exemplo:
 
 ```text
-[audit] fup@soma -> .tko/audit/fup@soma/2026-06-09_10-11-12_solver.py
+[audit] 10:11:12 fup@soma
 ```
 
 Para encerrar, use `Ctrl+C`.
@@ -53,7 +60,7 @@ Para encerrar, use `Ctrl+C`.
 Tambem e possivel ajustar o intervalo apenas para a sessao manual:
 
 ```bash
-tko audit --interval 60
+tko audit start --interval 60
 ```
 
 ## Protecao contra multiplos watchers (lock)
@@ -64,7 +71,7 @@ Agora o sistema usa lock por repositorio em:
 .tko/watcher.lock
 ```
 
-Com isso, se ja houver um `tko open`/`tko audit` ativo no mesmo repositorio, uma segunda tentativa de iniciar watcher falha com aviso, evitando snapshots duplicados e redundancia de copia.
+Com isso, se ja houver um `tko open`/`tko audit start` ativo no mesmo repositorio, uma segunda tentativa de iniciar watcher falha com aviso, evitando snapshots duplicados e redundancia de copia.
 
 Se o aluno fechar o `tko open`, o watcher para e nenhum novo snapshot sera criado.
 
@@ -88,36 +95,34 @@ Exemplo:
 .tko/audit/fup@soma/
 ```
 
-Os nomes seguem o formato:
+Dentro dessa pasta, cada arquivo auditado tem seu proprio historico:
 
 ```text
-YYYY-MM-DD_HH-MM-SS_nome-do-arquivo
+nome-do-arquivo.jsonl
 ```
 
 Exemplo:
 
 ```text
-2026-06-09_10-11-12_solver.py
-2026-06-09_10-12-12_solver.py
-2026-06-09_10-13-12_solver.py
+solver.py.jsonl
+main.cpp.jsonl
 ```
 
-Isso facilita comparar a evolucao do codigo ao longo do tempo.
+Esses arquivos armazenam a sequencia de versoes capturadas pelo watcher e permitem comparar a evolucao do codigo ao longo do tempo.
 
-## Como o professor analisa os arquivos com `fzf-preview`
+## Como o professor analisa os arquivos com `tko audit preview`
 
-O script `tools/fzf-preview.sh` pode ser usado para navegar pelos snapshots e comparar um arquivo com a versao anterior.
+O comando `tko audit preview` abre uma timeline interativa para navegar pelos snapshots e comparar um arquivo com a versao anterior.
 
 Exemplo entrando na pasta de auditoria de uma tarefa:
 
 ```bash
-cd .tko/audit/fup@soma
-../../../tools/fzf-preview.sh
+tko audit preview .tko/audit/fup@soma
 ```
 
-Como os snapshots ficam ordenados pelo timestamp no nome, o preview mostra a diferenca entre um arquivo e o imediatamente anterior.
+Como cada arquivo `.jsonl` guarda as versoes em ordem temporal, o preview mostra a diferenca entre um snapshot e o imediatamente anterior.
 
-Atalhos uteis dentro do `fzf-preview`:
+Atalhos uteis dentro do preview:
 
 - `Alt+1`: diff com contexto normal.
 - `Alt+2`: diff com contexto maior.
@@ -126,39 +131,29 @@ Atalhos uteis dentro do `fzf-preview`:
 
 ## Filtrando a analise para um unico arquivo
 
-O script tambem aceita arquivos como parametros. Quando voce passa argumentos, ele usa apenas aqueles arquivos como entrada do `fzf`.
+O comando tambem aceita arquivos `.jsonl` como parametros.
 
 Exemplo para analisar apenas os snapshots do `solver.py`:
 
 ```bash
-cd .tko/audit/fup@soma
-../../../tools/fzf-preview.sh *_solver.py
+tko audit preview .tko/audit/fup@soma/solver.py.jsonl
 ```
 
-Ou explicitando caminhos:
-
-```bash
-../../../tools/fzf-preview.sh \
-	2026-06-09_10-11-12_solver.py \
-	2026-06-09_10-12-12_solver.py \
-	2026-06-09_10-13-12_solver.py
-```
-
-Se nenhum parametro for informado, o script usa todos os arquivos da pasta atual.
+Se nenhum parametro for informado, o comando procura a auditoria do repositorio atual.
 
 ## Fluxo recomendado para avaliacao
 
 Para o aluno:
 
 1. Entrar no repositorio da disciplina.
-2. Garantir que a auditoria esteja ativa.
-3. Executar `tko open`.
+2. Garantir que a auditoria esteja ativa, com `tko audit on` ou `tko open --audit`.
+3. Executar `tko open`, se a auditoria persistente estiver habilitada.
 4. Resolver a atividade com o `tko open` ainda aberto.
 
 Para o professor:
 
 1. Abrir a pasta `.tko/audit/<source@task>` do aluno.
-2. Rodar `tools/fzf-preview.sh` nessa pasta.
+2. Rodar `tko audit preview` nessa pasta.
 3. Navegar pelos snapshots para observar a evolucao da solucao.
 4. Comparar o ritmo das alteracoes com o historico esperado da resolucao.
 
@@ -168,6 +163,7 @@ Use o modo de auditoria quando quiser evidencias temporais do processo de constr
 
 Os pontos principais sao:
 
-- iniciar auditoria explicitamente com `tko audit` (ou `tko audit --interval ...`);
+- iniciar auditoria explicitamente com `tko audit start` (ou `tko audit start --interval ...`);
+- habilitar auditoria persistente com `tko audit on`;
 - manter o processo de auditoria ativo durante a resolucao;
-- analisar os snapshots gerados com `tools/fzf-preview.sh`.
+- analisar os snapshots gerados com `tko audit preview`.

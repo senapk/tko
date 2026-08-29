@@ -18,17 +18,21 @@ No indice, ha dois niveis:
 
 Uma quest e lida por cabecalho e pode incluir metadados no proprio titulo:
 
-- `@chave`: chave da quest.
-- `+skill` ou `+skill:valor`: skills aplicadas as tarefas da quest.
-- `!@outra_quest`: dependencia para desbloqueio.
-- `=linguagem`: filtro por linguagem.
-- `%N`: percentual minimo para considerar a quest completa.
+- `key=@chave`: chave da quest.
+- `tag=skill`: skill aplicada as tarefas da quest.
+- `deps=@outra_quest`: dependencia para desbloqueio.
+- `lang=linguagem`: filtro por linguagem.
+- `xpgoal=N`: XP alvo para 100% de completude.
+- `min=N%`: percentual minimo para considerar a quest completa.
+- `active=true|false`: ativa ou desativa a quest.
 
 Exemplo:
 
 ```md
-## Selecao 1 @if1 +if_else !@base %50
+## Selecao 1 key=@if1 tag=if_else deps=@base min=50%
 ```
+
+O parser ainda aceita sintaxes legadas como `@if1`, `!@base`, `=python` e `%50`, mas a documentacao deve preferir os campos chave-valor.
 
 Comportamento no codigo:
 
@@ -92,7 +96,7 @@ A quest soma XP obtido e total, e deriva percentuais.
 
 Pontos importantes:
 
-- Quest completa depende de `min_percent_completion` (padrao 50%).
+- Quest completa depende de `min` (padrao 50%).
 
 Comportamento no codigo:
 

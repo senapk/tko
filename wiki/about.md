@@ -92,31 +92,38 @@ Durante esse processo, o sistema registra eventos relevantes.
 
 # 5. Estrutura de Tarefas
 
-Cada tarefa possui:
+Um repositório de tarefas usa um `README.md` como índice navegável. Esse índice organiza quests e tasks e guarda os metadados pedagógicos que o TKO processa.
+
+Cada task normalmente possui:
 
 -   descrição do problema
--   arquivos base para o aluno
--   testes automatizados
+-   arquivos de rascunho para o aluno
+-   testes automatizados opcionais
 -   metadados pedagógicos
 
 Exemplo de estrutura:
 
     task/
-     ├─ task.yml
      ├─ README.md
-     ├─ template/
-     │   └─ solution.py
-     ├─ tests/
-     │   ├─ input/
-     │   └─ output/
-     └─ hints.md
+     ├─ .cache/drafts/
+     │   ├─ py/draft.py
+     │   └─ go/draft.go
+     ├─ local.sh
+     └─ tests.toml
 
 Metadados incluem:
 
--   habilidades envolvidas
--   pontos da tarefa
--   dificuldade
--   dependências
+-   `gain`: valor pedagogico
+-   `hard`: dificuldade
+-   `size`: tamanho ou extensao
+-   `type`: `make` ou `read`
+-   `eval`: `test` ou `self`
+
+Exemplo de linha no índice:
+
+```md
+- [ ] `@soma gain=1 hard=1 size=1 type=make eval=test` [Soma](base/soma/README.md)
+```
 
 ------------------------------------------------------------------------
 
@@ -160,13 +167,14 @@ Incluem:
 -   número de testes que passaram
 -   número de testes que falharam
 
-## Eventos de atividade
+## Eventos de atividade e auditoria
 
-Registram apenas interação, sem salvar código.
+Registram interação e, quando a auditoria esta habilitada, snapshots periodicos dos arquivos editados.
 
 - Entrar na atividade
 - Registrar alteração em arquivos
 - Sair da atividade
+- Salvar versões periodicas em `.tko/audit/`
 
 Essa separação permite:
 
@@ -178,8 +186,7 @@ Essa separação permite:
 
 # 8. Reconstrução da Evolução da Solução
 
-Como os diffs são armazenados incrementalmente, é possível reconstruir
-qualquer versão do código.
+Como o TKO guarda históricos de execução, testes e auditoria, é possível acompanhar versões relevantes do código ao longo do trabalho.
 
 Isso permite criar:
 

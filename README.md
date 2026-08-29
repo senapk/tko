@@ -70,6 +70,8 @@ Use o guia recomendado para setup completo com VS Code e WSL:
 
 ## Documentação por Perfil
 
+- Conceitos e arquitetura:
+  [TKO: conceitos e organização](wiki/Conceitos-e-Arquitetura.md)
 - Professor da disciplina (distribui e coleta via Git, GitHub Classroom (recomendado), Dropbox e e-mail):
   [Uso pelos professores](#uso-pelos-professores),
   [Criando tarefas e testes](wiki/Criando-Tarefas-e-Testes.md)
@@ -106,6 +108,7 @@ Repositórios de referência:
 
 ## Uso pelos professores
 
+- [Conceitos e organização do TKO](wiki/Conceitos-e-Arquitetura.md)
 - [Trabalhando com o GitHub Classroom](wiki/Classroom.md)
 - [Repositórios e quests](wiki/Criando-Atividades.md)
 - [Marcadores e tipos de atividades](wiki/game/tasks.md)

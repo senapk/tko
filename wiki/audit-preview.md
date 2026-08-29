@@ -94,13 +94,13 @@ Se `delta` ou `bat` não estiverem instalados, o preview ainda funciona, mas per
 Para ativar auditoria persistente no repositório:
 
 ```bash
-tko audit set --on
+tko audit on
 ```
 
 Para definir um intervalo entre snapshots:
 
 ```bash
-tko audit set --on --interval 20
+tko audit on --interval 20
 ```
 
 Depois, rode o TKO normalmente mantendo o watcher ativo:
@@ -112,13 +112,13 @@ tko open
 Também é possível iniciar a auditoria explicitamente em foreground:
 
 ```bash
-tko audit init
+tko audit start
 ```
 
 Com intervalo específico:
 
 ```bash
-tko audit init --interval 20
+tko audit start --interval 20
 ```
 
 ## Usando o preview
