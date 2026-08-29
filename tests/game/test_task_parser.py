@@ -80,6 +80,19 @@ def test_read_task_external_url_sets_default_self_eval() -> None:
     assert task.config.test == TaskEval.SELF
 
 
+def test_read_task_github_url_stays_external() -> None:
+    task = make_parser(remote_import=True).parse_line(
+        "- [ ] `@ref type=read eval=test` [material](https://github.com/user/repo/blob/main/README.md)",
+    )
+
+    assert task is not None
+    assert task.location.task_type == TaskType.READ
+    assert task.location.is_read_http_link is True
+    assert task.location.git_hub_url is None
+    assert task.location.remote_import is False
+    assert task.config.test == TaskEval.TEST
+
+
 def test_decode_task_types_sets_expected_values() -> None:
     task = make_parser().parse_line("- [ ] :15:test:make:zero [@label title](data/label/r.md)", 0)
 
@@ -107,9 +120,24 @@ def test_decode_task_types_covers_self_and_make_while_ignoring_legacy_loss_tags(
 
 
 def test_parse_line_applies_tags_from_title_and_keeps_plain_words() -> None:
-    task = make_parser().parse_line("- [ ] [@label eval=self loss=free titulo](data/label/r.md)", 12)
+    task = make_parser().parse_line("- [ ] [@label eval=self titulo](data/label/r.md)", 12)
 
     assert task is not None
     assert task.basic.key == "label"
     assert task.basic.title == "titulo"
+    assert task.config.test == TaskEval.SELF
+
+
+def test_parse_line_sets_gain_hard_size_correctly() -> None:
+    task = make_parser().parse_line(
+        "- [ ] `@calc gain=4 hard=2 size=3 type=make eval=self` [Calculadora](calc/README.md)",
+        5,
+    )
+
+    assert task is not None
+    assert task.basic.key == "calc"
+    assert task.game.gain == 4
+    assert task.game.hard == 2
+    assert task.game.size == 3
+    assert task.location.task_type == TaskType.MAKE
     assert task.config.test == TaskEval.SELF

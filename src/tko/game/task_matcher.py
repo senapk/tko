@@ -48,7 +48,6 @@ class TaskMatcher:
         self.eval = TaskEval.NULL
 
     def match_pattern(self, line: str) -> bool:
-        self.raw_line = line
         is_ref: bool = False
         match = re.match(TaskMatcher.REF_T, line)
         if match is not None:
@@ -57,6 +56,18 @@ class TaskMatcher:
             match = re.match(TaskMatcher.REF_F, line)
             if match is None:
                 return False
+
+        self.raw_line = line
+        self.raw_pre = ""
+        self.raw_pos = ""
+        self.title = ""
+        self.link = ""
+        self.key = None
+        self.resource_type = TaskType.NULL
+        self.gain = 1
+        self.hard = 1
+        self.size = 1
+        self.eval = TaskEval.NULL
         self.is_ref = is_ref
         self.raw_pre = remove_emojis(match.group(1))
         self.title = remove_emojis(match.group(2))
@@ -87,9 +98,6 @@ class TaskMatcher:
             if item.startswith("@"):
                 self.key = TaskMatcher.__filter_task_key(item)
                 break
-            if item.startswith(TaskMatcher.TYPE):
-                self.key = TaskMatcher.__filter_task_key(item[len(TaskMatcher.TYPE):])
-                break
 
     @staticmethod
     def parse_int(value: str) -> int | None:
@@ -106,16 +114,17 @@ class TaskMatcher:
         output: list[str] = []
         if self.key is not None:
             output.append(f"@{self.key}")
-        
-        if self.resource_type != TaskType.NULL:
-            output.append(f"{TaskMatcher.TYPE}{self.resource_type.value}")
 
         output.append(f"{TaskMatcher.GAIN}{self.gain}")
         if self.is_make:
             output.append(f"{TaskMatcher.HARD}{self.hard}")
             output.append(f"{TaskMatcher.SIZE}{self.size}")
-            output.append(f"{TaskMatcher.EVAL}{self.eval.value}")
 
+        if self.resource_type != TaskType.NULL:
+            output.append(f"{TaskMatcher.TYPE}{self.resource_type.value}")
+
+        if self.eval != TaskEval.NULL:
+            output.append(f"{TaskMatcher.EVAL}{self.eval.value}")
 
         return output
 
@@ -123,23 +132,23 @@ class TaskMatcher:
         for item in words:
             item = item.lower()
             if item.startswith(TaskMatcher.HARD):
-                if hard_value := self.parse_int(item[len(TaskMatcher.HARD):]):
+                if (hard_value := self.parse_int(item[len(TaskMatcher.HARD):])) is not None:
                     self.hard = hard_value
                 continue
             if item.startswith("tier="):
-                if hard_value := self.parse_int(item[len("tier="):]):
+                if (hard_value := self.parse_int(item[len("tier="):])) is not None:
                     self.hard = hard_value
                 continue
             if item.startswith(TaskMatcher.GAIN):
-                if gain_value := self.parse_int(item[len(TaskMatcher.GAIN):]):
+                if (gain_value := self.parse_int(item[len(TaskMatcher.GAIN):])) is not None:
                     self.gain = gain_value
                 continue
             if item.startswith("xp="):
-                if gain_value := self.parse_int(item[len("xp="):]):
+                if (gain_value := self.parse_int(item[len("xp="):])) is not None:
                     self.gain = gain_value
                 continue
             if item.startswith(TaskMatcher.SIZE):
-                if size_value := self.parse_int(item[len(TaskMatcher.SIZE):]):
+                if (size_value := self.parse_int(item[len(TaskMatcher.SIZE):])) is not None:
                     self.size = size_value
                 continue
             elif item == f"{TaskMatcher.EVAL}{TaskEval.TEST.value}":
@@ -170,11 +179,8 @@ class TaskMatcher:
         if self.resource_type == TaskType.NULL:
             self.resource_type = TaskType.MAKE
 
-        if self.resource_type == TaskType.READ:
-            self.eval = TaskEval.SELF
-        else:
-            if self.eval == TaskEval.NULL:
-                self.eval = TaskEval.TEST
+        if self.eval == TaskEval.NULL:
+            self.eval = TaskEval.SELF if self.resource_type == TaskType.READ else TaskEval.TEST
 
 
     @property

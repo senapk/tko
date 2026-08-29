@@ -53,7 +53,7 @@ def config_sandbox(
         Console.print(RT.parse(f"Sandbox directory set to: {dir}"))
         repo.data.sandbox_name = dir
     if index is not None:
-        repo.data.sandbox_index_file = index
+        repo.data.sandbox_index = index
         Console.print(RT.parse(f"Sandbox index set to: {index}"))
     if dir is not None or index is not None:
         RepositoryLoader(repo).save()

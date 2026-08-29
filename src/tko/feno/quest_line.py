@@ -33,8 +33,14 @@ class QuestLine:
         fields = qf.get_filled_fields()
         ref_sum = self._calc_ref_sum()
         if ref_sum > 0:
+            found_goal = False
             for i, f in enumerate(fields):
                 if f.startswith(QuestMatcher.GOAL):
                     fields[i] = f"{QuestMatcher.GOAL}{self._calc_ref_sum()}"
+                    found_goal = True
+            if not found_goal:
+                fields.append(f"{QuestMatcher.GOAL}{self._calc_ref_sum()}")
 
-        return f"## {quest.basic.title} <!-- {" ".join(fields)} -->"
+        if fields:
+            return f"## {quest.basic.title} <!-- {' '.join(fields)} -->"
+        return f"## {quest.basic.title}"

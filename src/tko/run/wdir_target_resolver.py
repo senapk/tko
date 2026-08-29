@@ -22,7 +22,7 @@ class WdirTargetResolver:
     def identify_source_and_solver_targets(target_list: list[Path]) -> tuple[list[Path], list[Path]]:
         for target in target_list:
             if not target.exists():
-                raise Warning(_RUN_TARGET_NOT_FOUND.t().format(target=target))
+                raise FileNotFoundError(_RUN_TARGET_NOT_FOUND.t().format(target=target))
 
         solvers = [target for target in target_list if target.suffix not in Loader.SOURCES_EXTENSIONS]
         sources = WdirTargetResolver.filter_and_order_sources([target for target in target_list if not target in solvers])

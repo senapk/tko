@@ -37,11 +37,12 @@ Comportamento no codigo:
 
 ## Tasks: como entram na gamificacao
 
-Nas linhas de tarefa, o parser extrai:
+Nas linhas de tarefa, o parser extrai os três indicadores da atividade:
 
-- XP numerico (`xp:1`, `xp:2`, ...).
-- Politica de perda (`loss:free`, `loss:part`, `loss:zero`).
-- Modo de avaliacao (`eval:test`, `eval:self`).
+- Ganho (`gain=1`, compatível com `xp=`).
+- Dificuldade (`hard=1`, compatível com `tier=`).
+- Tamanho (`size=1`).
+- Tipo (`type=make`, `type=read`) e modo de avaliação (`eval=test`, `eval=self`).
 
 Comportamento no codigo:
 
@@ -56,7 +57,7 @@ Cada tarefa tem duas partes:
 1. Percentual de execucao (`rate`):
    - vem de testes automaticos ou autoavaliacao.
 2. Percentual de qualidade:
-   - aplica penalidade conforme `loss` e flags de ajuda (`guided`, `ia_code`, `ia_debug`, `ia_problem`).
+   - aplica as regras de qualidade e flags de ajuda (`guided`, `ia_code`, `ia_debug`, `ia_problem`).
 
 Formula principal:
 
@@ -133,6 +134,10 @@ Esse comando ajuda a:
 - adicionar tarefas faltantes no indice;
 - remover linhas com README local inexistente.
 - atualizar e normalizar a sintaxe de tags e campos nas tarefas
+
+Pastas novas dentro da base que contêm `README.md` entram automaticamente na quest correspondente,
+com `gain=1 hard=1 size=1 type=make eval=test`. URLs HTTP/HTTPS são preservadas como referências
+remotas e não são tratadas como arquivos locais quebrados.
 
 Guia detalhado:
 

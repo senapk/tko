@@ -17,9 +17,9 @@ _INDEXER_FOUND_READMES = Msg.parse(
     pt="Encontrados {count} arquivos README.md no diretório base '{base_dir}'",
     en="Found {count} README.md files in base directory '{base_dir}'",
 )
-_INDEXER_MISSING_README_REMOVING = Msg.parse(
-    pt="Aviso: Arquivo README '[y]{readme}[]' não existe para a tarefa:[b]{task}[], removendo do índice",
-    en="Warning: README file '[y]{readme}[]' does not exist for task:[b]{task}[], removing from index",
+_INDEXER_MISSING_LOCAL_FILE = Msg.parse(
+    pt="Erro: Arquivo local '[y]{file}[]' não existe para a tarefa:[b]{task}[]",
+    en="Error: local file '[y]{file}[]' does not exist for task:[b]{task}[]",
 )
 _INDEXER_MISSING_README_TASK = Msg.parse(
     pt="Aviso: Arquivo README '[y]{readme}[]' não existe para a tarefa:[b]{task}[]",
@@ -66,34 +66,33 @@ class Elements:
             else:
                 Console.print(f"STR: {line}")
 
-    def remove_tasks_with_broken_targets(self) -> None:
-        new_list: list[QuestLine | TaskLine | str] = []
-        for line in self.lines:
+    def validate_local_targets_exist(self) -> bool:
+        ok: bool = True
+        for i, line in enumerate(self.lines):
             if not isinstance(line, TaskLine):
-                new_list.append(line)
                 continue
             if line.target_file is not None:
-                if not line.target_file.exists():
+                if not line.tm.is_url and not line.target_file.exists():
+                    message = str(_INDEXER_MISSING_LOCAL_FILE).format(file=line.target_file, task=line.key)
                     if self.verbose:
-                        Console.print(RT.parse(str(_INDEXER_MISSING_README_REMOVING).format(readme=line.target_file, task=line.key)))
-                    continue
-            new_list.append(line)
-        self.lines = new_list
+                        Console.print(RT(f" {self.index_path}:{i + 1} - ", "r") + RT.parse(message))
+                    ok = False
+        return ok
 
     def fix_titles(self, save_titles: bool = False, load_titles: bool = False) -> None:
         for line in self.lines:
             folder_title: str = ""
             if not isinstance(line, TaskLine):
-                return
+                continue
             if line.tm.is_url:
-                return
+                continue
             if line.target_file is None:
-                return
+                continue
             if line.target_file.exists():
                 title = IndexerMd.load_title_from_markdown_file(line.target_file)
                 if title is not None:
                     folder_title = title
-            if folder_title == line.tm.title:
+            if folder_title == line.tm.title or not folder_title:
                 continue
             if self.verbose:
                 Console.print(RT.parse(str(_INDEXER_MISMATCH_TITLE).format(readme=line.target_file, line_title=line.tm.title, folder_title=folder_title)))
@@ -107,32 +106,45 @@ class Renderer:
     def __init__(self, index_path: Path):
         self.index_path = index_path
 
-    def get_render_line(self, item: Line, key_pad: int) -> str:
+    def get_render_line(self, item: Line, key_pad: int, fields_pad: int) -> str:
         if isinstance(item, TaskLine):
-            return item.render_line(key_pad)
+            return item.render_line(key_pad, fields_pad)
         elif isinstance(item, QuestLine):
             return item.render_line()
         return item
 
-    def _calc_key_pad(self, quest_lines: list[QuestLine]) -> int:
+    def _calc_key_pad(self, quests: list[QuestLine], header: list[TaskLine | str]) -> int:
         keys: list[str] = []
-        for quest in quest_lines:
+        for line in header:
+            if isinstance(line, TaskLine):
+                keys.append(line.key)
+        for quest in quests:
             for line in quest.lines:
                 if isinstance(line, TaskLine):
                     keys.append(line.key)
         return max([len(k) for k in keys]) if len(keys) > 0 else 0
 
+    def _calc_fields_pad(self, quests: list[QuestLine], header: list[TaskLine | str]) -> int:
+        max_len = len("gain=1 hard=1 size=1 type=make eval=test")
+        all_task_lines: list[TaskLine] = [line for line in header if isinstance(line, TaskLine)]
+        for quest in quests:
+            all_task_lines.extend([line for line in quest.lines if isinstance(line, TaskLine)])
+        for tl in all_task_lines:
+            fields = [f for f in tl.tm.get_filled_fields() if not f.startswith("@")]
+            max_len = max(max_len, len(" ".join(fields)))
+        return max_len
+
     def _render(self, header: list[TaskLine | str], quests: list[QuestLine]) -> list[str]:
-        
-        key_pad = self._calc_key_pad(quests)
+        key_pad = self._calc_key_pad(quests, header)
+        fields_pad = self._calc_fields_pad(quests, header)
         output: list[str] = []
         for line in header:
-            output.append(self.get_render_line(line, key_pad=key_pad))
+            output.append(self.get_render_line(line, key_pad=key_pad, fields_pad=fields_pad))
 
         for quest in quests:
             output.append(quest.render_line())
             for line in quest.lines:
-                output.append(self.get_render_line(line, key_pad=key_pad))
+                output.append(self.get_render_line(line, key_pad=key_pad, fields_pad=fields_pad))
         return output
 
     def write_file(self, header: list[TaskLine | str], quests: list[QuestLine]) -> None:
@@ -173,7 +185,7 @@ class Finder:
         missing_keys = folder_keys - line_keys
 
         output: dict[Path, TaskLine] = {}
-        for m in missing_keys:
+        for m in sorted(missing_keys):
             tl = TaskLine(index_path=self.index_path, base_dir=self.base_dir)
             readme = (self.base_dir / m / 'README.md').resolve()
             if not readme.exists():
@@ -219,11 +231,10 @@ class Merger:
         self.quests = quests
 
     def _search_sandbox_quest_index(self, default_quest_name: str) -> int:
-        found_index = -1
-        for quest in self.quests:
-            if quest.qp.raw_line.startswith(f"## {default_quest_name}"):
-                found_index = len(self.quests) - 1
-        return found_index
+        for index, quest in enumerate(self.quests):
+            if quest.key == default_quest_name or quest.quest.basic.title == default_quest_name:
+                return index
+        return -1
 
     def insert_missing_tasks(self, default_quest_name: str, missing_entries: dict[Path, TaskLine]) -> tuple[list[TaskLine | str], list[QuestLine]]:
         self._split_header_and_quests()
@@ -247,7 +258,8 @@ def fix_readme(index: Path, base_dir: Path, verbose: bool = True, save_titles: b
     index = index.resolve()
     elements = Elements(index_path=index, base_dir=base_dir, verbose=verbose)
     elements.load_lines()
-    elements.remove_tasks_with_broken_targets()
+    if verbose and not elements.validate_local_targets_exist():
+        return
     elements.fix_titles(save_titles, load_titles)
 
     finder = Finder(elements)

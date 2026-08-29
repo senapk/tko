@@ -3,91 +3,65 @@
 Uma tarefa é definida em uma linha markdown com checkbox e link:
 
 ```md
-- [ ] `@t1 xp=9 tier=3 type=make eval=test loss=part` [Implementar função soma](t1/README.md)
-- [ ] `@t2 xp=5 tier=2 type=read` [Ler artigo sobre listas](https://exemplo.com/material)
+- [ ] `@t1 gain=9 hard=3 size=2 type=make eval=test` [Implementar função soma](t1/README.md)
+- [ ] `@t2 gain=5 type=read` [Ler artigo sobre listas](https://exemplo.com/material)
 ```
 
 O identificador `@chave` é obrigatório. Os demais campos podem ser omitidos e assumem valores padrão.
 
 
-## Atualização automática do README.md
+## As 3 Dimensões Ortogonais de Atividade
 
-O comando `tko build index README.md <pasta>` atualiza as tarefas do README.md utilizando a pasta especificada com a fonte das tarefas. Ele atualiza automaticamente os campos:
+Cada atividade possui 3 indicadores independentes:
 
-- título: o texto do link é atualizado para o título encontrado no arquivo `README.md` da tarefa, ou permanece o mesmo se não houver título.
-- eval: tipo de avaliação
-  - `test` se ele encontrar um arquivo de teste `tests.toml` na pasta da tarefa.
-  - `self` caso contrário.
+1. **`gain`** (antigo `xp`): Valor pedagógico / utilidade da tarefa no curso.
+2. **`hard`** (antigo `tier`): Nível de dificuldade / complexidade intelectual (1 a 4).
+3. **`size`**: Tamanho / extensão da atividade (volume de trabalho/código).
 
-O script vai inserir todos os outros parâmetros com os valores default, para serem ajustados manualmente depois, se necessário. Ele não remove ou altera os campos que já existem, apenas adiciona os que estão faltando e ordena os campos na ordem padrão.
+`gain`, `hard` e `size` são ortogonais porque nem tudo que é difícil ou longo é o foco principal da disciplina, e vice-versa.
 
-O usuário pode definir manualmente os campos:
-  - type: tipo da tarefa (make ou read)
-  - xp: pontuação da tarefa
-  - tier: nível de dificuldade
-
-xp e tier são diferentes porque nem tudo que é difícil é valioso. Algumas atividas podem ser desafiadoras por lógica ou curiosidade, mas não necessariamente são o foco do curso, e vice-versa.
-
-Para tarefas do tipo `make` existem duas opções extras:
-  - loss: política de penalidade por consulta, o usuário pode escolher entre:
-    - `zero`: consulta proibida; se houver consulta, o progresso fica zerado.
-    - `part`: consulta permitida, mas com penalidade parcial.
-    - `free`: consulta permitida sem penalidade.
-  - eval: tipo de avaliação, é preenchido automaticamente pelo `tko build index`.
-    - `test`: avaliação automática por testes, se houver um arquivo `tests.toml` na pasta.
-    - `self`: autoavaliação pelo próprio aluno, se não houver um arquivo `tests.toml` na pasta.
 
 ## Campos Suportados
 
 | Campo | Valores possíveis | Padrão | Descrição |
 |-------|-------------------|--------|-----------|
 | `@chave` | `@t1`, `@foo`, ... | obrigatório | Identificador único da tarefa |
-| `xp=` | números inteiros | `1` | Pontuação/XP da tarefa |
-| `tier=` | números inteiros | `1` | Nível de dificuldade da tarefa |
-| `type=` | `make`, `read` | `make` | Tipo da tarefa |
-| `loss=` | `zero`, `part`, `free` | part| Política de penalidade por consulta |
+| `gain=` | números inteiros (≥ 1) | `1` | Utilidade / ganho pedagógico |
+| `hard=` | números inteiros (1 a 4) | `1` | Dificuldade / complexidade |
+| `size=` | números inteiros (≥ 1) | `1` | Tamanho / extensão da tarefa |
+| `type=` | `make`, `read` | `make` | Tipo da tarefa (produção ou leitura) |
+| `eval=` | `test`, `self` | `test` (make) / `self` (read) | Modo de avaliação |
 
-Os campos podem aparecer antes do link, dentro do título ou depois do link. O parser também reconhece campos entre crases e comentários HTML, porque esses delimitadores são ignorados na leitura dos marcadores.
 
-## Valores Padrão
+## Tipos de Atividade
 
-- `xp=1`
-- `tier=1`
-- `type=make`
-- Para `type=make`: `loss=part`
+- **`type=make`**: Tarefa de produção/programação.
+  - Pode apontar para uma pasta local (`base/soma/README.md`) ou para uma URL do GitHub (`https://github.com/.../README.md`).
+  - No caso de URLs do GitHub, o TKO gerencia a clonagem/cache remoto para que o aluno possa resolver e testar localmente.
+- **`type=read`**: Tarefa de consumo/leitura.
+  - Pode apontar para documentação local (`wiki/git/README.md`) ou para links externos HTTP/HTTPS (artigos, vídeos, etc.).
 
-Quando a tarefa é `type=read`, `eval` e `loss` são sempre ajustados para `self` e `free`.
 
-## Tipos
+## Modos de Avaliação
 
-- `type=make`: tarefa de produção, normalmente editável, como programar, escrever ou resolver um exercício.
-- `type=read`: tarefa de consumo, como ler, assistir ou explorar um material externo.
+- **`eval=test`**: Avaliação automática por testes (casos em `tests.toml`, `.tio` ou blocos de teste no próprio `README.md`).
+- **`eval=self`**: Autoavaliação pelo próprio aluno.
 
-Links externos `http`/`https` seguem uma regra especial:
 
-- `type=read` mantém o link como URL externa.
-- `type=make` aceita URLs do GitHub e extrai o repositório/caminho.
-- `type=make` com URL externa que não seja GitHub vira uma tarefa de leitura.
+## Papel do `tko build index`
 
-## Avaliação e Penalidade
+O comando `tko build index README.md <pasta_base>` sincroniza e formata o índice:
 
-- `eval=test`: avaliação automática por testes.
-- `eval=self`: autoavaliação pelo próprio aluno.
-- `loss=zero`: consulta proibida; se houver consulta, o progresso fica zerado.
-- `loss=part`: consulta permitida, mas com penalidade parcial.
-- `loss=free`: consulta permitida sem penalidade.
+1. **Validação de Links Locais**: Detecta se alguma tarefa aponta para um README local que não existe mais, avisa o usuário e remove a entrada inválida.
+2. **Auto-indexação de Novas Pastas**: Inspeciona a pasta base (ex: `base/`) e, se houver pastas de tarefas que ainda não estão no índice, avisa e adiciona automaticamente na seção correspondente.
+3. **Alinhamento Visual (Padding)**: Formata as tarefas alinhando `@chave` e tags em colunas padronizadas, garantindo que os colchetes dos títulos fiquem perfeitamente alinhados verticalmente.
+4. **Preservação de Escolhas**: O indexador não sobrescreve os tipos `type` ou modos de avaliação `eval` definidos pelo autor.
 
-## Sintaxe Antiga
 
-A sintaxe antiga com `:` ainda é aceita por compatibilidade, mas será automaticamente atualizada na execução do `tko build index`
+## Sintaxe Antiga e Compatibilidade
+
+A sintaxe antiga com `xp=`, `tier=` e `:` ainda é aceita pelo parser na leitura por compatibilidade, sendo normalizada na execução do `tko build index`:
 
 ```md
-- [ ] `@t1 :10:test:zero` [Implementar função soma](t1/README.md)
-- [ ] [@video_intro :read Vídeo de introdução](https://exemplo.com/video)
+- [ ] `@t1 xp=10 tier=2` [Implementar função soma](t1/README.md)
 ```
-
-
-## Recomendações
-
-- Prefira o formato chave-valor para clareza e manutenção futura.
-- Use nomes de campos e valores em minúsculas.

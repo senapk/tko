@@ -1,5 +1,5 @@
 from pathlib import Path
-from tko.game.task_enums import TaskEval
+from tko.game.task_enums import TaskEval, TaskType
 from tko.i18n import  Msg
 from tko.game.task_matcher import TaskMatcher
 from tko.run.wdir import Wdir
@@ -54,59 +54,30 @@ class TaskLine:
 
     def init_by_readme_file(self, readme_file: Path, title: str):
         self.target_file = readme_file
+        self.tm.raw_line = ""
+        self.tm.raw_pre = ""
+        self.tm.raw_pos = ""
+        self.tm.key = readme_file.parent.name
+        self.tm.resource_type = TaskType.MAKE
+        self.tm.eval = TaskEval.TEST
         self.tm.title = title
         self.origin_key = self.target_file.parent.name
         return self
 
     def get_pre(self, key_pad: int, fields_pad: int) -> str:
-        if self.tm.is_make:
-            if self.has_tests():
-                self.tm.eval = TaskEval.TEST
-            else:
-                self.tm.eval = TaskEval.SELF
-
-        test_icon = "🤖"
-        self_icon = "👤"
-
-        read_icon = "📖"
-        make_icon = "🛠️"
-
-        def make_icons() -> str:
-            icons: list[str] = []
-            if self.tm.is_read:
-                icons.append(read_icon)
-            elif self.tm.is_make:
-                icons.append(make_icon)
-
-            if self.tm.is_make and self.has_tests():
-                icons.append(test_icon)
-            else:
-                icons.append(self_icon)
-            return " ".join(icons)
-        
-        def filter_icons(s: str) -> str:
-            for icon in [read_icon, make_icon, test_icon, self_icon]:
-                s = s.replace(icon, "")
-            return s
-
         fields = self.tm.get_filled_fields()
-        fields = [f for f in fields if not f.startswith("@")]
-        fields = " ".join(fields)
-        words = self.tm.raw_pre.replace("`", " ").replace("- [ ]", " ").replace("<!--", " ").replace("-->", " ").split()
+        tags = [f for f in fields if not f.startswith("@")]
+        tags_str = " ".join(tags)
+
+        words = self.tm.raw_pre.replace("`", " ").replace("- [ ]", " ").replace("- [x]", " ").replace("<!--", " ").replace("-->", " ").split()
         left = " ".join(x for x in words if not self.tm.is_field(x))
-        left = filter_icons(left)
-        out = f" `@{self.key:<{key_pad + 1}}{make_icons()} {fields:<{fields_pad}}` {left}"
+
+        key_tag = f"@{self.key}"
+        if left:
+            out = f" `{key_tag:<{key_pad + 1}} {tags_str:<{fields_pad}}` {left} "
+        else:
+            out = f" `{key_tag:<{key_pad + 1}} {tags_str:<{fields_pad}}` "
         return out
-    
-    def has_tests(self) -> bool:
-        if self.tm.is_read:
-            return False
-        if self.tm.is_url:
-            return self.tm.eval == TaskEval.TEST
-        if self.target_file is None:
-            return False
-        return TestsFinder().find_tests(self.target_file.parent)
-        # load wdir in this folder and check number os tests
 
     @property
     def key(self) -> str:
@@ -118,14 +89,12 @@ class TaskLine:
         if self.origin_key is not None:
             return self.origin_key
         return ""
-    
-    def render_line(self, key_pad: int) -> str:
-        # after = f"{_type} {_eval}"
-        fields_pad = len("type=make gain=4 hard=1 size=1 eval=test")
+
+    def render_line(self, key_pad: int, fields_pad: int = 42) -> str:
         ref = "x" if self.tm.is_ref else " "
         link = self.tm.link
         if self.target_file is not None:
-            link = self.target_file.resolve().relative_to(self.index_path.parent.resolve(), walk_up=True)
+            link = self.target_file.resolve().relative_to(self.index_path.parent.resolve(), walk_up=True).as_posix()
         elif self.url is not None:
             link = self.url
         return f"- [{ref}]{self.get_pre(key_pad, fields_pad)}[{self.tm.title}]({link}){self.tm.raw_pos}"

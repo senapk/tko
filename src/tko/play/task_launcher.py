@@ -72,7 +72,11 @@ class TaskLauncher:
         run.set_run_without_ask(False)
         run.set_curses(True)
         run.set_task(self.repo, task)
-        run.load()
+        try:
+            run.load()
+        except FileNotFoundError as _e:
+            self.fman.add_floating(Floating().bottom().right().set_warning().set_countdown(Floating.Time.MEDIUM).put_text(str(_e)))
+            return
 
         if not run.context.wdir.solver:
             cmd = CmdDown(self.repo, task.basic.full_key, self.settings)

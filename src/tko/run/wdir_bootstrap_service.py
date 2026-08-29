@@ -33,4 +33,6 @@ class WdirBootstrapService:
             if ctx.wdir.solver:
                 executable, _ = ctx.wdir.solver.get_executable()
                 executable.set_compile_error(str(err))
+            else:
+                raise err
         return ctx.wdir

@@ -120,7 +120,8 @@ class QuestMatcher:
             return (
                 w.startswith(QuestMatcher.KEY) or w.startswith(QuestMatcher.TAG) or w.startswith(QuestMatcher.REQUIRES) or
                 w.startswith(QuestMatcher.GOAL) or w.startswith(QuestMatcher.MIN) or
-                w.startswith(QuestMatcher.ACTIVE) or w.startswith(QuestMatcher.LANG) or (w[0] in ["@", "%", "=", "+", "!"])
+                w.startswith(QuestMatcher.ACTIVE) or w.startswith(QuestMatcher.LANG) or
+                w.startswith("factor=") or (w[0] in ["@", "%", "=", "+", "!"])
             )
         words_title = [w for w in words if not is_field(w)]
         return " ".join(words_title)
@@ -128,18 +129,19 @@ class QuestMatcher:
     def get_filled_fields(self) -> list[str]:
         quest = self.quest
         output: list[str] = []
-        output.append(f"@{quest.basic.key}")
+        if quest.basic.key:
+            output.append(f"@{quest.basic.key}")
         if quest.requirements.requires:
-            output.append(f"{QuestMatcher.REQUIRES}{",".join(quest.requirements.requires)}")
-        else:
-            output.append(f"{QuestMatcher.REQUIRES}none")
+            output.append(f"{QuestMatcher.REQUIRES}{','.join(quest.requirements.requires)}")
         if quest.game.skill and quest.game.skill != quest.basic.key:
             output.append(f"{QuestMatcher.TAG}{quest.game.skill}")
-        output.append(f"{QuestMatcher.GOAL}{quest.game.goal_xp}")
+        if quest.game.goal_xp > 0:
+            output.append(f"{QuestMatcher.GOAL}{quest.game.goal_xp}")
         threshold = quest.game.threshold
         if threshold != quest.game.DEFAULT_MIN:
             output.append(f"{QuestMatcher.MIN}{quest.game.threshold}%")
         for lang in quest.game.languages:
             output.append(f"{QuestMatcher.LANG}{lang}")
-        output.append(f"{QuestMatcher.ACTIVE}{"1" if quest.game.active else "0"}")
+        if not quest.game.active:
+            output.append(f"{QuestMatcher.ACTIVE}0")
         return output

@@ -17,8 +17,8 @@ _REMOTE_NONE_CONFIGURED = Msg.text(pt="Nenhuma fonte configurada", en="No source
 _REMOTE_CONFIGURED_SOURCES = Msg.text(pt="Fontes configuradas:", en="Configured sources:")
 _REMOTE_LABEL = Msg.parse(pt="[y]- Rótulo: {name}", 
                     en="[y]- Label: {name}")
-_REMOTE_LINK = Msg.parse(pt="[y]- Link ou Caminho: {link}", 
-                   en="[y]- Link or Path: {link}")
+_REMOTE_LINK = Msg.parse(pt="[y]- Alvo: {link}", 
+                   en="[y]- Target: {link}")
 _REMOTE_EDITABLE = Msg.parse(pt="[y]- Editável: {index}", 
                     en="[y]- Editable: {index}")
 _REMOTE_FILTER_DISABLED = Msg.text(pt="Desativado", en="Disabled")
@@ -96,12 +96,11 @@ class RemoteActions:
     
     def show_source(self, remote: Remote):
         Console.print(_REMOTE_LABEL.t().format(name=remote.name))
-        Console.print(_REMOTE_LINK.t().format(link=remote.path_or_url))
-        Console.print(_REMOTE_EDITABLE.t().format(index=remote.is_editable))
+        Console.print("  " + _REMOTE_LINK.t().format(link=remote.path_or_url))
+        Console.print("  " +_REMOTE_EDITABLE.t().format(index=remote.is_editable))
 
     def remote_rm(self, alias: str) -> bool:
-        if alias in self.repo.remotes:
-            del self.repo.remotes[alias]
+        if self.repo.data.rm_remote(alias):
             logger.info(str(_REMOTE_REMOVED_SUCCESS).format(alias=alias))
             RepositoryLoader(self.repo).save()
             return True
@@ -124,7 +123,7 @@ class RemoteActions:
             return None
         return {s: destiny if destiny is not None else "" for s in source}
 
-    def remote_add( self, name: str, target: str, writeable: bool = False ) -> bool:
+    def remote_add(self, name: str, target: str, writeable: bool = False ) -> bool:
         default_git_alias = target[1:] if target.startswith("@") else None
         git_repository_url = target if target.startswith(("http:", "https:")) else None
         local_source_file = target if not (default_git_alias or git_repository_url) else None
@@ -158,7 +157,7 @@ class RemoteActions:
             
         elif remote_file is not None:
             remote_file_path = Path(remote_file).expanduser().resolve()
-            if not remote_file_path.exists() or not remote_file_path.is_dir():
+            if not remote_file_path.exists() or remote_file_path.is_dir():
                 logger.warning(str(_REMOTE_FILE_NOT_FOUND))
                 return False
             Console.print(RT.parse(f"[y] {str(_REMOTE_ADDING_LOCAL).format(path=remote_file_path)}"))

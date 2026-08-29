@@ -97,6 +97,13 @@ class RepositoryData:
             output[s.name] = s
         return output
 
+    def rm_remote(self, key: str) -> bool:
+        if key in self.__remotes:
+            del self.__remotes[key]
+            return True
+        return False
+
+
     def _safe_load(self, data: dict[str, Any], key: str, target_type: type, default_value: Any = None):
         """Helper method to safely load a value from a dictionary."""
         if key in data and isinstance(data[key], target_type):
