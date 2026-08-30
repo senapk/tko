@@ -41,12 +41,14 @@ E escolha um repositório oficial listado no README.
 
 Fluxo recomendado:
 
-- Distribuir e coletar via Git/GitHub Classroom.
-- Alternativas: Dropbox e e-mail.
+- Distribuir conteúdo por um repositório Git.
+- Usar um repositório por aluno para entregas e histórico.
+- O aluno pode criar o repositório e compartilhar com o professor.
+- O professor pode criar repositórios em lote com scripts, como os do projeto `senapk/classroom`.
 
 Guias:
 
-- [Classrooom](../wiki/Classroom.md)
+- [Gestão de repositórios de turma](../wiki/Classroom.md)
 - [wiki/Criando-Atividades.md](../wiki/Criando-Atividades.md)
 - [wiki/Criando-Tarefas-e-Testes.md](../wiki/Criando-Tarefas-e-Testes.md)
 

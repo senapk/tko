@@ -55,7 +55,7 @@ A arquitetura segue um modelo **local-first e distribuído**.
 3.  Repositórios de tarefas
 4.  Sistema de testes automatizados
 5.  Sistema de logs e analytics
-6.  Integração com Git e GitHub Classroom
+6.  Integração com Git, GitHub e Codespaces
 
 ------------------------------------------------------------------------
 
@@ -79,13 +79,13 @@ Durante esse processo, o sistema registra eventos relevantes.
 
 ### Fluxo do professor criando e distribuindo tarefas
 
-1. Professor cria uma turma no GitHub Classroom para gerenciar os repositórios dos alunos
 1. Professor cria um repositório Git para definir tarefas e gamificação.
 2. Copia as tarefas dos servidores oficiais ou cria suas próprias tarefas localmente.
-3. Envia o link do repositório para os alunos configurarem no TKO.
-4. Alunos adicionam o repositório e começam a resolver as tarefas.
-5. Sempre que o professor atualiza o repositório, os alunos recebem as atualizações na próxima sincronização.
-6. Após os alunos resolverem as tarefas e realizarem o push, o professor usa ferramentas de coleta de dados do TKO ou abre os repositórios dos alunos para analisar o processo de resolução.
+3. Define como os repositórios dos alunos serão criados: por cada aluno ou em lote pelo professor.
+4. Envia o link do conteúdo e as instruções de fonte para os alunos configurarem no TKO.
+5. Alunos adicionam a fonte e começam a resolver as tarefas.
+6. Sempre que o professor atualiza o repositório de conteúdo, os alunos recebem as atualizações na próxima sincronização.
+7. Após os alunos resolverem as tarefas e realizarem o push, o professor usa ferramentas de coleta de dados do TKO ou abre os repositórios dos alunos para analisar o processo de resolução.
 
 
 ------------------------------------------------------------------------
@@ -202,13 +202,13 @@ O sistema se integra naturalmente com:
 
 -   Git
 -   GitHub
--   GitHub Classroom
+-   Codespaces
 
 Fluxo típico:
 
     professor cria repositório de tarefas
     ↓
-    GitHub Classroom distribui repositórios
+    alunos ou professor criam repositórios individuais
     ↓
     alunos resolvem tarefas localmente
     ↓

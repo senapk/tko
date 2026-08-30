@@ -28,7 +28,7 @@ Fluxo rápido:
 1. Professor cria ou publica repositórios de questões.
 2. Aluno baixa a atividade e desenvolve na própria IDE.
 3. Aluno executa os testes localmente e itera com feedback imediato.
-4. Aluno envia para o professor via Git, GitHub Classroom, Dropbox ou e-mail.
+4. Aluno envia para o professor via Git, normalmente por um repositório compartilhado no GitHub.
 5. Professor acompanha evolução, métricas de aprendizado, tentativas e progresso da turma.
 
 ## Quick Start
@@ -72,7 +72,7 @@ Use o guia recomendado para setup com VS Code, WSL e Ubuntu:
 
 - Conceitos e arquitetura:
   [TKO: conceitos e organização](wiki/Conceitos-e-Arquitetura.md)
-- Professor da disciplina (distribui e coleta via Git, GitHub Classroom (recomendado), Dropbox e e-mail):
+- Professor da disciplina (distribui conteúdo e coleta repositórios dos alunos via Git/GitHub):
   [Uso pelos professores](#uso-pelos-professores),
   [Criando tarefas e testes](wiki/Criando-Tarefas-e-Testes.md)
 - Aluno da disciplina:
@@ -110,7 +110,7 @@ Repositórios de referência:
 ## Uso pelos professores
 
 - [Conceitos e organização do TKO](wiki/Conceitos-e-Arquitetura.md)
-- [Trabalhando com o GitHub Classroom](wiki/Classroom.md)
+- [Gestão de repositórios de turma](wiki/Classroom.md)
 - [Repositórios e quests](wiki/Criando-Atividades.md)
 - [Marcadores e tipos de atividades](wiki/game/tasks.md)
 - [Criando tarefas e testes](wiki/Criando-Tarefas-e-Testes.md)
