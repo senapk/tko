@@ -24,7 +24,8 @@ Fluxo principal:
 3. Remove do indice entradas locais cujo README.md nao existe mais.
 4. Detecta pastas de tarefa existentes em BASE_DIR que nao estao no indice.
 5. Adiciona essas entradas faltantes na secao de quest padrao (sandbox).
-6. Regrava o arquivo com alinhamento de chaves.
+6. Atualiza `xpgoal` das quests quando houver tarefas marcadas como referencia.
+7. Regrava o arquivo com alinhamento de chaves.
 
 ## Como ele adiciona entradas faltantes
 
@@ -74,9 +75,48 @@ Resumo:
 - --load: atualiza o titulo da linha no indice.
 - --save: atualiza o cabecalho # no README da tarefa.
 
+## Calculando `xpgoal` com `[x]`
+
+O `xpgoal` de uma quest pode ser informado manualmente no cabecalho:
+
+```md
+## Vetores <!-- key=@vetores xpgoal=12 min=70% -->
+```
+
+Quando voce nao quiser contar esse total manualmente, marque com `[x]` as tarefas que fazem parte da meta esperada daquela quest:
+
+```md
+## Vetores <!-- key=@vetores min=70% -->
+
+- [x] `@soma     gain=2 hard=1 size=1 type=make eval=test` [Soma](base/soma/README.md)
+- [x] `@media    gain=3 hard=1 size=1 type=make eval=test` [Media](base/media/README.md)
+- [ ] `@desafio  gain=5 hard=3 size=2 type=make eval=test` [Desafio](base/desafio/README.md)
+```
+
+Ao executar:
+
+```bash
+tko build index README.md base
+```
+
+o indexer soma o `gain` das tarefas marcadas com `[x]` e grava esse valor em `xpgoal`:
+
+```md
+## Vetores <!-- @vetores xpgoal=5 min=70% -->
+```
+
+Regras importantes:
+
+- Apenas tarefas marcadas com `[x]` entram nessa soma.
+- A soma usa o campo `gain`, nao `hard` nem `size`.
+- Se a quest ja tiver `xpgoal`, o valor sera substituido pela soma dos `[x]`.
+- Se nenhuma tarefa da quest estiver marcada com `[x]`, o `xpgoal` existente nao e recalculado por essa regra.
+- Em tempo de execucao, se uma quest ficar sem `xpgoal`, o TKO usa a soma de todas as tasks da quest como meta disponivel.
+
 ## Boas praticas
 
 - Rode o comando sempre que criar, renomear ou remover tarefas em BASE_DIR.
+- Use `[x]` para marcar as tarefas que contam para a meta principal da quest, deixando tarefas extras ou desafios com `[ ]`.
 - Mantenha uma secao sandbox para receber entradas auto-geradas.
 - Revise o diff apos rodar para confirmar ordem e agrupamento desejados.
 

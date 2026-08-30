@@ -168,6 +168,32 @@ def test_fix_readme_uses_canonical_defaults_and_aligned_columns(tmp_path: Path) 
     assert "📖" not in line and "🛠" not in line
 
 
+def test_fix_readme_updates_quest_xpgoal_from_checked_tasks(tmp_path: Path) -> None:
+    from tko.feno.indexer import fix_readme
+
+    index_path = tmp_path / "README.md"
+    base_dir = tmp_path / "base"
+    for task in ["soma", "media", "desafio"]:
+        task_dir = base_dir / task
+        task_dir.mkdir(parents=True)
+        (task_dir / "README.md").write_text(f"# {task.title()}\n", encoding="utf-8")
+
+    index_path.write_text(
+        "# Curso\n\n"
+        "## Vetores <!-- key=@vetores xpgoal=99 min=70% -->\n\n"
+        "- [x] `@soma gain=2 hard=1 size=1 type=make eval=test` [Soma](base/soma/README.md)\n"
+        "- [x] `@media gain=3 hard=1 size=1 type=make eval=test` [Media](base/media/README.md)\n"
+        "- [ ] `@desafio gain=5 hard=3 size=2 type=make eval=test` [Desafio](base/desafio/README.md)\n",
+        encoding="utf-8",
+    )
+
+    fix_readme(index_path, base_dir, verbose=False)
+
+    content = index_path.read_text(encoding="utf-8")
+    assert "## Vetores <!-- @vetores xpgoal=5 min=70% -->" in content
+    assert "- [x]" in content
+
+
 def test_fix_titles_checks_tasks_after_non_task_lines(tmp_path: Path) -> None:
     from tko.feno.indexer import Elements
 

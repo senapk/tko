@@ -97,6 +97,7 @@ A quest soma XP obtido e total, e deriva percentuais.
 Pontos importantes:
 
 - Quest completa depende de `min` (padrao 50%).
+- `xpgoal` pode ser definido manualmente ou gerado pelo `tko build index` a partir das tasks marcadas com `[x]` no indice.
 
 Comportamento no codigo:
 
@@ -138,6 +139,7 @@ Esse comando ajuda a:
 - adicionar tarefas faltantes no indice;
 - remover linhas com README local inexistente.
 - atualizar e normalizar a sintaxe de tags e campos nas tarefas
+- calcular `xpgoal` das quests somando o `gain` das tasks marcadas com `[x]`
 
 Pastas novas dentro da base que contêm `README.md` entram automaticamente na quest correspondente,
 com `gain=1 hard=1 size=1 type=make eval=test`. URLs HTTP/HTTPS são preservadas como referências
