@@ -1,38 +1,55 @@
-# Instalando os compiladores e interpretadores
+# Linguagens de programação
+
+Instale primeiro o ambiente base do TKO em [Ubuntu / WSL: Git, Python, pipx e TKO](ubuntu_git_python_tko.md). Depois instale apenas as linguagens exigidas pela disciplina.
+
+Este guia define metas e comandos comuns para Ubuntu/WSL. Se algum comando falhar por versão da distribuição, política da máquina ou mudança no instalador da linguagem, consulte a documentação atual da linguagem e volte ao checklist.
+
+## Meta geral
+
+Para cada linguagem usada na disciplina, o aluno deve ter:
+
+- compilador ou interpretador instalado;
+- comando disponível no terminal;
+- extensão do VS Code instalada, quando a turma usar VS Code;
+- um programa simples compilando ou executando;
+- o TKO conseguindo executar as tarefas daquela linguagem.
 
 ## Java no Linux / WSL
 
+Meta: `java` e `javac` devem funcionar no terminal.
+
 ```bash
-# instalando o JDK e JRE
+sudo apt update
 sudo apt install default-jre default-jdk -y
 code --install-extension redhat.java
 
-# reinicie o terminal e teste a instalação
 java -version
 javac -version
 ``` 
 
 ## Go no Linux / WSL
 
+Meta: `go version` deve funcionar no terminal.
+
+Instale Go pelo método recomendado para a turma ou pela documentação oficial da linguagem. Em Ubuntu/WSL, uma instalação por pacote pode ser suficiente quando a versão disponível atende à disciplina:
+
 ```bash
-curl -fsSL https://go.dev/dl/go1.26.0.linux-amd64.tar.gz -o ~/go.tar.gz
-sudo rm -rf /usr/local/go
-sudo tar -C /usr/local -xzf ~/go.tar.gz
-
-grep -qxF 'export PATH=$PATH:/usr/local/go/bin' ~/.bashrc || \
-echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
-
+sudo apt update
+sudo apt install golang-go -y
 code --install-extension golang.Go
 
-# reinicie o terminal e teste a instalação
 go version
-
-# instale o pacote para debug
-go install github.com/go-delve/delve/cmd/dlv@latest
-# configure o VS Code para usar o dlv como depurador rodando o arquivo individual
 ```
 
-Na sua pasta de projeto, crie uma pasta .vscode e dentro dela um arquivo launch.json com a seguinte configuração. Ela vai permitir utilizar o terminal integrado do VS Code para depurar seus arquivos Go usando o dlv.
+Se a disciplina exigir uma versão mais nova do Go que a disponível no `apt`, use a documentação oficial do Go para instalar a versão adequada.
+
+Para depuração no VS Code, instale o Delve quando necessário:
+
+```bash
+go install github.com/go-delve/delve/cmd/dlv@latest
+```
+
+Na pasta de projeto, uma configuração de debug pode usar `.vscode/launch.json`:
 
 ```bash
 mkdir -p .vscode
@@ -60,25 +77,43 @@ code .vscode/launch.json
 
 ## Typescript no Linux / WSL
 
-```bash
-# Instale a extensao do VS Code para TypeScript
-code --install-extension ms-vscode.vscode-typescript-next
+Meta: `node`, `npm`, `tsc` e `esbuild` devem funcionar no terminal.
 
-# Instale o nodejs e npm
+```bash
+sudo apt update
 sudo apt install nodejs npm -y
 sudo npm install -g typescript esbuild
+code --install-extension ms-vscode.vscode-typescript-next
 
-# Dê o comando abaixo na sua pasta de usuário ou na sua pasta de projeto
 npm install --save-dev @types/node readline-sync
 
-# reinicie o terminal e teste a instalação
+node --version
+npm --version
 tsc --version
 npx esbuild --version
+```
 
-# Vamos testar agora a leitura síncrona
+Teste uma execução simples quando necessário:
+
+```bash
 echo "console.log('Digite algo:'); const input = require('readline-sync').question(); console.log('Você digitou: ' + input);" > test.ts
 npx esbuild test.ts  --outfile=test.js --format=cjs --log-level=error
 node test.js
+```
+
+Se a versão de Node.js do `apt` for antiga para a disciplina, use uma fonte atual indicada pelo professor ou pela documentação do Node.js.
+
+## C e C++ no Linux / WSL
+
+Meta: `gcc`, `g++` e `make` devem funcionar no terminal.
+
+```bash
+sudo apt update
+sudo apt install build-essential gdb -y
+
+gcc --version
+g++ --version
+make --version
 ```
 
 ## Trabalhando com outras linguagens

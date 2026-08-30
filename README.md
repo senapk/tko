@@ -33,7 +33,7 @@ Fluxo rápido:
 
 ## Quick Start
 
-### Linux / WSL
+### Ubuntu / WSL / Codespaces
 
 ```bash
 pipx install tko
@@ -56,9 +56,9 @@ Depois reabra o terminal.
 
 ### Windows
 
-Use o guia recomendado para setup completo com VS Code e WSL:
+Use o guia recomendado para setup com VS Code, WSL e Ubuntu:
 
-- [Windows, VS Code e WSL - Recomendado](wiki/Windows-WSL.md)
+- [Windows com WSL e Ubuntu](wiki/Windows-WSL.md)
 
 ## Casos de Uso
 
@@ -93,12 +93,13 @@ Repositórios de referência:
 
 ## Instalação
 
-- [Windows, VS Code e WSL - Recomendado](wiki/Windows-WSL.md)
-- [Linux: VS Code](wiki/ubuntu_vscode.md)
-- [WSL e Ubuntu: Setup básico com GIT, Python, TKO](wiki/ubuntu_git_python_tko.md)
-- [Windows sem WSL](wiki/Windows-Sem-WSL.md)
+- [Guia recomendado: Windows com WSL e Ubuntu](wiki/Windows-WSL.md)
+- [Ubuntu / WSL: Git, Python, pipx e TKO](wiki/ubuntu_git_python_tko.md)
+- [GitHub Codespaces](wiki/Codespaces.md)
+- [VS Code no Ubuntu / WSL](wiki/ubuntu_vscode.md)
 - [Linguagens - Java, C, C++, Python, TypeScript, Go](wiki/Linguagens.md)
 - [Outros sistemas operacionais](wiki/Outros-Sistemas-Operacionais.md)
+- [Windows sem WSL - legado](wiki/Windows-Sem-WSL.md)
 
 ## Uso do TKO pelos alunos
 

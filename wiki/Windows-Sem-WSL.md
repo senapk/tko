@@ -1,89 +1,48 @@
-# Windows sem WSL
+# Windows sem WSL - legado
 
-## VS Code
+Este caminho não é recomendado para turmas atuais.
 
-O Visual Studio Code (VS Code) é um editor de código fonte utilizado por programadores para escrever, editar depurar e organizar projetos de software em diversas linguagens.  
+Use apenas se a máquina não puder usar WSL, Ubuntu nativo ou GitHub Codespaces. O suporte principal da documentação do TKO assume ambiente Linux, preferencialmente Ubuntu no WSL.
 
-1. Acesse: [Visual Studio Code Download](https://code.visualstudio.com/sha/download?build=stable&os=win32-x64-user)
-2. Execute o instalador
-3. Siga as instruções do instalador
+## Caminhos recomendados antes deste
 
-**Atenção!:** certifique-se de que as duas últimas opções estão marcadas, elas te pouparão muito trabalho no futuro.
+1. [Windows com WSL e Ubuntu](Windows-WSL.md)
+2. [GitHub Codespaces](Codespaces.md)
+3. [Ubuntu / WSL: Git, Python, pipx e TKO](ubuntu_git_python_tko.md)
 
-![vsc](images/VSC.jpg)
+## Meta mínima
 
-4. Reinicie o seu computador
+Se ainda for necessário usar Windows sem WSL, a máquina precisa ter:
 
-Agora você já possui o VS Code de forma funcional em seu computador.
+- VS Code instalado.
+- Git instalado e disponível no terminal.
+- Autenticação com GitHub funcionando.
+- Python 3 instalado.
+- `pipx` instalado e disponível no PATH.
+- TKO instalado via `pipx`.
+- Linguagens da disciplina instaladas.
+- `tko --version` e `tko --help` funcionando.
 
-## Git Bash
+## Orientação
 
-O Git é um sistema de controle de versão, usado principalmente para gerenciar o código-fonte de projetos de software, permitindo que você acompanhe todas as mudanças feitas em arquivos ao longo do tempo, facilitando a colaboração com outras pessoas e a reversão de erros.
+Instale cada ferramenta seguindo a documentação atual do fornecedor:
 
-1. Acesse: [https://git-scm.com/download/win](https://git-scm.com/download/win)
-2. Execute o instalador e siga as opções padrão (pode aceitar tudo como vem).
+- VS Code: site oficial do Visual Studio Code.
+- Git: instalador oficial do Git for Windows.
+- Python: site oficial do Python ou método indicado pela instituição.
+- pipx: documentação oficial do pipx.
 
-Ponto! A instalação do git foi concluida e agora você possui o terminal bash.
+Depois de instalar Python e pipx, o TKO normalmente pode ser instalado com:
 
-Essa etapa de configuração serve para identificar suas ações no repositório (commits, etc.).
-
-**No terminal (Git bash):**
-
-```bash
-git config --global user.name "Seu Nome"
-git config --global user.email "seuemail@example.com"
-```
-
----
-
-A chave SSH (Secure Shell) serve como uma forma segura de autenticação entre seu computador e o GitHub, sem que você precise digitar seu usuário e senha toda vez que fizer alguma interação utilizando o git ou clonar para sua máquina algum repositório de acesso restrito.  
-
-Aqui estaremos gerando uma chave SSH e adicionando a sua conta do Github.
-
-**No terminal (Git Bash):**
-
-```bash
-ssh-keygen -t ed25519 -C "seuemail@example.com"
-```
-
-- Você pode gerar uma **senha** para sua chave SSH. Caso não queira configurar uma senha, pode simplesmente apertar **enter** para continuar sem senha.
-
-**Depois:**
-
-```bash
-cat ~/.ssh/id_ed25519.pub
-```
-
-- Copie a chave gerada em seu terminal bash.
-
-- Entre nas configurações de chave SSH e GPG com sua conta do Github: [https://github.com/settings/keys](https://github.com/settings/keys).
-
-- Aperte em **New SSH key** na direita.
-
-- Adicione um título para sua chave e coloque a chave gerada no terminal bash no espaço livre abaixo.
-
-- Aperte em **Add SSH key**.
-
-E pronto, você já conseguiu gerar e adicionar sua chave SSH a sua conta do Github, autenticando sua máquina!
-
-## Python, Pipx, TKO
-
-Se tiver qualquer versão instalada do Python, desinstale-a para não dar conflito. A opção melhor é instalar o Python pelo instalador do windows. Abra o PowerShell e digite:
-
-```bash
-python
-```
-
-Ele não irá encontrar e vai direcionar você para a Microsoft Store. Clique no botão para instalar o Python. Depois de instalado, abra o PowerShell e digite:
-
-```bash
-python --version
-
-# Instale o pipx
-python -m pip install --upgrade pip
-python -m pip install --user pipx
-python -m pipx ensurepath
-
-# Instale o TKO
+```powershell
 pipx install tko
 ```
+
+Verifique:
+
+```powershell
+tko --version
+tko --help
+```
+
+Se houver erro de PATH, terminal, compilador ou permissão, procure uma correção específica para a ferramenta que falhou. Em contexto de turma, prefira migrar para WSL ou Codespaces em vez de gastar muito tempo depurando diferenças do Windows nativo.

@@ -1,57 +1,74 @@
-# Instale o VS Code
+# VS Code no Ubuntu / WSL
 
-## Ubuntu e derivados (Debian, Mint, Pop!_OS, etc)
+Este guia define a meta de integração entre VS Code e o ambiente Linux usado pelo TKO.
 
-Instalação rápida e limpa do **VS Code** no **Ubuntu**:
+No Windows, o caminho recomendado é instalar o VS Code no Windows e abrir as pastas do Ubuntu via WSL. No Ubuntu nativo, o VS Code pode ser instalado diretamente no sistema.
 
----
+## Meta do ambiente
 
-### 🧰 1. Atualize os pacotes
+Ao final, você deve conseguir:
 
-```bash
-sudo apt update
+- abrir o VS Code;
+- abrir uma pasta do Ubuntu/WSL com `code .`;
+- usar o terminal integrado do VS Code no mesmo ambiente onde o TKO está instalado;
+- editar arquivos da disciplina sem copiar arquivos entre Windows e Linux.
+
+Se algum passo falhar, consulte a documentação atual do VS Code para Ubuntu ou WSL. O objetivo é garantir a integração, não seguir um comando específico.
+
+## Windows com WSL
+
+1. Instale o VS Code no Windows.
+2. Instale a extensão WSL:
+
+```powershell
+code --install-extension ms-vscode-remote.remote-wsl
 ```
 
----
-
-### 🧩 2. Instale dependências
-
-```bash
-sudo apt install -y wget gpg apt-transport-https
-```
-
----
-
-### 🧾 3. Adicione o repositório oficial da Microsoft
+3. Abra o Ubuntu.
+4. Entre na pasta do projeto.
+5. Execute:
 
 ```bash
-wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null
-echo "deb [arch=$(dpkg --print-architecture)] https://packages.microsoft.com/repos/code stable main" | \
-sudo tee /etc/apt/sources.list.d/vscode.list
+code .
 ```
 
----
+O VS Code deve abrir mostrando `WSL: Ubuntu` na barra inferior.
 
-### 📦 4. Instale o VS Code
+## Ubuntu nativo
+
+Instale o VS Code usando um método adequado para sua distribuição:
+
+- pacote `.deb` oficial;
+- repositório oficial da Microsoft;
+- loja ou gerenciador gráfico da distribuição;
+- outro método recomendado pela instituição.
+
+Depois, verifique no terminal:
 
 ```bash
-sudo apt update
-sudo apt install -y code
+code --version
 ```
 
----
-
-### 🚀 5. Abrir
+Abra a pasta atual:
 
 ```bash
-code
+code .
 ```
 
----
+## Checklist de verificação
 
-## Instalando em derivados do Arch Linux (Manjaro, EndeavourOS, etc)
+No terminal usado pelo aluno:
 
 ```bash
-sudo pacman -S yay
-yay -S visual-studio-code-bin
+code --version
+tko --version
 ```
+
+Dentro do VS Code, abra o terminal integrado e confira:
+
+```bash
+pwd
+tko --version
+```
+
+O terminal integrado deve estar no ambiente Ubuntu/WSL, não no PowerShell do Windows, quando a turma estiver usando WSL.
