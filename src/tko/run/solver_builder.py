@@ -175,12 +175,29 @@ class SolverBuilder:
             return
         self._prepare_exec_with_commands(lang.build_cmd, lang.run_cmd)
 
+    @staticmethod
+    def _is_esbuild_network_error(stdout: str, stderr: str) -> bool:
+        text = f"{stdout}\n{stderr}".lower()
+        markers = (
+            "e403",
+            "403 forbidden",
+            "npm err! code e403",
+            "failed to fetch",
+            "network request failed",
+            "could not resolve dependency",
+        )
+        return any(marker in text for marker in markers)
+
     def _prepare_exec_with_commands(self, build_cmd: list[str], run_cmd: list[str]):
         parent_folder = self.args_list[0].parent
         build_cmd = self.replace_placeholders(build_cmd)
         if len(build_cmd) > 0:
             return_code, stdout, stderr = Runner.subprocess_run(build_cmd, folder=parent_folder)
             if return_code != 0:
+                if self._is_esbuild_network_error(stdout, stderr) and any(part in build_cmd for part in ("esbuild", "npx")):
+                    fallback = self.args_list[0].resolve()
+                    self.__exec.set_executable(["node", fallback.as_posix()], [], parent_folder)
+                    return
                 self.__exec.set_compile_error(stdout + stderr)
                 return
         run_cmd = self.replace_placeholders(run_cmd)

@@ -93,19 +93,20 @@ class AuditTracker:
 
     def store(self, task_key: str, file_ts_list: list[tuple[Path, datetime | None]]) -> tuple[bool, int]:
         audit_task_folder = self.repo.paths.get_audit_task_folder(task_key)
-        audit_task_folder.mkdir(parents=True, exist_ok=True)
-
         task_root = self.repo.get_task_folder_for_label(task_key)
         any_changes = False
         total_lines = 0
 
         resolved_files = [(file.resolve(), ts) for file, ts in file_ts_list]
-        audit_task_lock_file = self._task_lock_file(audit_task_folder)
-        lock = FileLock(str(audit_task_lock_file), timeout=1)
         try:
             for file, ts in resolved_files:
+                if not self._is_auditable(file, task_root):
+                    continue
                 if ts is None:
                     ts = datetime.now()
+                audit_task_folder.mkdir(parents=True, exist_ok=True)
+                audit_task_lock_file = self._task_lock_file(audit_task_folder)
+                lock = FileLock(str(audit_task_lock_file), timeout=1)
                 with lock:
                     changed, line_count = self.save_file(file, task_root, audit_task_folder, task_key, ts)
                 if changed:
