@@ -58,7 +58,10 @@ def test_fix_readme_interactive_keeps_broken_local_target_when_user_declines(tmp
         encoding="utf-8",
     )
 
-    monkeypatch.setattr("builtins.input", lambda _prompt: "n")
+    def decline_removal(_prompt: str = "") -> str:
+        return "n"
+
+    monkeypatch.setattr("builtins.input", decline_removal)
 
     fix_readme(index=index_path, base_dir=base_dir, verbose=True)
 
@@ -78,7 +81,10 @@ def test_fix_readme_interactive_removes_broken_local_target_when_user_confirms(t
         encoding="utf-8",
     )
 
-    monkeypatch.setattr("builtins.input", lambda _prompt: "s")
+    def confirm_removal(_prompt: str = "") -> str:
+        return "s"
+
+    monkeypatch.setattr("builtins.input", confirm_removal)
 
     fix_readme(index=index_path, base_dir=base_dir, verbose=True)
 

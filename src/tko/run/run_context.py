@@ -2,6 +2,7 @@ from pathlib import Path
 from tko.util.param import Param
 from tko.config.settings import Settings
 from tko.run.run_config import RunConfig
+from tko.run.run_execution_settings import RunExecutionSettings
 from tko.run.wdir import Wdir
 from tko.repository.repository import Repository
 from tko.game.task import Task
@@ -17,11 +18,12 @@ _RUN_TASK_NOT_DEFINED = Msg.text(
 class RunContext:
     def __init__(self, config: RunConfig, settings: Settings, target_list: list[Path], param: Param.Basic | None, language: str | None, repo: Repository | None = None):
         self.config = config
-        self.pwd = Path(".").resolve()
         self.settings = settings
         self.target_list: list[Path] = [Path(target) for target in target_list]
         self.param = param if param is not None else Param.Basic()
+        self.execution_settings = RunExecutionSettings.from_config(config)
 
+        self.pwd = Path(".").resolve()
         self.wdir: Wdir = Wdir(self.settings)
         self.wdir_builded: bool = False
 
@@ -35,47 +37,55 @@ class RunContext:
 
     # --- Setters (fluent API) ---
 
-    def set_show_track_info(self):
+    def set_show_track_info(self) -> RunContext:
         self.config.show_track_info = True
+        self.execution_settings = RunExecutionSettings.from_config(self.config)
         return self
 
-    def set_no_run(self):
+    def set_no_run(self) -> RunContext:
         self.config.no_run = True
+        self.execution_settings = RunExecutionSettings.from_config(self.config)
         return self
 
-    def set_show_self_info(self):
+    def set_show_self_info(self) -> RunContext:
         self.config.show_self_info = True
+        self.execution_settings = RunExecutionSettings.from_config(self.config)
         return self
 
-    def set_complex_percent(self):
+    def set_complex_percent(self) -> RunContext:
         self.config.complex_percent = True
+        self.execution_settings = RunExecutionSettings.from_config(self.config)
         return self
 
-    def set_abort_on_exec_error(self):
+    def set_abort_on_exec_error(self) -> RunContext:
         self.config.abord_on_exec_error = True
+        self.execution_settings = RunExecutionSettings.from_config(self.config)
         return self
 
-    def set_timeout(self, timeout: int):
+    def set_timeout(self, timeout: int) -> RunContext:
         self.config.timeout = timeout
+        self.execution_settings = RunExecutionSettings.from_config(self.config)
         return self
 
-    def set_curses(self, value: bool = True):
+    def set_curses(self, value: bool = True) -> RunContext:
         self.config.curses_mode = value
+        self.execution_settings = RunExecutionSettings.from_config(self.config)
         return self
 
-    def set_lang(self, lang: str):
+    def set_lang(self, lang: str) -> RunContext:
         self.lang = lang
         return self
 
-    def set_opener(self, opener: Opener):
+    def set_opener(self, opener: Opener) -> RunContext:
         self.opener = opener
         return self
 
-    def set_run_without_ask(self, value: bool):
+    def set_run_without_ask(self, value: bool) -> RunContext:
         self.config.run_without_ask = value
+        self.execution_settings = RunExecutionSettings.from_config(self.config)
         return self
 
-    def set_task(self, rep: Repository, task: Task):
+    def set_task(self, rep: Repository, task: Task) -> RunContext:
         self.repo = rep
         self.task = task
         return self

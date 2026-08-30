@@ -3,13 +3,12 @@ import os
 import argparse
 import csv
 from pathlib import Path
-from tko.logger.patch_history import PatchHistory
+from tko.logger.patch_history import PatchHistory, PatchInfo
 from tko.logger.versions_writer import VersionsWriter
 from tko.i18n import Msg
 from tko.util.decoder import Decoder
 import tempfile
 from tko.logger.log_sort import LogSort
-from pathlib import Path
 
 
 _TRACKER_NOT_ENOUGH_COLUMNS = Msg.text(
@@ -27,22 +26,22 @@ class Track:
         self.file_stamp_list: list[str] = []
         self.result: str = ""
 
-    def set_timestamp(self, timestamp: str):
+    def set_timestamp(self, timestamp: str) -> Track:
         self.timestamp = timestamp
         return self
     
-    def set_file_stamp_list(self, files: list[str]):
+    def set_file_stamp_list(self, files: list[str]) -> Track:
         self.file_stamp_list = [os.path.basename(f) for f in files]
         return self
     
-    def set_result(self, result: str):
+    def set_result(self, result: str) -> Track:
         self.result = result
         return self
     
-    def track_to_column(self):
+    def track_to_column(self) -> list[str]:
         return [self.timestamp, self.result, ";".join(self.file_stamp_list)]
 
-    def column_to_track(self, columns: list[str]):
+    def column_to_track(self, columns: list[str]) -> Track:
         if len(columns) < 3:
             raise ValueError(_TRACKER_NOT_ENOUGH_COLUMNS.t())
         self.timestamp = columns[0]
@@ -112,28 +111,28 @@ class Tracker:
             return output, temp_dir
 
 
-    def set_files(self, files: list[Path]):
+    def set_files(self, files: list[Path]) -> Tracker:
         self._files = files
         return self
     
-    def set_result(self, result: str):
+    def set_result(self, result: str) -> Tracker:
         self._result = result
         return self
     
-    def set_percentage(self, percentage: int):
+    def set_percentage(self, percentage: int) -> Tracker:
         self._result = "{}%".format(str(percentage).rjust(3, "0"))
         return self
 
-    def get_log_full_path(self):
+    def get_log_full_path(self) -> str:
         return os.path.join(self._folder, Tracker.log_file)
 
-    def set_folder(self, folder: Path):
+    def set_folder(self, folder: Path) -> Tracker:
         self._folder = folder
         return self
     
     # in format: YYYY-MM-DD HH:MM:SS
     @staticmethod
-    def get_timestamp():
+    def get_timestamp() -> str:
         return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     
     @staticmethod
@@ -203,7 +202,7 @@ class Tracker:
         return tracks
 
     @staticmethod
-    def main():
+    def main() -> None:
         parser = argparse.ArgumentParser(description="Track files changes.")
         parser.add_argument("files", metavar="files", type=str, nargs="+", help="files to be tracked.")
         args = parser.parse_args()

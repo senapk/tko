@@ -93,3 +93,51 @@ def test_run_top_line_stops_after_execution_error_when_abort_enabled(monkeypatch
     assert units[1].result == ExecutionResult.UNTESTED
     assert len(calls) == 1
     assert calls[0][2] == 7
+
+
+def test_run_progress_calculates_success_percentage_from_units():
+    from tko.run.run_progress import RunProgress
+
+    units = [
+        Unit(case="a", input_data="1", expected="1", source=Path("a.tio")),
+        Unit(case="b", input_data="2", expected="2", source=Path("b.tio")),
+        Unit(case="c", input_data="3", expected="3", source=Path("c.tio")),
+    ]
+    units[0].result = ExecutionResult.SUCCESS
+    units[1].result = ExecutionResult.SUCCESS
+    units[2].result = ExecutionResult.WRONG_OUTPUT
+
+    progress = RunProgress.from_units(units)
+
+    assert progress.total == 3
+    assert progress.passed == 2
+    assert progress.percent == 66
+
+
+def test_run_progress_returns_zero_when_no_run_is_enabled():
+    from tko.run.run_progress import RunProgress
+
+    units = [
+        Unit(case="a", input_data="1", expected="1", source=Path("a.tio")),
+    ]
+    units[0].result = ExecutionResult.SUCCESS
+
+    progress = RunProgress.from_units(units, no_run=True)
+
+    assert progress.percent == 0
+    assert progress.passed == 0
+
+
+def test_run_execution_settings_are_extracted_from_config():
+    from tko.run.run_execution_settings import RunExecutionSettings
+
+    config = RunConfig()
+    config.no_run = True
+    config.timeout = 12
+    config.curses_mode = True
+
+    settings = RunExecutionSettings.from_config(config)
+
+    assert settings.no_run is True
+    assert settings.timeout == 12
+    assert settings.curses_mode is True

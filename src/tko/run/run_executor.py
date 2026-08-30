@@ -1,11 +1,13 @@
 from tko.util.raw_terminal import RawTerminal
 from tko.util.freerun import Free
-from tko.enums.execution_result import ExecutionResult
 from tko.run.run_context import RunContext
 from tko.run.run_tracker import RunTracker
 from tko.run.run_presenter import RunPresenter
 from tko.run.run_loader import RunLoader
 from tko.run.test_loop_service import TestLoopService
+from tko.run.run_execution_summary import RunExecutionSummary
+from tko.run.execution_report import ExecutionReport
+from tko.run.execution_orchestrator import ExecutionOrchestrator
 from tko.i18n import Msg
 from tko.util.console import Console
 
@@ -22,15 +24,26 @@ class RunExecutor:
         self.presenter = RunPresenter(ctx)
         self.loader = RunLoader(ctx)
         self.test_loop = TestLoopService(ctx)
+        self.orchestrator = ExecutionOrchestrator()
 
     def get_rate(self) -> int:
-        if self.ctx.config.no_run:
-            return 0
-        correct = [unit for unit in self.ctx.wdir.unit_list if unit.result == ExecutionResult.SUCCESS]
-        if len(self.ctx.wdir.unit_list) == 0:
-            return 0
-        percent = (len(correct) * 100) // len(self.ctx.wdir.unit_list)
-        return percent
+        summary = self.get_summary()
+        return summary.percent
+
+    def get_summary(self) -> RunExecutionSummary:
+        return RunExecutionSummary.from_wdir(self.ctx.wdir, no_run=self.ctx.config.no_run)
+
+    def get_report(self) -> ExecutionReport:
+        summary = self.get_summary()
+        solver = self.ctx.wdir.solver
+        has_compile_error = bool(solver is not None and solver.has_compile_error())
+        return ExecutionReport.from_execution(
+            summary=summary,
+            units=self.ctx.wdir.unit_list,
+            has_compile_error=has_compile_error,
+            compact=self.ctx.param.compact,
+            eval_mode=self.ctx.config.eval_mode,
+        )
 
     def run_tests(self) -> int:
         """Execute tests in raw terminal mode."""
@@ -50,7 +63,7 @@ class RunExecutor:
         self.tracker.store_execution_log(rate, percent, solver.has_compile_error())
         return percent
 
-    def free_run(self):
+    def free_run(self) -> None:
         solver = self.ctx.wdir.solver
         if solver is None:
             return

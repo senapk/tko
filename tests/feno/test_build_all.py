@@ -1,10 +1,11 @@
 from pathlib import Path
 
+import pytest
 import tko.feno.build as build_module
 
 
 def test_build_all_moodle_writes_rebased_readme_and_artifacts(
-    monkeypatch, tmp_path: Path
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     root = tmp_path / "repo"
     task = root / "base" / "soma"
