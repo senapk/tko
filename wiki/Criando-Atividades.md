@@ -1,196 +1,228 @@
-# Estrutura de um Repositório de Tarefas
+# Guia para Criar um Repositorio de Tarefas
 
-Um repositório de tarefas contém um arquivo principal `README.md` que
-funciona como **índice navegável das atividades**.
+Este guia e o caminho principal para professores que querem criar e publicar
+seus proprios repositorios de tarefas no TKO.
 
-Esse arquivo lista as tarefas disponíveis e define metadados usados pelo
-sistema de gamificação, como:
+A ideia central e simples: o repositorio tem um `README.md` principal que
+funciona como indice navegavel das atividades. Esse indice organiza as tarefas
+em quests, guarda metadados pedagogicos e aponta para as pastas ou links onde
+cada tarefa esta descrita.
 
--   pontuação
--   habilidades associadas
--   nível ou tipo de tarefa
+## Estrutura minima
 
-Cada item da lista aponta para uma pasta contendo a descrição completa
-da atividade.
-
-O `README.md` é projetado para ser **legível diretamente no GitHub**,
-permitindo que alunos naveguem e explorem o repositório mesmo fora da
-ferramenta.
-
-------------------------------------------------------------------------
-
-## Organização conceitual
-
-A estrutura do repositório segue dois níveis:
-
--   **Quest** --- conjunto de tarefas relacionadas
--   **Task** --- atividade individual
-
-
-------------------------------------------------------------------------
-
-## Estrutura de uma tarefa
-
-Cada tarefa possui sua própria pasta contendo os arquivos necessários
-para resolução.
-
-Uma tarefa normalmente inclui:
-
--   descrição do problema
--   arquivos de rascunho para o aluno
--   testes automatizados (opcional)
-
-Exemplo de estrutura:
-
-    task/
-    ├─ README.md
-    ├─ .cache/drafts/
-    │  ├─ py/draft.py
-    │  └─ go/draft.go
-    ├─ local.sh # script opcional para configurações locais
-    └─ tests.toml
-
-### Arquivos
-
-**README.md**\
-Descrição completa do problema, exemplos de entrada e saída e instruções
-da tarefa.
-
-**.cache/drafts/**\
-Arquivos iniciais fornecidos para o aluno em diferentes linguagens.
-
-**tests.toml**\
-Arquivo opcional contendo casos de teste automatizados.
-
-------------------------------------------------------------------------
-
-## Formato de Task (linha única)
-
-Cada task é definida em uma linha markdown, seguida de pares chave-valor:
-
-Exemplo:
-
-    - [ ] `@t1 gain=10 hard=2 size=1 type=make eval=test` [Soma](base/soma/README.md)
-    - [ ] `@t2 gain=5 type=read eval=self` [Material de apoio](https://exemplo.com/material)
-
-**Campos suportados:**
-- `@chave`: identificador único da task
-- `gain=valor`: valor pedagógico da tarefa
-- `hard=valor`: dificuldade da tarefa
-- `size=valor`: tamanho ou extensão da tarefa
-- `type=make` ou `type=read`: tipo da tarefa (produção ou consumo)
-- `eval=test` ou `eval=self`: modo de avaliação
-
-**Notas:**
-- Apenas `@chave` é obrigatória.
-- Campos podem aparecer em qualquer ordem.
-- Campos não obrigatórios assumem valores padrão.
-- Sintaxe antiga (`xp=`, `tier=` e marcadores com `:`) ainda é suportada por compatibilidade, mas recomenda-se o novo formato.
-
-------------------------------------------------------------------------
-
-## Benefícios dessa estrutura
-
-Essa organização permite:
-
--   navegação simples pelo GitHub
--   integração direta com a ferramenta `tko`
--   reutilização de tarefas em diferentes cursos
--   contribuição fácil da comunidade
-
-Cada tarefa é autocontida e pode ser reutilizada em outros repositórios
-ou trilhas de aprendizado.
-
-
-## Formato de Quest (linha única)
-
-Cada quest é definida em uma linha de título markdown, seguida de pares chave-valor:
-
-Exemplo:
-
-    ## Ponteiros em C key=@ptr tag=ponteiro deps=@intro xpgoal=100 min=80% lang=c lang=c++
-
-**Campos suportados:**
-- `key=@chave`: identificador único da quest
-- `tag=nome`: habilidade/tópico trabalhado
-- `deps=@outra`: pré-requisito (pode repetir ou separar por vírgula)
-- `xpgoal=valor`: pontuação-alvo para 100% de completude
-- `min=valor%`: percentual mínimo para considerar a quest completa
-- `lang=nome`: linguagem de programação específica (pode repetir, ex: lang=c lang=python)
-- `active=true|false`: define se a quest está ativa (default: true). Se `active=false`, a quest e suas questões são desabilitadas e não participam da gamificação.
-
-**Regras e padrões:**
-- Apenas `key` é obrigatória.
-- Se `tag` não for definida, será usada a própria `key` como tag.
-- `deps` não é obrigatório, mas é usado para definir dependências e gamificação da disciplina.
-- `xpgoal` define o XP necessário para atingir 100% da quest.
-- `min` é opcional, o padrão é 50% e define o percentual mínimo para considerar a quest completa.
-- `lang` é opcional, define as linguagens de programação específicas da quest.
-
-**Notas:**
-- Comentários HTML (`<!-- ... -->`) e crases são ignorados.
-- Os campos podem aparecer em qualquer ordem após o título.
-
-**Exemplo completo:**
-
-    ## Estruturas de Repetição key=@loops tag=for deps=@intro xpgoal=100 min=80% lang=python
-
-
-## Dependências entre Quests, Tags e Habilidades
-
-As **quests** podem declarar duas informações importantes:
-
-1. **Quais tópicos/habilidades são trabalhados** (usando `tag=nome`)
-2. **Quais quests precisam ser concluídas antes** (usando `deps=@outra`)
-
-Essas informações são definidas diretamente no cabeçalho da missão usando os campos chave-valor.
-
-Esse formato tem duas vantagens importantes:
-
-- mantém o arquivo **legível para humanos**
-
----
-
-## Exemplo de definição de habilidades e dependências
-
-As habilidades/tópicos são declarados usando `tag=nome`:
-
-```md
-## Missão: Operações key=@operations tag=basic
-## Missão: Seleção 1 key=@selection1 tag=if deps=@operations
-## Missão: Seleção 2 key=@selection2 tag=if deps=@selection1
-## Missão: Repetição1 key=@repetition1 tag=for deps=@selection2
-## Missão: Repetição2 key=@repetition2 tag=for deps=@repetition1
-```
-
-Esse conjunto define o seguinte grafo de progressão:
+Um repositorio de tarefas pode comecar assim:
 
 ```txt
-Operações
-↓
-Seleção 1
-↓
-Seleção 2
-↓
-Repetição 1
-↓
-Repetição 2
+README.md
+base/
+├── soma/
+│   ├── README.md
+│   └── tests.toml
+└── media/
+    ├── README.md
+    └── tests.toml
 ```
 
----
+Papeis dos arquivos:
 
-## Benefícios desse modelo
+- `README.md`: indice principal do repositorio, com quests e tasks.
+- `base/<tarefa>/README.md`: enunciado da tarefa.
+- `base/<tarefa>/tests.toml`: casos de teste, quando houver avaliacao automatica.
+- `base/<tarefa>/src/<lang>/...`: solucoes, rascunhos ou codigo de apoio, quando usados pela disciplina.
 
-Essa abordagem oferece várias vantagens:
+O repositorio de conteudo do professor nao precisa ter `.tko/`. Essa pasta e
+normalmente parte do workspace do aluno, nao do formato publico das tarefas.
 
-- dependências **claras e visíveis no README**
-- fácil edição manual
-- compatível com Markdown padrão
-- atualização automática de referências no VS Code
-- permite construir **grafos de progressão de aprendizado**
+## Modelo mental
 
-Além disso, o sistema pode usar essas relações para:
+O indice trabalha com dois niveis:
 
-- desbloquear quests conforme o progresso
-- calcular domínio de habilidades/tags
-- sugerir próximas atividades ao aluno
+- **Quest**: um bloco de aprendizagem, modulo ou missao.
+- **Task**: uma atividade individual dentro de uma quest.
+
+Exemplo minimo:
+
+```md
+# Minha Disciplina
+
+## Operacoes Basicas key=@basic tag=basic xpgoal=2 min=70%
+
+- [x] `@soma  gain=1 hard=1 size=1 type=make eval=test` [Soma](base/soma/README.md)
+- [x] `@media gain=1 hard=1 size=1 type=make eval=test` [Media](base/media/README.md)
+```
+
+Use `[x]` nas tarefas que contam para a meta principal da quest. Ao rodar
+`tko build index`, o TKO pode usar essas marcacoes para recalcular o `xpgoal`.
+Tarefas extras ou desafios podem ficar com `[ ]`.
+
+## Criando quests
+
+Cada quest e declarada em um titulo Markdown com metadados em pares
+chave-valor.
+
+```md
+## Vetores key=@vetores tag=array deps=@basic xpgoal=10 min=70% lang=c lang=python
+```
+
+Campos mais usados:
+
+- `key=@chave`: identificador unico da quest.
+- `tag=nome`: habilidade ou topico trabalhado.
+- `deps=@outra`: quest que precisa vir antes.
+- `xpgoal=valor`: meta de ganho pedagogico para completar a quest.
+- `min=valor%`: percentual minimo para considerar a quest completa.
+- `lang=nome`: linguagem associada a quest.
+- `active=true|false`: desativa temporariamente a quest quando for `false`.
+
+Regras praticas:
+
+- `key` e o campo essencial.
+- Se `tag` nao for informado, o TKO usa a propria chave como tag.
+- `deps`, `lang` e `active` sao opcionais.
+- Prefira chaves curtas, estaveis e sem espacos, como `@vetores`.
+
+## Criando tasks
+
+Cada task e uma linha Markdown com checkbox, metadados entre crases e link para
+o recurso.
+
+```md
+- [ ] `@soma gain=1 hard=1 size=1 type=make eval=test` [Soma](base/soma/README.md)
+- [ ] `@intro gain=1 type=read eval=self` [Texto introdutorio](wiki/intro.md)
+```
+
+Campos mais usados:
+
+- `@chave`: identificador unico da task.
+- `gain=valor`: ganho pedagogico.
+- `hard=valor`: dificuldade.
+- `size=valor`: tamanho ou volume de trabalho.
+- `type=make`: tarefa de producao/programacao.
+- `type=read`: tarefa de leitura ou consulta.
+- `eval=test`: avaliacao automatica.
+- `eval=self`: autoavaliacao.
+
+Padroes aplicados pelo TKO:
+
+- `gain=1`, `hard=1`, `size=1`.
+- `type=make`, quando o tipo nao e informado.
+- `eval=test` para `type=make`.
+- `eval=self` para `type=read`.
+
+Sintaxes antigas como `xp=`, `tier=`, `:make`, `:read`, `:test` e `:self` ainda
+sao aceitas por compatibilidade. Em repositorios novos, prefira sempre os
+campos chave-valor acima.
+
+## Criando uma tarefa
+
+Fluxo recomendado:
+
+1. Crie uma pasta para a tarefa, por exemplo `base/minha_tarefa/`.
+2. Escreva o enunciado em `base/minha_tarefa/README.md`.
+3. Adicione `tests.toml` se a tarefa tiver testes automaticos.
+4. Adicione a linha da task no `README.md` principal.
+5. Rode o TKO localmente para validar.
+
+Exemplo:
+
+```bash
+mkdir -p base/minha_tarefa
+$EDITOR base/minha_tarefa/README.md
+$EDITOR base/minha_tarefa/tests.toml
+$EDITOR README.md
+tko run base/minha_tarefa
+```
+
+## Escrevendo testes simples
+
+O formato mais comum e `tests.toml` dentro da pasta da tarefa.
+
+```toml
+[[tests]]
+input = '1 2\n'
+output = '3\n'
+
+[[tests]]
+input = '''
+10
+20
+'''
+output = '''
+30
+'''
+```
+
+Para conversoes, testes em pasta, `cases.tio`, VPL e formatos especiais,
+consulte [Criando testes e conversoes](Criando-Tarefas-e-Testes.md).
+
+## Atualizando o indice
+
+Depois de criar, renomear ou remover tarefas locais, rode:
+
+```bash
+tko build index README.md base
+```
+
+Esse comando:
+
+- encontra tarefas novas em `base/`;
+- remove links locais quebrados;
+- alinha visualmente as linhas de tasks;
+- atualiza `xpgoal` quando ha tarefas marcadas com `[x]`.
+
+Detalhes e casos especiais estao em [Build index](tools/build-index.md).
+
+## Reaproveitando tarefas remotas
+
+Uma task pode apontar para um `README.md` local ou para uma URL remota.
+
+```md
+- [ ] `@fila gain=2 hard=2 size=2 type=make eval=test` [Fila](https://github.com/qxcodeed/arcade/blob/main/base/fila/README.md)
+```
+
+Para preparar um indice externo com links absolutos e reutilizaveis:
+
+```bash
+tko tool rebase @fup -o README.fup.md
+```
+
+Esse fluxo evita links relativos quebrados ao transportar uma lista de tarefas
+entre repositorios. Veja [Rebase de links markdown](tools/rebase-links.md).
+
+## Publicando para alunos
+
+Fluxo tipico:
+
+1. Crie ou atualize o repositorio de conteudo.
+2. Valide o indice e as tarefas localmente.
+3. Faca commit e push para o GitHub.
+4. Informe aos alunos a URL do repositorio.
+5. Oriente os alunos a registrar a fonte com `tko source add`.
+
+Exemplo para o aluno:
+
+```bash
+tko init
+tko source add disciplina https://github.com/<usuario>/<repositorio>
+tko open
+```
+
+## Checklist antes de liberar
+
+- O `README.md` principal lista as quests e tasks esperadas.
+- Cada task local aponta para um `README.md` existente.
+- As chaves `@...` sao curtas, unicas e estaveis.
+- As linhas usam `gain`, `hard`, `size`, `type` e `eval`.
+- Os enunciados abrem corretamente no GitHub.
+- Os testes executam localmente nas tarefas com `eval=test`.
+- `tko build index README.md base` foi executado e o diff foi revisado.
+- O repositorio foi commitado e publicado.
+
+## Referencias
+
+- [Marcadores e tipos de tarefas](game/tasks.md)
+- [Criando testes e conversoes](Criando-Tarefas-e-Testes.md)
+- [Gamificacao e progressao](Gamificacao-e-Progressao.md)
+- [Build index](tools/build-index.md)
+- [Markdown Preprocessor](tools/mdpp.md)
+- [Filtragem e rascunhos](tools/filter.md)

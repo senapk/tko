@@ -1,124 +1,28 @@
-# Criando Tarefas e Testes
+# Criando Testes e Conversoes
 
-Este guia e para professores que organizam atividades de disciplina com TKO.
+Este guia complementa o [guia para criar repositorios de tarefas](Criando-Atividades.md).
+Use-o quando precisar escrever, converter ou publicar casos de teste.
 
-## Objetivo
+Para estrutura do repositorio, formato de quests, formato de tasks e checklist
+de publicacao, consulte primeiro o guia principal.
 
-Uma tarefa no TKO normalmente tem:
+## Onde colocar testes
 
-- Uma linha no indice (geralmente um `README.md` de trilha/quest).
-- Uma pasta da tarefa (por exemplo `base/tres/`).
-- Um `README.md` com enunciado.
-- Um arquivo de testes (como `cases.tio`) ou testes em `toml`.
+Uma tarefa com avaliacao automatica normalmente usa `eval=test` na linha do
+indice e possui casos de teste na propria pasta da tarefa:
 
-As tarefas tambem podem apontar para arquivos em repositorios remotos (por URL), nao apenas para arquivos locais.
-
-## Reuso com repositorio remoto
-
-Quando voce usa uma fonte Git externa (por exemplo um `README.md` hospedado no GitHub), o comando abaixo reescreve links relativos para links absolutos e prontos para reuso:
-
-```bash
-tko tool rebase @fup -o README.fup.md
+```txt
+base/soma/
+├── README.md
+└── tests.toml
 ```
 
-Isso facilita reaproveitar trilhas e listas de tarefas ja publicadas em outro repositorio, sem quebrar links internos.
+O TKO tambem aceita casos em formatos `.tio`, `.vpl` ou em pastas com pares de
+entrada e saida.
 
-## Arquivos de solucao e rascunho
+## Formato `tests.toml`
 
-No fluxo de trabalho, arquivos de solucao costumam ficar em `src/lang/arquivo` (ou `src/lang/arquivos`, conforme organizacao da disciplina).
-
-Com o comando de filtro, voce pode aplicar marcacoes no codigo e gerar versoes/drafts para alunos:
-
-```bash
-tko tool filter
-```
-
-Consulte tambem: [Filtragem e Rascunhos](tools/filter.md).
-
-## Ferramenta de markdown
-
-O TKO possui a ferramenta de preprocessamento markdown no comando:
-
-```bash
-tko tool mdpp
-```
-
-Ela oferece funcionalidades como:
-
-- Geracao de TOC automaticamente.
-- Inclusao de conteudo carregado por diretivas.
-- Insercao de testes a partir de arquivo TOML (ex.: `tests.toml`) em blocos gerados.
-
-Consulte: [Markdown Preprocessor](tools/mdpp.md).
-
-## Formato da linha de tarefa
-
-Exemplo:
-
-```md
-- [ ] `@tres gain=1 hard=1 size=1 type=make eval=test` [Soma de tres inteiros](base/tres/README.md)
-```
-
-Partes:
-
-- `@tres`: chave da tarefa.
-- `gain=1`: valor pedagogico da tarefa.
-- `hard=1`: dificuldade da tarefa.
-- `size=1`: tamanho ou extensao da tarefa.
-- `type=make`: tipo da tarefa (producao).
-- `eval=test`: modo de avaliacao por testes automaticos.
-- `[Soma de tres inteiros]`: texto do link.
-- `(base/tres/README.md)`: link para o enunciado.
-
-
-Regra importante da chave:
-
-- A chave inicia com `@`.
-- O tipo da atividade e indicado por `type=read` ou `type=make`.
-
-Exemplo de tarefa de consumo:
-
-```md
-- [ ] `@video_intro gain=1 type=read eval=self` [Video de introducao](https://exemplo.com/video)
-```
-
-## Tipos e marcadores
-
-Consulte a referencia completa em:
-
-- [Marcadores e Tipos](game/tasks.md)
-
-Resumo util:
-
-- Ganho pedagogico: `gain=1`.
-- Dificuldade: `hard=1`.
-- Tamanho: `size=1`.
-- Modo de avaliacao: `eval=test`, `eval=self`.
-
-## Como criar uma nova tarefa (passo a passo)
-
-1. Crie a pasta da tarefa, por exemplo `base/minha_tarefa/`.
-2. Crie o enunciado em `base/minha_tarefa/README.md`.
-3. Adicione testes em `tests.toml` se for uma tarefa com testes.
-5. Rode localmente com TKO para validar enunciado e testes.
-
-Exemplo de execucao local:
-
-```bash
-mkdir base/minha_tarefa
-# adicionar elementos na pasta, como README.md e tests.toml
-cd base/minha_tarefa
-tko run
-```
-
-## Como escrever testes
-
-Voce pode usar:
-
-- Bloco `toml` no `README.md` da tarefa.
-- Arquivo `tests.toml` na pasta da tarefa.
-
-Exemplo em `toml`:
+`tests.toml` e o formato compacto recomendado para tarefas novas.
 
 ```toml
 [[tests]]
@@ -135,89 +39,115 @@ output = '''
 '''
 ```
 
-## Trabalhando com `cases.tio` e pastas
+Boas praticas:
 
-Se preferir trabalhar com os testes em arquivos separados, voce pode descompactar um arquivo de testes `cases.tio` ou `tests.toml` para uma pasta com pares de entrada/saida.
+- Cubra pelo menos um caso simples.
+- Inclua casos de borda quando eles forem relevantes para o enunciado.
+- Mantenha entradas e saidas exatamente como o programa deve ler e imprimir.
+- Prefira casos pequenos e legiveis no material publico.
 
-Exemplo:
+## Testes no README com mdpp
 
-```bash
-mkdir pasta
-tko build tests pasta tests.toml
-ls pasta
-```
-
-Serao gerados arquivos como `00.in`, `00.sol`, `01.in`, `01.sol`.
-
-Para rodar a partir da pasta descompactada:
+Quando o enunciado precisa mostrar exemplos gerados a partir dos testes, use o
+preprocessador Markdown:
 
 ```bash
-tko run Solver.java pasta
+tko tool mdpp README.md
 ```
+
+Ele pode carregar testes de `tests.toml` e inserir blocos renderizados no
+`README.md`. A referencia completa esta em [Markdown Preprocessor](tools/mdpp.md).
 
 ## Convertendo entre formatos
 
-Alguns fluxos comuns:
-
-- Gerar `t.vpl` a partir de `testes.tio`:
+Gerar `t.vpl` a partir de `tests.toml`:
 
 ```bash
-tko build tests t.vpl testes.tio
+tko build tests t.vpl tests.toml
 ```
 
-- Gerar `t.tio` a partir de `README.md` e `extra.tio`:
+Gerar `t.tio` a partir de `README.md` e `extra.tio`:
 
 ```bash
 tko build tests t.tio README.md extra.tio
 ```
 
-- Extrair os testes para pasta (um arquivo de entrada e um de saida por caso):
+Extrair testes para uma pasta:
+
+```bash
+mkdir pasta
+tko build tests pasta tests.toml
+```
+
+Extrair de `cases.tio`:
 
 ```bash
 mkdir pasta
 tko build tests pasta cases.tio
 ```
 
+## Testes em pasta
+
+Ao converter para pasta, o TKO gera pares de entrada e saida, como:
+
+```txt
+pasta/
+├── 00.in
+├── 00.sol
+├── 01.in
+└── 01.sol
+```
+
+Para rodar uma solucao usando essa pasta:
+
+```bash
+tko run Solver.java pasta
+```
+
 ## Padrao de nomes com `-p`
 
-Voce pode definir o padrao de nome dos arquivos gerados com `-p`, usando `@` como wildcard para a numeracao.
-
-Exemplo:
+Use `-p` para escolher os nomes dos arquivos gerados. O caractere `@` funciona
+como marcador da numeracao.
 
 ```bash
 tko build tests pasta/ cases.tio -p "in.@ out.@"
 ```
 
-Para formatos de maratona, voce pode adaptar para o padrao esperado:
+Padroes comuns:
 
 - `-p "@.in @.out"`
 - `-p "in@ out@"`
-- outros padroes equivalentes
+- `-p "in.@ out.@"`
 
-## Boas praticas para professores
+## Gerando rascunhos para alunos
 
-- Use chaves curtas e consistentes (`@tres`, `@media`, `@bhaskara`).
-- Evite mudar chave de tarefa depois de publicada.
-- Mantenha enunciado claro com exemplo de entrada e saida.
-- Crie testes cobrindo caso simples, borda e caso invalido (quando aplicavel).
-- Use `gain`, `hard`, `size` e quests para progressao gradual da disciplina.
+Quando a disciplina mantem uma solucao completa do professor e precisa gerar
+arquivos iniciais para alunos, use:
 
-## Organizacao recomendada
+```bash
+tko tool filter
+```
 
-- Um arquivo indice por modulo/trilha.
-- Pastas de tarefa com mesmo padrao de nomes.
-- Historico de mudancas no repositorio (git) antes de publicar turma.
+Os arquivos de solucao costumam ficar em `src/<lang>/...`, conforme convencao
+da disciplina. Veja [Filtragem e rascunhos](tools/filter.md).
 
-## Checklist antes de publicar
+## Pipeline de publicacao da tarefa
 
-- A linha da tarefa aponta para link valido.
-- O enunciado abre corretamente no TKO.
-- Os testes executam localmente.
-- O nivel de dificuldade bate com `gain`, `hard`, `size` e a quest.
-- O titulo esta claro para os alunos.
+Para tarefas que usam preprocessamento de Markdown, rebase de links, VPL ou
+rascunhos, o comando mais conveniente e:
 
-## Guias relacionados
+```bash
+tko build all
+```
 
-- [Gamificação e progressão](Gamificacao-e-Progressao.md)
-- [Build all: pipeline de mdpp, filter e drafts](tools/build-all.md)
-- [Build index: manter e atualizar índices](tools/build-index.md)
+Ele executa a preparacao da tarefa e gera artefatos de publicacao quando
+aplicavel. Veja [Build all](tools/build-all.md).
+
+## Checklist de testes
+
+- A linha da task usa `eval=test`.
+- O arquivo de testes esta na pasta da tarefa ou foi referenciado pelo fluxo de build.
+- Os exemplos do enunciado batem com os testes publicos.
+- A solucao de referencia passa nos testes.
+- Conversoes para `.tio`, `.vpl` ou pasta foram revisadas quando usadas.
+- O guia principal foi seguido para atualizar o indice do repositorio.

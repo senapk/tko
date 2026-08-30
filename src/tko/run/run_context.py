@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 from tko.util.param import Param
 from tko.config.settings import Settings
