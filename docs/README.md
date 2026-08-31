@@ -12,6 +12,8 @@ Este diretório reúne guias de referência e manutenção do TKO.
 
 ### Professores
 
+- [Guia para criar repositórios de tarefas](../wiki/Criando-Atividades.md)
+- [Criando testes e conversões](../wiki/Criando-Tarefas-e-Testes.md)
 - [Ciclo de vida de tarefas](TASK_LIFECYCLE.md)
 - [Exemplos end-to-end](EXAMPLES.md)
 - [Especificação de formatos](FORMATS.md)

@@ -131,7 +131,7 @@ Comportamento no codigo:
 Como o indice e o ponto de metadados, mantenha ele sincronizado com:
 
 ```bash
-tko build index README.md base
+tko build index README.md labs
 ```
 
 Esse comando ajuda a:
@@ -141,7 +141,7 @@ Esse comando ajuda a:
 - atualizar e normalizar a sintaxe de tags e campos nas tarefas
 - calcular `xpgoal` das quests somando o `gain` das tasks marcadas com `[x]`
 
-Pastas novas dentro da base que contêm `README.md` entram automaticamente na quest correspondente,
+Pastas novas dentro de `labs/` que contêm `README.md` entram automaticamente na quest correspondente,
 com `gain=1 hard=1 size=1 type=make eval=test`. URLs HTTP/HTTPS são preservadas como referências
 remotas e não são tratadas como arquivos locais quebrados.
 
@@ -153,5 +153,6 @@ Guia detalhado:
 
 - Regras de gamificação e progressão: este arquivo.
 - Sintaxe de tags por linha de tarefa: [Marcadores-e-Tipos.md](game/tasks.md).
-- Operacao de autoria para professores: [Criando-Tarefas-e-Testes.md](Criando-Tarefas-e-Testes.md).
+- Operacao de autoria para professores: [Guia para criar repositorios de tarefas](Criando-Atividades.md).
+- Testes, conversoes e drafts: [Criando testes e conversoes](Criando-Tarefas-e-Testes.md).
 - Detalhes tecnicos de parser/engine: [Desenvolvimento-de-Tarefas.md](Desenvolvimento-de-Tarefas.md).

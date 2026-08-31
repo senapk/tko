@@ -88,7 +88,7 @@ Comportamento padrão:
 
 ## Guias relacionados
 
-- docs/REFERENCE.md
-- wiki/Criando-Atividades.md
-- wiki/Criando-Tarefas-e-Testes.md
-- wiki/Testando-Sem-Disciplina.md
+- [Referência rápida da CLI](REFERENCE.md)
+- [Guia para criar repositórios de tarefas](../wiki/Criando-Atividades.md)
+- [Criando testes e conversões](../wiki/Criando-Tarefas-e-Testes.md)
+- [Testando sem estar em uma disciplina](../wiki/Testando-Sem-Disciplina.md)

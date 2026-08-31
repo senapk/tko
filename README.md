@@ -74,7 +74,7 @@ Use o guia recomendado para setup com VS Code, WSL e Ubuntu:
   [TKO: conceitos e organização](wiki/Conceitos-e-Arquitetura.md)
 - Professor da disciplina (distribui conteúdo e coleta repositórios dos alunos via Git/GitHub):
   [Uso pelos professores](#uso-pelos-professores),
-  [Criando tarefas e testes](wiki/Criando-Tarefas-e-Testes.md)
+  [Guia para criar repositórios de tarefas](wiki/Criando-Atividades.md)
 - Aluno da disciplina:
   [Uso do TKO pelos alunos](#uso-do-tko-pelos-alunos),
   [Fazendo as atividades](wiki/Fazendo-Atividades.md)
@@ -111,9 +111,9 @@ Repositórios de referência:
 
 - [Conceitos e organização do TKO](wiki/Conceitos-e-Arquitetura.md)
 - [Gestão de repositórios de turma](wiki/Classroom.md)
-- [Repositórios e quests](wiki/Criando-Atividades.md)
+- [Guia para criar repositórios de tarefas](wiki/Criando-Atividades.md)
 - [Marcadores e tipos de atividades](wiki/game/tasks.md)
-- [Criando tarefas e testes](wiki/Criando-Tarefas-e-Testes.md)
+- [Criando testes e conversões](wiki/Criando-Tarefas-e-Testes.md)
 - [Gamificação e progressão](wiki/Gamificacao-e-Progressao.md)
 - [Relizando provas com modo auditoria](wiki/audit.md)
 - [Analisando a timeline de execução de uma tarefa](wiki/audit-preview.md)

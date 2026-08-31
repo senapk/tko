@@ -49,8 +49,8 @@ Fluxo recomendado:
 Guias:
 
 - [Gestão de repositórios de turma](../wiki/Classroom.md)
-- [wiki/Criando-Atividades.md](../wiki/Criando-Atividades.md)
-- [wiki/Criando-Tarefas-e-Testes.md](../wiki/Criando-Tarefas-e-Testes.md)
+- [Guia para criar repositórios de tarefas](../wiki/Criando-Atividades.md)
+- [Criando testes e conversões](../wiki/Criando-Tarefas-e-Testes.md)
 
 ## 6) Qual a diferença entre `cases.tio` e testes em pasta?
 
@@ -59,7 +59,7 @@ Guias:
 
 Conversões e exemplos:
 
-- `wiki/Criando-Tarefas-e-Testes.md`
+- [Criando testes e conversões](../wiki/Criando-Tarefas-e-Testes.md)
 
 ## 7) Como converter formatos de testes?
 

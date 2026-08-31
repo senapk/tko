@@ -27,7 +27,7 @@ Passos:
 1. Criar pasta da tarefa e README com enunciado.
 2. Adicionar casos de teste (`tests.toml` ou pasta).
 3. Se tiver rascunhos a serem gerados para essa tarefa, ou links a serem atualizados, rodar `tko build all` na pasta da tarefa. 
-4. Atualizar README de índice da trilha rodando no root do projeto `tko build index README.md <pasta>`.
+4. Atualizar README de índice da trilha rodando no root do projeto `tko build index README.md labs`.
 5. Commit e push no repositório da disciplina.
 
 Após publicação:

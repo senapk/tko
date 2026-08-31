@@ -97,17 +97,18 @@ Elementos comuns:
 Exemplo de linha:
 
 ```md
-- [ ]`@tres :1:main`[Soma de três inteiros](base/tres/README.md)
+- [ ] `@tres gain=1 hard=1 size=1 type=make eval=test` [Soma de três inteiros](labs/tres/README.md)
 ```
 
 Semântica resumida:
 
 - `@chave` identifica task
-- `xp:1` define XP
+- `gain=1` define ganho pedagogico
 
 ## Referências relacionadas
 
-- docs/REFERENCE.md
-- docs/LANGUAGE_SUPPORT.md
-- wiki/Criando-Tarefas-e-Testes.md
-- wiki/Marcadores-e-Tipos.md
+- [Referência rápida da CLI](REFERENCE.md)
+- [Suporte a linguagens](LANGUAGE_SUPPORT.md)
+- [Guia para criar repositórios de tarefas](../wiki/Criando-Atividades.md)
+- [Criando testes e conversões](../wiki/Criando-Tarefas-e-Testes.md)
+- [Marcadores e tipos de tarefas](../wiki/game/tasks.md)

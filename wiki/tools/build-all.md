@@ -35,7 +35,7 @@ tko build all
 Com alvos especificos:
 
 ```bash
-tko build all base/tres base/media
+tko build all labs/tres labs/media
 ```
 
 Opcoes principais:

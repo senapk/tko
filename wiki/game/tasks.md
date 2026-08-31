@@ -36,7 +36,7 @@ Cada atividade possui 3 indicadores independentes:
 ## Tipos de Atividade
 
 - **`type=make`**: Tarefa de produção/programação.
-  - Pode apontar para uma pasta local (`base/soma/README.md`) ou para uma URL do GitHub (`https://github.com/.../README.md`).
+  - Pode apontar para uma pasta local (`labs/soma/README.md`) ou para uma URL do GitHub (`https://github.com/.../README.md`).
   - No caso de URLs do GitHub, o TKO gerencia a clonagem/cache remoto para que o aluno possa resolver e testar localmente.
 - **`type=read`**: Tarefa de consumo/leitura.
   - Pode apontar para documentação local (`wiki/git/README.md`) ou para links externos HTTP/HTTPS (artigos, vídeos, etc.).
@@ -50,10 +50,10 @@ Cada atividade possui 3 indicadores independentes:
 
 ## Papel do `tko build index`
 
-O comando `tko build index README.md <pasta_base>` sincroniza e formata o índice:
+O comando `tko build index README.md labs` sincroniza e formata o índice:
 
 1. **Validação de Links Locais**: Detecta se alguma tarefa aponta para um README local que não existe mais, avisa o usuário e remove a entrada inválida.
-2. **Auto-indexação de Novas Pastas**: Inspeciona a pasta base (ex: `base/`) e, se houver pastas de tarefas que ainda não estão no índice, avisa e adiciona automaticamente na seção correspondente.
+2. **Auto-indexação de Novas Pastas**: Inspeciona `labs/` e, se houver pastas de tarefas que ainda não estão no índice, avisa e adiciona automaticamente na seção correspondente.
 3. **Alinhamento Visual (Padding)**: Formata as tarefas alinhando `@chave` e tags em colunas padronizadas, garantindo que os colchetes dos títulos fiquem perfeitamente alinhados verticalmente.
 4. **Preservação de Escolhas**: O indexador não sobrescreve os tipos `type` ou modos de avaliação `eval` definidos pelo autor.
 

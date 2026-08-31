@@ -14,7 +14,7 @@ Um repositorio de tarefas pode comecar assim:
 
 ```txt
 README.md
-base/
+labs/
 ├── soma/
 │   ├── README.md
 │   └── tests.toml
@@ -26,9 +26,9 @@ base/
 Papeis dos arquivos:
 
 - `README.md`: indice principal do repositorio, com quests e tasks.
-- `base/<tarefa>/README.md`: enunciado da tarefa.
-- `base/<tarefa>/tests.toml`: casos de teste, quando houver avaliacao automatica.
-- `base/<tarefa>/src/<lang>/...`: solucoes, rascunhos ou codigo de apoio, quando usados pela disciplina.
+- `labs/<tarefa>/README.md`: enunciado da tarefa.
+- `labs/<tarefa>/tests.toml`: casos de teste, quando houver avaliacao automatica.
+- `labs/<tarefa>/src/<lang>/...`: solucoes, rascunhos ou codigo de apoio, quando usados pela disciplina.
 
 O repositorio de conteudo do professor nao precisa ter `.tko/`. Essa pasta e
 normalmente parte do workspace do aluno, nao do formato publico das tarefas.
@@ -47,8 +47,8 @@ Exemplo minimo:
 
 ## Operacoes Basicas key=@basic tag=basic xpgoal=2 min=70%
 
-- [x] `@soma  gain=1 hard=1 size=1 type=make eval=test` [Soma](base/soma/README.md)
-- [x] `@media gain=1 hard=1 size=1 type=make eval=test` [Media](base/media/README.md)
+- [x] `@soma  gain=1 hard=1 size=1 type=make eval=test` [Soma](labs/soma/README.md)
+- [x] `@media gain=1 hard=1 size=1 type=make eval=test` [Media](labs/media/README.md)
 ```
 
 Use `[x]` nas tarefas que contam para a meta principal da quest. Ao rodar
@@ -87,7 +87,7 @@ Cada task e uma linha Markdown com checkbox, metadados entre crases e link para
 o recurso.
 
 ```md
-- [ ] `@soma gain=1 hard=1 size=1 type=make eval=test` [Soma](base/soma/README.md)
+- [ ] `@soma gain=1 hard=1 size=1 type=make eval=test` [Soma](labs/soma/README.md)
 - [ ] `@intro gain=1 type=read eval=self` [Texto introdutorio](wiki/intro.md)
 ```
 
@@ -117,8 +117,8 @@ campos chave-valor acima.
 
 Fluxo recomendado:
 
-1. Crie uma pasta para a tarefa, por exemplo `base/minha_tarefa/`.
-2. Escreva o enunciado em `base/minha_tarefa/README.md`.
+1. Crie uma pasta para a tarefa, por exemplo `labs/minha_tarefa/`.
+2. Escreva o enunciado em `labs/minha_tarefa/README.md`.
 3. Adicione `tests.toml` se a tarefa tiver testes automaticos.
 4. Adicione a linha da task no `README.md` principal.
 5. Rode o TKO localmente para validar.
@@ -126,11 +126,12 @@ Fluxo recomendado:
 Exemplo:
 
 ```bash
-mkdir -p base/minha_tarefa
-$EDITOR base/minha_tarefa/README.md
-$EDITOR base/minha_tarefa/tests.toml
+mkdir -p labs/minha_tarefa
+$EDITOR labs/minha_tarefa/README.md
+$EDITOR labs/minha_tarefa/tests.toml
 $EDITOR README.md
-tko run base/minha_tarefa
+cd labs/minha_tarefa
+tko run
 ```
 
 ## Escrevendo testes simples
@@ -160,12 +161,12 @@ consulte [Criando testes e conversoes](Criando-Tarefas-e-Testes.md).
 Depois de criar, renomear ou remover tarefas locais, rode:
 
 ```bash
-tko build index README.md base
+tko build index README.md labs
 ```
 
 Esse comando:
 
-- encontra tarefas novas em `base/`;
+- encontra tarefas novas em `labs/`;
 - remove links locais quebrados;
 - alinha visualmente as linhas de tasks;
 - atualiza `xpgoal` quando ha tarefas marcadas com `[x]`.
@@ -177,7 +178,7 @@ Detalhes e casos especiais estao em [Build index](tools/build-index.md).
 Uma task pode apontar para um `README.md` local ou para uma URL remota.
 
 ```md
-- [ ] `@fila gain=2 hard=2 size=2 type=make eval=test` [Fila](https://github.com/qxcodeed/arcade/blob/main/base/fila/README.md)
+- [ ] `@fila gain=2 hard=2 size=2 type=make eval=test` [Fila](https://github.com/qxcodeed/arcade/blob/main/labs/fila/README.md)
 ```
 
 Para preparar um indice externo com links absolutos e reutilizaveis:
@@ -215,7 +216,7 @@ tko open
 - As linhas usam `gain`, `hard`, `size`, `type` e `eval`.
 - Os enunciados abrem corretamente no GitHub.
 - Os testes executam localmente nas tarefas com `eval=test`.
-- `tko build index README.md base` foi executado e o diff foi revisado.
+- `tko build index README.md labs` foi executado e o diff foi revisado.
 - O repositorio foi commitado e publicado.
 
 ## Referencias

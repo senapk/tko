@@ -6,7 +6,7 @@ Este guia explica o comando:
 
 Exemplo:
 
-    tko build index README.md base
+    tko build index README.md labs
 
 Onde:
 
@@ -64,11 +64,11 @@ O comando possui duas opcoes para sincronizar titulo entre indice e README da ta
 
 Carregar titulo do README para o indice:
 
-    tko build index README.md base --load
+    tko build index README.md labs --load
 
 Salvar titulo do indice para o README da tarefa:
 
-    tko build index README.md base --save
+    tko build index README.md labs --save
 
 Resumo:
 
@@ -88,15 +88,15 @@ Quando voce nao quiser contar esse total manualmente, marque com `[x]` as tarefa
 ```md
 ## Vetores <!-- key=@vetores min=70% -->
 
-- [x] `@soma     gain=2 hard=1 size=1 type=make eval=test` [Soma](base/soma/README.md)
-- [x] `@media    gain=3 hard=1 size=1 type=make eval=test` [Media](base/media/README.md)
-- [ ] `@desafio  gain=5 hard=3 size=2 type=make eval=test` [Desafio](base/desafio/README.md)
+- [x] `@soma     gain=2 hard=1 size=1 type=make eval=test` [Soma](labs/soma/README.md)
+- [x] `@media    gain=3 hard=1 size=1 type=make eval=test` [Media](labs/media/README.md)
+- [ ] `@desafio  gain=5 hard=3 size=2 type=make eval=test` [Desafio](labs/desafio/README.md)
 ```
 
 Ao executar:
 
 ```bash
-tko build index README.md base
+tko build index README.md labs
 ```
 
 o indexer soma o `gain` das tarefas marcadas com `[x]` e grava esse valor em `xpgoal`:
@@ -122,11 +122,11 @@ Regras importantes:
 
 ## Exemplo de ciclo de manutencao
 
-1. Criou pasta nova base/nova_tarefa/README.md.
-2. Removeu pasta antiga base/tarefa_antiga/.
+1. Criou pasta nova labs/nova_tarefa/README.md.
+2. Removeu pasta antiga labs/tarefa_antiga/.
 3. Executou:
 
-    tko build index README.md base
+    tko build index README.md labs
 
 4. Resultado esperado:
 - Entrada de @nova_tarefa adicionada.

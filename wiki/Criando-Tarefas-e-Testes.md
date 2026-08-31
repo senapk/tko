@@ -12,7 +12,7 @@ Uma tarefa com avaliacao automatica normalmente usa `eval=test` na linha do
 indice e possui casos de teste na propria pasta da tarefa:
 
 ```txt
-base/soma/
+labs/soma/
 ├── README.md
 └── tests.toml
 ```
