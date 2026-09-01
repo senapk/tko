@@ -11,6 +11,7 @@ from tko.config.run_settings import RunSettings
 from tko.config.settings import Settings
 from tko.repository.remote import Remote, SourceType
 from tko.repository.repository import Repository
+from tko.repository.repository_data import ProfileLink
 from tko.repository.source_actions import SourceActions
 from tko.util.console import Console
 
@@ -169,3 +170,14 @@ def test_git_url_context_is_preserved_without_new_string_classifier(monkeypatch:
     assert source.source_type == SourceType.GIT_SOURCE
     data = read_config(repo)
     assert data["profile"]["sources"]["fup"]["uri"] == "https://github.com/qxcodefup/arcade/blob/main/README.md"
+
+
+def test_linked_workspace_blocks_source_mutations(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path)
+    repo.data.link = ProfileLink(uri="profile.toml")
+    actions = SourceActions(make_settings(), repo)
+
+    assert actions.add_source("disc", "README.md") is False
+    assert actions.update_source("labs", uri="other.md") is False
+    assert actions.set_authoring_source("labs") is False
+    assert actions.remove_source("labs") is False

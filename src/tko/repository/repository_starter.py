@@ -80,12 +80,13 @@ _WITCH_REPO = Msg.parse(
 )
 
 class RepositoryStarter:
-    def __init__(self, settings: Settings, language: str | None, skip_add_remote: bool, force_location: bool = False):
+    def __init__(self, settings: Settings, language: str | None, skip_add_remote: bool, force_location: bool = False, profile_uri: str | None = None):
         self.settings = settings
         self.skip = skip_add_remote
         self.force_location = force_location
         self.folder: Path = settings.rs.changedir
         self.language = language
+        self.profile_uri = profile_uri
 
     def execute(self) -> bool:
         if not self.force_location:
@@ -94,10 +95,17 @@ class RepositoryStarter:
         git_cache = GitCache(cache_dir=UserData.global_cache_dir(), update_mode=self.settings.rs.update_mode)
         repo = Repository(self.folder, self.settings.rs, git_cache=git_cache)
         self.repo = repo
-        self.language = LanguageSetter.check_prog_lang_in_text_mode(self.settings, self.repo, selected=self.language)
+        if self.profile_uri is not None:
+            from tko.repository.linked_profile import LinkedProfileService
+
+            loaded = LinkedProfileService(repo).load(self.profile_uri, force_git_update=True)
+            LinkedProfileService(repo).apply_loaded(loaded)
+            self.language = repo.data.lang
+        else:
+            self.language = LanguageSetter.check_prog_lang_in_text_mode(self.settings, self.repo, selected=self.language)
         Console.print(_REPO_STARTER_LANGUAGE_SET.t().format(language=self.language))
 
-        if not self.skip:
+        if self.profile_uri is None and not self.skip:
             self.ask_about_default_sources()
 
         authoring = repo.data.get_authoring_remote() if hasattr(repo.data, "get_authoring_remote") else None

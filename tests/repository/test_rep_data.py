@@ -91,6 +91,7 @@ def test_save_to_dict_exports_current_state(tmp_path: Path) -> None:
     data.expanded = ["q1"]
     data.flags = {"panel": "logs"}
     data.audit_enabled = True
+    data.profile_language = "cpp"
     data.lang = "cpp"
     data.selected = "disc@task1"
     data.selected_index = 2
@@ -99,8 +100,9 @@ def test_save_to_dict_exports_current_state(tmp_path: Path) -> None:
 
     assert saved["version"] == "0.2"
     assert saved["profile"]["authoring_source"] == "labs"
+    assert saved["profile"]["language"] == "cpp"
     assert saved["profile"]["audit"] == {"enabled": True, "interval_seconds": None}
-    assert saved["preferences"] == {"panel": "logs", "lang": "cpp"}
+    assert saved["preferences"] == {"panel": "logs"}
     assert saved["state"] == {"expanded": ["q1"], "selected": "disc@task1", "selected_index": 2}
     sources = cast(dict[str, dict[str, str]], saved["profile"]["sources"])
     assert sources["disc"] == {"uri": "base"}

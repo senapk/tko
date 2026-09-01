@@ -66,6 +66,45 @@ class AuditConfig:
             "interval_seconds": self.interval_seconds,
         }
 
+
+@dataclass
+class ProfileLink:
+    uri: str = ""
+    refresh_minutes: int = 60
+    updated_at: str = ""
+    revision: str = ""
+    content_hash: str = ""
+
+    def from_dict(self, data: ConfigDict) -> ProfileLink:
+        uri = data.get("uri")
+        if isinstance(uri, str):
+            self.uri = uri
+        refresh_minutes = data.get("refresh_minutes")
+        if isinstance(refresh_minutes, int):
+            self.refresh_minutes = refresh_minutes
+        updated_at = data.get("updated_at")
+        if isinstance(updated_at, str):
+            self.updated_at = updated_at
+        revision = data.get("revision")
+        if isinstance(revision, str):
+            self.revision = revision
+        content_hash = data.get("content_hash")
+        if isinstance(content_hash, str):
+            self.content_hash = content_hash
+        return self
+
+    def to_dict(self) -> ConfigDict:
+        output: ConfigDict = {
+            "uri": self.uri,
+            "refresh_minutes": self.refresh_minutes,
+            "updated_at": self.updated_at,
+        }
+        if self.revision:
+            output["revision"] = self.revision
+        if self.content_hash:
+            output["content_hash"] = self.content_hash
+        return output
+
 class RepositoryData:
     def __init__(self, root_folder: Path):
         self.root_folder: Path = root_folder
@@ -77,8 +116,15 @@ class RepositoryData:
         self.flags: ConfigDict = {}
         self.audit: AuditConfig = AuditConfig()
         self.lang: str = ""
+        self.profile_language: str = ""
+        self.profile_name: str = ""
+        self.link: ProfileLink | None = None
         self.selected: str = ""
         self.selected_index: int = 0
+
+    @property
+    def is_linked(self) -> bool:
+        return self.link is not None and bool(self.link.uri)
 
     @property
     def sandbox_name(self) -> str:
@@ -227,7 +273,11 @@ class RepositoryData:
         return sources
 
     def _load_profile_from_dict(self, profile: ConfigDict) -> None:
+        self.profile_name = self._load_str(profile, "name", "")
         authoring_source = self._load_str(profile, "authoring_source", self.authoring_source)
+        self.profile_language = self._load_str(profile, "language", "")
+        if self.profile_language:
+            self.lang = self.profile_language
         sources = self._load_dict(profile, "sources")
         if sources is not None:
             self._load_sources_map(sources)
@@ -235,6 +285,8 @@ class RepositoryData:
         audit_data = self._load_dict(profile, "audit")
         if audit_data is not None:
             _ = self.audit.from_dict(audit_data)
+        else:
+            self.audit = AuditConfig()
 
     def validate_authoring_source(self) -> None:
         if not self.authoring_source:
@@ -261,19 +313,23 @@ class RepositoryData:
         try:
             # Load simple fields
             self.version = self._load_str(data, "version", self.version)
+            link = self._load_dict(data, "link")
+            self.link = ProfileLink().from_dict(link) if link is not None else None
             profile = self._load_dict(data, "profile")
             if profile is not None:
                 self._load_profile_from_dict(profile)
 
             preferences = self._load_dict(data, "preferences")
             if preferences is not None:
-                self.lang = self._load_str(preferences, "lang", self.lang)
+                if not self.profile_language:
+                    self.lang = self._load_str(preferences, "lang", self.lang)
                 self.flags = {key: value for key, value in preferences.items() if key != "lang"}
             else:
                 flags = self._load_dict(data, "flags")
                 if flags is not None:
                     self.flags = flags
-                self.lang = self._load_str(data, "lang", self.lang)
+                if not self.profile_language:
+                    self.lang = self._load_str(data, "lang", self.lang)
 
             state = self._load_dict(data, "state")
             if state is not None:
@@ -324,16 +380,24 @@ class RepositoryData:
             "sources": sources,
             "audit": self.audit.to_dict(),
         }
+        if self.profile_name:
+            profile["name"] = self.profile_name
+        if self.profile_language:
+            profile["language"] = self.profile_language
         preferences: ConfigDict = self.flags.copy()
-        preferences["lang"] = self.lang
+        if self.lang and not self.profile_language:
+            preferences["lang"] = self.lang
         state: ConfigDict = {
             "expanded": list(self.expanded),
             "selected": self.selected,
             "selected_index": self.selected_index,
         }
-        return {
+        output: ConfigDict = {
             "version": self.version,
             "profile": profile,
             "preferences": preferences,
             "state": state,
         }
+        if self.link is not None:
+            output["link"] = self.link.to_dict()
+        return output

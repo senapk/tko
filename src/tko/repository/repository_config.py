@@ -75,10 +75,23 @@ def dumps_repository_toml(data: ConfigDict) -> str:
     lines.append(f"version = {_toml_value(data.get('version', '0.3'))}")
     lines.append("")
 
+    link = _config_dict(data.get("link"))
+    if link is not None:
+        lines.append("[link]")
+        for key in ("uri", "refresh_minutes", "updated_at", "revision", "content_hash"):
+            value = link.get(key)
+            if value not in (None, ""):
+                lines.append(f"{_toml_key(key)} = {_toml_value(value)}")
+        lines.append("")
+
     profile = _config_dict(data.get("profile"))
     if profile is not None:
         lines.append("[profile]")
+        if profile.get("name"):
+            lines.append(f"name = {_toml_value(profile.get('name', ''))}")
         lines.append(f"authoring_source = {_toml_value(profile.get('authoring_source', ''))}")
+        if profile.get("language"):
+            lines.append(f"language = {_toml_value(profile.get('language', ''))}")
         lines.append("")
         sources = _config_dict(profile.get("sources"))
         if sources is not None:
@@ -213,6 +226,11 @@ class RepositoryLoader:
             raise Warning(_REPOSITORY_LOADER_CONFIG_CORRUPTED_UNEXPECTED.t().format(file=load_path, error=e))
 
         self.repo.data.load_from_dict(local_data)
+        if getattr(self.repo.data, "is_linked", False):
+            from tko.repository.linked_profile import LinkedProfileService
+
+            if LinkedProfileService(self.repo).refresh_if_due(force=False):
+                atomic_write_toml(path, self.repo.data.to_dict())
         self.repo.flags.from_dict(_string_dict(self.repo.data.flags))
         if is_migration:
             _ = self.save(force=True)

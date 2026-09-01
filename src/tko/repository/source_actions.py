@@ -68,6 +68,10 @@ _SOURCE_GIT_ACCESSED = Msg.text(
     pt="Repositório {link} acessado com sucesso.",
     en="Repository {link} accessed successfully.",
 )
+_SOURCE_LINKED_PROFILE_CONTROLLED = Msg.text(
+    pt="Sources are controlled by the linked profile",
+    en="Sources are controlled by the linked profile",
+)
 
 
 class SourceActions:
@@ -106,6 +110,8 @@ class SourceActions:
         return "local"
 
     def remove_source(self, label: str) -> bool:
+        if self._sources_are_profile_controlled():
+            return False
         try:
             if self.repo.data.remove_source(label):
                 logger.info(str(_SOURCE_REMOVED_SUCCESS).format(label=label))
@@ -118,6 +124,8 @@ class SourceActions:
         return False
 
     def update_source(self, label: str, uri: str | None = None) -> bool:
+        if self._sources_are_profile_controlled():
+            return False
         source = self.repo.data.get_source(label)
         if source is None:
             logger.warning(_SOURCE_NOT_FOUND.t().format(label=label))
@@ -142,6 +150,8 @@ class SourceActions:
         return True
 
     def set_authoring_source(self, label: str) -> bool:
+        if self._sources_are_profile_controlled():
+            return False
         try:
             self.repo.data.set_authoring_source(label)
         except ValueError as error:
@@ -152,6 +162,8 @@ class SourceActions:
         return True
 
     def add_source(self, label: str, uri: str, authoring: bool = False) -> bool:
+        if self._sources_are_profile_controlled():
+            return False
         if label in self.repo.sources:
             logger.warning(str(_SOURCE_LABEL_EXISTS))
             return False
@@ -219,3 +231,9 @@ class SourceActions:
             Console.print(_SOURCE_CLONE_FAILED.t())
             logger.warning(_SOURCE_CLONE_FAILED.t())
         return ok
+
+    def _sources_are_profile_controlled(self) -> bool:
+        if getattr(self.repo.data, "is_linked", False):
+            logger.warning(_SOURCE_LINKED_PROFILE_CONTROLLED.t())
+            return True
+        return False

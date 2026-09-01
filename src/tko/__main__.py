@@ -16,6 +16,7 @@ from tko.cli.cli_class import app as class_app
 from tko.cli.cli_collect import app as collect_app
 from tko.cli.cli_config import app as config_app
 from tko.cli.cli_main import register_main_commands
+from tko.cli.cli_profile import app as profile_app
 from tko.cli.cli_source import app as source_app
 from tko.cli.cli_reset import app as reset_app
 from tko.cli.cli_task import app as task_app
@@ -44,6 +45,7 @@ app.add_typer(audit_app, name="audit")
 app.add_typer(task_app, name="task")
 app.add_typer(config_app, name="config")
 app.add_typer(reset_app, name="reset")
+app.add_typer(profile_app, name="profile")
 app.add_typer(source_app, name="source")
 app.add_typer(collect_app, name="collect")
 app.add_typer(class_app, name="class")

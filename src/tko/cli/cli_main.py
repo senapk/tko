@@ -98,12 +98,13 @@ def register_main_commands(app: typer.Typer):
     def init_cmd( # type: ignore
         ctx: typer.Context,
         language: Optional[str] = typer.Option(None, "--language", "-l", help="Default repository language (e.g. py, cpp, java, go)"),
-        skip: bool = typer.Option(False, "--skip-sources", "--skip-remotes", "-s", help="Skip asking about default sources")
+        skip: bool = typer.Option(False, "--skip-sources", "--skip-remotes", "-s", help="Skip asking about default sources"),
+        profile: Optional[str] = typer.Option(None, "--profile", help="Initialize from a linked profile URI"),
     ):
         from tko.repository.repository_starter import RepositoryStarter
         
 
         settings: Settings = ctx.obj
         
-        rep_starter = RepositoryStarter(settings=settings, language=language, skip_add_remote=skip)
+        rep_starter = RepositoryStarter(settings=settings, language=language, skip_add_remote=skip, profile_uri=profile)
         rep_starter.execute()
