@@ -105,7 +105,13 @@ Semântica resumida:
 - `@chave` identifica task
 - `gain=1` define ganho pedagogico
 - `hard=1` e `size=1` definem dificuldade e tamanho, inclusive para tarefas `read`
-- `eval` e emitido para tarefas `make`; em `read`, a autoavaliacao (`self`) e implicita
+- `eval` é emitido para tarefas `make`; em `read`, a autoavaliação (`self`) é implícita
+- o link deve apontar para um `README.md` local ou para um `README.md` no GitHub
+
+Tarefas externas, tanto `read` quanto `make`, são materializadas na área de trabalho do
+usuário. A materialização copia o `README.md`, a pasta `assets` e os demais arquivos
+Markdown diretamente na pasta de origem. Somente tarefas externas `make` recebem testes
+e rascunhos.
 
 ## Referências relacionadas
 

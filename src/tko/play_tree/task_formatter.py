@@ -54,8 +54,10 @@ class TaskFormatter:
         else:
             test_mode = selF
 
-        if task.location.is_read:
+        if task.location.is_read and not task.location.is_external:
             state_mode = read
+        elif task.location.is_read:
+            state_mode = down if self.is_downloaded(task) else empty
         elif task.location.is_static_type:
             state_mode = static
         elif self.is_downloaded_for_lang(task):

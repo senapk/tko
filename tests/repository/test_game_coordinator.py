@@ -38,12 +38,16 @@ def test_load_game_exposes_the_same_unique_tasks_in_quests_and_task_map(tmp_path
     index_file.write_text(
         "# Course\n\n"
         "## First <!-- @first -->\n"
-        "- [ ] `@same type=read` [First](https://example.com/first)\n"
+        "- [ ] `@same type=read` [First](first/README.md)\n"
         "## Second <!-- @second -->\n"
-        "- [ ] `@same type=read` [Duplicate](https://example.com/duplicate)\n"
-        "- [ ] `@unique type=read` [Unique](https://example.com/unique)\n",
+        "- [ ] `@same type=read` [Duplicate](first/README.md)\n"
+        "- [ ] `@unique type=read` [Unique](unique/README.md)\n",
         encoding="utf-8",
     )
+    (tmp_path / "first").mkdir()
+    (tmp_path / "first" / "README.md").write_text("# First\n", encoding="utf-8")
+    (tmp_path / "unique").mkdir()
+    (tmp_path / "unique" / "README.md").write_text("# Unique\n", encoding="utf-8")
     rs = RunSettings(changedir=tmp_path)
     rs.force_offline = True
     repo = Repository(

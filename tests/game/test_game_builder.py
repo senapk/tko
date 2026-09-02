@@ -26,11 +26,11 @@ def test_duplicate_tasks_keep_only_first_occurrence(tmp_path: Path) -> None:
         tmp_path,
         "# Course\n\n"
         "## First <!-- @first -->\n"
-        "- [ ] `@same` [First occurrence](first.md)\n"
-        "- [ ] `@same` [Same quest duplicate](duplicate.md)\n"
+        "- [ ] `@same` [First occurrence](first/README.md)\n"
+        "- [ ] `@same` [Same quest duplicate](duplicate/README.md)\n"
         "## Second <!-- @second -->\n"
-        "- [ ] `@same` [Other quest duplicate](other.md)\n"
-        "- [ ] `@unique` [Unique](unique.md)\n",
+        "- [ ] `@same` [Other quest duplicate](other/README.md)\n"
+        "- [ ] `@unique` [Unique](unique/README.md)\n",
     )
 
     assert quest_tasks(builder, "first") == ["same"]
@@ -42,9 +42,9 @@ def test_task_key_prevents_later_quest_and_keeps_current_quest(tmp_path: Path) -
     builder = build_game(
         tmp_path,
         "# Course\n\n"
-        "- [ ] `@shared` [Task before any quest](shared.md)\n"
+        "- [ ] `@shared` [Task before any quest](shared/README.md)\n"
         "## Rejected <!-- @shared -->\n"
-        "- [ ] `@after` [Still in current quest](after.md)\n",
+        "- [ ] `@after` [Still in current quest](after/README.md)\n",
     )
 
     assert list(builder.collect_quests()) == ["base@_sem_quest"]
@@ -56,8 +56,8 @@ def test_quest_key_prevents_later_task(tmp_path: Path) -> None:
         tmp_path,
         "# Course\n\n"
         "## Shared <!-- @shared -->\n"
-        "- [ ] `@shared` [Rejected task](shared.md)\n"
-        "- [ ] `@accepted` [Accepted task](accepted.md)\n",
+        "- [ ] `@shared` [Rejected task](shared/README.md)\n"
+        "- [ ] `@accepted` [Accepted task](accepted/README.md)\n",
     )
 
     assert quest_tasks(builder, "shared") == ["accepted"]
@@ -69,11 +69,11 @@ def test_duplicate_quest_heading_does_not_change_current_quest(tmp_path: Path) -
         tmp_path,
         "# Course\n\n"
         "## First <!-- @first -->\n"
-        "- [ ] `@one` [One](one.md)\n"
+        "- [ ] `@one` [One](one/README.md)\n"
         "## Second <!-- @second -->\n"
-        "- [ ] `@two` [Two](two.md)\n"
+        "- [ ] `@two` [Two](two/README.md)\n"
         "## Repeated first <!-- @first -->\n"
-        "- [ ] `@three` [Three](three.md)\n",
+        "- [ ] `@three` [Three](three/README.md)\n",
     )
 
     assert quest_tasks(builder, "first") == ["one"]
@@ -88,10 +88,10 @@ def test_missing_requirements_warn_and_only_valid_requirements_remain(tmp_path: 
             tmp_path,
             "# Course\n\n"
             "## Base <!-- @base -->\n"
-            "- [ ] `@blocked` [This key blocks a quest](blocked.md)\n"
+            "- [ ] `@blocked` [This key blocks a quest](blocked/README.md)\n"
             "## Rejected <!-- @blocked -->\n"
             "## Dependent <!-- @dependent deps=@blocked,@base -->\n"
-            "- [ ] `@work` [Work](work.md)\n",
+            "- [ ] `@work` [Work](work/README.md)\n",
         )
     finally:
         logger.remove(sink_id)
@@ -108,9 +108,9 @@ def test_first_occurrence_is_reserved_before_language_filtering(tmp_path: Path) 
         tmp_path,
         "# Course\n\n"
         "## Python first <!-- @shared lang=python -->\n"
-        "- [ ] `@python_task` [Python](python.md)\n"
+        "- [ ] `@python_task` [Python](python/README.md)\n"
         "## C duplicate <!-- @shared lang=c -->\n"
-        "- [ ] `@c_task` [C](c.md)\n",
+        "- [ ] `@c_task` [C](c/README.md)\n",
     )
 
     builder.build_from("c")
@@ -125,7 +125,7 @@ def test_same_item_key_is_allowed_in_different_sources(tmp_path: Path) -> None:
     content = (
         "# Course\n\n"
         "## Quest <!-- @quest -->\n"
-        "- [ ] `@same type=read` [Same](https://example.com/same)\n"
+        "- [ ] `@same type=read` [Same](same/README.md)\n"
     )
     first_index.write_text(content, encoding="utf-8")
     second_index.write_text(content, encoding="utf-8")

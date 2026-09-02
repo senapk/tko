@@ -30,8 +30,8 @@ _DOWN_INVALID_REPO_ARG_ACTION = Msg.parse(
     en="Navigate to that folder or pass its path and try again.",
 )
 _CMD_DOWN_ACTIVITY_LINK_NOT_DOWNLOADABLE = Msg.parse(
-    pt="Atividade {task_key} é do tipo link, ela não é para download",
-    en="Activity {task_key} is a link type and is not downloadable",
+    pt="Atividade {task_key} é local e trabalha diretamente na origem",
+    en="Activity {task_key} is local and works directly on its source",
 )
 _CMD_DOWN_ACTIVITY_NO_ORIGIN_FOLDER = Msg.parse(
     pt="Atividade {task_key} não possui pasta de origem para download",
@@ -113,7 +113,7 @@ class CmdDown:
         self.task_key = task_key
         self.settings = settings
         self.task: Task = self.repo.game.get_task_throw(self.task_key)
-        if self.task.location.is_read:
+        if not self.task.location.is_external:
             raise ValueError(_CMD_DOWN_ACTIVITY_LINK_NOT_DOWNLOADABLE.t().format(task_key=self.task_key))
         
         origin_target = self.repo.task_resolver.origin_file(self.task, load_git=True)
@@ -154,10 +154,11 @@ class CmdDown:
     def download_from_external_remote(self) -> None:
         self.actions.fnprint(_DOWN_OPENING.t().format(key=self.task_key, folder=self.destiny_folder))
         self.destiny_folder.mkdir(exist_ok=True, parents=True)
-        self.copy_readme()
-        self.copy_tests()
+        self.copy_markdown_files()
         self.copy_assets()
-        self.copy_drafts()
+        if self.task.location.is_make:
+            self.copy_tests()
+            self.copy_drafts()
         self.actions.fnprint("")
         self.actions.fnprint(_DOWN_ACTIVITY_DOWNLOADED_SUCCESS.t())
 
@@ -169,24 +170,21 @@ class CmdDown:
             self.actions.fnprint(_DRAFTS_FOUND.t().format(folder=relative))
             return True
         
-        if self.task.location.is_static_type: # working in managed/local source, creating only default draft if not found
-            destiny_drafts_folder.mkdir(exist_ok=True, parents=True)
-            self.actions.create_default_draft(destiny_drafts_folder, self.language)
-            return True
-
         origin_drafts_source: Path = CodeFilter.get_source_starter_dir(self.origin_folder, self.language)
         default_draft_ok = self.copy_drafts_from(origin_drafts_source, destiny_drafts_folder, self.language)
         if not default_draft_ok:
             self.actions.create_default_draft(destiny_drafts_folder, self.language)
         return True
     
-    def copy_readme(self):
-        origin_readme  = self.origin_folder /"README.md"
-        destiny_readme = self.destiny_folder/ "README.md"
+    def copy_markdown_files(self):
         source_folder_rel = self.origin_folder.resolve().relative_to(self.destiny_folder.resolve(), walk_up=True)
-        content = Decoder.load(origin_readme)
-        content = LinkRebase.change_to_relative_folder(content, source_folder_rel, preserve_assets=True)
-        self.actions.compare_and_save_to(content, destiny_readme)
+        for origin_file in self.origin_folder.iterdir():
+            if not origin_file.is_file() or origin_file.suffix.lower() != ".md":
+                continue
+            destiny_file = self.destiny_folder / origin_file.name
+            content = Decoder.load(origin_file)
+            content = LinkRebase.change_to_relative_folder(content, source_folder_rel, preserve_assets=True)
+            self.actions.compare_and_save_to(content, destiny_file)
 
     def copy_assets(self):
         origin_assets  = self.origin_folder /"assets"

@@ -344,11 +344,13 @@ Assim, `make` não implica necessariamente a existência de testes automáticos.
 
 O índice distingue dois comportamentos principais.
 
-`type=read` indica uma atividade ou recurso destinado à consulta. Markdown pode ser aberto diretamente no editor, e vídeos, páginas e URLs externas podem ser abertos no navegador. O conteúdo não é materializado como uma atividade editável.
+`type=read` indica uma atividade ou recurso destinado à consulta. A tarefa deve apontar para um `README.md` local ou hospedado no GitHub. Quando a origem é externa, o TKO materializa o README, a pasta `assets` e os demais arquivos Markdown da mesma pasta na área de trabalho do usuário.
 
 `type=make` indica que o estudante deve produzir ou modificar algum artefato: código, relatório, resumo, diagrama, projeto, experimento ou qualquer outro produto previsto pela atividade. Se o destino estiver dentro do workspace e pertencer a um índice gerenciado, o TKO trabalha diretamente no original. Caso contrário, cria uma cópia de trabalho.
 
 Uma atividade `make` pode ser avaliada de diferentes formas. Com `eval=self`, o aluno atribui a própria avaliação de acordo com o que conseguiu realizar. Com `eval=test`, o TKO utiliza os testes fornecidos pelo autor.
+
+Para uma tarefa externa `make`, a materialização também copia testes e rascunhos. Para uma tarefa externa `read`, esses arquivos não são copiados nem gerados.
 
 ## Por que o tipo pertence ao índice
 
@@ -375,4 +377,3 @@ Isso torna a indexação rápida, determinística e independente da disponibilid
 Uma regra fundamental é:
 
 > O conteúdo informa o que existe; o índice informa o que o aluno deve fazer com esse conteúdo.
-

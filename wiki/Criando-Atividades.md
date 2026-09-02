@@ -88,7 +88,7 @@ o recurso.
 
 ```md
 - [ ] `@soma type=make gain=1 hard=1 size=1 eval=test` [Soma](labs/soma/README.md)
-- [ ] `@intro gain=1 hard=1 size=1 type=read` [Texto introdutorio](wiki/intro.md)
+- [ ] `@intro gain=1 hard=1 size=1 type=read` [Texto introdutorio](wiki/intro/README.md)
 ```
 
 Campos mais usados:
@@ -175,7 +175,7 @@ Detalhes e casos especiais estao em [Build index](tools/build-index.md).
 
 ## Reaproveitando tarefas remotas
 
-Uma task pode apontar para um `README.md` local ou para uma URL remota.
+Uma task deve apontar para um `README.md` local ou para uma URL do GitHub que aponte para um `README.md`.
 
 ```md
 - [ ] `@fila gain=2 hard=2 size=2 type=make eval=test` [Fila](https://github.com/qxcodeed/arcade/blob/main/labs/fila/README.md)

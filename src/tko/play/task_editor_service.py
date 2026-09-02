@@ -79,9 +79,10 @@ class TaskEditorService:
         if isinstance(obj, Task):
             task: Task = obj
             url = task.location.raw_link
-            origin_target: Path | None = self.repo.task_resolver.origin_file(task, load_git=True)
+            target = self.repo.task_resolver.target_file(task)
+            origin_target: Path | None = target if task.location.is_external else self.repo.task_resolver.origin_file(task, load_git=True)
             logger.info(str(_TaskEditorMsg.OPENING_LINK_LOG).format(task_key=task.basic.key, url=task.location.raw_link))
-            if task.location.is_http_link:
+            if task.location.is_http_link and not task.location.is_external:
                 try:
                     self._open_link_without_stdout_stderr(url)
                     self.fman.add_floating(

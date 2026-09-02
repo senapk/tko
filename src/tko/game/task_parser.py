@@ -7,6 +7,7 @@ from tko.util.git_hub_url import GitHubUrl
 from tko.i18n import Msg
 from icecream import ic # type: ignore
 from pathlib import Path
+from urllib.parse import urlparse
 
 
 
@@ -25,7 +26,7 @@ class TaskParser:
 
     Formato canônico (chave-valor):
         - [ ] `@t1 type=make gain=10 hard=3 size=2 eval=test` [Título](t1/README.md)
-        - [ ] `@t2 gain=5 type=read` [Material](https://exemplo.com/material)
+        - [ ] `@t2 gain=5 type=read` [Material](wiki/material/README.md)
 
     Campos suportados:
         - @chave: identificador único da task
@@ -46,13 +47,13 @@ class TaskParser:
         - Apenas @chave é obrigatória.
         - Campos não obrigatórios assumem valores padrão.
         - Sintaxe antiga (:15, :make, :read, :test, :self, xp=, tier=) ainda é suportada por compatibilidade.
-        - Para links externos http/https: URLs normais funcionam como leitura ou execução externa; URLs do GitHub são tratadas como tarefas remotas importáveis.
+        - Links externos devem ser URLs do GitHub apontando para um README.md; eles são tratados como tarefas remotas importáveis.
 
     Exemplos:
         - [ ] `@t1  type=make gain=8 hard=1 size=1 eval=test` [Implementar soma](t1/README.md)
-        - [ ] `@t2  gain=5 type=read`                        [Ler artigo](https://exemplo.com/material)
+        - [ ] `@t2  gain=5 type=read`                        [Ler material](wiki/material/README.md)
         - [ ] `@foo gain=9 hard=2 size=2`                    [Tarefa de exemplo](exemplo/README.md)
-        - [ ] `@bar type=read`                               [Material externo](https://exemplo.com/material)
+        - [ ] `@bar type=read`                               [Material externo](https://github.com/user/repo/blob/main/wiki/material/README.md)
     """
 
     def __init__(self, index_path: Path, remote_import: bool = False):
@@ -102,6 +103,8 @@ class TaskParser:
 
         if task.basic.key == "":
             return None
+
+        self.__validate_task_link(tm.link)
  
         task.location = TaskLocation(
             index_path=self.index_path,
@@ -109,8 +112,26 @@ class TaskParser:
             line_number=line_num,
             line_data=line,
             task_type=tm.resource_type,
-            git_hub_url=GitHubUrl.parse(tm.link) if tm.is_make else None,
-            remote_import=self.remote_import if tm.is_make else False,
+            git_hub_url=GitHubUrl.parse(tm.link),
+            remote_import=self.remote_import,
         )
 
         return task
+
+    @staticmethod
+    def __validate_task_link(link: str) -> None:
+        parsed = urlparse(link)
+        if parsed.scheme in {"http", "https"}:
+            github = GitHubUrl.parse(link)
+            if github is None or not parsed.netloc.lower() in {"github.com", "www.github.com"}:
+                raise ValueError(
+                    f"Task must point to a local README.md or a GitHub README.md: {link}"
+                )
+            if "/blob/" not in parsed.path or not parsed.path.rstrip("/").endswith("/README.md"):
+                raise ValueError(
+                    f"Task GitHub link must point to a README.md file: {link}"
+                )
+            return
+
+        if Path(link).name != "README.md":
+            raise ValueError(f"Task activity must point to a README file: {link}")

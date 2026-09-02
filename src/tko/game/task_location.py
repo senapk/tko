@@ -40,6 +40,11 @@ class TaskLocation:
     @property
     def is_read_http_link(self) -> bool:
         return self.task_type == TaskType.READ and self.is_http_link
+
+    @property
+    def is_external(self) -> bool:
+        """A tarefa precisa de uma cópia de trabalho separada da origem."""
+        return self.remote_import or self.is_task_from_git
         
     @property
     def is_task_from_git(self) -> bool:
@@ -47,8 +52,10 @@ class TaskLocation:
 
     @property
     def is_static_type(self) -> bool:
-        return self.task_type == TaskType.MAKE and not self.is_import_type
+        return self.task_type == TaskType.MAKE and not self.is_external
 
     @property
     def is_import_type(self) -> bool:
-        return self.task_type == TaskType.MAKE and (self.remote_import or self.is_task_from_git)
+        # Mantido por compatibilidade: importação é uma propriedade da origem,
+        # não do tipo pedagógico (Read/Make).
+        return self.is_external

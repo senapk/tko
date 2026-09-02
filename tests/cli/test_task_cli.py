@@ -54,12 +54,16 @@ def test_task_list_prints_each_duplicate_key_only_once(tmp_path: Path) -> None:
     (tmp_path / "README.md").write_text(
         "# Course\n\n"
         "## First <!-- @first -->\n"
-        "- [ ] `@same type=read` [First](https://example.com/first)\n"
+        "- [ ] `@same type=read` [First](first/README.md)\n"
         "## Second <!-- @second -->\n"
-        "- [ ] `@same type=read` [Duplicate](https://example.com/duplicate)\n"
-        "- [ ] `@unique type=read` [Unique](https://example.com/unique)\n",
+        "- [ ] `@same type=read` [Duplicate](first/README.md)\n"
+        "- [ ] `@unique type=read` [Unique](unique/README.md)\n",
         encoding="utf-8",
     )
+    (tmp_path / "first").mkdir()
+    (tmp_path / "first" / "README.md").write_text("# First\n", encoding="utf-8")
+    (tmp_path / "unique").mkdir()
+    (tmp_path / "unique" / "README.md").write_text("# Unique\n", encoding="utf-8")
     ctx = _make_app_context(tmp_path)
     ctx.rs.force_offline = True
 

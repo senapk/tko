@@ -28,10 +28,12 @@ class TaskResolver:
             case TaskType.NULL:
                 return None
             case TaskType.READ:
+                if loc.is_external:
+                    return self.__remote_work_dir(task) / "README.md"
                 return None
             case TaskType.MAKE:        
                 # if is git url, is import type
-                if loc.remote_import or loc.is_task_from_git:
+                if loc.is_external:
                     return self.__remote_work_dir(task) / "README.md"
                 else:
                     return self.__calc_origin_file(loc)
@@ -51,4 +53,3 @@ class TaskResolver:
                 return None
         else:
             return self.__calc_origin_file(loc)
-        

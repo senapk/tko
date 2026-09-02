@@ -19,8 +19,10 @@ class GuiActionResolver:
         self.flags = flags
 
     def get_task_action(self, task: Task) -> tuple[str, Msg]:
-        if task.location.is_read:
+        if task.location.is_read and not task.location.is_external:
             return "B", TaskAction.VISITAR
+        if task.location.is_read and not self.task_formatter.is_downloaded(task):
+            return "Y", TaskAction.BAIXAR
         if task.location.is_static_type:
             return "G", TaskAction.EXECUTAR
         if not self.task_formatter.is_downloaded_for_lang(task):

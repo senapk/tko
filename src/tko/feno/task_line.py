@@ -4,6 +4,8 @@ from tko.i18n import  Msg
 from tko.game.task_matcher import TaskMatcher
 from tko.run.wdir import Wdir
 from tko.config.settings import Settings
+from urllib.parse import urlparse
+from tko.util.git_hub_url import GitHubUrl
 
 _INDEXER_INVALID_LABEL = Msg.text(
     pt="Rótulo inválido na linha: {label}",
@@ -40,12 +42,17 @@ class TaskLine:
         self.origin_key = tm.key
         if self.tm.is_url:
             self.url = self.tm.link
+            parsed = urlparse(self.tm.link)
+            github = GitHubUrl.parse(self.tm.link)
+            if github is None or parsed.netloc.lower() not in {"github.com", "www.github.com"}:
+                raise ValueError(f"Task must point to a local README.md or a GitHub README.md: {self.tm.link}")
+            if "/blob/" not in parsed.path or not parsed.path.rstrip("/").endswith("/README.md"):
+                raise ValueError(f"Task GitHub link must point to a README.md file: {self.tm.link}")
             return True
 
         link = Path(tm.link)
-        if not self.tm.is_read:
-            if link.name != "README.md":
-                raise ValueError(f"Task activity must point to a README file: {link}")
+        if link.name != "README.md":
+            raise ValueError(f"Task activity must point to a README file: {link}")
         if link.is_absolute():
             self.target_file = Path(link).resolve()
         else:

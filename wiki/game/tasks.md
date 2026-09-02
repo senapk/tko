@@ -4,7 +4,7 @@ Uma tarefa é definida em uma linha markdown com checkbox e link:
 
 ```md
 - [ ] `@t1 gain=9 hard=3 size=2 type=make eval=test` [Implementar função soma](t1/README.md)
-- [ ] `@t2 gain=5 type=read` [Ler artigo sobre listas](https://exemplo.com/material)
+- [ ] `@t2 gain=5 type=read` [Ler material sobre listas](wiki/listas/README.md)
 ```
 
 O identificador `@chave` é obrigatório. Os demais campos podem ser omitidos e assumem valores padrão.
@@ -39,7 +39,9 @@ Cada atividade possui 3 indicadores independentes:
   - Pode apontar para uma pasta local (`labs/soma/README.md`) ou para uma URL do GitHub (`https://github.com/.../README.md`).
   - No caso de URLs do GitHub, o TKO gerencia a clonagem/cache remoto para que o aluno possa resolver e testar localmente.
 - **`type=read`**: Tarefa de consumo/leitura.
-  - Pode apontar para documentação local (`wiki/git/README.md`) ou para links externos HTTP/HTTPS (artigos, vídeos, etc.).
+  - Deve apontar para um `README.md` local ou para um `README.md` hospedado no GitHub.
+  - Quando a origem é externa, o TKO materializa o README, `assets` e os demais Markdown da pasta.
+  - Não copia testes nem cria rascunhos.
 
 
 ## Modos de Avaliação
