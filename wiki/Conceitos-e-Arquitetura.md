@@ -352,6 +352,16 @@ Uma atividade `make` pode ser avaliada de diferentes formas. Com `eval=self`, o 
 
 Para uma tarefa externa `make`, a materialização também copia testes e rascunhos. Para uma tarefa externa `read`, esses arquivos não são copiados nem gerados.
 
+Uma tarefa local continua trabalhando diretamente na origem. Portanto, a
+materialização depende da procedência da tarefa, enquanto `type=read` e
+`type=make` descrevem apenas a intenção pedagógica:
+
+| Procedência | Tipo | Comportamento |
+|---|---|---|
+| Local | `read` ou `make` | Trabalha na origem |
+| Externa | `read` | Materializa README, assets e Markdown adicionais |
+| Externa | `make` | Materializa README, assets, Markdown, testes e rascunhos |
+
 ## Por que o tipo pertence ao índice
 
 O produtor conhece a intenção pedagógica da atividade, mas o indexador não deve tentar inferi-la analisando o conteúdo.

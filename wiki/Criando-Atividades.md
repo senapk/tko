@@ -3,6 +3,8 @@
 Este guia e o caminho principal para professores que querem criar e publicar
 seus proprios repositorios de tarefas no TKO.
 
+Para uma visão geral do fluxo completo, consulte o [ciclo de vida de tarefas](../docs/TASK_LIFECYCLE.md).
+
 A ideia central e simples: o repositorio tem um `README.md` principal que
 funciona como indice navegavel das atividades. Esse indice organiza as tarefas
 em quests, guarda metadados pedagogicos e aponta para as pastas ou links onde
@@ -32,6 +34,11 @@ Papeis dos arquivos:
 
 O repositorio de conteudo do professor nao precisa ter `.tko/`. Essa pasta e
 normalmente parte do workspace do aluno, nao do formato publico das tarefas.
+
+Quando uma tarefa externa é materializada, o TKO copia o `README.md`, a pasta
+`assets/` e todos os demais arquivos Markdown diretamente na pasta da tarefa.
+Arquivos de teste e rascunhos são copiados somente para tarefas externas do
+tipo `make`.
 
 ## Modelo mental
 
@@ -173,9 +180,13 @@ Esse comando:
 
 Detalhes e casos especiais estao em [Build index](tools/build-index.md).
 
+Para testes, conversões e rascunhos, consulte [Criando Tarefas e Testes](Criando-Tarefas-e-Testes.md).
+
 ## Reaproveitando tarefas remotas
 
-Uma task deve apontar para um `README.md` local ou para uma URL do GitHub que aponte para um `README.md`.
+Uma task deve apontar para um `README.md` local ou para uma URL do GitHub que
+aponte para um `README.md`. Não use URLs HTTP genéricas, links para diretórios
+ou links para outros arquivos Markdown.
 
 ```md
 - [ ] `@fila gain=2 hard=2 size=2 type=make eval=test` [Fila](https://github.com/qxcodeed/arcade/blob/main/labs/fila/README.md)
@@ -212,6 +223,7 @@ tko open
 
 - O `README.md` principal lista as quests e tasks esperadas.
 - Cada task local aponta para um `README.md` existente.
+- Cada task externa aponta para um `README.md` local ou para uma URL GitHub de um `README.md` existente.
 - As chaves `@...` sao curtas, unicas e estaveis.
 - As linhas usam `gain`, `hard`, `size`, `type` e `eval`.
 - Os enunciados abrem corretamente no GitHub.

@@ -2,6 +2,8 @@
 
 Este diretório reúne guias de referência e manutenção do TKO.
 
+A documentação temática está organizada no [índice da Wiki](../wiki/README.md).
+
 ## Por perfil
 
 ### Contribuidores e mantenedores

@@ -1,362 +1,41 @@
-# O-que-é-o-tko
+# O que é o TKO
 
-O TKO é uma Plataforma de Prática Deliberada em Programação (CLI/TUI)
+O TKO é um ambiente de aprendizagem executado no terminal para organizar,
+realizar, testar e acompanhar atividades, especialmente atividades de
+programação.
 
-## 1. Visão Geral
+Ele separa três responsabilidades:
 
-A ferramenta descrita é um **ambiente de prática de programação
-local-first**, orientado a terminal, que permite estudantes resolverem
-tarefas de programação em seu próprio ambiente de desenvolvimento (IDE
-ou editor), enquanto o sistema acompanha o processo de resolução e
-coleta dados sobre a evolução da solução.
+- fontes e índices de atividades;
+- área de trabalho do aluno;
+- histórico de execução, testes e evolução.
 
-A proposta central não é apenas verificar se o código final funciona,
-mas **capturar o processo de aprendizagem** --- incluindo tentativas,
-erros, tempo de interação e evolução do código.
+O TKO pode ser usado com qualquer editor e integrado a repositórios Git. O
+professor publica atividades em um repositório; o aluno cadastra a fonte,
+escolhe as tarefas e trabalha no próprio workspace.
 
-O sistema é **open source**, distribuído via repositórios Git, e pode
-ser usado gratuitamente por qualquer pessoa ou instituição.
+## Comece por aqui
 
-------------------------------------------------------------------------
+- [Conceitos e arquitetura](Conceitos-e-Arquitetura.md): modelo conceitual,
+  fontes, origem, workspace e materialização.
+- [Ciclo de vida de tarefas](../docs/TASK_LIFECYCLE.md): fluxo completo de
+  criação, publicação e consumo.
+- [Fazendo atividades](Fazendo-Atividades.md): tutorial do aluno.
+- [Criando atividades](Criando-Atividades.md): guia do professor para
+  organizar quests e tasks.
+- [Marcadores e tipos de tarefas](game/tasks.md): sintaxe dos índices.
 
-# 2. Objetivos Educacionais
+## Princípio central
 
-A ferramenta foi projetada para promover:
+Uma tarefa sempre aponta para um `README.md` local ou para um `README.md` no
+GitHub.
 
--   **Prática deliberada em programação**
--   Aprendizado baseado em tentativa e erro
--   Feedback imediato através de testes automatizados
--   Reflexão do aluno sobre o próprio processo de solução
+Tarefas locais trabalham diretamente na origem. Tarefas externas são
+materializadas na área de trabalho do aluno. A cópia inclui o README, `assets/`
+e os demais Markdown da pasta; somente tarefas externas `make` também recebem
+testes e rascunhos.
 
-Diferente de muitas plataformas tradicionais que avaliam apenas a
-submissão final, o sistema enfatiza:
+## Navegação
 
--   o processo de construção da solução
--   a progressão gradual de entendimento
--   a interação contínua com o problema
-
-Esse modelo aproxima-se de abordagens conhecidas na pesquisa educacional
-como:
-
--   Process-based assessment
--   Learning analytics
--   Deliberate practice environments
-
-------------------------------------------------------------------------
-
-# 3. Arquitetura Geral
-
-A arquitetura segue um modelo **local-first e distribuído**.
-
-## Componentes principais
-
-1.  CLI da ferramenta
-2.  Interface TUI (terminal UI)
-3.  Repositórios de tarefas
-4.  Sistema de testes automatizados
-5.  Sistema de logs e analytics
-6.  Integração com Git, GitHub e Codespaces
-
-------------------------------------------------------------------------
-
-# 4. Fluxo do Aluno / Professor
-
-### Fluxo do aluno trabalhando na sua máquina ou via Codespaces
-
-1.  Criar pasta de trabalho
-2.  Adicionar repositório de tarefas
-3.  Abrir a interface TUI
-4.  Navegar pelas tarefas disponíveis
-5.  Baixar ou ativar uma tarefa
-6.  Editar arquivos no editor de preferência
-7.  Executar testes automatizados
-8.  Visualizar diffs e progresso
-9.  Executar testes personalizados
-10. Concluir tarefa e registrar autoavaliação
-11. Sincronizar progresso com repositório remoto
-
-Durante esse processo, o sistema registra eventos relevantes.
-
-### Fluxo do professor criando e distribuindo tarefas
-
-1. Professor cria um repositório Git para definir tarefas e gamificação.
-2. Copia as tarefas dos servidores oficiais ou cria suas próprias tarefas localmente.
-3. Define como os repositórios dos alunos serão criados: por cada aluno ou em lote pelo professor.
-4. Envia o link do conteúdo e as instruções de fonte para os alunos configurarem no TKO.
-5. Alunos adicionam a fonte e começam a resolver as tarefas.
-6. Sempre que o professor atualiza o repositório de conteúdo, os alunos recebem as atualizações na próxima sincronização.
-7. Após os alunos resolverem as tarefas e realizarem o push, o professor usa ferramentas de coleta de dados do TKO ou abre os repositórios dos alunos para analisar o processo de resolução.
-
-
-------------------------------------------------------------------------
-
-# 5. Estrutura de Tarefas
-
-Um repositório de tarefas usa um `README.md` como índice navegável. Esse índice organiza quests e tasks e guarda os metadados pedagógicos que o TKO processa.
-
-Cada task normalmente possui:
-
--   descrição do problema
--   arquivos de rascunho para o aluno
--   testes automatizados opcionais
--   metadados pedagógicos
-
-Exemplo de estrutura:
-
-    task/
-     ├─ README.md
-     ├─ .cache/drafts/
-     │   ├─ py/draft.py
-     │   └─ go/draft.go
-     ├─ local.sh
-     └─ tests.toml
-
-Metadados incluem:
-
--   `gain`: valor pedagogico
--   `hard`: dificuldade
--   `size`: tamanho ou extensao
--   `type`: `make` ou `read`
--   `eval`: `test` ou `self`
-
-Exemplo de linha no índice:
-
-```md
-- [ ] `@soma type=make gain=1 hard=1 size=1 eval=test` [Soma](labs/soma/README.md)
-```
-
-------------------------------------------------------------------------
-
-# 6. Gamificação
-
-O sistema inclui elementos de gamificação para aumentar engajamento.
-
-Cada tarefa pode ter:
-
--   pontuação
--   tags de habilidade
--   dificuldade
-
-O aluno pode acompanhar:
-
--   progresso por habilidade
--   porcentagem de domínio
--   pontos acumulados
-
-Exemplo de visualização:
-
-    loops        ███████░░░ 70%
-    strings      █████████░ 90%
-    recursão     ██░░░░░░░░ 20%
-
-------------------------------------------------------------------------
-
-# 7. Sistema de Registro de Processo
-
-O sistema registra **eventos durante a resolução da tarefa**.
-
-Existem dois tipos principais de eventos.
-
-## Eventos de execução
-
-Registrados quando o aluno executa intencionalmente o código.
-
-Incluem:
-
--   diffs do código
--   número de testes que passaram
--   número de testes que falharam
-
-## Eventos de atividade e auditoria
-
-Registram interação e, quando a auditoria esta habilitada, snapshots periodicos dos arquivos editados.
-
-- Entrar na atividade
-- Registrar alteração em arquivos
-- Sair da atividade
-- Salvar versões periodicas em `.tko/audit/`
-
-Essa separação permite:
-
--   acompanhar atividade
--   manter baixo volume de dados
--   preservar apenas estados relevantes
-
-------------------------------------------------------------------------
-
-# 8. Reconstrução da Evolução da Solução
-
-Como o TKO guarda históricos de execução, testes e auditoria, é possível acompanhar versões relevantes do código ao longo do trabalho.
-
-Isso permite criar:
-
--   histórico completo da solução
--   replay da resolução da tarefa
--   análise pedagógica da trajetória
-
-------------------------------------------------------------------------
-
-# 9. Integração com GitHub
-
-O sistema se integra naturalmente com:
-
--   Git
--   GitHub
--   Codespaces
-
-Fluxo típico:
-
-    professor cria repositório de tarefas
-    ↓
-    alunos ou professor criam repositórios individuais
-    ↓
-    alunos resolvem tarefas localmente
-    ↓
-    commits registram evolução
-    ↓
-    professor analisa histórico
-
-Essa integração fornece rastreabilidade adicional do processo.
-
-------------------------------------------------------------------------
-
-# 10. Compatibilidade com Ambientes de Desenvolvimento
-
-Uma das decisões arquiteturais principais é permitir que o aluno utilize
-seu **ambiente de desenvolvimento nativo**.
-
-Isso inclui:
-
--   VS Code
--   Vim
--   Emacs
--   PyCharm
--   Neovim
--   outros editores
-
-A ferramenta funciona como **orquestradora do fluxo de aprendizagem**,
-não como editor.
-
-------------------------------------------------------------------------
-
-# 11. Compatibilidade com Cloud Development
-
-A ferramenta funciona bem com ambientes como:
-
-GitHub Codespaces.
-
-Isso permite criar laboratórios prontos com:
-
--   linguagem instalada
--   dependências configuradas
--   tarefas disponíveis
-
-------------------------------------------------------------------------
-
-# 12. Vantagens em Relação a Plataformas Web
-
-Muitas plataformas educacionais usam editores em navegador.
-
-O modelo desta ferramenta difere porque:
-
--   usa ambiente real de desenvolvimento
--   executa testes localmente
--   não exige infraestrutura de servidores
--   escala facilmente
-
-Arquitetura típica da ferramenta:
-
-    terminal
-    +
-    editor local
-    +
-    git
-
-------------------------------------------------------------------------
-
-# 13. Acessibilidade e Custo
-
-A proposta também tem um objetivo social importante.
-
-Como o sistema é:
-
--   open source
--   local-first
--   distribuído via Git
-
-Ele permite que qualquer pessoa ou instituição utilize a plataforma sem
-custo de infraestrutura.
-
-Isso torna possível:
-
--   ensino comunitário
--   cursos independentes
--   autoaprendizado
-
-------------------------------------------------------------------------
-
-# 14. Posicionamento de Mercado
-
-A ferramenta ocupa um espaço pouco explorado entre:
-
--   plataformas de exercícios online
--   ambientes profissionais de desenvolvimento
-
-Ela se posiciona como:
-
-**Terminal-based deliberate practice environment for programming.**
-
-Ou:
-
-**Local-first programming learning platform.**
-
-Comparação simplificada:
-
-  Característica          Ferramenta
-  ----------------------- ------------
-  CLI                     sim
-  TUI                     sim
-  Testes locais           sim
-  Gamificação             sim
-  Analytics educacional   sim
-  Execução local          sim
-
-------------------------------------------------------------------------
-
-# 15. Diferencial Principal
-
-O diferencial mais importante é que o sistema captura:
-
-**o processo de construção da solução**, não apenas o resultado final.
-
-Isso permite:
-
--   observar aprendizado real
--   detectar padrões de resolução
--   analisar dificuldades conceituais
--   fornecer feedback pedagógico mais rico
-
-------------------------------------------------------------------------
-
-# 16. Potencial Futuro
-
-O modelo abre caminho para evoluções como:
-
--   análise automática de trajetórias de solução
--   recomendações adaptativas de tarefas
--   visualizações de progresso da turma
--   análise de padrões de aprendizagem
-
-------------------------------------------------------------------------
-
-# 17. Conclusão
-
-A ferramenta combina:
-
--   prática deliberada
--   feedback automático
--   observação do processo de resolução
--   execução local em ambiente real
-
-Essa combinação é rara em plataformas educacionais e cria um ambiente
-poderoso para ensino de programação.
+Consulte o [índice da Wiki](README.md) para encontrar guias por público e por
+assunto.

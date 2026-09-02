@@ -19,9 +19,10 @@ Arquivos importantes:
 
 ## Repositorio remoto e reuso de indices
 
-Uma linha de tarefa pode apontar para arquivo local ou URL remota.
+Uma linha de tarefa deve apontar para um arquivo `README.md` local ou para uma
+URL do GitHub que aponte para um `README.md`.
 
-- Para URL remota, o parser tenta extrair estrutura GitHub quando aplicavel.
+- Para URL GitHub, o parser extrai a estrutura do repositório e do caminho.
 - Isso permite reutilizar listas de tarefas publicadas em outros repositorios.
 
 Para preparar um indice remoto com links absolutos e reutilizaveis, use:
@@ -68,10 +69,13 @@ Regra de chave:
 - A chave sempre inicia com `@`.
 - O tipo da atividade e definido por `type=make` ou `type=read`.
 
-Para links HTTP em tarefas de producao:
+Para links GitHub em tarefas:
 
 - Se for URL GitHub reconhecida, o parser extrai `repository_url` e `relative_path`.
-- Se for `type=read`, o link e tratado como recurso de consulta.
+- Tarefas externas `read` e `make` são materializadas no workspace do aluno.
+- Tarefas locais continuam trabalhando diretamente na origem.
+- Tarefas externas `read` recebem README, assets e Markdown adicionais, sem testes ou drafts.
+- Tarefas externas `make` também recebem testes e drafts.
 
 ## Regras de tags e defaults
 

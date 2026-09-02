@@ -2,6 +2,10 @@
 
 Este guia explica como estudar e resolver tarefas utilizando o **tko** de forma eficiente.
 
+Para configurar o workspace, consulte [Organizando Disciplinas](Organizando-Disciplinas.md).
+Para entender o fluxo completo entre professor, fonte e aluno, consulte o
+[ciclo de vida de tarefas](../docs/TASK_LIFECYCLE.md).
+
 ## Tópicos abordados
 
 - Como fazer as tarefas utilizando o tko
@@ -44,6 +48,30 @@ Fluxo típico:
 4. implementar sua solução
 5. executar os testes
 6. corrigir erros até passar em todos os testes
+
+## Tarefas locais e externas
+
+Uma tarefa local trabalha diretamente nos arquivos da própria origem. Uma
+tarefa externa é materializada na área de trabalho do aluno quando baixada.
+Isso vale tanto para tarefas `make` quanto para tarefas `read`.
+
+Toda tarefa aponta para um `README.md` local ou para um `README.md` hospedado
+no GitHub. O TKO não aceita links HTTP genéricos para tarefas.
+
+Ao materializar uma tarefa externa, o TKO copia o `README.md`, a pasta
+`assets/` e os demais arquivos Markdown diretamente na pasta da tarefa.
+
+Para tarefas externas `make`, também são copiados os testes e os rascunhos
+necessários. Para tarefas externas `read`, testes e rascunhos não são copiados
+nem gerados; o material de leitura é aberto a partir do README local
+materializado.
+
+O tipo da tarefa descreve a atividade pedagógica:
+
+- `type=make`: produzir ou modificar algum artefato;
+- `type=read`: consultar e estudar o material.
+
+O tipo não determina se a origem é local ou externa.
 
 ---
 

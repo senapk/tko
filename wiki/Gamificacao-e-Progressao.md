@@ -142,8 +142,8 @@ Esse comando ajuda a:
 - calcular `xpgoal` das quests somando o `gain` das tasks marcadas com `[x]`
 
 Pastas novas dentro de `labs/` que contêm `README.md` entram automaticamente na quest correspondente,
-com `type=make gain=1 hard=1 size=1 eval=test`. URLs HTTP/HTTPS são preservadas como referências
-remotas e não são tratadas como arquivos locais quebrados.
+com `type=make gain=1 hard=1 size=1 eval=test`. Links de tarefas devem apontar para `README.md` local
+ou para `README.md` hospedado no GitHub; URLs HTTP/HTTPS genéricas não são aceitas.
 
 Guia detalhado:
 
@@ -152,7 +152,7 @@ Guia detalhado:
 ## Onde documentar cada coisa
 
 - Regras de gamificação e progressão: este arquivo.
-- Sintaxe de tags por linha de tarefa: [Marcadores-e-Tipos.md](game/tasks.md).
+- Sintaxe de tags por linha de tarefa: [Marcadores e tipos de tarefas](game/tasks.md).
 - Operacao de autoria para professores: [Guia para criar repositorios de tarefas](Criando-Atividades.md).
 - Testes, conversoes e drafts: [Criando testes e conversoes](Criando-Tarefas-e-Testes.md).
 - Detalhes tecnicos de parser/engine: [Desenvolvimento-de-Tarefas.md](Desenvolvimento-de-Tarefas.md).

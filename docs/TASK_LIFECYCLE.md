@@ -20,6 +20,10 @@ Uma tarefa normalmente contém:
 - casos de teste (ex.: cases.tio ou formato equivalente)
 - opcionalmente rascunhos por linguagem
 
+Toda tarefa deve ser referenciada por um arquivo `README.md`, usando um caminho
+local ou uma URL do GitHub apontando para esse arquivo. URLs HTTP genéricas,
+links para diretórios e links para outros arquivos não são aceitos pelo TKO.
+
 Depois de criar a tarefa, o professor publica no repositório Git da disciplina.
 
 Na próxima sincronização dos alunos, a tarefa aparece automaticamente no TKO.
@@ -33,12 +37,13 @@ O professor pode:
    - comunidade
    - outros professores
 
-   Basta referenciar a URL completa da tarefa no README de índice da disciplina.
+   Basta referenciar no README de índice da disciplina o caminho local ou a URL
+   do GitHub para o `README.md` da tarefa.
 
 2. Criar atividade nova no próprio repositório:
    - enunciado
-   - testes
-   - rascunhos (opcional)
+   - testes e rascunhos, quando a atividade for `make`;
+   - apenas documentação Markdown e assets, quando a atividade for `read`.
 
 ## Fluxo do aluno
 
@@ -78,13 +83,29 @@ Comportamento padrão:
 ### Professor quer montar disciplina usando material existente
 
 - Mantém README de índice da disciplina.
-- Referencia tarefas prontas por URL completa.
+- Referencia tarefas prontas por caminho local ou por URL do GitHub apontando para `README.md`.
 - Publica e distribui para turma.
 
 ### Aluno quer estudar fora de disciplina
 
 - Pode adicionar remotos públicos de trilhas e atividades.
 - Segue o mesmo fluxo de init, source add e open.
+
+## Materialização de tarefas externas
+
+Uma tarefa local continua trabalhando diretamente na origem. Uma tarefa externa,
+seja `read` ou `make`, é copiada para a área de trabalho do aluno quando é
+baixada.
+
+Em ambos os tipos, a cópia contém:
+
+- `README.md`;
+- a pasta `assets/`;
+- os demais arquivos Markdown diretamente na pasta da tarefa.
+
+Somente uma tarefa externa `make` recebe também arquivos de teste e rascunhos.
+Uma tarefa externa `read` é aberta a partir do README materializado e não gera
+rascunho nem copia testes.
 
 ## Guias relacionados
 
