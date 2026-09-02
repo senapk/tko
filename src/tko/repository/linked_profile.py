@@ -12,7 +12,7 @@ from loguru import logger
 
 from tko.config.languages_settings import LanguagesSettings
 from tko.i18n import Msg
-from tko.repository.remote import Remote
+from tko.repository.remote import Source
 from tko.repository.repository import Repository
 from tko.repository.repository_data import ConfigDict, ConfigValue, ProfileLink
 from tko.util.decoder import Decoder
@@ -177,7 +177,7 @@ class LinkedProfileService:
             uri = source_data.get("uri")
             if not isinstance(uri, str) or not uri:
                 raise ValueError(str(_PROFILE_INVALID).format(reason=str(_PROFILE_INVALID_SOURCE).format(label=label)))
-            _ = Remote.from_uri(label, uri)
+            _ = Source.from_uri(label, uri)
 
         audit = profile.get("audit")
         if audit is not None:

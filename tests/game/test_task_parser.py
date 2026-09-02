@@ -3,8 +3,8 @@ from tko.game.task_enums import TaskEval, TaskType
 from tko.game.task_parser import TaskParser
 
 
-def make_parser(remote_import: bool = False) -> TaskParser:
-    return TaskParser(index_path=Path("/source/arquivo.md"), remote_import=remote_import)
+def make_parser(external_source: bool = False) -> TaskParser:
+    return TaskParser(index_path=Path("/source/arquivo.md"), external_source=external_source)
 
 
 def test_parse_legacy_link_task() -> None:
@@ -19,19 +19,19 @@ def test_parse_legacy_link_task() -> None:
     assert task.location.line_number == 0
     assert task.location.task_type == TaskType.MAKE
     assert task.location.git_hub_url is None
-    assert task.location.remote_import is False
+    assert task.location.external_source is False
 
 
 def test_parse_github_blob_url_sets_github_structure() -> None:
-    task = make_parser(remote_import=True).parse_line(
+    task = make_parser(external_source=True).parse_line(
         "- [ ] `@label type=make` [complemente](https://github.com/user/repo/blob/main/folder/README.md)",
     )
 
     assert task is not None
     assert task.location.task_type == TaskType.MAKE
     assert task.location.is_task_from_git is True
-    assert task.location.is_import_type is True
-    assert task.location.remote_import is True
+    assert task.location.materialization.value == "external"
+    assert task.location.external_source is True
     assert task.location.git_hub_url is not None
     assert task.location.git_hub_url.repository_url == "https://github.com/user/repo"
     assert task.location.git_hub_url.relative_path == "folder/README.md"
@@ -69,7 +69,7 @@ def test_read_task_external_url_is_rejected() -> None:
 
 
 def test_read_task_github_url_stays_external_and_uses_self_eval() -> None:
-    task = make_parser(remote_import=True).parse_line(
+    task = make_parser(external_source=True).parse_line(
         "- [ ] `@ref type=read eval=test` [material](https://github.com/user/repo/blob/main/README.md)",
     )
 
@@ -78,7 +78,7 @@ def test_read_task_github_url_stays_external_and_uses_self_eval() -> None:
     assert task.location.is_read_http_link is True
     assert task.location.git_hub_url is not None
     assert task.location.is_external is True
-    assert task.location.remote_import is True
+    assert task.location.external_source is True
     assert task.config.test == TaskEval.SELF
 
 

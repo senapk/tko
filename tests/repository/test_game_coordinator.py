@@ -18,10 +18,10 @@ def test_ensure_managed_readmes_removes_missing_task_during_load(tmp_path: Path)
         encoding="utf-8",
     )
     remote = SimpleNamespace(name="labs")
-    repo = SimpleNamespace(remotes={"labs": remote})
+    repo = SimpleNamespace(sources={"labs": remote})
     resolver = SimpleNamespace(
         is_local_internal=lambda _remote: True,  # type: ignore[attr-defined]
-        remote_work_dir=lambda _remote: source_dir,  # type: ignore[attr-defined]
+        source_work_dir=lambda _source: source_dir,  # type: ignore[attr-defined]
         resolve_index_file=lambda _remote, load_git=False: (index_file, True),  # type: ignore[attr-defined]
     )
 

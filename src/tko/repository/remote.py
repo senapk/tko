@@ -6,7 +6,7 @@ from tko.util.git_hub_url import GitHubUrl
 from typing import Any
 from loguru import logger
 
-class Keys:
+class SourceKeys:
     NAME = "name"
     PATH_OR_URL = "path_or_url"
     URI = "uri"
@@ -34,7 +34,7 @@ DEFAULT_BRANCH = "main"
 DEFAULT_INDEX = "README.md"
 
 @dataclass(frozen=True, slots=True)
-class Remote:
+class Source:
     source_type: SourceType = SourceType.LOCAL_FILE
     is_editable: bool = False
     
@@ -42,10 +42,10 @@ class Remote:
     path_or_url: str = ""
 
     @staticmethod
-    def from_local_file(name: str, target: Path, is_editable: bool = False) -> Remote:
+    def from_local_file(name: str, target: Path, is_editable: bool = False) -> Source:
         if target.is_dir():
             target = target / DEFAULT_INDEX
-        return Remote(
+        return Source(
             name=name,
             source_type=SourceType.LOCAL_FILE,
             is_editable=is_editable,
@@ -53,16 +53,16 @@ class Remote:
         )
 
     @staticmethod
-    def from_uri(name: str, uri: str, is_editable: bool = False) -> Remote:
+    def from_uri(name: str, uri: str, is_editable: bool = False) -> Source:
         if GitHubUrl.parse(uri) is not None:
-            remote = Remote.from_git_file(name, uri)
+            remote = Source.from_git_file(name, uri)
             if remote is None:
                 raise ValueError(f"Invalid git source: {uri}")
             return remote
-        return Remote.from_local_file(name, Path(uri), is_editable=is_editable)
+        return Source.from_local_file(name, Path(uri), is_editable=is_editable)
 
     @staticmethod
-    def from_git_file(name: str, target: str, branch: str | None = None, index: str | None = None) -> Remote | None:
+    def from_git_file(name: str, target: str, branch: str | None = None, index: str | None = None) -> Source | None:
         gus = GitHubUrl.parse(target)
         if gus is None:
             logger.warning(f"Invalid GitHub URL: {target}")
@@ -74,7 +74,7 @@ class Remote:
             gus = gus.set_relative_path(index)
         if gus.relative_path is None:
             gus = gus.set_relative_path(DEFAULT_INDEX)
-        return Remote(
+        return Source(
             name=name,
             source_type=SourceType.GIT_SOURCE,
             is_editable=False,
@@ -91,7 +91,7 @@ class Remote:
         return self.source_type == SourceType.LOCAL_FILE
 
     @staticmethod
-    def from_dict(data: dict[str, Any]) -> Remote:
+    def from_dict(data: dict[str, Any]) -> Source:
         name: str = ""
         target: str = ""
         path_or_url: str | None = None
@@ -99,14 +99,14 @@ class Remote:
         index: str = DEFAULT_INDEX
         source_type: SourceType = SourceType.LOCAL_FILE
 
-        if Keys.NAME in data and isinstance(data[Keys.NAME], str):
-            name = data[Keys.NAME]
-        if Keys.PATH_OR_URL in data and isinstance(data[Keys.PATH_OR_URL], str):
-            path_or_url = data[Keys.PATH_OR_URL]
-        if Keys.URI in data and isinstance(data[Keys.URI], str):
-            path_or_url = data[Keys.URI]
-        if Keys.WRITEABLE in data and isinstance(data[Keys.WRITEABLE], bool):
-            is_editable = data[Keys.WRITEABLE]
+        if SourceKeys.NAME in data and isinstance(data[SourceKeys.NAME], str):
+            name = data[SourceKeys.NAME]
+        if SourceKeys.PATH_OR_URL in data and isinstance(data[SourceKeys.PATH_OR_URL], str):
+            path_or_url = data[SourceKeys.PATH_OR_URL]
+        if SourceKeys.URI in data and isinstance(data[SourceKeys.URI], str):
+            path_or_url = data[SourceKeys.URI]
+        if SourceKeys.WRITEABLE in data and isinstance(data[SourceKeys.WRITEABLE], bool):
+            is_editable = data[SourceKeys.WRITEABLE]
 
 
 
@@ -114,45 +114,45 @@ class Remote:
             name = data["alias"]
         if "database" in data and isinstance(data["database"], str): # for backward compatibility
             name = data["database"]
-        if Keys.TARGET in data and isinstance(data[Keys.TARGET], str):
-            target = data[Keys.TARGET]
-        if Keys.BRANCH in data and isinstance(data[Keys.BRANCH], str):
-            branch = data[Keys.BRANCH]
+        if SourceKeys.TARGET in data and isinstance(data[SourceKeys.TARGET], str):
+            target = data[SourceKeys.TARGET]
+        if SourceKeys.BRANCH in data and isinstance(data[SourceKeys.BRANCH], str):
+            branch = data[SourceKeys.BRANCH]
         else:
             branch = "main"
-        if Keys.TYPE in data and isinstance(data[Keys.TYPE], str):
-            type_str = data[Keys.TYPE]
+        if SourceKeys.TYPE in data and isinstance(data[SourceKeys.TYPE], str):
+            type_str = data[SourceKeys.TYPE]
             if type_str == SourceType.LOCAL_FILE.value:
                 source_type = SourceType.LOCAL_FILE
             else:
                 source_type = SourceType.GIT_SOURCE
         else:
             source_type = SourceType.LOCAL_FILE
-        if Keys.INDEX in data and isinstance(data[Keys.INDEX], str):
-            index = data[Keys.INDEX]
+        if SourceKeys.INDEX in data and isinstance(data[SourceKeys.INDEX], str):
+            index = data[SourceKeys.INDEX]
         else:
             index = "README.md"
 
 
         if source_type == SourceType.GIT_SOURCE:
             if path_or_url is not None:
-                remote = Remote.from_git_file(name=name, target=path_or_url, branch=None, index=None)
+                remote = Source.from_git_file(name=name, target=path_or_url, branch=None, index=None)
             else:
-                remote = Remote.from_git_file(name=name, target=target, branch=branch, index=index)
+                remote = Source.from_git_file(name=name, target=target, branch=branch, index=index)
             if remote is None:
                 raise ValueError(f"Invalid git source: {target}")
             return remote
         else:
             if path_or_url is not None:
-                return Remote.from_local_file(name=name, target=Path(path_or_url), is_editable=is_editable)
+                return Source.from_local_file(name=name, target=Path(path_or_url), is_editable=is_editable)
             else:
-                return Remote.from_local_file(name=name, target=Path(target) / index, is_editable=is_editable)
+                return Source.from_local_file(name=name, target=Path(target) / index, is_editable=is_editable)
 
     def to_dict(self) -> dict[str, Any]:
         output: dict[str, Any] = {
-            Keys.NAME: self.name,
-            Keys.TYPE: self.source_type.value,
-            Keys.WRITEABLE: self.is_editable,
-            Keys.PATH_OR_URL: self.path_or_url,
+            SourceKeys.NAME: self.name,
+            SourceKeys.TYPE: self.source_type.value,
+            SourceKeys.WRITEABLE: self.is_editable,
+            SourceKeys.PATH_OR_URL: self.path_or_url,
         }
         return output

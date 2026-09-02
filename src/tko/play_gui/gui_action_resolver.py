@@ -23,7 +23,7 @@ class GuiActionResolver:
             return "B", TaskAction.VISITAR
         if task.location.is_read and not self.task_formatter.is_downloaded(task):
             return "Y", TaskAction.BAIXAR
-        if task.location.is_static_type:
+        if not task.location.is_external:
             return "G", TaskAction.EXECUTAR
         if not self.task_formatter.is_downloaded_for_lang(task):
             return "Y", TaskAction.BAIXAR

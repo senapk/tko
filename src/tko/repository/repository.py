@@ -3,9 +3,9 @@ from pathlib import Path
 from tko.config.run_settings import RunSettings
 from tko.config.user_data import UserData
 from tko.game.task_resolver import TaskResolver
-from tko.repository.remote_resolver import RemoteResolver
+from tko.repository.remote_resolver import SourceResolver
 from tko.repository.repository_data import RepositoryData
-from tko.repository.remote import Remote
+from tko.repository.remote import Source
 from tko.game.game import Game
 from tko.logger.logger import Logger
 from tko.repository.repository_paths import RepositoryPaths
@@ -58,8 +58,8 @@ class Repository:
         self.data.audit.enabled = value
 
     @property
-    def remote_resolver(self) -> RemoteResolver:
-        return RemoteResolver(self.git_cache, self.paths.root_dir)
+    def source_resolver(self) -> SourceResolver:
+        return SourceResolver(self.git_cache, self.paths.root_dir)
 
     @property
     def task_resolver(self) -> TaskResolver:
@@ -74,11 +74,7 @@ class Repository:
         self.data.audit.interval_seconds = value
 
     @property
-    def remotes(self) -> dict[str, Remote]:
-        return self.data.get_remotes()
-
-    @property
-    def sources(self) -> dict[str, Remote]:
+    def sources(self) -> dict[str, Source]:
         return self.data.get_sources()
 
     @property

@@ -27,12 +27,12 @@ class TaskFormatter:
         drafts = finder.load_source_files()
         return len(drafts) > 0
 
-    def get_task_full_title(self, task: Task, key_pad: None | int, sep: str = " ", remote_name: str = "") -> tuple[str, str, str]:
+    def get_task_full_title(self, task: Task, key_pad: None | int, sep: str = " ", source_name: str = "") -> tuple[str, str, str]:
         basic = task.basic
         if key_pad is None:
             key_pad = len(basic.key)
         if not f"@{basic.key}" in basic.title:
-            key = f"{remote_name}@{basic.key}".ljust(key_pad + 1, sep) + sep
+            key = f"{source_name}@{basic.key}".ljust(key_pad + 1, sep) + sep
             title = basic.title
             return key + title, key, title
         return basic.title, "", basic.title
@@ -58,7 +58,7 @@ class TaskFormatter:
             state_mode = read
         elif task.location.is_read:
             state_mode = down if self.is_downloaded(task) else empty
-        elif task.location.is_static_type:
+        elif not task.location.is_external:
             state_mode = static
         elif self.is_downloaded_for_lang(task):
             state_mode = down

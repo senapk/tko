@@ -39,8 +39,9 @@ Subapps principais:
 
 Peças centrais:
 
-- src/tko/app_context.py
-- src/tko/config/settings.py
+- `src/tko/config/settings.py`
+- `src/tko/repository/repository.py`
+- `src/tko/repository/repository_data.py`
 
 Responsabilidades:
 
@@ -48,7 +49,7 @@ Responsabilidades:
 2. Controlar comportamento global (cache, update, offline, render).
 3. Disponibilizar contexto consistente para os comandos.
 
-## Repositórios e carga de tarefas
+## Fontes e carga de tarefas
 
 Pacotes principais:
 
@@ -58,9 +59,18 @@ Pacotes principais:
 
 Responsabilidades:
 
-1. Carregar fontes locais e remotas.
+1. Carregar fontes locais e Git.
 2. Parsear README de índice com quests/tasks.
 3. Transformar metadados em estrutura de execução e progresso.
+
+Uma `Source` é a unidade configurada de conteúdo, identificada por um nome e
+uma URI local ou Git. A fonte de autoria é apenas a fonte local editável
+selecionada; não existe um conceito separado de sandbox.
+
+Uma tarefa possui três dimensões independentes: tipo (`read` ou `make`),
+avaliação (`self` ou `test`) e materialização (`local` ou `external`). A
+materialização determina se a atividade precisa ser copiada para o workspace;
+o tipo determina se testes e rascunhos fazem sentido.
 
 ## Execução de código
 

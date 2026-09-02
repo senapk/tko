@@ -91,7 +91,7 @@ def test_task_resolution_service_sets_standalone_task_when_needed():
 
     assert changed is True
     assert ctx.task.basic.key == "STANDALONE"
-    assert ctx.task.basic.remote_name == "NONE"
+    assert ctx.task.basic.source_name == "NONE"
     assert ctx.track_folder is None
 
 

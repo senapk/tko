@@ -1,5 +1,5 @@
 from __future__ import annotations
-from tko.game.tree_item import TreeBasic, TreeUi
+from tko.game.tree_item import TreeItem
 from tko.game.task import Task
 from tko.game.quest_source import QuestSource
 from tko.game.quest_config import QuestGame
@@ -9,10 +9,9 @@ from tko.game.quest_progress import QuestProgress
 
 # from typing import override
 
-class Quest:
+class Quest(TreeItem):
     def __init__(self, title: str = "", key: str = ""):
-        self.basic = TreeBasic()
-        self.ui = TreeUi()
+        super().__init__()
         self.source = QuestSource()
         self.game = QuestGame()
         self.requirements = QuestRequirements()

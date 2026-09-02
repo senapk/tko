@@ -5,7 +5,7 @@ from loguru import logger
 
 from tko.config.settings import Settings
 from tko.i18n import Msg
-from tko.repository.remote import Remote, SourceType
+from tko.repository.remote import Source, SourceType
 from tko.repository.repository import Repository
 from tko.repository.repository_config import RepositoryLoader
 from tko.util.console import Console
@@ -91,21 +91,21 @@ class SourceActions:
         for source in sources.values():
             self.show_source(source)
 
-    def show_source(self, source: Remote) -> None:
+    def show_source(self, source: Source) -> None:
         authoring = "yes" if source.name == self.repo.data.authoring_source else "no"
         Console.print(
             _SOURCE_ROW.t().format(
                 label=source.name,
                 context=self.context_name(source),
-                uri=self.repo.remote_resolver.serialize_uri(source),
+                uri=self.repo.source_resolver.serialize_uri(source),
                 authoring=authoring,
             )
         )
 
-    def context_name(self, source: Remote) -> str:
+    def context_name(self, source: Source) -> str:
         if source.source_type == SourceType.GIT_SOURCE:
             return "git"
-        if self.repo.remote_resolver.is_local_internal(source):
+        if self.repo.source_resolver.is_local_internal(source):
             return "managed"
         return "local"
 
@@ -176,7 +176,7 @@ class SourceActions:
                 self.repo.data.set_authoring_source(label)
             RepositoryLoader(self.repo).save()
         except ValueError as error:
-            self.repo.data.rm_remote_legacy(label)
+            self.repo.data.remove_source(label)
             self.repo.data.authoring_source = previous_authoring
             logger.warning(str(error))
             return False
@@ -193,7 +193,7 @@ class SourceActions:
             return False
         return self.add_source(label=label, uri=uri)
 
-    def _source_from_uri(self, label: str, uri: str) -> Remote:
+    def _source_from_uri(self, label: str, uri: str) -> Source:
         if uri.startswith("@"):
             alias = uri[1:]
             if not self.settings.has_alias_git(alias):
@@ -210,16 +210,16 @@ class SourceActions:
             index_path, ok = self.repo.git_cache.git_hub_url_to_path(git_url, load_git=True)
             if not ok or not index_path.exists():
                 raise ValueError(str(_SOURCE_FILE_NOT_FOUND))
-            source = Remote.from_git_file(name=label, target=git_url.blob_url)
+            source = Source.from_git_file(name=label, target=git_url.blob_url)
             if source is None:
                 raise ValueError(str(_SOURCE_CLONE_FAILED))
             return source
 
-        source = Remote.from_uri(label, uri)
-        resolved_path = self.repo.remote_resolver.resolve_local_uri(source.path_or_url)
-        if not self.repo.remote_resolver.is_local_internal(source) and not resolved_path.exists():
+        source = Source.from_uri(label, uri)
+        resolved_path = self.repo.source_resolver.resolve_local_uri(source.path_or_url)
+        if not self.repo.source_resolver.is_local_internal(source) and not resolved_path.exists():
             raise ValueError(str(_SOURCE_FILE_NOT_FOUND))
-        return replace(source, path_or_url=self.repo.remote_resolver.serialize_uri(source))
+        return replace(source, path_or_url=self.repo.source_resolver.serialize_uri(source))
 
     def git_clone_repository(self, link: GitHubUrl) -> bool:
         Console.print(_SOURCE_ACCESSING_GIT.t().format(link=link.repository_url))

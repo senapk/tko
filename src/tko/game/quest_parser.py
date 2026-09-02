@@ -11,7 +11,7 @@ class QuestParser:
     def __init__(self, source_alias: str):
         self.source_alias = source_alias
         self.quest = Quest()
-        self.quest.basic.remote_name = source_alias
+        self.quest.basic.source_name = source_alias
         self.raw_line: str = ""
         self.line_num = 0
         self.filename: Path = Path("")
@@ -43,7 +43,7 @@ class QuestParser:
         self.filename: Path = filename
         self.quest.source.line = self.raw_line
         self.quest.source.line_number = self.line_num
-        self.quest.basic.remote_name = ""
+        self.quest.basic.source_name = ""
 
         if self.match_full_pattern():
             return self.finish_quest()

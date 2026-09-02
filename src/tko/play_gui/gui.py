@@ -49,7 +49,7 @@ class Gui:
         audit_mode_fn = lambda: self.watcher is not None and self.watcher.audit_logger is not None
         
         self.top_bar         = GuiTopBar(self.flags, self.app, edit_fn=edit_mode_fn, audit_fn=audit_mode_fn)
-        self.skills_bar      = GuiSkillsBar(self.game, self.colors, self.flags, lambda: self.tree.get_selected_throw().basic.remote_name)
+        self.skills_bar      = GuiSkillsBar(self.game, self.colors, self.flags, lambda: self.tree.get_selected_throw().basic.source_name)
         self.graph_panel     = GuiGraphPanel(self.settings, self.repo, self.flags)
 
     # ------------------------------------------------------------------

@@ -132,15 +132,8 @@ class CmdDown:
         
     def execute(self) -> bool:
 
-        if self.task.location.is_import_type:
-            self.download_from_external_remote()
-            return True
-        if self.task.location.is_static_type:
-            if not self.copy_drafts():
-                self.actions.fnprint(_DOWN_ACTIVITY_ALREADY_PRESENT.t())
-            return False
-        self.actions.fnprint(_DOWN_LINK_HAS_NO_DOWNLOAD.t())
-        return False
+        self.download_from_external_remote()
+        return True
 
     def set_fnprint(self, fnprint: Callable[[str| RT], None]):
         self.actions.fnprint = fnprint

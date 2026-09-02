@@ -25,7 +25,7 @@ class GuiSkillsBar:
         self.available_cut = 3
         self.overload = 1.1
 
-    def get_remote(self):
+    def get_source(self):
         try:
             return self.remote()
         except IndexError as _:
@@ -69,7 +69,7 @@ class GuiSkillsBar:
 
     def show(self, frame_xp: Frame) -> None:
         dy, dx = frame_xp.get_inner()
-        quests: dict[str, Quest] = {k: q for k, q in self.game.quests.items() if q.basic.remote_name == self.get_remote()}
+        quests: dict[str, Quest] = {k: q for k, q in self.game.quests.items() if q.basic.source_name == self.get_source()}
         xp_resume: XPResume = XPResume(quests)
         skills_resume: dict[str, SkillResume] = xp_resume.get_skills_resume()
         frame_xp.draw()

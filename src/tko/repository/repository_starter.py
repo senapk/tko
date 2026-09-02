@@ -108,13 +108,13 @@ class RepositoryStarter:
         if self.profile_uri is None and not self.skip:
             self.ask_about_default_sources()
 
-        authoring = repo.data.get_authoring_remote() if hasattr(repo.data, "get_authoring_remote") else None
+        authoring = repo.data.get_authoring_source()
         if authoring is not None:
-            index_file, _ = repo.remote_resolver.resolve_index_file(authoring, load_git=False)
+            index_file, _ = repo.source_resolver.resolve_index_file(authoring, load_git=False)
             index_file.parent.mkdir(parents=True, exist_ok=True)
             if not index_file.exists():
                 index_file.write_text(f"# {authoring.name}\n\n", encoding="utf-8")
-            repo.remote_resolver.source_activity_dir(authoring).mkdir(parents=True, exist_ok=True)
+            repo.source_resolver.source_activity_dir(authoring).mkdir(parents=True, exist_ok=True)
 
         RepositoryLoader(repo).save()
         Console.print(_REPO_STARTER_OPEN_HINT.t())

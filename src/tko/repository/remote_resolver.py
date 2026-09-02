@@ -3,7 +3,7 @@ from tko.repository.git_cache import GitCache
 from pathlib import Path
 
 from tko.i18n import Msg
-from tko.repository.remote import Remote, SourceType
+from tko.repository.remote import Source, SourceType
 
 
 _REMOTE_PATH_SOURCE_DIR_NOT_EXISTS = Msg.text(
@@ -15,27 +15,27 @@ _REMOTE_PATH_INDEX_FILE_NOT_EXISTS = Msg.text(
     en="Index file does not exist",
 )
 
-class RemoteResolver:
+class SourceResolver:
     def __init__(self, git_cache: GitCache, root_dir: Path):
         self.git_cache: GitCache = git_cache
         self.repo_root_dir: Path = root_dir.resolve()
 
-    def remote_work_dir(self, remote: Remote) -> Path:
-        return self.repo_root_dir / remote.name
+    def source_work_dir(self, source: Source) -> Path:
+        return self.repo_root_dir / source.name
 
-    def is_local_internal(self, remote: Remote) -> bool:
-        if remote.source_type != SourceType.LOCAL_FILE:
+    def is_local_internal(self, source: Source) -> bool:
+        if source.source_type != SourceType.LOCAL_FILE:
             return False
-        path = self.resolve_local_uri(remote.path_or_url)
+        path = self.resolve_local_uri(source.path_or_url)
         return path.is_relative_to(self.repo_root_dir)
 
-    def is_editable_index(self, remote: Remote) -> bool:
-        if remote.source_type != SourceType.LOCAL_FILE:
+    def is_editable_index(self, source: Source) -> bool:
+        if source.source_type != SourceType.LOCAL_FILE:
             return False
-        return self.is_local_internal(remote)
+        return self.is_local_internal(source)
 
-    def source_activity_dir(self, remote: Remote) -> Path:
-        return self.remote_work_dir(remote)
+    def source_activity_dir(self, source: Source) -> Path:
+        return self.source_work_dir(source)
 
     def resolve_local_uri(self, uri: str) -> Path:
         path = Path(uri)
@@ -43,17 +43,17 @@ class RemoteResolver:
             return path.resolve()
         return (self.repo_root_dir / path).resolve()
 
-    def serialize_uri(self, remote: Remote) -> str:
-        if remote.source_type == SourceType.GIT_SOURCE:
-            return remote.path_or_url
-        path = self.resolve_local_uri(remote.path_or_url)
+    def serialize_uri(self, source: Source) -> str:
+        if source.source_type == SourceType.GIT_SOURCE:
+            return source.path_or_url
+        path = self.resolve_local_uri(source.path_or_url)
         if path.is_relative_to(self.repo_root_dir):
             return path.relative_to(self.repo_root_dir).as_posix()
         return path.as_posix()
     
-    def resolve_index_file(self, remote: Remote, load_git: bool) -> tuple[Path , bool]:
-        if remote.source_type == SourceType.GIT_SOURCE:
-            ghu = GitHubUrl.parse(remote.path_or_url)
+    def resolve_index_file(self, source: Source, load_git: bool) -> tuple[Path , bool]:
+        if source.source_type == SourceType.GIT_SOURCE:
+            ghu = GitHubUrl.parse(source.path_or_url)
             if ghu is None or ghu.relative_path is None:
                 return Path(), False
             folder, found = self.git_cache.get_repository_dir(ghu.repository_url, load_git=load_git)
@@ -61,5 +61,5 @@ class RemoteResolver:
                 return folder, False
             return folder / ghu.relative_path, True
         else:
-            path = self.resolve_local_uri(remote.path_or_url)
+            path = self.resolve_local_uri(source.path_or_url)
             return path, path.exists()

@@ -25,7 +25,7 @@ class FakeRepo:
         self.saved_source = None
         self.data = SimpleNamespace(
             lang="",
-            set_remote=self._set_source,
+            get_authoring_source=lambda: None,
         )
         self.paths = SimpleNamespace(cache_folder=root / ".tko" / "cache")
 

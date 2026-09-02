@@ -2,14 +2,13 @@ from pathlib import Path
 
 import pytest
 
-from tko.repository.remote import DEFAULT_INDEX, Remote, SourceType
-from tko.repository.remote import DEFAULT_INDEX, Remote, SourceType
+from tko.repository.remote import DEFAULT_INDEX, Source, SourceType
 
 def test_from_local_file_keeps_absolute_file_path(tmp_path: Path) -> None:
     source_dir = tmp_path / "materials"
     index_file = source_dir / DEFAULT_INDEX
 
-    remote = Remote.from_local_file("disc", index_file, is_editable=False)
+    remote = Source.from_local_file("disc", index_file, is_editable=False)
 
     assert remote.path_or_url == index_file.as_posix()
     assert remote.is_editable is False
@@ -19,14 +18,14 @@ def test_from_local_file_uses_default_index_for_directory(tmp_path: Path) -> Non
     source_dir = tmp_path / "materials"
     source_dir.mkdir()
 
-    remote = Remote.from_local_file("disc", source_dir, is_editable=True)
+    remote = Source.from_local_file("disc", source_dir, is_editable=True)
 
     assert remote.path_or_url == (source_dir / DEFAULT_INDEX).as_posix()
     assert remote.is_editable is True
 
 
 def test_from_git_file_builds_blob_url_with_branch_and_index() -> None:
-    remote = Remote.from_git_file(
+    remote = Source.from_git_file(
         "disc",
         "https://github.com/user/repo",
         branch="develop",
@@ -41,11 +40,11 @@ def test_from_git_file_builds_blob_url_with_branch_and_index() -> None:
 
 
 def test_from_git_file_returns_none_for_invalid_url() -> None:
-    assert Remote.from_git_file("disc", "https://example.com/repo.git") is None
+    assert Source.from_git_file("disc", "https://example.com/repo.git") is None
 
 
 def test_load_from_dict_supports_legacy_git_fields() -> None:
-    remote = Remote.from_dict(
+    remote = Source.from_dict(
         {
             "alias": "legacy",
             "target": "https://github.com/user/repo",
@@ -63,7 +62,7 @@ def test_load_from_dict_supports_legacy_git_fields() -> None:
 
 
 def test_load_from_dict_uses_path_or_url_when_present() -> None:
-    remote = Remote.from_dict(
+    remote = Source.from_dict(
         {
             "name": "disc",
             "path_or_url": "materials/README.md",
@@ -72,11 +71,11 @@ def test_load_from_dict_uses_path_or_url_when_present() -> None:
         }
     )
 
-    assert remote == Remote.from_local_file("disc", Path("materials/README.md"), is_editable=True)
+    assert remote == Source.from_local_file("disc", Path("materials/README.md"), is_editable=True)
 
 
 def test_save_to_dict_persists_expected_fields() -> None:
-    remote = Remote.from_git_file("disc", "https://github.com/user/repo", branch="develop", index="INDEX.md")
+    remote = Source.from_git_file("disc", "https://github.com/user/repo", branch="develop", index="INDEX.md")
     assert remote is not None
 
     saved = remote.to_dict()
@@ -91,4 +90,4 @@ def test_save_to_dict_persists_expected_fields() -> None:
 
 def test_from_dict_raises_value_error_for_invalid_git_source() -> None:
     with pytest.raises(ValueError, match="Invalid git source"):
-        Remote.from_dict({"name": "disc", "target": "https://example.com/repo.git", "type": "git"})
+        Source.from_dict({"name": "disc", "target": "https://example.com/repo.git", "type": "git"})

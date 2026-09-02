@@ -39,10 +39,10 @@ _GAME_BUILDER_NO_QUEST_TITLE = Msg.text(
 
 
 class GameBuilder:
-    def __init__(self, index_path: Path, remote_name: str, remote_import: bool = False):
+    def __init__(self, index_path: Path, source_name: str, external_source: bool = False):
         self.index_path = index_path
-        self.remote_name = remote_name
-        self.remote_import = remote_import
+        self.source_name = source_name
+        self.external_source = external_source
 
         self.ordered_quests: list[str] = []  # ordered quests keys
         self.quests: dict[str, Quest] = {}
@@ -124,15 +124,15 @@ class GameBuilder:
     def __parse_file_content(self, content: str):
         lines = content.splitlines()
         for line_num, line in enumerate(lines):
-            quest_parser = QuestParser(self.remote_name)
+            quest_parser = QuestParser(self.source_name)
             quest = quest_parser.parse_quest(self.index_path, line, line_num + 1)
             if quest is not None:
                 self.__add_quest(quest_parser.finish_quest())
                 continue
-            tp = TaskParser(index_path=self.index_path, remote_import = self.remote_import)
+            tp = TaskParser(index_path=self.index_path, external_source=self.external_source)
             task = tp.parse_line(line, line_num + 1)
             if task is not None:
-                task.basic.remote_name = self.remote_name
+                task.basic.source_name = self.source_name
                 self.__add_task(task)
 
     def __get_active_quest(self) -> Quest:
@@ -196,7 +196,7 @@ class GameBuilder:
 
     def __create_cross_references(self):  # call after clear_empty
         for quest in self.quests.values():
-            quest.basic.remote_name = self.remote_name
+            quest.basic.source_name = self.source_name
             for task in quest.get_tasks():
-                task.basic.remote_name = self.remote_name
+                task.basic.source_name = self.source_name
                 task.quest_key = quest.basic.full_key

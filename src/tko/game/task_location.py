@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from tko.util.git_hub_url import GitHubUrl
 from pathlib import Path
-from tko.game.task_enums import TaskType
+from tko.game.task_enums import Materialization, TaskType
 
 @dataclass(frozen=True, slots=True)
 class TaskLocation:
@@ -12,7 +12,7 @@ class TaskLocation:
     line_data: str = ""
     task_type: TaskType = TaskType.NULL
     git_hub_url: GitHubUrl | None = None
-    remote_import: bool = False
+    external_source: bool = False
         
     def clone(self) -> TaskLocation:
         return TaskLocation(
@@ -22,7 +22,7 @@ class TaskLocation:
             line_data=self.line_data,
             task_type=self.task_type,
             git_hub_url=self.git_hub_url,
-            remote_import=self.remote_import
+            external_source=self.external_source
         )
             
     @property
@@ -44,18 +44,12 @@ class TaskLocation:
     @property
     def is_external(self) -> bool:
         """A tarefa precisa de uma cópia de trabalho separada da origem."""
-        return self.remote_import or self.is_task_from_git
+        return self.external_source or self.is_task_from_git
+
+    @property
+    def materialization(self) -> Materialization:
+        return Materialization.EXTERNAL if self.is_external else Materialization.LOCAL
         
     @property
     def is_task_from_git(self) -> bool:
         return self.git_hub_url is not None
-
-    @property
-    def is_static_type(self) -> bool:
-        return self.task_type == TaskType.MAKE and not self.is_external
-
-    @property
-    def is_import_type(self) -> bool:
-        # Mantido por compatibilidade: importação é uma propriedade da origem,
-        # não do tipo pedagógico (Read/Make).
-        return self.is_external

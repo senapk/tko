@@ -19,12 +19,12 @@ def test_external_read_materializes_markdown_and_assets_without_tests_or_drafts(
 
     task = Task()
     task.basic.key = "reading"
-    task.basic.remote_name = "source"
+    task.basic.source_name = "source"
     task.location = TaskLocation(
         index_path=origin / "index.md",
         raw_link="README.md",
         task_type=TaskType.READ,
-        remote_import=True,
+        external_source=True,
     )
 
     repo = SimpleNamespace(

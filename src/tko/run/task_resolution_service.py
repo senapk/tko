@@ -20,7 +20,7 @@ class TaskResolutionService:
             return False
         task = Task()
         task.basic.key = "STANDALONE"
-        task.basic.remote_name = "NONE"
+        task.basic.source_name = "NONE"
         ctx.task = task
         ctx.track_folder = None
         return True

@@ -2,8 +2,8 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from loguru import logger
 from tko.i18n import Msg
-from tko.repository.remote import Remote
-from tko.repository.remote_resolver import RemoteResolver
+from tko.repository.remote import Source
+from tko.repository.remote_resolver import SourceResolver
 from tko.repository.git_cache import GitCache
 from typing import cast
 from pathlib import Path
@@ -110,8 +110,8 @@ class RepositoryData:
         self.root_folder: Path = root_folder
         self.version: str = ""
         self.authoring_source: str = "labs"
-        self.__remotes: dict[str, Remote] = {}
-        self.set_remote(Remote.from_local_file("labs", Path("README.md"), is_editable=True))
+        self.__sources: dict[str, Source] = {}
+        self.set_source(Source.from_local_file("labs", Path("README.md"), is_editable=True))
         self.expanded: list[str] = []
         self.flags: ConfigDict = {}
         self.audit: AuditConfig = AuditConfig()
@@ -125,30 +125,6 @@ class RepositoryData:
     @property
     def is_linked(self) -> bool:
         return self.link is not None and bool(self.link.uri)
-
-    @property
-    def sandbox_name(self) -> str:
-        return self.authoring_source
-
-    @sandbox_name.setter
-    def sandbox_name(self, value: str) -> None:
-        old_remote = self.get_authoring_remote()
-        self.authoring_source = value
-        if old_remote is not None and value not in self.__remotes:
-            self.set_remote(Remote(name=value, path_or_url=old_remote.path_or_url, source_type=old_remote.source_type, is_editable=old_remote.is_editable))
-
-    @property
-    def sandbox_index(self) -> str:
-        remote = self.get_authoring_remote()
-        return remote.path_or_url if remote is not None else "README.md"
-
-    @sandbox_index.setter
-    def sandbox_index(self, value: str) -> None:
-        self.set_remote(Remote.from_uri(self.authoring_source, value, is_editable=True))
-
-    @property
-    def sandbox_index_file(self) -> Path:
-        return RemoteResolver(GitCache(self.root_folder / ".tko" / "cache"), self.root_folder).resolve_local_uri(self.sandbox_index)
 
     @property
     def audit_enabled(self) -> bool:
@@ -166,48 +142,36 @@ class RepositoryData:
     def audit_interval_seconds(self, value: int | None) -> None:
         self.audit.interval_seconds = value
 
-    def set_remote(self, remote: Remote) -> None:
-        self.set_source(remote)
-
-    def set_source(self, remote: Remote) -> None:
-        if remote.is_local_source:
-            resolver = RemoteResolver(GitCache(self.root_folder / ".tko" / "cache"), self.root_folder)
-            remote = replace(
-                remote,
-                path_or_url=resolver.serialize_uri(remote),
-                is_editable=resolver.is_editable_index(remote),
+    def set_source(self, source: Source) -> None:
+        if source.is_local_source:
+            resolver = SourceResolver(GitCache(self.root_folder / ".tko" / "cache"), self.root_folder)
+            source = replace(
+                source,
+                path_or_url=resolver.serialize_uri(source),
+                is_editable=resolver.is_editable_index(source),
             )
-        self.__remotes[remote.name] = remote
+        self.__sources[source.name] = source
 
-    def get_remote(self, name: str) -> Remote | None:
-        return self.get_source(name)
+    def get_source(self, name: str) -> Source | None:
+        return self.__sources.get(name, None)
 
-    def get_source(self, name: str) -> Remote | None:
-        return self.__remotes.get(name, None)
+    def get_authoring_source(self) -> Source | None:
+        return self.get_source(self.authoring_source)
 
-    def get_authoring_remote(self) -> Remote | None:
-        return self.get_remote(self.authoring_source)
-
-    def get_sandbox(self) -> Remote:
-        remote = self.get_authoring_remote()
-        if remote is None:
+    def get_authoring_source_throw(self) -> Source:
+        source = self.get_authoring_source()
+        if source is None:
             raise ValueError(str(_SOURCE_NOT_FOUND).format(label=self.authoring_source))
-        return remote
+        return source
 
-    def get_remotes(self) -> dict[str, Remote]:
-        return self.get_sources()
-
-    def get_sources(self) -> dict[str, Remote]:
-        return dict(self.__remotes)
-
-    def rm_remote(self, key: str) -> bool:
-        return self.remove_source(key)
+    def get_sources(self) -> dict[str, Source]:
+        return dict(self.__sources)
 
     def remove_source(self, label: str) -> bool:
         if label == self.authoring_source:
             raise ValueError(f"Source '{label}' is the authoring source\nSelect another authoring source before removing it")
-        if label in self.__remotes:
-            del self.__remotes[label]
+        if label in self.__sources:
+            del self.__sources[label]
             return True
         return False
 
@@ -219,13 +183,6 @@ class RepositoryData:
         except ValueError:
             self.authoring_source = previous
             raise
-
-    def rm_remote_legacy(self, key: str) -> bool:
-        if key in self.__remotes:
-            del self.__remotes[key]
-            return True
-        return False
-
 
     def _load_str(self, data: ConfigDict, key: str, default_value: str) -> str:
         value = data.get(key)
@@ -248,19 +205,19 @@ class RepositoryData:
         return None
 
     def _load_sources_map(self, sources_data: ConfigDict) -> None:
-        self.__remotes.clear()
+        self.__sources.clear()
         for label, source_data in sources_data.items():
             if not isinstance(source_data, dict):
                 continue
             uri = source_data.get("uri")
             if isinstance(uri, str):
-                self.set_remote(Remote.from_uri(label, uri))
+                self.set_source(Source.from_uri(label, uri))
 
     def _load_sources_list(self, sources_data: list[ConfigDict]) -> None:
-        self.__remotes.clear()
+        self.__sources.clear()
         for item in sources_data:
-            remote = Remote.from_dict(item)
-            self.set_remote(remote)
+            source = Source.from_dict(item)
+            self.set_source(source)
 
     def _load_source_list(self, data: ConfigDict, key: str) -> list[ConfigDict] | None:
         value = data.get(key)
@@ -291,17 +248,17 @@ class RepositoryData:
     def validate_authoring_source(self) -> None:
         if not self.authoring_source:
             raise ValueError(str(_AUTHORING_SOURCE_NOT_CONFIGURED))
-        remote = self.get_remote(self.authoring_source)
-        if remote is None:
+        source = self.get_source(self.authoring_source)
+        if source is None:
             raise ValueError(str(_SOURCE_NOT_FOUND).format(label=self.authoring_source))
-        resolver = RemoteResolver(GitCache(self.root_folder / ".tko" / "cache"), self.root_folder)
-        if not resolver.is_local_internal(remote):
-            if remote.is_git_source:
+        resolver = SourceResolver(GitCache(self.root_folder / ".tko" / "cache"), self.root_folder)
+        if not resolver.is_local_internal(source):
+            if source.is_git_source:
                 raise ValueError(str(_SOURCE_EXTERNAL_AUTHORING).format(label=self.authoring_source))
             raise ValueError(str(_SOURCE_POINTS_OUTSIDE_WORKSPACE).format(label=self.authoring_source))
-        if not resolver.is_editable_index(remote):
+        if not resolver.is_editable_index(source):
             raise ValueError(str(_AUTHORING_SOURCE_NOT_EDITABLE).format(label=self.authoring_source))
-        activity_dir = resolver.source_activity_dir(remote)
+        activity_dir = resolver.source_activity_dir(source)
         if activity_dir.exists() and not activity_dir.is_dir():
             raise ValueError(str(_AUTHORING_SOURCE_FOLDER_BLOCKED).format(label=self.authoring_source))
 
@@ -345,11 +302,11 @@ class RepositoryData:
             sandbox_index = data.get("sandbox_index")
             if sandbox_name is not None:
                 if profile is None:
-                    self.__remotes.clear()
+                    self.__sources.clear()
                 if isinstance(sandbox_name, str):
                     self.authoring_source = sandbox_name
                 if isinstance(sandbox_name, str) and isinstance(sandbox_index, str):
-                    self.set_remote(Remote.from_uri(sandbox_name, sandbox_index, is_editable=True))
+                    self.set_source(Source.from_uri(sandbox_name, sandbox_index, is_editable=True))
 
             audit_data = self._load_dict(data, "audit")
             if audit_data is not None:
@@ -358,10 +315,10 @@ class RepositoryData:
             # Load the 'source' field with specific validation
             source_data = self._load_source_list(data, "sources")
             if source_data is not None:
-                existing_authoring = self.get_remote(self.authoring_source)
+                existing_authoring = self.get_source(self.authoring_source)
                 self._load_sources_list(source_data)
                 if existing_authoring is not None:
-                    self.set_remote(existing_authoring)
+                    self.set_source(existing_authoring)
             elif "sources" in data:
                 raise TypeError("The 'sources' field must be a list.")
             self.validate_authoring_source()
@@ -370,10 +327,10 @@ class RepositoryData:
             logger.exception(str(_REPOSITORY_DATA_LOAD_ERROR))
 
     def to_dict(self) -> ConfigDict:
-        resolver = RemoteResolver(GitCache(self.root_folder / ".tko" / "cache"), self.root_folder)
+        resolver = SourceResolver(GitCache(self.root_folder / ".tko" / "cache"), self.root_folder)
         sources: ConfigDict = {
             remote.name: {"uri": resolver.serialize_uri(remote)}
-            for remote in self.__remotes.values()
+            for remote in self.__sources.values()
         }
         profile: ConfigDict = {
             "authoring_source": self.authoring_source,

@@ -12,7 +12,7 @@ from tko.config.settings import Settings
 from tko.floating.floating_input_text import FloatingInputText
 from tko.game.game import Game
 from tko.play.draft_creator import DraftCreator
-from tko.repository.remote import Remote, SourceType
+from tko.repository.remote import Source, SourceType
 from tko.repository.repository import Repository
 from tko.repository.repository_config import RepositoryLoader
 from tko.repository.repository_data import RepositoryData
@@ -64,7 +64,7 @@ def test_relative_internal_uri_loads_as_managed_source(tmp_path: Path) -> None:
         }
     )
 
-    remote = data.get_remote("labs")
+    remote = data.get_source("labs")
     assert remote is not None
     assert remote.is_editable is True
     assert remote.path_or_url == "README.md"
@@ -72,7 +72,7 @@ def test_relative_internal_uri_loads_as_managed_source(tmp_path: Path) -> None:
 
 def test_save_normalizes_absolute_internal_path_to_relative_uri(tmp_path: Path) -> None:
     repo = make_repo(tmp_path)
-    repo.data.set_remote(Remote.from_local_file("python", tmp_path / "python" / "README.md"))
+    repo.data.set_source(Source.from_local_file("python", tmp_path / "python" / "README.md"))
 
     RepositoryLoader(repo).save(force=True)
 
@@ -82,9 +82,9 @@ def test_save_normalizes_absolute_internal_path_to_relative_uri(tmp_path: Path) 
 
 def test_save_preserves_git_url(tmp_path: Path) -> None:
     repo = make_repo(tmp_path)
-    remote = Remote.from_git_file("fup", "https://github.com/qxcodefup/arcade/blob/main/README.md")
+    remote = Source.from_git_file("fup", "https://github.com/qxcodefup/arcade/blob/main/README.md")
     assert remote is not None
-    repo.data.set_remote(remote)
+    repo.data.set_source(remote)
 
     RepositoryLoader(repo).save(force=True)
 
@@ -95,13 +95,13 @@ def test_save_preserves_git_url(tmp_path: Path) -> None:
 def test_source_classification_by_uri(tmp_path: Path) -> None:
     repo = make_repo(tmp_path)
     outside = tmp_path.parent / "outside-source" / "README.md"
-    git = Remote.from_uri("fup", "https://github.com/qxcodefup/arcade/blob/main/README.md")
+    git = Source.from_uri("fup", "https://github.com/qxcodefup/arcade/blob/main/README.md")
 
-    internal = Remote.from_uri("labs", "README.md")
-    external = Remote.from_uri("shared", outside.as_posix())
+    internal = Source.from_uri("labs", "README.md")
+    external = Source.from_uri("shared", outside.as_posix())
 
-    assert repo.remote_resolver.is_local_internal(internal) is True
-    assert repo.remote_resolver.is_local_internal(external) is False
+    assert repo.source_resolver.is_local_internal(internal) is True
+    assert repo.source_resolver.is_local_internal(external) is False
     assert git.source_type == SourceType.GIT_SOURCE
 
 
@@ -241,4 +241,4 @@ def test_profile_update_preserves_preferences_and_state(tmp_path: Path) -> None:
     assert data.flags == {"panel": "logs"}
     assert data.selected == "labs@one"
     assert data.expanded == ["labs@one"]
-    assert data.get_remote("fup") is not None
+    assert data.get_source("fup") is not None

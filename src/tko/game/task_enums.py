@@ -10,3 +10,7 @@ class TaskType(enum.Enum):
     NULL = "null"
     READ = "read"  # md_file, url, pdf or other resource link, not editable
     MAKE = "make"  # editable task
+
+class Materialization(enum.Enum):
+    LOCAL = "local"
+    EXTERNAL = "external"

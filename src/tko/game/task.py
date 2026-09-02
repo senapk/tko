@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from tko.game.task_game import TaskGame
 from tko.game.task_grader import TaskGrader
-from tko.game.tree_item import TreeBasic, TreeUi
+from tko.game.tree_item import TreeItem
 from tko.game.task_info import TaskSelfInfo
 from tko.game.task_config import TaskConfig
 from tko.game.task_location import TaskLocation
 
-class Task:
+class Task(TreeItem):
     """
     Representa uma tarefa (atividade) do sistema TKO.
 
@@ -19,15 +19,14 @@ class Task:
 
     O título da tarefa normalmente é carregado do índice (texto entre colchetes na linha do índice).
     """
+
     def __init__(self):
-        self.quest_key: str = ""
-        self.basic: TreeBasic = TreeBasic()
-        self.ui: TreeUi = TreeUi()
+        super().__init__()
         self.info: TaskSelfInfo = TaskSelfInfo()
         self.config: TaskConfig = TaskConfig()
         self.location: TaskLocation = TaskLocation()
         self.game: TaskGame = TaskGame()
-        
+        self.quest_key: str = ""
         self.main_idx = 0
 
     @property
@@ -51,4 +50,4 @@ class Task:
     def __str__(self):
         lnum = str(self.location.line_number).rjust(3)
         key = "" if self.basic.full_key == self.basic.title else self.basic.full_key + " "
-        return f"{lnum} key:{key} title:{self.basic.title} skills:{self.game.skill} remote:{self.location.raw_link}"
+        return f"{lnum} key:{key} title:{self.basic.title} skills:{self.game.skill} source:{self.location.raw_link}"

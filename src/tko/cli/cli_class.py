@@ -26,14 +26,14 @@ def collect_skills(
     ctx: typer.Context,
     path: list[str] = typer.Argument(..., help="Paths to repos"),
     csv: str = typer.Option(..., "--csv", help="Output CSV file"),
-    remote: str = typer.Option(..., "--remote", "-r", help="Remote target to load quests"),
+    source: str = typer.Option(..., "--source", "-s", help="Source target to load quests"),
     language: str = typer.Option(..., "--lang", "-l", help="Programming language for skills"),
 ):
     from tko.collect.collect_many import CollectMany
 
     settings: Settings = ctx.obj
     repos = [Path(p) for p in path]
-    CollectMany.load_skills(rs=settings.rs, git_dir_list=repos, skills_path=csv, remote_index=remote, prog_lang=language)
+    CollectMany.load_skills(rs=settings.rs, git_dir_list=repos, skills_path=csv, remote_index=source, prog_lang=language)
 
 @app.command("pull", help="Perform git pull in many repos using threads")
 def class_pull(

@@ -5,7 +5,7 @@ from loguru import logger
 
 from tko.game.game import Game
 from tko.game.game_builder import GameBuilder
-from tko.repository.remote import Remote
+from tko.repository.remote import Source
 
 
 def build_game(tmp_path: Path, content: str) -> GameBuilder:
@@ -130,14 +130,14 @@ def test_same_item_key_is_allowed_in_different_sources(tmp_path: Path) -> None:
     first_index.write_text(content, encoding="utf-8")
     second_index.write_text(content, encoding="utf-8")
     remotes = {
-        "first": Remote.from_local_file("first", first_index),
-        "second": Remote.from_local_file("second", second_index),
+        "first": Source.from_local_file("first", first_index),
+        "second": Source.from_local_file("second", second_index),
     }
     indexes = {"first": first_index, "second": second_index}
     resolver = SimpleNamespace(
         resolve_index_file=lambda remote, load_git: (indexes[remote.name], True)
     )
-    game = Game().set_remotes(remotes, "")
+    game = Game().set_sources(remotes, "")
 
     game.build(resolver)  # type: ignore[arg-type]
 

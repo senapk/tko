@@ -40,11 +40,11 @@ class QuestMatcher:
         for req_key in requires:
             for req in req_key.split(","):
                 if req.lower() != "none":
-                    self.quest.requirements.add_require_key(self.quest.basic.remote_name, req)
+                    self.quest.requirements.add_require_key(self.quest.basic.source_name, req)
 
         required_legacy = [t[1:] for t in words if t[0] == "!"]
         for req_key in required_legacy:
-            self.quest.requirements.add_require_key(self.quest.basic.remote_name, req_key)
+            self.quest.requirements.add_require_key(self.quest.basic.source_name, req_key)
 
     def _process_goal(self, words: list[str]):
         for w in words:

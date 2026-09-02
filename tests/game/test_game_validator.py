@@ -5,14 +5,14 @@ from tko.game.task import Task
 
 def make_quest(key: str) -> Quest:
     quest = Quest(key.title(), key)
-    quest.basic.remote_name = "base"
+    quest.basic.source_name = "base"
     return quest
 
 
 def make_task(key: str) -> Task:
     task = Task()
     task.basic.key = key
-    task.basic.remote_name = "base"
+    task.basic.source_name = "base"
     return task
 
 
@@ -49,4 +49,3 @@ def test_validator_removes_task_that_collides_with_quest_key() -> None:
 
     assert quest.get_tasks() == [accepted_task]
     assert validator.tasks == {"base@accepted": accepted_task}
-

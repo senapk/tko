@@ -49,11 +49,11 @@ def _make_repo(tmp_path: Path) -> Any:
     remote = SimpleNamespace(
         name="disc",
     )
-    remote_resolver = SimpleNamespace(remote_work_dir=lambda _source: tmp_path / "disc") # type: ignore[arg-type]
+    source_resolver = SimpleNamespace(source_work_dir=lambda _source: tmp_path / "disc") # type: ignore[arg-type]
     return SimpleNamespace(
         root_dir=tmp_path,
-        remotes={"disc": remote},
-        remote_resolver=remote_resolver,
+        sources={"disc": remote},
+        source_resolver=source_resolver,
         ignore_patterns=[],
         paths=SimpleNamespace(config_folder=tmp_path / ".tko"),
         logger=SimpleNamespace(store=_store),

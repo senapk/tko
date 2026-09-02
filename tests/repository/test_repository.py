@@ -56,9 +56,9 @@ def test_task_folder_helpers_handle_prefixed_and_plain_labels(tmp_path: Path) ->
 def test_authoring_remote_resolves_against_workspace(tmp_path: Path) -> None:
     repo = Repository(tmp_path, make_run_settings(tmp_path), git_cache=None, recursive_search=False)
 
-    remote = repo.data.get_authoring_remote()
+    remote = repo.data.get_authoring_source()
     assert remote is not None
-    index_file, found = repo.remote_resolver.resolve_index_file(remote, load_git=False)
+    index_file, found = repo.source_resolver.resolve_index_file(remote, load_git=False)
 
     assert remote.name == "labs"
     assert remote.path_or_url == "README.md"

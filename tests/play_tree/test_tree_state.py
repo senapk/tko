@@ -10,9 +10,9 @@ class Item:
         self.ui = TreeUi()
 
 
-def make_item(key: str, remote_name: str = "repo"):
+def make_item(key: str, source_name: str = "repo"):
     basic = TreeBasic()
-    basic.remote_name = remote_name
+    basic.source_name = source_name
     basic.key = key
     basic.title = key
     return Item(basic)

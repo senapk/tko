@@ -56,10 +56,10 @@ class TaskParser:
         - [ ] `@bar type=read`                               [Material externo](https://github.com/user/repo/blob/main/wiki/material/README.md)
     """
 
-    def __init__(self, index_path: Path, remote_import: bool = False):
+    def __init__(self, index_path: Path, external_source: bool = False):
         self.index_path = index_path
         self.task: Task = Task()
-        self.remote_import = remote_import
+        self.external_source = external_source
 
     def __remove_tags_from_title(self, text: str) -> str:
         """
@@ -114,7 +114,7 @@ class TaskParser:
             line_data=line,
             task_type=tm.resource_type,
             git_hub_url=GitHubUrl.parse(tm.link),
-            remote_import=self.remote_import,
+            external_source=self.external_source,
         )
 
         return task

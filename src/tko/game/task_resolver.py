@@ -12,8 +12,8 @@ class TaskResolver:
         self.git_cache = git_cache
         self.remote_root_dir = repo_root_dir
 
-    def __remote_work_dir(self, task: Task) -> Path:
-        return self.remote_root_dir / task.basic.remote_name / task.basic.key
+    def __source_work_dir(self, task: Task) -> Path:
+        return self.remote_root_dir / task.basic.source_name / task.basic.key
 
     def target_folder(self, task: Task) -> Path | None:
         file = self.target_file(task)
@@ -29,12 +29,12 @@ class TaskResolver:
                 return None
             case TaskType.READ:
                 if loc.is_external:
-                    return self.__remote_work_dir(task) / "README.md"
+                    return self.__source_work_dir(task) / "README.md"
                 return None
             case TaskType.MAKE:        
                 # if is git url, is import type
                 if loc.is_external:
-                    return self.__remote_work_dir(task) / "README.md"
+                    return self.__source_work_dir(task) / "README.md"
                 else:
                     return self.__calc_origin_file(loc)
 

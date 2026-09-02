@@ -63,7 +63,7 @@ Primeira configuração no ambiente local:
 
 ## Sincronização e cache remoto
 
-Internamente, o TKO trabalha com clone e cache local dos repositórios remotos.
+Internamente, o TKO trabalha com clone e cache local das fontes Git.
 
 Comportamento padrão:
 

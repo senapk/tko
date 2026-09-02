@@ -9,7 +9,7 @@ import pytest
 
 from tko.config.run_settings import RunSettings
 from tko.config.settings import Settings
-from tko.repository.remote import Remote, SourceType
+from tko.repository.remote import Source, SourceType
 from tko.repository.repository import Repository
 from tko.repository.repository_data import ProfileLink
 from tko.repository.source_actions import SourceActions
@@ -37,7 +37,7 @@ def test_list_sources_shows_context_uri_and_authoring(tmp_path: Path) -> None:
     outside = tmp_path.parent / "source-actions-outside" / "README.md"
     outside.parent.mkdir(exist_ok=True)
     outside.write_text("# outside\n", encoding="utf-8")
-    repo.data.set_source(Remote.from_uri("base", outside.as_posix()))
+    repo.data.set_source(Source.from_uri("base", outside.as_posix()))
     actions = SourceActions(make_settings(), repo)
 
     with Console.capture() as capture:
@@ -86,7 +86,7 @@ def test_add_source_with_external_authoring_rolls_back(tmp_path: Path) -> None:
 
 def test_set_authoring_source_changes_only_reference(tmp_path: Path) -> None:
     repo = make_repo(tmp_path)
-    repo.data.set_source(Remote.from_uri("python", "python/README.md"))
+    repo.data.set_source(Source.from_uri("python", "python/README.md"))
     actions = SourceActions(make_settings(), repo)
 
     assert actions.set_authoring_source("python") is True
@@ -130,7 +130,7 @@ def test_remove_source_does_not_delete_materialized_folder(tmp_path: Path) -> No
     repo = make_repo(tmp_path)
     materialized = tmp_path / "python" / "task"
     materialized.mkdir(parents=True)
-    repo.data.set_source(Remote.from_uri("python", "python/README.md"))
+    repo.data.set_source(Source.from_uri("python", "python/README.md"))
     actions = SourceActions(make_settings(), repo)
 
     assert actions.remove_source("python") is True

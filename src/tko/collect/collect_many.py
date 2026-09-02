@@ -3,9 +3,8 @@ from tko.collect.task_collected import TaskCollected
 from tko.config.run_settings import RunSettings
 from tko.config.user_data import UserData
 from tko.game.game import Game
-from tko.repository.remote import Remote
-from tko.repository.remote import Remote
-from tko.repository.remote_resolver import RemoteResolver
+from tko.repository.remote import Source
+from tko.repository.remote_resolver import SourceResolver
 from tko.repository.repository import Repository
 from tko.repository.repository_builder import RepositoryBuilder
 from tko.repository.repository_paths import RepositoryPaths
@@ -100,11 +99,11 @@ class CollectMany:
         # output_map: dict[str, Repository] = CollectMany.collect_repos(rs, git_dir_list)
         # resumes_map: dict[str, TaskResume] = {k: CollectActions.get_resume(v) for k, v in output_map.items()}
 
-        remote = Remote(name="remote")
+        source = Source(name="source")
         game = Game()
-        game.set_remotes({"remote": remote}, language=prog_lang)
+        game.set_sources({"source": source}, language=prog_lang)
         git_cache = GitCache(cache_dir=UserData.global_cache_dir())
-        rr= RemoteResolver(git_cache=git_cache, root_dir=Path("."))
+        rr= SourceResolver(git_cache=git_cache, root_dir=Path("."))
         game.build(rr)
         for quest in game.quests.values():
             print(f"Quest: {quest.basic.full_key}")

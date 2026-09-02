@@ -69,14 +69,14 @@ class TreeRenderer:
             head.add(f" #{key:<{self.layout.quest_key_pad}} ", "b")
 
         output = head.to_rt()
-        remote_name: str = ""
+        source_name: str = ""
         if self.layout.use_full_key:
-            remote_name = t.basic.remote_name
+            source_name = t.basic.source_name
 
         _, _key, _title = self.task_formatter.get_task_full_title(
             task=t,
             key_pad=self.layout.task_key_pad,
-            remote_name=remote_name,
+            source_name=source_name,
         )
         title = self.task_formatter.color_task_title(_key, _title)
 

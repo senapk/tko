@@ -4,7 +4,7 @@ from tko.i18n import Msg
 from tko.game.task import Task
 from tko.logger.log_sort import LogSort
 from tko.repository.repository import Repository
-from tko.repository.remote_resolver import RemoteResolver
+from tko.repository.remote_resolver import SourceResolver
 from tko.feno.indexer import fix_readme
 
 _GAME_COORDINATOR_LOADING_REPOSITORY = Msg.text(
@@ -19,16 +19,16 @@ class GameCoordinator:
 
     def load_game(self) -> GameCoordinator:
         logger.debug(str(_GAME_COORDINATOR_LOADING_REPOSITORY).format(root=self.repo.paths.root_dir))
-        rr = RemoteResolver(self.repo.git_cache, self.repo.paths.root_dir)
+        resolver = SourceResolver(self.repo.git_cache, self.repo.paths.root_dir)
         
-        remotes = self.repo.remotes
-        if not remotes: # load now
+        sources = self.repo.sources
+        if not sources: # load now
             from tko.repository.repository_config import RepositoryLoader
             RepositoryLoader(self.repo).load()
-            remotes = self.repo.remotes
-        self.ensure_managed_readmes_fixed(self.repo, rr)
-        self.repo.game.set_remotes(remotes, self.repo.data.lang)
-        self.repo.game.build(remote_resolver = rr)
+            sources = self.repo.sources
+        self.ensure_managed_readmes_fixed(self.repo, resolver)
+        self.repo.game.set_sources(sources, self.repo.data.lang)
+        self.repo.game.build(source_resolver=resolver)
         self._load_tasks_from_log_into_game()
         return self
     
@@ -57,18 +57,18 @@ class GameCoordinator:
                     task.info.rate = exec_item.rate
 
 
-    def ensure_managed_readmes_fixed(self, repo: Repository, remote_resolver: RemoteResolver):
-        for remote in repo.remotes.values():
-            if not remote_resolver.is_local_internal(remote):
+    def ensure_managed_readmes_fixed(self, repo: Repository, resolver: SourceResolver):
+        for source in repo.sources.values():
+            if not resolver.is_local_internal(source):
                 continue
-            basedir = remote_resolver.remote_work_dir(remote)
-            filename = remote_resolver.resolve_index_file(remote, load_git=False)[0]
+            basedir = resolver.source_work_dir(source)
+            filename = resolver.resolve_index_file(source, load_git=False)[0]
 
             if not filename.parent.exists():
                 continue
             if basedir.exists() and not filename.exists():
                 filename.parent.mkdir(parents=True, exist_ok=True)
                 with open(filename, "w", encoding="utf-8") as f:
-                    f.write(f"# {remote.name}\n\n")
+                    f.write(f"# {source.name}\n\n")
             if filename.exists():
                 fix_readme(index=filename.resolve(), base_dir=basedir, verbose=False, load_titles=True, yes=True)

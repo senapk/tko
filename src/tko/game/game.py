@@ -4,9 +4,9 @@ from tko.game.game_builder import GameBuilder
 from tko.game.game_validator import GameValidator
 from tko.game.quest import Quest
 from tko.game.task import Task
-from tko.repository.remote import Remote
+from tko.repository.remote import Source
 from tko.i18n import Msg
-from tko.repository.remote_resolver import RemoteResolver
+from tko.repository.remote_resolver import SourceResolver
 
 
 _GAME_TASK_NOT_FOUND_IN_COURSE = Msg.text(
@@ -31,7 +31,7 @@ def load_html_tags(task: str) -> None | str:
 
 class Game:
     def __init__(self):
-        self.remotes: dict[str, Remote] = {}
+        self.sources: dict[str, Source] = {}
         self.ordered_quests: list[str] = [] # ordered clusters
         self.quests: dict[str, Quest] = {}  # quests indexed by quest key
         self.tasks: dict[str, Task] = {}  # tasks indexed by task key
@@ -47,28 +47,28 @@ class Game:
             return self.tasks[key]
         return None
         
-    def set_remotes(self, remotes: dict[str, Remote], language: str):
-        self.remotes = remotes
+    def set_sources(self, sources: dict[str, Source], language: str):
+        self.sources = sources
         self.language = language
         return self
     
-    def build(self, remote_resolver: RemoteResolver):
+    def build(self, source_resolver: SourceResolver):
         self.ordered_quests = []
         self.quests = {}
         self.tasks = {}
-        for remote in self.remotes.values():
-            index_file, ok = remote_resolver.resolve_index_file(remote, load_git=True)
+        for source in self.sources.values():
+            index_file, ok = source_resolver.resolve_index_file(source, load_git=True)
             if not ok:
-                logger.warning(str(_GAME_BUILD_FAILED_FOR_SOURCE).format(name=remote.name))
+                logger.warning(str(_GAME_BUILD_FAILED_FOR_SOURCE).format(name=source.name))
                 continue
-            gb = GameBuilder(index_file, remote.name, remote_import=not remote.is_editable)
+            gb = GameBuilder(index_file, source.name, external_source=not source.is_editable)
             try:
                 gb.build_from(self.language)
             except ValueError:
-                logger.exception(str(_GAME_BUILD_FAILED_FOR_SOURCE).format(name=remote.name))
+                logger.exception(str(_GAME_BUILD_FAILED_FOR_SOURCE).format(name=source.name))
                 continue
             for quest_key in gb.ordered_quests:
-                self.ordered_quests.append(remote.name + "@" + quest_key)
+                self.ordered_quests.append(source.name + "@" + quest_key)
             gb_quests = gb.collect_quests()
             for quest in gb_quests.values():
                 self.quests[quest.basic.full_key] = quest

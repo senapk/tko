@@ -47,7 +47,7 @@ class SearchService:
             return True
 
         if isinstance(unit, Task):
-            self.tree.state.expanded = {unit.basic.remote_name, unit.quest_key}
+            self.tree.state.expanded = {unit.basic.source_name, unit.quest_key}
         elif isinstance(unit, Quest):
-            self.tree.state.expanded = {unit.basic.full_key, unit.basic.remote_name}
+            self.tree.state.expanded = {unit.basic.full_key, unit.basic.source_name}
         return True
