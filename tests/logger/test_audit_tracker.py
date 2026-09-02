@@ -10,7 +10,8 @@ class _FakePaths:
         self.config_folder = root_dir / ".tko"
 
     def get_audit_task_folder(self, label: str) -> Path:
-        return self.root_dir / ".tko" / "audit" / label
+        source, task = label.split("@", 1)
+        return self.root_dir / ".tko" / "audit" / source / task
 
 
 class _FakeRepo:
@@ -39,8 +40,8 @@ def test_audit_tracker_stores_snapshots(tmp_path: Path) -> None:
     assert changed is True
     assert total_lines == 1
 
-    audit_folder = tmp_path / ".tko" / "audit" / "disc@task01"
-    copied_file = audit_folder / "solver.py.jsonl"
+    audit_folder = tmp_path / ".tko" / "audit" / "disc" / "task01"
+    copied_file = audit_folder / "src" / "py" / "solver.py.jsonl"
     assert copied_file.exists()
     lines = copied_file.read_text(encoding="utf-8").splitlines()
     assert len(lines) == 1
@@ -63,7 +64,7 @@ def test_audit_tracker_accepts_files_outside_task_folder(tmp_path: Path) -> None
     assert changed is True
     assert total_lines == 1
 
-    audit_folder = tmp_path / ".tko" / "audit" / "disc@task03"
+    audit_folder = tmp_path / ".tko" / "audit" / "disc" / "task03"
     copied_file = audit_folder / "solver.py.jsonl"
     assert copied_file.exists()
 
@@ -86,5 +87,5 @@ def test_audit_tracker_ignores_large_or_missing_files(tmp_path: Path) -> None:
     assert changed is False
     assert total_lines == 0
 
-    audit_folder = tmp_path / ".tko" / "audit" / "disc@task02"
+    audit_folder = tmp_path / ".tko" / "audit" / "disc" / "task02"
     assert list(audit_folder.glob("*")) == [] if audit_folder.exists() else True

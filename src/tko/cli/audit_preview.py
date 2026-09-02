@@ -19,9 +19,9 @@ def build_output_path(folder: Path, index: int, label: str, filename: str) -> Pa
     sanitized_filename = sanitize_filename(filename)
     return folder / f"{index:04d}_{label}_{sanitized_filename}"
 
-def unpack_patch_history(index: int, json_file: Path, output_dir: Path) -> tuple[int, list[Path]]:
+def unpack_patch_history(index: int, json_file: Path, output_dir: Path, display_name: str | None = None) -> tuple[int, list[Path]]:
     patches = PatchHistory().set_json_file(json_file).load_json().restore_all()
-    stem = sanitize_filename(json_file.stem)
+    stem = sanitize_filename(display_name or json_file.stem)
     files: list[Path] = []
     for i, patch in enumerate(patches, start=1):
         label = sanitize_filename(patch.label)
@@ -43,9 +43,9 @@ def unpack_audit_jsonl(index: int, jsonl_file: Path, output_dir: Path) -> tuple[
         files.append(output_file)
     return index + len(snapshots), files
 
-def _materialize_audit_history(index: int, jsonl_file: Path, output_dir: Path) -> tuple[int, list[Path]]:
+def _materialize_audit_history(index: int, jsonl_file: Path, output_dir: Path, display_name: str | None = None) -> tuple[int, list[Path]]:
     jsonl_file = jsonl_file.resolve()
-    stem = sanitize_filename(f"{jsonl_file.stem}")
+    stem = sanitize_filename(display_name or jsonl_file.stem)
     history_dir = output_dir / stem
     history_dir.mkdir(parents=True, exist_ok=True)
     snapshots = VersionsWriter().load_history(jsonl_file).snapshots
@@ -70,6 +70,19 @@ def _collect_preview_files(source_paths: list[Path], output_dir: Path) -> list[P
             file_list.extend(files)
         elif source_path.is_file():
             file_list.append(source_path)
+        elif source_path.is_dir():
+            for path in sorted(source_path.rglob("*")):
+                if not path.is_file():
+                    continue
+                display_name = path.relative_to(source_path).with_suffix("").as_posix()
+                if path.suffix == ".jsonl":
+                    index, files = _materialize_audit_history(index, path, output_dir, display_name)
+                    file_list.extend(files)
+                elif path.suffix == ".json":
+                    index, files = unpack_patch_history(index, path, output_dir, display_name)
+                    file_list.extend(files)
+                else:
+                    file_list.append(path)
     return sorted(file_list)
 
 

@@ -40,6 +40,8 @@ class TaskLine:
             return False
 
         self.origin_key = tm.key
+        if self.origin_key is not None:
+            TaskMatcher.validate_key(self.origin_key)
         if self.tm.is_url:
             self.url = self.tm.link
             parsed = urlparse(self.tm.link)
@@ -64,11 +66,12 @@ class TaskLine:
         self.tm.raw_line = ""
         self.tm.raw_pre = ""
         self.tm.raw_pos = ""
-        self.tm.key = readme_file.parent.name
+        relative_folder = readme_file.parent.resolve().relative_to(self.base_dir.resolve())
+        self.tm.key = relative_folder.as_posix()
         self.tm.resource_type = TaskType.MAKE
         self.tm.eval = TaskEval.TEST
         self.tm.title = title
-        self.origin_key = self.target_file.parent.name
+        self.origin_key = self.tm.key
         return self
 
     def get_pre(self, key_pad: int, fields_pad: int) -> str:
@@ -88,8 +91,8 @@ class TaskLine:
 
     @property
     def key(self) -> str:
-        if self.tm.is_read:
-            return self.origin_key if self.origin_key is not None else ""
+        if self.origin_key is not None:
+            return self.origin_key
         if self.target_file is not None:
             if self.target_file.resolve().is_relative_to(self.base_dir.resolve()):
                 return self.target_file.parent.name

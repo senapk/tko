@@ -29,7 +29,7 @@ class TaskMatcher:
     PATTERN = r'(.*?)\[(.*?)\]\(([^()]*)\)(.*)$'
     REF_T = r'^- \[x\]' + PATTERN
     REF_F = r'^- \[ \]' + PATTERN
-    ALLOWED = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-+"
+    ALLOWED = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-+/"
 
     def __init__(self):
         self.raw_line: str = ""
@@ -209,3 +209,13 @@ class TaskMatcher:
             else:
                 break
         return new_key if new_key else None
+
+    @staticmethod
+    def validate_key(key: str) -> None:
+        if not key or key.startswith("/") or key.endswith("/") or "//" in key:
+            raise ValueError(f"Invalid task key path: {key}")
+        parts = key.split("/")
+        if any(part in {"", ".", ".."} for part in parts):
+            raise ValueError(f"Invalid task key path: {key}")
+        if any("~" in part for part in parts):
+            raise ValueError(f"Invalid character in task key: {key}")

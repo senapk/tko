@@ -126,7 +126,13 @@ class AuditTracker:
         # calculate hash of the file content
         content = Decoder.load(file)
         hash_value = blake2s(content.encode("utf-8")).hexdigest()
-        output_file = audit_task_folder / (file.name + ".jsonl")
+        try:
+            relative = file.resolve().relative_to(task_root.resolve())
+        except ValueError:
+            # Keep compatibility for callers auditing a file outside the task.
+            relative = Path(file.name)
+        output_file = audit_task_folder / relative.with_name(relative.name + ".jsonl")
+        output_file.parent.mkdir(parents=True, exist_ok=True)
         
         # verify changes in concurrent scenarios using .last file
         audit_last_file = self._output_file_last(output_file)

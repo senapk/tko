@@ -104,6 +104,7 @@ class TaskParser:
         if task.basic.key == "":
             return None
 
+        TaskMatcher.validate_key(task.basic.key)
         self.__validate_task_link(tm.link)
  
         task.location = TaskLocation(

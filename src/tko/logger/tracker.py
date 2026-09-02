@@ -33,7 +33,7 @@ class Track:
         return self
     
     def set_file_stamp_list(self, files: list[str]) -> Track:
-        self.file_stamp_list = [os.path.basename(f) for f in files]
+        self.file_stamp_list = list(files)
         return self
     
     def set_result(self, result: str) -> Track:
@@ -60,6 +60,7 @@ class Tracker:
         self._result: str = "None"
         self._files: list[Path] = []
         self._folder: Path = Path()
+        self._task_root: Path | None = None
         self._versions_writer: VersionsWriter = VersionsWriter()
 
     def unfold_files(self, log_sort: LogSort) -> tuple[str, str]:
@@ -76,11 +77,12 @@ class Tracker:
         #         file_dict[file] = track.result
 
         with tempfile.TemporaryDirectory(delete=False) as temp_dir:
-            for file in os.listdir(self._folder):
-                path = os.path.join(self._folder, file)
-                if not (file.endswith(".json") or file.endswith(".jsonl")):
+            for path in self._folder.rglob("*"):
+                if not path.is_file() or path.name == self.log_file:
                     continue
-                if file.endswith(".jsonl"):
+                if path.suffix not in {".json", ".jsonl"}:
+                    continue
+                if path.suffix == ".jsonl":
                     complete = [
                         PatchInfo(
                             snapshot.timestamp.strftime("%Y-%m-%d_%H-%M-%S"),
@@ -88,11 +90,11 @@ class Tracker:
                         )
                         for snapshot in VersionsWriter().load_history(Path(path)).snapshots
                     ]
-                    filename = file[:-len(".jsonl")]
+                    filename = path.relative_to(self._folder).as_posix()[:-len(".jsonl")].replace("/", "__")
                 else:
-                    ph = PatchHistory().set_json_file(path).load_json()
+                    ph = PatchHistory().set_json_file(path.as_posix()).load_json()
                     complete = ph.restore_all()
-                    filename = file[:-len(".json")]
+                    filename = path.relative_to(self._folder).as_posix()[:-len(".json")].replace("/", "__")
                 for i, patch in enumerate(complete):
                     key = patch.label
                     rate = timestamp_rate.get(key, "000")
@@ -131,6 +133,18 @@ class Tracker:
     def set_folder(self, folder: Path) -> Tracker:
         self._folder = folder
         return self
+
+    def set_task_root(self, task_root: Path) -> Tracker:
+        self._task_root = task_root
+        return self
+
+    def _relative_file(self, file: Path) -> Path:
+        if self._task_root is not None:
+            try:
+                return file.resolve().relative_to(self._task_root.resolve())
+            except ValueError:
+                pass
+        return Path(file.name)
     
     # in format: YYYY-MM-DD HH:MM:SS
     @staticmethod
@@ -146,8 +160,9 @@ class Tracker:
 
     # return timestamp of the last version of the file
     def save_file_with_timestamp_prefix(self, timestamp: str, file: Path) -> tuple[str, bool, int]:
-        filename = os.path.basename(file)
-        json_file = os.path.join(self._folder, f"{filename}{Tracker.extension}")
+        relative = self._relative_file(file)
+        json_file = self._folder / relative.with_name(relative.name + Tracker.extension)
+        json_file.parent.mkdir(parents=True, exist_ok=True)
 
         content = Decoder.load(file)
         changed = self._versions_writer.write(
@@ -176,7 +191,7 @@ class Tracker:
         for file in self._files:
             stored, changed, size = self.save_file_with_timestamp_prefix(timestamp, file)
             total_size += size
-            filename = os.path.basename(file)
+            filename = self._relative_file(file).as_posix()
             files_in_this_version.append(filename + ":" + stored)
             if changed:
                 any_changes = True

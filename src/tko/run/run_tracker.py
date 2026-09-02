@@ -10,6 +10,10 @@ class RunTracker:
     def store_exec_diff(self, rate: str) -> tuple[bool, int]:
         if self.ctx.track_folder is not None:
             self.tracker.set_folder(self.ctx.track_folder)
+            if self.ctx.repo is not None and self.ctx.task is not None:
+                task_root = self.ctx.repo.task_resolver.target_folder(self.ctx.task)
+                if task_root is not None:
+                    self.tracker.set_task_root(task_root)
             self.tracker.set_files(self.ctx.wdir.get_solver().args_list)
             self.tracker.set_result(rate)
             has_changes, total_lines = self.tracker.store()

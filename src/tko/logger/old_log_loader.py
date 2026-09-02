@@ -43,17 +43,15 @@ class AType(enum.Enum):
 class TrackerLoader: # deprecated
     @staticmethod
     def load_file_versions(task_track_folder: str) -> dict[str, dict[str, PatchInfo]]:
-        files: list[str] = os.listdir(task_track_folder)
-        files = [f for f in files if f.endswith(".json") or f.endswith(".jsonl")]
+        root = Path(task_track_folder)
+        files = [f for f in root.rglob("*") if f.is_file() and f.suffix in {".json", ".jsonl"}]
         file_versions: dict[str, dict[str, PatchInfo]] = {}
-        for f in files:
-            file_path = os.path.join(task_track_folder, f)
-            if not os.path.isfile(file_path):
-                continue
+        for file_path in files:
+            f = file_path.relative_to(root).as_posix()
             try:
                 if f.endswith(".jsonl"):
                     file_name = f[:-len(".jsonl")]
-                    snapshots = VersionsWriter().load_history(Path(file_path)).snapshots
+                    snapshots = VersionsWriter().load_history(file_path).snapshots
                     patch_history = [
                         PatchInfo(
                             snapshot.timestamp.strftime("%Y-%m-%d_%H-%M-%S"),
@@ -63,7 +61,7 @@ class TrackerLoader: # deprecated
                     ]
                 else:
                     file_name = f[:-len(".json")]
-                    patch_history = PatchHistory().set_json_file(file_path).load_json().restore_all()
+                    patch_history = PatchHistory().set_json_file(file_path.as_posix()).load_json().restore_all()
                 file_versions[file_name] = {}
                 for patch in patch_history:
                     file_versions[file_name][patch.label] = patch
@@ -80,8 +78,8 @@ class TrackerLoader: # deprecated
         return Tracker.load_from_log(csv_file)
 
     @staticmethod
-    def load_from_task_track(task_track_folder: str) -> dict[dt.datetime, LogItemExec]:
-        task = os.path.basename(task_track_folder)
+    def load_from_task_track(task_track_folder: str, task_key: str | None = None) -> dict[dt.datetime, LogItemExec]:
+        task = task_key or os.path.basename(task_track_folder)
         tracks: list[Track] = TrackerLoader.load_track_csv(task_track_folder)
         file_versions: dict[str, dict[str, PatchInfo]] = TrackerLoader.load_file_versions(task_track_folder)
         output: dict[dt.datetime, LogItemExec] = {}
@@ -144,12 +142,14 @@ class OldLogLoader:
         track_folder = self.paths.track_folder
         if not os.path.exists(track_folder):
             return output
-        entries = os.listdir(track_folder)
-        for e in entries:
-            folder_path = os.path.join(track_folder, e)
-            if not os.path.isdir(folder_path):
-                continue
-            dict_stamp_exec: dict[dt.datetime, LogItemExec] = TrackerLoader.load_from_task_track(folder_path)
+        for csv_file in Path(track_folder).rglob("track.csv"):
+            folder_path = csv_file.parent
+            relative = folder_path.relative_to(track_folder)
+            if len(relative.parts) < 2:
+                task_key = relative.parts[-1] if relative.parts else folder_path.name
+            else:
+                task_key = f"{relative.parts[0]}@{'/'.join(relative.parts[1:])}"
+            dict_stamp_exec: dict[dt.datetime, LogItemExec] = TrackerLoader.load_from_task_track(str(folder_path), task_key)
             output.update(dict_stamp_exec)
 
         return output

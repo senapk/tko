@@ -28,7 +28,7 @@ class TaskCollected:
     def key(self, value: str):
         self._key = value
         if "@" in value:
-            self._key = value.split("@")[1]
+            self._key = value.split("@", 1)[1]
 
     @property
     def quest(self) -> str:
@@ -38,13 +38,13 @@ class TaskCollected:
     def quest(self, value: str):
         self._quest = value
         if "@" in value:
-            self._quest = value.split("@")[1]
+            self._quest = value.split("@", 1)[1]
 
     def setup(self, log_sort: LogSort, task: Task | None, remote_index: dict[str, str] | None):
         key = log_sort.key if log_sort.key else ""
         remote = None
         if "@" in key:
-            remote = key.split("@")[0]
+            remote = key.split("@", 1)[0]
         if remote_index is not None and remote and remote in remote_index.keys():
             self.remote = remote_index[remote]
         self.key = key

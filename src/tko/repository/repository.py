@@ -101,7 +101,7 @@ class Repository:
         return task_folder == folder
     
     def get_task_folder_for_label(self, label: str) -> Path:
-        parts: list[str] = label.split("@")
+        parts: list[str] = label.split("@", 1)
         source = ""
         if len(parts) > 1:
             source = parts[0]

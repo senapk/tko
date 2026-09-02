@@ -127,7 +127,7 @@ class PlayActions:
                 )
                 return
             if ic.enabled:
-                delete_folder(text=folder.name)
+                delete_folder(text=obj.basic.key)
             else:
                 self.fman.add_floating(
                     FloatingInputText(
