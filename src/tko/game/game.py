@@ -70,12 +70,10 @@ class Game:
             for quest_key in gb.ordered_quests:
                 self.ordered_quests.append(remote.name + "@" + quest_key)
             gb_quests = gb.collect_quests()
-            gb_tasks = gb.collect_tasks()
             for quest in gb_quests.values():
                 self.quests[quest.basic.full_key] = quest
-            for task in gb_tasks.values():
-                self.tasks[task.basic.full_key] = task
-        GameValidator(self.quests).validate()
+        validator = GameValidator(self.quests).validate()
+        self.tasks = validator.tasks
         return self
     
 
@@ -119,4 +117,3 @@ class Game:
         for t in self.tasks.values():
             output.append(str(t))
         return "\n".join(output)
-    

@@ -154,7 +154,7 @@ class Renderer:
         return max([len(k) for k in keys]) if len(keys) > 0 else 0
 
     def _calc_fields_pad(self, quests: list[QuestLine], header: list[TaskLine | str]) -> int:
-        max_len = len("gain=1 hard=1 size=1 type=make eval=test")
+        max_len = len("type=make gain=1 hard=1 size=1 eval=test")
         all_task_lines: list[TaskLine] = [line for line in header if isinstance(line, TaskLine)]
         for quest in quests:
             all_task_lines.extend([line for line in quest.lines if isinstance(line, TaskLine)])

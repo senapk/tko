@@ -45,8 +45,11 @@ class Quest:
         task.game.skill = self.game.skill
         self.__tasks.append(task)
 
-    def get_tasks(self):
+    def get_tasks(self) -> list[Task]:
         return self.__tasks
+
+    def set_tasks(self, tasks: list[Task]) -> None:
+        self.__tasks = list(tasks)
 
     def sort_tasks_by_title(self):
         self.__tasks = sorted(self.__tasks, key=lambda tr: tr.basic.title)

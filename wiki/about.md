@@ -122,7 +122,7 @@ Metadados incluem:
 Exemplo de linha no índice:
 
 ```md
-- [ ] `@soma gain=1 hard=1 size=1 type=make eval=test` [Soma](labs/soma/README.md)
+- [ ] `@soma type=make gain=1 hard=1 size=1 eval=test` [Soma](labs/soma/README.md)
 ```
 
 ------------------------------------------------------------------------

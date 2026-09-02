@@ -89,7 +89,7 @@ Defaults aplicados pelo parser:
 - `gain=1`, `hard=1`, `size=1`.
 - `type=make`, se o tipo nao for informado.
 - `eval=test` para `type=make`.
-- `eval=self` para `type=read`.
+- `eval=self` e implicito para `type=read` e nao e emitido pelo indexador.
 
 Sintaxes antigas com `:read`, `:make`, `:test`, `:self`, `xp=` e `tier=` ainda sao aceitas por compatibilidade, mas novas documentacoes e exemplos devem usar os campos chave-valor canonicos.
 

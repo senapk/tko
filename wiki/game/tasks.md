@@ -47,6 +47,9 @@ Cada atividade possui 3 indicadores independentes:
 - **`eval=test`**: Avaliação automática por testes (casos em `tests.toml`, `.tio` ou blocos de teste no próprio `README.md`).
 - **`eval=self`**: Autoavaliação pelo próprio aluno.
 
+Para atividades `type=read`, `eval=self` é implícito e não aparece na formatação do
+índice. Os campos `hard` e `size` também podem ser usados nesse tipo de atividade.
+
 
 ## Papel do `tko build index`
 
@@ -55,7 +58,7 @@ O comando `tko build index README.md labs` sincroniza e formata o índice:
 1. **Validação de Links Locais**: Detecta se alguma tarefa aponta para um README local que não existe mais, avisa o usuário e remove a entrada inválida.
 2. **Auto-indexação de Novas Pastas**: Inspeciona `labs/` e, se houver pastas de tarefas que ainda não estão no índice, avisa e adiciona automaticamente na seção correspondente.
 3. **Alinhamento Visual (Padding)**: Formata as tarefas alinhando `@chave` e tags em colunas padronizadas, garantindo que os colchetes dos títulos fiquem perfeitamente alinhados verticalmente.
-4. **Preservação de Escolhas**: O indexador não sobrescreve os tipos `type` ou modos de avaliação `eval` definidos pelo autor.
+4. **Normalização de Leitura**: Atividades `type=read` são sempre autoavaliadas; o indexador remove `eval=test` ou `eval=self` e preserva `gain`, `hard` e `size`.
 
 
 ## Sintaxe Antiga e Compatibilidade

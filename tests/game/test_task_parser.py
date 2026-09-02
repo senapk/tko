@@ -80,7 +80,7 @@ def test_read_task_external_url_sets_default_self_eval() -> None:
     assert task.config.test == TaskEval.SELF
 
 
-def test_read_task_github_url_stays_external() -> None:
+def test_read_task_github_url_stays_external_and_uses_self_eval() -> None:
     task = make_parser(remote_import=True).parse_line(
         "- [ ] `@ref type=read eval=test` [material](https://github.com/user/repo/blob/main/README.md)",
     )
@@ -90,7 +90,7 @@ def test_read_task_github_url_stays_external() -> None:
     assert task.location.is_read_http_link is True
     assert task.location.git_hub_url is None
     assert task.location.remote_import is False
-    assert task.config.test == TaskEval.TEST
+    assert task.config.test == TaskEval.SELF
 
 
 def test_decode_task_types_sets_expected_values() -> None:

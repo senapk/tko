@@ -24,7 +24,7 @@ class TaskParser:
     Faz o parsing de linhas de tarefas no formato markdown, suportando tanto o modelo chave-valor quanto o modelo antigo.
 
     Formato canônico (chave-valor):
-        - [ ] `@t1 gain=10 hard=3 size=2 type=make eval=test` [Título](t1/README.md)
+        - [ ] `@t1 type=make gain=10 hard=3 size=2 eval=test` [Título](t1/README.md)
         - [ ] `@t2 gain=5 type=read` [Material](https://exemplo.com/material)
 
     Campos suportados:
@@ -49,7 +49,7 @@ class TaskParser:
         - Para links externos http/https: URLs normais funcionam como leitura ou execução externa; URLs do GitHub são tratadas como tarefas remotas importáveis.
 
     Exemplos:
-        - [ ] `@t1  gain=8 hard=1 size=1 type=make eval=test` [Implementar soma](t1/README.md)
+        - [ ] `@t1  type=make gain=8 hard=1 size=1 eval=test` [Implementar soma](t1/README.md)
         - [ ] `@t2  gain=5 type=read`                        [Ler artigo](https://exemplo.com/material)
         - [ ] `@foo gain=9 hard=2 size=2`                    [Tarefa de exemplo](exemplo/README.md)
         - [ ] `@bar type=read`                               [Material externo](https://exemplo.com/material)

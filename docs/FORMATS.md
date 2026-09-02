@@ -97,13 +97,15 @@ Elementos comuns:
 Exemplo de linha:
 
 ```md
-- [ ] `@tres gain=1 hard=1 size=1 type=make eval=test` [Soma de três inteiros](labs/tres/README.md)
+- [ ] `@tres type=make gain=1 hard=1 size=1 eval=test` [Soma de três inteiros](labs/tres/README.md)
 ```
 
 Semântica resumida:
 
 - `@chave` identifica task
 - `gain=1` define ganho pedagogico
+- `hard=1` e `size=1` definem dificuldade e tamanho, inclusive para tarefas `read`
+- `eval` e emitido para tarefas `make`; em `read`, a autoavaliacao (`self`) e implicita
 
 ## Referências relacionadas
 

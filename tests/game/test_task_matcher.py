@@ -61,7 +61,7 @@ class TestTaskMatcher:
         assert matcher.size == 4
         assert matcher.is_make is True
         assert matcher.eval.value == "self"
-        assert matcher.get_filled_fields() == ["@foo", "gain=3", "hard=2", "size=4", "type=make", "eval=self"]
+        assert matcher.get_filled_fields() == ["@foo", "type=make", "gain=3", "hard=2", "size=4", "eval=self"]
 
     def test_match_pattern_with_legacy_xp_tier(self):
         matcher = TaskMatcher()
@@ -73,7 +73,7 @@ class TestTaskMatcher:
         assert matcher.size == 1
         assert matcher.is_make is True
         assert matcher.eval.value == "test"
-        assert matcher.get_filled_fields() == ["@bar", "gain=5", "hard=3", "size=1", "type=make", "eval=test"]
+        assert matcher.get_filled_fields() == ["@bar", "type=make", "gain=5", "hard=3", "size=1", "eval=test"]
 
     def test_read_task_defaults_and_filled_fields(self):
         matcher = TaskMatcher()
@@ -82,4 +82,20 @@ class TestTaskMatcher:
         assert matcher.key == "read_task"
         assert matcher.is_read is True
         assert matcher.eval.value == "self"
-        assert matcher.get_filled_fields() == ["@read_task", "gain=1", "type=read", "eval=self"]
+        assert matcher.get_filled_fields() == ["@read_task", "type=read", "gain=1", "hard=1", "size=1"]
+
+    def test_read_task_keeps_hard_and_size_but_omits_eval(self):
+        matcher = TaskMatcher()
+        line = "- [ ] `@read_task gain=5 hard=3 size=2 type=read eval=self` [Material](wiki/git/README.md)"
+
+        assert matcher.match_pattern(line) is True
+        assert matcher.eval.value == "self"
+        assert matcher.get_filled_fields() == ["@read_task", "type=read", "gain=5", "hard=3", "size=2"]
+
+    def test_read_task_eval_test_is_normalized_to_self(self):
+        matcher = TaskMatcher()
+        line = "- [ ] `@read_task type=read eval=test` [Material](wiki/git/README.md)"
+
+        assert matcher.match_pattern(line) is True
+        assert matcher.eval.value == "self"
+        assert matcher.get_filled_fields() == ["@read_task", "type=read", "gain=1", "hard=1", "size=1"]

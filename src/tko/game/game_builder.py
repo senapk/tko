@@ -21,8 +21,16 @@ _GAME_BUILDER_SOURCE_NOT_FOUND_CREATING = Msg.text(
     en="Warning: source {filename} not found in source {name}, creating file",
 )
 _GAME_BUILDER_QUEST_REQUIRES_MISSING = Msg.text(
-    pt="Quest\n{filename}:{line}\n{quest}\nrequer {required} que não existe",
-    en="Quest\n{filename}:{line}\n{quest}\nrequires {required} that does not exist",
+    pt="Quest\n{filename}:{line}\n{quest}\nrequer {required}, que não existe; carregando sem esse requisito",
+    en="Quest\n{filename}:{line}\n{quest}\nrequires {required}, which does not exist; loading without this requirement",
+)
+_GAME_BUILDER_DUPLICATE_QUEST = Msg.text(
+    pt="Ignorando quest com chave repetida: {key}, arquivo={filename}, linha={line_number}, conteúdo={line}",
+    en="Ignoring quest with duplicate key: {key}, file={filename}, line={line_number}, content={line}",
+)
+_GAME_BUILDER_DUPLICATE_TASK = Msg.text(
+    pt="Ignorando tarefa com chave repetida: {key}, arquivo={filename}, linha={line_number}, conteúdo={line}",
+    en="Ignoring task with duplicate key: {key}, file={filename}, line={line_number}, content={line}",
 )
 _GAME_BUILDER_NO_QUEST_TITLE = Msg.text(
     pt="Sem Quest",
@@ -39,6 +47,7 @@ class GameBuilder:
         self.ordered_quests: list[str] = []  # ordered quests keys
         self.quests: dict[str, Quest] = {}
         self.active_quest: Quest | None = None
+        self._registered_keys: set[str] = set()
         self.interactive: bool = False
 
     def set_interactive(self, interactive: bool):
@@ -46,7 +55,11 @@ class GameBuilder:
         return self
 
     def build_from(self, language: str) -> bool:
-        
+        self.ordered_quests = []
+        self.quests = {}
+        self.active_quest = None
+        self._registered_keys.clear()
+
         filename = self.index_path
         content = Decoder.load(filename)
         self.__parse_file_content(content)
@@ -87,10 +100,15 @@ class GameBuilder:
     def __create_requirements_pointers(self):
         filename: Path = self.index_path
         quests = self.collect_quests()
+        for q in quests.values():
+            q.requirements.requires_ptr.clear()
+            q.requirements.required_by_ptr.clear()
         # verificar se todas as quests requeridas existem e adicionar o ponteiro
         for q in quests.values():
+            valid_requirements: list[str] = []
             for r in q.requirements.requires:
                 if r in quests:
+                    valid_requirements.append(r)
                     q.requirements.requires_ptr.append(quests[r])
                     quests[r].requirements.required_by_ptr.append(q)
                 else:
@@ -101,7 +119,7 @@ class GameBuilder:
                             required=r,
                         )
                     )
-                    exit(1)
+            q.requirements.requires = valid_requirements
 
     def __parse_file_content(self, content: str):
         lines = content.splitlines()
@@ -124,16 +142,41 @@ class GameBuilder:
         return self.active_quest
 
     def __add_quest(self, quest: Quest) -> Quest:
-        if quest.basic.full_key not in self.quests:
-            # print("debug", f"Adding quest {quest.identity.full_key} with title {quest.identity.get_title()}")
-            self.quests[quest.basic.full_key] = quest
-        if quest.basic.full_key not in self.ordered_quests:
-            self.ordered_quests.append(quest.basic.full_key)
+        key = quest.basic.key
+        if key in self._registered_keys:
+            logger.warning(
+                _GAME_BUILDER_DUPLICATE_QUEST.t().format(
+                    key=key,
+                    filename=self.index_path,
+                    line_number=quest.source.line_number,
+                    line=quest.source.line,
+                )
+            )
+            if self.active_quest is None:
+                raise ValueError(f"Duplicate quest key without an active quest: {key}")
+            return self.active_quest
+
+        self._registered_keys.add(key)
+        self.quests[quest.basic.full_key] = quest
+        self.ordered_quests.append(quest.basic.full_key)
         self.active_quest = quest
         return quest
 
     def __add_task(self, task: Task):
-        self.__get_active_quest().add_task(task)
+        active_quest = self.__get_active_quest()
+        key = task.basic.key
+        if key in self._registered_keys:
+            logger.warning(
+                _GAME_BUILDER_DUPLICATE_TASK.t().format(
+                    key=key,
+                    filename=self.index_path,
+                    line_number=task.location.line_number,
+                    line=task.location.line_data,
+                )
+            )
+            return
+        self._registered_keys.add(key)
+        active_quest.add_task(task)
 
     def filter_by_language_and_empty(self, language: str):
         quests: list[Quest] = []

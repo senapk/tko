@@ -7,9 +7,9 @@ from tko.i18n import Msg
 
 
 
-_GAME_VALIDATOR_DUPLICATE_KEY = Msg.text(
-    pt="Chave repetida: {task_key}",
-    en="Duplicate key: {task_key}",
+_GAME_VALIDATOR_IGNORING_DUPLICATE_TASK = Msg.text(
+    pt="Ignorando tarefa com chave repetida: {task_key}, arquivo={filename}, linha={line_number}, conteúdo={line}",
+    en="Ignoring task with duplicate key: {task_key}, file={filename}, line={line_number}, content={line}",
 )
 _GAME_VALIDATOR_SELF_REF_ERROR = Msg.text(
     pt="Erro: auto referência {line_number} {line}",
@@ -26,32 +26,31 @@ class GameValidator:
         self.tasks: dict[str, Task] = {}
         
     def validate(self):
+        self.tasks.clear()
         self.__validate_requirements()
         self.__check_cycle()
         return self
 
     def __validate_requirements(self):
         # verify is there are keys repeated between quests, tasks and groups
-        keys = [k for k in self.quests.keys()]
+        keys = set(self.quests.keys())
         for q in self.quests.values():
+            accepted_tasks: list[Task] = []
             for task in q.get_tasks():
                 if task.basic.full_key in keys:
-                    if task.basic.full_key != "sandbox@sandbox":
-                        logger.error(
-                            "ignoring task_key={task_key}, line_number={line_number}, line={line}",
+                    logger.warning(
+                        _GAME_VALIDATOR_IGNORING_DUPLICATE_TASK.t().format(
                             task_key=task.basic.full_key,
+                            filename=task.location.index_path,
                             line_number=task.location.line_number,
-                            line=task.location.line_data
+                            line=task.location.line_data,
                         )
+                    )
                     continue
-                keys.append(task.basic.full_key)
+                keys.add(task.basic.full_key)
                 self.tasks[task.basic.full_key] = task
-
-        # print chaves repetidas
-        for k in keys:
-            if keys.count(k) > 1:
-                logger.error(str(_GAME_VALIDATOR_DUPLICATE_KEY).format(task_key=k))
-                exit(1)
+                accepted_tasks.append(task)
+            q.set_tasks(accepted_tasks)
 
         # trim titles
         for q in self.quests.values():

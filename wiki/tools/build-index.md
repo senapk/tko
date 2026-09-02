@@ -89,8 +89,8 @@ Quando voce nao quiser contar esse total manualmente, marque com `[x]` as tarefa
 ## Vetores <!-- key=@vetores min=70% -->
 
 - [x] `@soma     gain=2 hard=1 size=1 type=make eval=test` [Soma](labs/soma/README.md)
-- [x] `@media    gain=3 hard=1 size=1 type=make eval=test` [Media](labs/media/README.md)
-- [ ] `@desafio  gain=5 hard=3 size=2 type=make eval=test` [Desafio](labs/desafio/README.md)
+- [x] `@media    type=make gain=3 hard=1 size=1 eval=test` [Media](labs/media/README.md)
+- [ ] `@desafio  type=make gain=5 hard=3 size=2 eval=test` [Desafio](labs/desafio/README.md)
 ```
 
 Ao executar:

@@ -115,15 +115,14 @@ class TaskMatcher:
         if self.key is not None:
             output.append(f"@{self.key}")
 
-        output.append(f"{TaskMatcher.GAIN}{self.gain}")
-        if self.is_make:
-            output.append(f"{TaskMatcher.HARD}{self.hard}")
-            output.append(f"{TaskMatcher.SIZE}{self.size}")
-
         if self.resource_type != TaskType.NULL:
             output.append(f"{TaskMatcher.TYPE}{self.resource_type.value}")
 
-        if self.eval != TaskEval.NULL:
+        output.append(f"{TaskMatcher.GAIN}{self.gain}")
+        output.append(f"{TaskMatcher.HARD}{self.hard}")
+        output.append(f"{TaskMatcher.SIZE}{self.size}")
+
+        if self.eval != TaskEval.NULL and not self.is_read:
             output.append(f"{TaskMatcher.EVAL}{self.eval.value}")
 
         return output
@@ -179,8 +178,10 @@ class TaskMatcher:
         if self.resource_type == TaskType.NULL:
             self.resource_type = TaskType.MAKE
 
-        if self.eval == TaskEval.NULL:
-            self.eval = TaskEval.SELF if self.resource_type == TaskType.READ else TaskEval.TEST
+        if self.resource_type == TaskType.READ:
+            self.eval = TaskEval.SELF
+        elif self.eval == TaskEval.NULL:
+            self.eval = TaskEval.TEST
 
 
     @property

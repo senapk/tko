@@ -164,8 +164,29 @@ def test_fix_readme_uses_canonical_defaults_and_aligned_columns(tmp_path: Path) 
     fix_readme(index_path, base_dir, verbose=False)
 
     line = next(line for line in index_path.read_text(encoding="utf-8").splitlines() if "@long_task" in line)
-    assert "gain=1 hard=1 size=1 type=make eval=test" in line
+    assert "type=make gain=1 hard=1 size=1 eval=test" in line
     assert "📖" not in line and "🛠" not in line
+
+
+def test_fix_readme_normalizes_read_fields_and_eval(tmp_path: Path) -> None:
+    from tko.feno.indexer import fix_readme
+
+    index_path = tmp_path / "README.md"
+    base_dir = tmp_path / "base"
+    base_dir.mkdir()
+    task_dir = base_dir / "reading"
+    task_dir.mkdir()
+    (task_dir / "README.md").write_text("# Leitura\n", encoding="utf-8")
+    index_path.write_text(
+        "- [ ] `@reading gain=4 hard=3 size=2 type=read eval=test` [Leitura](base/reading/README.md)\n",
+        encoding="utf-8",
+    )
+
+    fix_readme(index_path, base_dir, verbose=False)
+
+    line = next(line for line in index_path.read_text(encoding="utf-8").splitlines() if "@reading" in line)
+    assert "type=read gain=4 hard=3 size=2" in line
+    assert "eval=" not in line
 
 
 def test_fix_readme_updates_quest_xpgoal_from_checked_tasks(tmp_path: Path) -> None:

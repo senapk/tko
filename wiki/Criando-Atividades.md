@@ -47,8 +47,8 @@ Exemplo minimo:
 
 ## Operacoes Basicas key=@basic tag=basic xpgoal=2 min=70%
 
-- [x] `@soma  gain=1 hard=1 size=1 type=make eval=test` [Soma](labs/soma/README.md)
-- [x] `@media gain=1 hard=1 size=1 type=make eval=test` [Media](labs/media/README.md)
+- [x] `@soma  type=make gain=1 hard=1 size=1 eval=test` [Soma](labs/soma/README.md)
+- [x] `@media type=make gain=1 hard=1 size=1 eval=test` [Media](labs/media/README.md)
 ```
 
 Use `[x]` nas tarefas que contam para a meta principal da quest. Ao rodar
@@ -87,8 +87,8 @@ Cada task e uma linha Markdown com checkbox, metadados entre crases e link para
 o recurso.
 
 ```md
-- [ ] `@soma gain=1 hard=1 size=1 type=make eval=test` [Soma](labs/soma/README.md)
-- [ ] `@intro gain=1 type=read eval=self` [Texto introdutorio](wiki/intro.md)
+- [ ] `@soma type=make gain=1 hard=1 size=1 eval=test` [Soma](labs/soma/README.md)
+- [ ] `@intro gain=1 hard=1 size=1 type=read` [Texto introdutorio](wiki/intro.md)
 ```
 
 Campos mais usados:
@@ -107,7 +107,7 @@ Padroes aplicados pelo TKO:
 - `gain=1`, `hard=1`, `size=1`.
 - `type=make`, quando o tipo nao e informado.
 - `eval=test` para `type=make`.
-- `eval=self` para `type=read`.
+- `eval=self` e implicito para `type=read`; o indexador nao grava esse campo.
 
 Sintaxes antigas como `xp=`, `tier=`, `:make`, `:read`, `:test` e `:self` ainda
 sao aceitas por compatibilidade. Em repositorios novos, prefira sempre os

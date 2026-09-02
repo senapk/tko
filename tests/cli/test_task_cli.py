@@ -6,6 +6,7 @@ from typer.testing import CliRunner
 from tko.cli.cli_task import app
 from tko.config.run_settings import RunSettings
 from tko.config.settings import Settings
+from tko.util.console import Console
 
 
 def _make_app_context(tmp_path: Path) -> Settings:
@@ -29,3 +30,43 @@ def test_task_down_requires_full_key(monkeypatch: MonkeyPatch, tmp_path: Path) -
 
     # When repo is not found, the command returns silently with exit code 0
     assert result.exit_code == 0
+
+
+def test_task_list_prints_each_duplicate_key_only_once(tmp_path: Path) -> None:
+    (tmp_path / ".tko").mkdir()
+    (tmp_path / ".tko" / "repository.toml").write_text(
+        'version = "0.3"\n\n'
+        '[profile]\n'
+        'authoring_source = "base"\n\n'
+        '[profile.sources.base]\n'
+        'uri = "README.md"\n\n'
+        '[profile.audit]\n'
+        'enabled = false\n\n'
+        '[preferences]\n'
+        'inbox = "all"\n'
+        'lang = "c"\n\n'
+        '[state]\n'
+        'expanded = []\n'
+        'selected = ""\n'
+        'selected_index = 0\n',
+        encoding="utf-8",
+    )
+    (tmp_path / "README.md").write_text(
+        "# Course\n\n"
+        "## First <!-- @first -->\n"
+        "- [ ] `@same type=read` [First](https://example.com/first)\n"
+        "## Second <!-- @second -->\n"
+        "- [ ] `@same type=read` [Duplicate](https://example.com/duplicate)\n"
+        "- [ ] `@unique type=read` [Unique](https://example.com/unique)\n",
+        encoding="utf-8",
+    )
+    ctx = _make_app_context(tmp_path)
+    ctx.rs.force_offline = True
+
+    with Console.capture() as output:
+        result = CliRunner().invoke(app, ["list", "--all"], obj=ctx)
+    rendered = output.getvalue()
+
+    assert result.exit_code == 0
+    assert rendered.count("base@same") == 1
+    assert rendered.count("base@unique") == 1

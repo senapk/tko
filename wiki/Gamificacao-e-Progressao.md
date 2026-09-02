@@ -142,7 +142,7 @@ Esse comando ajuda a:
 - calcular `xpgoal` das quests somando o `gain` das tasks marcadas com `[x]`
 
 Pastas novas dentro de `labs/` que contêm `README.md` entram automaticamente na quest correspondente,
-com `gain=1 hard=1 size=1 type=make eval=test`. URLs HTTP/HTTPS são preservadas como referências
+com `type=make gain=1 hard=1 size=1 eval=test`. URLs HTTP/HTTPS são preservadas como referências
 remotas e não são tratadas como arquivos locais quebrados.
 
 Guia detalhado:
