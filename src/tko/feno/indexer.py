@@ -55,8 +55,13 @@ class Elements:
         index_lines: list[TaskLine | QuestLine | str] = []
         for line in content.splitlines():
             tl = TaskLine(index_path=self.index_path, base_dir=self.base_dir)
-            if tl.init_by_line(line):
-                index_lines.append(tl)
+            try:
+                if tl.init_by_line(line):
+                    index_lines.append(tl)
+                    continue
+            except ValueError as e:
+                Console.print(RT(f" {self.index_path}:{len(index_lines) + 1} - ", "r") + RT.parse(str(e)))
+                index_lines.append(line)
                 continue
             ql = QuestLine()
             if ql.parse(index_path=self.index_path, line=line):

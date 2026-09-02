@@ -80,6 +80,12 @@ Placeholders comuns:
 - Preferir `go build` para saída determinística.
 - Validar execução do binário gerado.
 
+### Kotlin
+
+- Compilar com `kotlinc` gerando um JAR em cache.
+- Executar com `java -jar`.
+- Validar que `kotlinc` e `java` estão instalados no ambiente.
+
 ### TypeScript
 
 - Definir transpile (ex.: esbuild/tsc) e execução via node.

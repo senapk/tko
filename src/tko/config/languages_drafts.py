@@ -44,6 +44,12 @@ public class draft {
 }
 """
 
+kotlin_draft = r"""
+fun main() {
+    println("Hello, World!")
+}
+"""[1:]
+
 ts_draft = r"""
 const input = () => ""; // MACRO
 export {};

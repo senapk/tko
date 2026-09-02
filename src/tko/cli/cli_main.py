@@ -14,7 +14,7 @@ def register_main_commands(app: typer.Typer):
         target_list: Optional[list[str]] = typer.Argument(None, help="Solvers files, test cases or directories containing them"),
         index: Optional[int] = typer.Option(None, "--index", "-i", help="Run a specific test index"),
         pattern: str = typer.Option("@.in @.sol", "--pattern", "-p", help="Input/output file pattern"),
-        language: str = typer.Option(None, "--lang", "-l", help="Language for autoloading (e.g. py, cpp, java, go)"),
+        language: str = typer.Option(None, "--lang", "-l", help="Language for autoloading (e.g. py, cpp, java, go, kt)"),
         filter: bool = typer.Option(False, "--filter", "-f", help="Filter solver files in temporary directory before running"),
         eval: bool = typer.Option(False, "--eval", "-e", help="Show percentage of passed tests"),
         compact: bool = typer.Option(False, "--compact", "-c", help="Hide test case descriptions in failures"),
@@ -97,7 +97,7 @@ def register_main_commands(app: typer.Typer):
     @app.command("init", help="Initialize empty TKO repository")
     def init_cmd( # type: ignore
         ctx: typer.Context,
-        language: Optional[str] = typer.Option(None, "--language", "-l", help="Default repository language (e.g. py, cpp, java, go)"),
+        language: Optional[str] = typer.Option(None, "--language", "-l", help="Default repository language (e.g. py, cpp, java, go, kt)"),
         skip: bool = typer.Option(False, "--skip-sources", "--skip-remotes", "-s", help="Skip asking about default sources"),
         profile: Optional[str] = typer.Option(None, "--profile", help="Initialize from a linked profile URI"),
     ):

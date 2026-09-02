@@ -1,4 +1,4 @@
-from tko.config.languages_drafts import c_draft, cpp_draft, draft_go, draft_js, draft_rust, haskell_draft, java_draft, ts_draft
+from tko.config.languages_drafts import c_draft, cpp_draft, draft_go, draft_js, draft_rust, haskell_draft, java_draft, kotlin_draft, ts_draft
 from tko.util.decoder import Decoder
 from tko.config.languages_setup import LanguageSetup
 from tko.i18n import Msg
@@ -59,6 +59,11 @@ class LanguagesSettings:
             build_cmd=["javac", "{files}", "-d", "{cache}"],
             run_cmd=["java", "-cp", "{cache}", "{main}"],
             draft=java_draft
+        ),
+        "kt": LanguageSetup(
+            build_cmd=["kotlinc", "{files}", "-include-runtime", "-d", "{cache}/main.jar"],
+            run_cmd=["java", "-jar", "{cache}/main.jar"],
+            draft=kotlin_draft
         ),
         "ts": LanguageSetup(
             build_cmd=["npx", "esbuild", "{files}", "--outdir={cache}", "--format=cjs", "--log-level=error"],

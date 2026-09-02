@@ -47,6 +47,14 @@ def test_parse_remote_profile_becomes_repository_profile(tmp_path: Path) -> None
     assert "poo" in cast(ConfigDict, loaded["sources"])
 
 
+def test_parse_remote_profile_accepts_kotlin_language(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path)
+
+    loaded = LinkedProfileService(repo).parse_and_validate(valid_profile().replace("java", "kt"))
+
+    assert loaded["language"] == "kt"
+
+
 def test_rejects_unknown_fields(tmp_path: Path) -> None:
     repo = make_repo(tmp_path)
 
