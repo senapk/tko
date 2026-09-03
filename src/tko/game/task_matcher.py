@@ -1,7 +1,6 @@
 import re
 
-from tko.game.task_enums import TaskEval
-from tko.game.task_enums import TaskType
+from tko.game.task_enums import TaskEval, TaskType
 
 def remove_emojis(text: str) -> str:
     emoji_pattern = re.compile(
@@ -42,10 +41,13 @@ class TaskMatcher:
         self.key: str | None = None
 
         self.resource_type = TaskType.NULL
+        self.eval = TaskEval.SELF
+        self._legacy_eval: TaskEval | None = None
+        self._legacy_read = False
+        self._explicit_type = False
         self.gain = 1
         self.hard = 1
         self.size = 1
-        self.eval = TaskEval.NULL
 
     def match_pattern(self, line: str) -> bool:
         is_ref: bool = False
@@ -64,10 +66,13 @@ class TaskMatcher:
         self.link = ""
         self.key = None
         self.resource_type = TaskType.NULL
+        self.eval = TaskEval.SELF
+        self._legacy_eval = None
+        self._legacy_read = False
+        self._explicit_type = False
         self.gain = 1
         self.hard = 1
         self.size = 1
-        self.eval = TaskEval.NULL
         self.is_ref = is_ref
         self.raw_pre = remove_emojis(match.group(1))
         self.title = remove_emojis(match.group(2))
@@ -122,9 +127,6 @@ class TaskMatcher:
         output.append(f"{TaskMatcher.HARD}{self.hard}")
         output.append(f"{TaskMatcher.SIZE}{self.size}")
 
-        if self.eval != TaskEval.NULL and not self.is_read:
-            output.append(f"{TaskMatcher.EVAL}{self.eval.value}")
-
         return output
 
     def __parse_fields(self, words: list[str]):
@@ -150,47 +152,72 @@ class TaskMatcher:
                 if (size_value := self.parse_int(item[len(TaskMatcher.SIZE):])) is not None:
                     self.size = size_value
                 continue
-            elif item == f"{TaskMatcher.EVAL}{TaskEval.TEST.value}":
-                self.eval = TaskEval.TEST
-            elif item == f"{TaskMatcher.EVAL}{TaskEval.SELF.value}":
-                self.eval = TaskEval.SELF
+            elif item == f"{TaskMatcher.TYPE}{TaskType.WIKI.value}" or item == f"{TaskMatcher.TYPE}read":
+                self.resource_type = TaskType.WIKI
+                self._legacy_read = item.endswith("read")
+                self._explicit_type = True
+            elif item == f"{TaskMatcher.TYPE}{TaskType.SELF.value}":
+                self.resource_type = TaskType.SELF
+                self._explicit_type = True
+            elif item == f"{TaskMatcher.TYPE}{TaskType.DIFF.value}":
+                self.resource_type = TaskType.DIFF
+                self._explicit_type = True
+            elif item == f"{TaskMatcher.TYPE}{TaskType.CODE.value}":
+                self.resource_type = TaskType.CODE
+                self._explicit_type = True
             elif item == f"{TaskMatcher.TYPE}{TaskType.MAKE.value}":
                 self.resource_type = TaskType.MAKE
-            elif item == f"{TaskMatcher.TYPE}{TaskType.READ.value}":
-                self.resource_type = TaskType.READ
+                self._explicit_type = True
+            elif item == f"{TaskMatcher.EVAL}self":
+                self._legacy_eval = TaskEval.SELF
+            elif item in (f"{TaskMatcher.EVAL}test", f"{TaskMatcher.EVAL}diff"):
+                self._legacy_eval = TaskEval.TEST
 
     def __parse_fields_legacy(self, items: list[str]):
         for tag in items:
             # if c is digit, set xp
             if tag.isdigit():
                 self.gain = int(tag)
-            elif tag == TaskEval.TEST.value:
-                self.eval = TaskEval.TEST
-            elif tag == TaskEval.SELF.value:
-                self.eval = TaskEval.SELF
+            elif tag == "test":
+                self._legacy_eval = TaskEval.TEST
+            elif tag == "diff":
+                self.resource_type = TaskType.DIFF
+            elif tag == "self":
+                self._legacy_eval = TaskEval.SELF
             elif tag == TaskType.MAKE.value:
                 self.resource_type = TaskType.MAKE
-            elif tag == TaskType.READ.value:
-                self.resource_type = TaskType.READ
+            elif tag in ("read", TaskType.WIKI.value):
+                self.resource_type = TaskType.WIKI
+                self._legacy_read = tag == "read"
 
 
     def __set_default_values(self):
         if self.resource_type == TaskType.NULL:
-            self.resource_type = TaskType.MAKE
-
-        if self.resource_type == TaskType.READ:
-            self.eval = TaskEval.SELF
-        elif self.eval == TaskEval.NULL:
-            self.eval = TaskEval.TEST
+            raise ValueError("Task type is required: use type=wiki, type=self, type=diff or type=code")
+        if self.resource_type == TaskType.MAKE:
+            if self._legacy_eval == TaskEval.SELF:
+                self.resource_type = TaskType.SELF
+            elif self._legacy_eval == TaskEval.TEST:
+                self.resource_type = TaskType.DIFF
+            else:
+                raise ValueError("type=make is obsolete; use type=self or type=diff")
+        elif self._explicit_type and not self._legacy_read and self._legacy_eval is not None:
+            raise ValueError("eval= is obsolete; use type=wiki, type=self, type=diff or type=code")
+        if self.resource_type in (TaskType.SELF, TaskType.DIFF, TaskType.CODE):
+            self.eval = {TaskType.SELF: TaskEval.SELF, TaskType.DIFF: TaskEval.TEST, TaskType.CODE: TaskEval.TEST}[self.resource_type]
 
 
     @property
     def is_read(self):
-        return self.resource_type == TaskType.READ
+        return self.resource_type == TaskType.WIKI
+
+    @property
+    def is_wiki(self):
+        return self.resource_type == TaskType.WIKI
     
     @property
     def is_make(self):
-        return self.resource_type == TaskType.MAKE
+        return self.resource_type != TaskType.WIKI and self.resource_type != TaskType.NULL
 
     @property
     def is_url(self):

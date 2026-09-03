@@ -1,5 +1,5 @@
 from pathlib import Path
-from tko.game.task_enums import TaskEval, TaskType
+from tko.game.task_enums import TaskType
 from tko.i18n import  Msg
 from tko.game.task_matcher import TaskMatcher
 from tko.run.wdir import Wdir
@@ -68,8 +68,7 @@ class TaskLine:
         self.tm.raw_pos = ""
         relative_folder = readme_file.parent.resolve().relative_to(self.index_path.parent.resolve())
         self.tm.key = relative_folder.as_posix()
-        self.tm.resource_type = TaskType.MAKE
-        self.tm.eval = TaskEval.TEST
+        self.tm.resource_type = TaskType.DIFF
         self.tm.title = title
         self.origin_key = self.tm.key
         return self
@@ -99,6 +98,15 @@ class TaskLine:
         if self.origin_key is not None:
             return self.origin_key
         return ""
+
+    @property
+    def materialized_folder(self) -> Path | None:
+        """Return the local folder whose contents are checked by the indexer."""
+        if self.target_file is not None:
+            return self.target_file.parent
+        if self.url is not None and self.key:
+            return (self.index_path.parent / self.key).resolve()
+        return None
 
     def render_line(self, key_pad: int, fields_pad: int = 42) -> str:
         ref = "x" if self.tm.is_ref else " "

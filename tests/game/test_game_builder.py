@@ -26,11 +26,11 @@ def test_duplicate_tasks_keep_only_first_occurrence(tmp_path: Path) -> None:
         tmp_path,
         "# Course\n\n"
         "## First <!-- @first -->\n"
-        "- [ ] `@same` [First occurrence](first/README.md)\n"
-        "- [ ] `@same` [Same quest duplicate](duplicate/README.md)\n"
+        "- [ ] `@same type=wiki` [First occurrence](first/README.md)\n"
+        "- [ ] `@same type=wiki` [Same quest duplicate](duplicate/README.md)\n"
         "## Second <!-- @second -->\n"
-        "- [ ] `@same` [Other quest duplicate](other/README.md)\n"
-        "- [ ] `@unique` [Unique](unique/README.md)\n",
+        "- [ ] `@same type=wiki` [Other quest duplicate](other/README.md)\n"
+        "- [ ] `@unique type=wiki` [Unique](unique/README.md)\n",
     )
 
     assert quest_tasks(builder, "first") == ["same"]
@@ -42,9 +42,9 @@ def test_task_key_prevents_later_quest_and_keeps_current_quest(tmp_path: Path) -
     builder = build_game(
         tmp_path,
         "# Course\n\n"
-        "- [ ] `@shared` [Task before any quest](shared/README.md)\n"
+        "- [ ] `@shared type=wiki` [Task before any quest](shared/README.md)\n"
         "## Rejected <!-- @shared -->\n"
-        "- [ ] `@after` [Still in current quest](after/README.md)\n",
+        "- [ ] `@after type=wiki` [Still in current quest](after/README.md)\n",
     )
 
     assert list(builder.collect_quests()) == ["base@_sem_quest"]
@@ -56,8 +56,8 @@ def test_quest_key_prevents_later_task(tmp_path: Path) -> None:
         tmp_path,
         "# Course\n\n"
         "## Shared <!-- @shared -->\n"
-        "- [ ] `@shared` [Rejected task](shared/README.md)\n"
-        "- [ ] `@accepted` [Accepted task](accepted/README.md)\n",
+        "- [ ] `@shared type=wiki` [Rejected task](shared/README.md)\n"
+        "- [ ] `@accepted type=wiki` [Accepted task](accepted/README.md)\n",
     )
 
     assert quest_tasks(builder, "shared") == ["accepted"]
@@ -69,11 +69,11 @@ def test_duplicate_quest_heading_does_not_change_current_quest(tmp_path: Path) -
         tmp_path,
         "# Course\n\n"
         "## First <!-- @first -->\n"
-        "- [ ] `@one` [One](one/README.md)\n"
+        "- [ ] `@one type=wiki` [One](one/README.md)\n"
         "## Second <!-- @second -->\n"
-        "- [ ] `@two` [Two](two/README.md)\n"
+        "- [ ] `@two type=wiki` [Two](two/README.md)\n"
         "## Repeated first <!-- @first -->\n"
-        "- [ ] `@three` [Three](three/README.md)\n",
+        "- [ ] `@three type=wiki` [Three](three/README.md)\n",
     )
 
     assert quest_tasks(builder, "first") == ["one"]
@@ -88,10 +88,10 @@ def test_requirements_are_ignored_for_gameplay(tmp_path: Path) -> None:
             tmp_path,
             "# Course\n\n"
             "## Base <!-- @base -->\n"
-            "- [ ] `@blocked` [This key blocks a quest](blocked/README.md)\n"
+            "- [ ] `@blocked type=wiki` [This key blocks a quest](blocked/README.md)\n"
             "## Rejected <!-- @blocked -->\n"
             "## Dependent <!-- @dependent deps=@blocked,@base -->\n"
-            "- [ ] `@work` [Work](work/README.md)\n",
+            "- [ ] `@work type=wiki` [Work](work/README.md)\n",
         )
     finally:
         logger.remove(sink_id)
@@ -106,9 +106,9 @@ def test_first_occurrence_is_reserved_before_language_filtering(tmp_path: Path) 
         tmp_path,
         "# Course\n\n"
         "## Python first <!-- @shared lang=python -->\n"
-        "- [ ] `@python_task` [Python](python/README.md)\n"
+        "- [ ] `@python_task type=wiki` [Python](python/README.md)\n"
         "## C duplicate <!-- @shared lang=c -->\n"
-        "- [ ] `@c_task` [C](c/README.md)\n",
+        "- [ ] `@c_task type=wiki` [C](c/README.md)\n",
     )
 
     builder.build_from("c")
@@ -123,7 +123,7 @@ def test_same_item_key_is_allowed_in_different_sources(tmp_path: Path) -> None:
     content = (
         "# Course\n\n"
         "## Quest <!-- @quest -->\n"
-        "- [ ] `@same type=read` [Same](same/README.md)\n"
+        "- [ ] `@same type=wiki` [Same](same/README.md)\n"
     )
     first_index.write_text(content, encoding="utf-8")
     second_index.write_text(content, encoding="utf-8")

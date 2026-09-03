@@ -23,7 +23,7 @@ def test_external_read_materializes_markdown_and_assets_without_tests_or_drafts(
     task.location = TaskLocation(
         index_path=origin / "index.md",
         raw_link="README.md",
-        task_type=TaskType.READ,
+            task_type=TaskType.WIKI,
         external_source=True,
     )
 

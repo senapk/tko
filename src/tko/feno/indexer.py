@@ -6,8 +6,9 @@ from tko.feno.quest_line import QuestLine
 from tko.i18n import Msg
 from tko.util.decoder import Decoder
 from tko.util.rt import RT
-from tko.feno.task_line import TaskLine
+from tko.feno.task_line import TaskLine, TestsFinder
 from tko.feno.indexer_md import IndexerMd
+from tko.game.task_enums import TaskType
 
 
 
@@ -41,6 +42,14 @@ _INDEXER_REMOVE_MISSING_LOCAL_TASKS = Msg.text(
 _INDEXER_REMOVED_MISSING_LOCAL_TASKS = Msg.parse(
     pt="Removidas {count} entradas de tarefas locais inválidas.",
     en="Removed {count} invalid local task entries.",
+)
+_INDEXER_SELF_HAS_TESTS = Msg.parse(
+    pt="Aviso: tarefa '[b]{task}[]' marcada como self possui testes; use type=diff se ela deve ser avaliada por testes.",
+    en="Warning: task '[b]{task}[]' marked as self has tests; use type=diff if it should be evaluated by tests.",
+)
+_INDEXER_DIFF_MISSING_TESTS = Msg.parse(
+    pt="Aviso: tarefa '[b]{task}[]' marcada como diff não possui testes materializados.",
+    en="Warning: task '[b]{task}[]' marked as diff has no materialized tests.",
 )
 
 class Elements:
@@ -108,6 +117,28 @@ class Elements:
         self.remove_missing_local_targets(missing)
         Console.print(str(_INDEXER_REMOVED_MISSING_LOCAL_TASKS).format(count=len(missing)))
 
+    def print_test_type_warnings(self) -> None:
+        for i, line in enumerate(self.lines):
+            if not isinstance(line, TaskLine):
+                continue
+            if line.tm.resource_type not in (TaskType.SELF, TaskType.DIFF):
+                continue
+            folder = line.materialized_folder
+            if folder is None or not folder.is_dir():
+                continue
+            try:
+                has_tests = TestsFinder.find_tests(folder)
+            except (FileNotFoundError, OSError, ValueError):
+                has_tests = False
+
+            if line.tm.resource_type == TaskType.SELF and has_tests:
+                message = _INDEXER_SELF_HAS_TESTS
+            elif line.tm.resource_type == TaskType.DIFF and not has_tests:
+                message = _INDEXER_DIFF_MISSING_TESTS
+            else:
+                continue
+            Console.print(RT(f" {self.index_path}:{i + 1} - ", "r") + RT.parse(str(message).format(task=line.key)))
+
     def fix_titles(self, save_titles: bool = False, load_titles: bool = False) -> None:
         for line in self.lines:
             folder_title: str = ""
@@ -154,7 +185,7 @@ class Renderer:
         return max([len(k) for k in keys]) if len(keys) > 0 else 0
 
     def _calc_fields_pad(self, quests: list[QuestLine], header: list[TaskLine | str]) -> int:
-        max_len = len("type=make gain=1 hard=1 size=1 eval=test")
+        max_len = len("type=diff gain=1 hard=1 size=1")
         all_task_lines: list[TaskLine] = [line for line in header if isinstance(line, TaskLine)]
         for quest in quests:
             all_task_lines.extend([line for line in quest.lines if isinstance(line, TaskLine)])
@@ -295,6 +326,8 @@ def fix_readme(index: Path, base_dir: Path, verbose: bool = True, save_titles: b
     elif verbose:
         elements.ask_remove_missing_local_targets(missing)
     elements.fix_titles(save_titles, load_titles)
+    if verbose:
+        elements.print_test_type_warnings()
 
     finder = Finder(elements)
     missing_entries = finder.create_tasks_from_unused_dirs()

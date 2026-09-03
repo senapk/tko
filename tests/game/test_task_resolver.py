@@ -11,7 +11,7 @@ def make_external_task(key: str) -> Task:
     task = Task()
     task.basic.source_name = "disc"
     task.basic.key = key
-    task.location = replace(task.location, task_type=TaskType.MAKE, external_source=True)
+    task.location = replace(task.location, task_type=TaskType.DIFF, external_source=True)
     return task
 
 

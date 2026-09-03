@@ -26,12 +26,12 @@ class TaskLocation:
         )
             
     @property
-    def is_read(self) -> bool:
-        return self.task_type == TaskType.READ
+    def is_wiki(self) -> bool:
+        return self.task_type == TaskType.WIKI
     
     @property
     def is_make(self) -> bool:
-        return self.task_type == TaskType.MAKE
+        return self.task_type != TaskType.WIKI and self.task_type != TaskType.NULL
     
     @property
     def is_http_link(self) -> bool:
@@ -39,7 +39,11 @@ class TaskLocation:
 
     @property
     def is_read_http_link(self) -> bool:
-        return self.task_type == TaskType.READ and self.is_http_link
+        return self.task_type == TaskType.WIKI and self.is_http_link
+
+    @property
+    def is_read(self) -> bool:
+        return self.is_wiki
 
     @property
     def is_external(self) -> bool:

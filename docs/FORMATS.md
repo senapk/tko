@@ -97,7 +97,7 @@ Elementos comuns:
 Exemplo de linha:
 
 ```md
-- [ ] `@tres type=make gain=1 hard=1 size=1 eval=test` [Soma de três inteiros](labs/tres/README.md)
+- [ ] `@tres type=diff gain=1 hard=1 size=1` [Soma de três inteiros](labs/tres/README.md)
 ```
 
 Semântica resumida:
@@ -105,7 +105,10 @@ Semântica resumida:
 - `@chave` identifica task
 - `gain=1` define ganho pedagogico
 - `hard=1` e `size=1` definem dificuldade e tamanho, inclusive para tarefas `read`
-- `eval` é emitido para tarefas `make`; em `read`, a autoavaliação (`self`) é implícita
+- `type` é obrigatório e pode ser `wiki`, `self`, `diff` ou `code`
+- todas as atividades são materializadas; `wiki` cria apenas o material, `self` cria também um draft, e `diff` cria código e testes
+- `type=self` usa autoavaliação; `type=diff` usa testes por entrada e saída; `type=code` é reservado para testes programáticos
+- somente `wiki` não oferece autoavaliação; as demais usam `src/feedback.toml`
 - o link deve apontar para um `README.md` local ou para um `README.md` no GitHub
 
 Tarefas externas, tanto `read` quanto `make`, são materializadas na área de trabalho do

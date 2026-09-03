@@ -49,11 +49,11 @@ class TaskResolver:
         match (loc.task_type):
             case TaskType.NULL:
                 return None
-            case TaskType.READ:
+            case TaskType.WIKI:
                 if loc.is_external:
                     return self.__source_work_dir(task) / "README.md"
                 return None
-            case TaskType.MAKE:        
+            case TaskType.SELF | TaskType.DIFF | TaskType.CODE | TaskType.MAKE:
                 # if is git url, is import type
                 if loc.is_external:
                     return self.__source_work_dir(task) / "README.md"

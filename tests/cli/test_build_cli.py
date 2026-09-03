@@ -12,7 +12,7 @@ def test_build_index_yes_removes_broken_local_target(tmp_path: Path) -> None:
     base_dir.mkdir()
     index_path.write_text(
         "# Disciplina\n\n"
-        "- [ ] `@missing` [Missing](base/missing/README.md)\n",
+        "- [ ] `@missing type=wiki` [Missing](base/missing/README.md)\n",
         encoding="utf-8",
     )
 

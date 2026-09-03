@@ -2,6 +2,7 @@ from __future__ import annotations
 from loguru import logger
 from tko.i18n import Msg
 from tko.game.task import Task
+from tko.game.task_enums import TaskType
 from tko.logger.log_sort import LogSort
 from tko.repository.repository import Repository
 from tko.repository.remote_resolver import SourceResolver
@@ -46,7 +47,7 @@ class GameCoordinator:
                 _, self_item = self_list[-1]
                 task.info.copy_quality_from(self_item.info)
 
-            if task.config.is_eval_self:
+            if task.config.type == TaskType.SELF:
                 if self_list:
                     _, self_item = self_list[-1]
                     task.info.rate = self_item.info.rate
