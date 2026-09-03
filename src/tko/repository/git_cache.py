@@ -222,6 +222,11 @@ class GitCache:
                 return target_path, True
             return target_path, False
 
+        if self.update_mode == UpdateMode.NEVER:
+            if target_path.exists():
+                return target_path, True
+            return target_path, False
+
         if not has_internet(1):
             if target_path.exists():
                 logger.debug(

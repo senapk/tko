@@ -208,6 +208,28 @@ def test_initial_clone_failure_returns_none(
     assert result == (cache.public_repo_dir("https://example.com/repo.git"), False)
 
 
+def test_never_mode_does_not_check_network_or_clone(
+    monkeypatch: MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    cache = GitCacheProbe(tmp_path, update_mode=UpdateMode.NEVER)
+    network_checked = False
+
+    def fail_if_checked(timeout: int = 1) -> bool:
+        nonlocal network_checked
+        _ = timeout
+        network_checked = True
+        return True
+
+    monkeypatch.setattr("tko.repository.git_cache.has_internet", fail_if_checked)
+
+    repo, found = cache.get_repository_dir("https://example.com/repo.git", load_git=True)
+
+    assert found is False
+    assert repo == cache.public_repo_dir("https://example.com/repo.git")
+    assert network_checked is False
+
+
 def test_successful_clone_marks_updated(
     monkeypatch: MonkeyPatch,
     tmp_path: Path,

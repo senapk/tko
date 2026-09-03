@@ -2,10 +2,13 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from tko.config.run_settings import RunSettings
-from tko.repository.git_cache import GitCache
+from tko.repository.git_cache import GitCache, UpdateMode
 from tko.repository.game_coordinator import GameCoordinator
 from tko.repository.repository import Repository
 from tko.repository.repository_config import RepositoryLoader
+from tko.repository.remote import Source
+from tko.game.game import Game
+from tko.repository.remote_resolver import SourceResolver
 
 
 def test_ensure_managed_readmes_removes_missing_task_during_load(tmp_path: Path) -> None:
@@ -68,3 +71,25 @@ def test_load_game_exposes_the_same_unique_tasks_in_quests_and_task_map(tmp_path
     ]
     assert quest_task_keys == ["labs@same", "labs@unique"]
     assert list(repo.game.tasks) == quest_task_keys
+
+
+def test_game_loads_remote_source_from_materialized_index_offline(tmp_path: Path) -> None:
+    snapshot = tmp_path / "disc" / "README.md"
+    snapshot.parent.mkdir()
+    snapshot.write_text(
+        "# Course\n\n"
+        "## Basics key=@basics\n"
+        "- [ ] `@carro type=read` [Carro](labs/carro/README.md)\n",
+        encoding="utf-8",
+    )
+    source = Source.from_git_file("disc", "https://github.com/user/course", index="README.md")
+    assert source is not None
+    resolver = SourceResolver(
+        GitCache(tmp_path / "missing-cache", update_mode=UpdateMode.NEVER),
+        tmp_path,
+    )
+    game = Game().set_sources({"disc": source}, language="")
+
+    game.build(resolver)
+
+    assert "disc@carro" in game.tasks

@@ -1,3 +1,7 @@
+import os
+import shutil
+import tempfile
+
 from tko.util.git_hub_url import GitHubUrl
 from tko.repository.git_cache import GitCache
 from pathlib import Path
@@ -50,6 +54,33 @@ class SourceResolver:
         if path.is_relative_to(self.repo_root_dir):
             return path.relative_to(self.repo_root_dir).as_posix()
         return path.as_posix()
+
+    def materialized_index_file(self, source: Source) -> Path:
+        """Return the local snapshot path for a source index."""
+        if source.source_type == SourceType.GIT_SOURCE:
+            github = GitHubUrl.parse(source.path_or_url)
+            if github is None or github.relative_path is None:
+                return Path()
+            return self.source_work_dir(source) / github.relative_path
+        return self.resolve_local_uri(source.path_or_url)
+
+    @staticmethod
+    def _copy_snapshot(origin: Path, destination: Path) -> None:
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        temporary: Path | None = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                dir=destination.parent,
+                prefix=f".{destination.name}.",
+                suffix=".tmp",
+                delete=False,
+            ) as file:
+                temporary = Path(file.name)
+            shutil.copy2(origin, temporary)
+            os.replace(temporary, destination)
+        finally:
+            if temporary is not None and temporary.exists():
+                temporary.unlink()
     
     def resolve_index_file(self, source: Source, load_git: bool) -> tuple[Path , bool]:
         if source.source_type == SourceType.GIT_SOURCE:
@@ -57,9 +88,12 @@ class SourceResolver:
             if ghu is None or ghu.relative_path is None:
                 return Path(), False
             folder, found = self.git_cache.get_repository_dir(ghu.repository_url, load_git=load_git)
-            if found is False:
-                return folder, False
-            return folder / ghu.relative_path, True
+            cached_index = folder / ghu.relative_path
+            snapshot = self.materialized_index_file(source)
+            if found and cached_index.exists():
+                self._copy_snapshot(cached_index, snapshot)
+                return snapshot, True
+            return snapshot, snapshot.exists()
         else:
             path = self.resolve_local_uri(source.path_or_url)
             return path, path.exists()
