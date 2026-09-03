@@ -140,3 +140,33 @@ def test_same_item_key_is_allowed_in_different_sources(tmp_path: Path) -> None:
     game.build(resolver)  # type: ignore[arg-type]
 
     assert list(game.tasks) == ["first@same", "second@same"]
+
+
+def test_quest_goal_uses_reference_task_xp(tmp_path: Path) -> None:
+    builder = build_game(
+        tmp_path,
+        "# Course\n\n"
+        "## Quest <!-- @quest -->\n"
+        "- [x] `@reference gain=4 hard=2 size=3 type=diff` [Reference](reference/README.md)\n"
+        "- [ ] `@alternative gain=20 hard=1 size=1 type=diff` [Alternative](alternative/README.md)\n"
+        "- [x] `@material gain=100 hard=4 size=4 type=wiki` [Material](material/README.md)\n",
+    )
+
+    quest = builder.collect_quests()["base@quest"]
+
+    assert quest.game.goal_xp == 6.0
+
+
+def test_quest_goal_uses_all_non_wiki_task_xp_without_references(tmp_path: Path) -> None:
+    builder = build_game(
+        tmp_path,
+        "# Course\n\n"
+        "## Quest <!-- @quest -->\n"
+        "- [ ] `@first gain=4 hard=2 size=3 type=diff` [First](first/README.md)\n"
+        "- [ ] `@second gain=8 hard=1 size=1 type=self` [Second](second/README.md)\n"
+        "- [ ] `@material gain=100 hard=4 size=4 type=wiki` [Material](material/README.md)\n",
+    )
+
+    quest = builder.collect_quests()["base@quest"]
+
+    assert quest.game.goal_xp == 8.0

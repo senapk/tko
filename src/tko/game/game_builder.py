@@ -84,11 +84,12 @@ class GameBuilder:
             quests[quest.basic.full_key] = quest
         return quests
 
-    def __sum_quest_xp(self, quest: Quest):
-        total = 0
-        for t in quest.get_tasks():
-            total += t.game.gain
-        return total
+    def __sum_quest_xp(self, quest: Quest) -> float:
+        tasks = quest.get_tasks()
+        references = [task for task in tasks if task.is_reference]
+        if references:
+            tasks = references
+        return sum(task.xp for task in tasks)
 
     def __calculate_total_xp(self):
         for quest in self.quests.values():

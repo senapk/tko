@@ -260,7 +260,7 @@ def test_fix_readme_normalizes_read_fields_and_eval(tmp_path: Path) -> None:
     assert "eval=" not in line
 
 
-def test_fix_readme_updates_quest_xpgoal_from_checked_tasks(tmp_path: Path) -> None:
+def test_fix_readme_removes_quest_xpgoal(tmp_path: Path) -> None:
     from tko.feno.indexer import fix_readme
 
     index_path = tmp_path / "README.md"
@@ -282,7 +282,8 @@ def test_fix_readme_updates_quest_xpgoal_from_checked_tasks(tmp_path: Path) -> N
     fix_readme(index_path, base_dir, verbose=False)
 
     content = index_path.read_text(encoding="utf-8")
-    assert "## Vetores <!-- @vetores xpgoal=5 -->" in content
+    assert "## Vetores <!-- @vetores -->" in content
+    assert "xpgoal=" not in content
     assert "- [x]" in content
 
 

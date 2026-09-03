@@ -15,7 +15,7 @@ class DummyTask:
     def __init__(self, skill: str | None, xp: float, ratio: float) -> None:
         self.game = MagicMock()
         self.game.skill = skill
-        self.game.gain = xp
+        self.xp = xp
         self.grader = MagicMock()
         self.grader.ratio = ratio
 

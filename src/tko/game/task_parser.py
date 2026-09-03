@@ -107,6 +107,7 @@ class TaskParser:
         task.game.gain = tm.gain
         task.game.hard = tm.hard
         task.game.size = tm.size
+        task.is_reference = tm.is_ref
         task.config = TaskConfig(type=tm.resource_type)
         task.basic.title = self.__remove_tags_from_title(tm.title)
 

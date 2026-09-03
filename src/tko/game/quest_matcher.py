@@ -4,7 +4,6 @@ from tko.game.quest import Quest
 class QuestMatcher:
     KEY = "key="
     TAG = "tag="
-    GOAL = "xpgoal="
     LANG = "lang="
     ACTIVE = "active="
 
@@ -33,18 +32,6 @@ class QuestMatcher:
         if not self.quest.game.skill and self.quest.basic.key:
             self.quest.game.skill = self.quest.basic.key
 
-    def _process_goal(self, words: list[str]):
-        for w in words:
-            if w.startswith(QuestMatcher.GOAL):
-                try:
-                    w = w[len(QuestMatcher.GOAL):]
-                    if w.endswith("xp"):
-                        w = w[:-2]
-                    self.quest.game.goal_xp = int(w)
-                except Exception:
-                    self.warnings.append(f"Valor de goal inválido na linha {self.quest.source.line_number} do arquivo {self.quest.source.file}: {w[len(QuestMatcher.GOAL):]}. Usando valor 0.")
-                    self.quest.game.goal_xp = 0
-
     def _process_languages(self, words: list[str]):
         # languages (novo formato: lang=nome)
         langs = [w[len(QuestMatcher.LANG):] for w in words if w.startswith(QuestMatcher.LANG)]
@@ -69,7 +56,6 @@ class QuestMatcher:
         words = text.split()
         self._process_key(words)
         self._process_skills(words)
-        self._process_goal(words)
         self._process_languages(words)
         self._process_active(words)
 
@@ -79,7 +65,7 @@ class QuestMatcher:
         def is_field(w: str) -> bool:
             return (
                 w.startswith(QuestMatcher.KEY) or w.startswith(QuestMatcher.TAG) or w.startswith("deps=") or
-                w.startswith(QuestMatcher.GOAL) or w.startswith("min=") or
+                w.startswith("xpgoal=") or w.startswith("min=") or
                 w.startswith(QuestMatcher.ACTIVE) or w.startswith(QuestMatcher.LANG) or
                 w.startswith("factor=") or (w[0] in ["@", "%", "=", "+", "!"])
             )
@@ -93,8 +79,6 @@ class QuestMatcher:
             output.append(f"@{quest.basic.key}")
         if quest.game.skill and quest.game.skill != quest.basic.key:
             output.append(f"{QuestMatcher.TAG}{quest.game.skill}")
-        if quest.game.goal_xp > 0:
-            output.append(f"{QuestMatcher.GOAL}{quest.game.goal_xp}")
         for lang in quest.game.languages:
             output.append(f"{QuestMatcher.LANG}{lang}")
         if not quest.game.active:

@@ -137,8 +137,25 @@ def test_parse_line_sets_gain_hard_size_correctly() -> None:
     assert task.game.gain == 4
     assert task.game.hard == 2
     assert task.game.size == 3
+    assert task.xp == 6.0
     assert task.location.task_type == TaskType.SELF
     assert task.config.test == TaskEval.SELF
+
+
+def test_parse_line_marks_reference_and_wiki_has_no_xp() -> None:
+    parser = make_parser()
+    reference = parser.parse_line(
+        "- [x] `@ref gain=4 hard=2 size=3 type=diff` [Referência](ref/README.md)"
+    )
+    wiki = make_parser().parse_line(
+        "- [ ] `@wiki gain=99 hard=4 size=9 type=wiki` [Wiki](wiki/README.md)"
+    )
+
+    assert reference is not None
+    assert reference.is_reference is True
+    assert reference.xp == 6.0
+    assert wiki is not None
+    assert wiki.xp == 0.0
 
 
 def test_new_task_types_are_the_single_source_of_evaluation_mode() -> None:

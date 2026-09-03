@@ -53,7 +53,7 @@ class TreeRenderer:
 
     def render_task(self, t: Task, focused: bool) -> RT:
         head = RBuffer()
-        head.add(f"{t.game.gain:>2}", "y")
+        head.add(f"{t.xp:>4g}", "y")
         state, test = self.task_formatter.get_task_down_test_eval_symbol(t)
         head.add(" ")
         head.add(" ").add(test)

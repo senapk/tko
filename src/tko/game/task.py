@@ -6,6 +6,7 @@ from tko.game.tree_item import TreeItem
 from tko.game.task_info import TaskSelfInfo
 from tko.game.task_config import TaskConfig
 from tko.game.task_location import TaskLocation
+from tko.game.task_enums import TaskType
 
 class Task(TreeItem):
     """
@@ -26,6 +27,7 @@ class Task(TreeItem):
         self.config: TaskConfig = TaskConfig()
         self.location: TaskLocation = TaskLocation()
         self.game: TaskGame = TaskGame()
+        self.is_reference: bool = False
         self.quest_key: str = ""
         self.main_idx = 0
 
@@ -41,7 +43,15 @@ class Task(TreeItem):
         new_task.config = self.config.clone()
         new_task.location = self.location.clone()
         new_task.game = self.game.clone()
+        new_task.is_reference = self.is_reference
         return new_task
+
+    @property
+    def xp(self) -> float:
+        """Gamification value of the task based on its configured attributes."""
+        if self.config.type == TaskType.WIKI:
+            return 0.0
+        return (self.game.gain * self.game.hard * self.game.size) / 4
     
     def is_db_empty(self) -> bool:
         return len(self.info.get_kv()) == 0

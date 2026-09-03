@@ -1,6 +1,6 @@
 class QuestGrader:
     class Elem:
-        def __init__(self, value: int, percent: float):
+        def __init__(self, value: float, percent: float):
             self.value = value
             self.percent = percent
 

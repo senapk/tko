@@ -2,7 +2,7 @@ from typing import Any
 
 
 class TaskGameData:
-    default_value: int = 1
+    default_value: float = 1
     default_leet: bool = True
     
     class Key:
@@ -12,9 +12,9 @@ class TaskGameData:
         QUEST: str = "quests"
         LEET: str = "leet"
 
-    def __init__(self, key: str = "", value: int = default_value, is_leet: bool = default_leet):
+    def __init__(self, key: str = "", value: float = default_value, is_leet: bool = default_leet):
         self.key = key
-        self.value: int = value
+        self.value: float = value
         self.leet: bool = is_leet
 
     def to_dict(self) -> dict[str, Any]:

@@ -34,11 +34,11 @@ class XPResume:
                 skill = t.game.skill
                 if skill is None:
                     continue
-                gvalue = t.game.gain * t.grader.ratio
+                gvalue = t.xp * t.grader.ratio
                 if gvalue < 0.1:
                     gvalue = 0
                 obtained[skill] = obtained.get(skill, 0) + gvalue
-                available[skill] = available.get(skill, 0) + t.game.gain
+                available[skill] = available.get(skill, 0) + t.xp
         output: dict[str, SkillResume] = {}
         for skill, value in available.items():
             resume = SkillResume(

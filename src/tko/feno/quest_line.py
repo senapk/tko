@@ -24,23 +24,9 @@ class QuestLine:
     def key(self) -> str:
         return self.qp.quest.basic.key
 
-    def _calc_ref_sum(self) -> int:
-        return sum(l.tm.gain for l in self.lines if isinstance(l, TaskLine) and l.tm.is_ref)
-
     def render_line(self):
         qf = QuestMatcher(self.qp.quest)
-        quest = self.qp.quest
         fields = qf.get_filled_fields()
-        ref_sum = self._calc_ref_sum()
-        if ref_sum > 0:
-            found_goal = False
-            for i, f in enumerate(fields):
-                if f.startswith(QuestMatcher.GOAL):
-                    fields[i] = f"{QuestMatcher.GOAL}{self._calc_ref_sum()}"
-                    found_goal = True
-            if not found_goal:
-                fields.append(f"{QuestMatcher.GOAL}{self._calc_ref_sum()}")
-
         if fields:
-            return f"## {quest.basic.title} <!-- {' '.join(fields)} -->"
-        return f"## {quest.basic.title}"
+            return f"## {self.qp.quest.basic.title} <!-- {' '.join(fields)} -->"
+        return f"## {self.qp.quest.basic.title}"

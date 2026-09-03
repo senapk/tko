@@ -7,7 +7,7 @@ from tko.game.task import Task
 
 
 class QuestProgress:
-    def __init__(self, tasks_getter: Callable[[], list[Task]], goal_xp: Callable[[], int]):
+    def __init__(self, tasks_getter: Callable[[], list[Task]], goal_xp: Callable[[], float]):
         self._tasks_getter = tasks_getter
         self._goal_xp = goal_xp
 
@@ -15,11 +15,9 @@ class QuestProgress:
         tasks_info: list[QuestGrader.Elem] = []
         for task in self._tasks_getter():
             percent = task.grader.full_percent
-            tasks_info.append(QuestGrader.Elem(task.game.gain, percent))
+            tasks_info.append(QuestGrader.Elem(task.xp, percent))
         obtained, available = QuestGrader.calc_xp_earned_total(tasks_info)
         goal = self._goal_xp()
-        if goal == 0:
-            goal = available
         return obtained, goal, available
 
     def get_completion(self) -> tuple[int, int]:
@@ -33,6 +31,6 @@ class QuestProgress:
 
     def get_percent(self) -> float:
         obtainedm, goalm, totalm = self.get_obtained_goal_available()
-        if totalm == 0:
+        if totalm == 0 or goalm <= 0:
             return 0
         return (obtainedm / goalm) * 100
