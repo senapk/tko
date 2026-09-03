@@ -20,7 +20,7 @@ class _Info:
 
 class _Task:
     def __init__(self) -> None:
-        self.config = SimpleNamespace(is_eval_test=False)
+        self.config = SimpleNamespace(is_automated=False)
         self.info = _Info()
 
 

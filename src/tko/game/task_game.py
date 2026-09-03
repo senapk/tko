@@ -7,7 +7,7 @@ class TaskGame:
     def __init__(self):
         self.default_min_value: int = 5 # default min grade to complete task
         self._gain: int = 1
-        self._hard: int = 1
+        self._cost: int = 1
         self._size: int = 1
         self.skill: str | None = None
         self.is_reachable: bool = False
@@ -16,7 +16,7 @@ class TaskGame:
         new_task = TaskGame()
         new_task.skill = self.skill
         new_task._gain = self._gain
-        new_task._hard = self._hard
+        new_task._cost = self._cost
         new_task._size = self._size
         new_task.is_reachable = self.is_reachable
         return new_task
@@ -61,21 +61,23 @@ class TaskGame:
     def gain(self, value: int):
         if value < 0:
             value = 1
+        if value > 3:
+            value = 3
         self._gain = value
 
     @property
-    def hard(self) -> int:
-        if self._hard == 0:
+    def cost(self) -> int:
+        if self._cost == 0:
             return 1
-        return self._hard
+        return self._cost
 
-    @hard.setter
-    def hard(self, value: int):
+    @cost.setter
+    def cost(self, value: int):
         if value < 0:
             value = 1
-        if value > 4:
-            value = 4
-        self._hard = value
+        if value > 6:
+            value = 6
+        self._cost = value
 
     @property
     def size(self) -> int:
@@ -87,11 +89,12 @@ class TaskGame:
     def size(self, value: int):
         if value < 0:
             value = 1
+        if value > 3:
+            value = 3
         self._size = value
 
     @property
-    def tier_symbol(self) -> RT:
+    def cost_symbol(self) -> RT:
         #values: list[RT] = [RT("▁", "w"), RT("▃", "g"), RT("▅", "y"), RT("▇", "r")]
         values: list[RT] = [RT(Symbols.block_1, "g"), RT(Symbols.block_2, "g"), RT(Symbols.block_3, "g"), RT(Symbols.block_4, "r")]
-        return values[self.hard - 1]
-    
+        return values[min(self.cost, len(values)) - 1]

@@ -8,7 +8,8 @@ from tko.util.decoder import Decoder
 from tko.util.rt import RT
 from tko.feno.task_line import TaskLine, TestsFinder
 from tko.feno.indexer_md import IndexerMd
-from tko.game.task_enums import TaskType
+from tko.game.task_enums import EvalMode
+from tko.game.eval_mode_spec import get_eval_mode_spec
 
 
 
@@ -44,12 +45,12 @@ _INDEXER_REMOVED_MISSING_LOCAL_TASKS = Msg.parse(
     en="Removed {count} invalid local task entries.",
 )
 _INDEXER_SELF_HAS_TESTS = Msg.parse(
-    pt="Aviso: tarefa '[b]{task}[]' marcada como self possui testes; use type=diff se ela deve ser avaliada por testes.",
-    en="Warning: task '[b]{task}[]' marked as self has tests; use type=diff if it should be evaluated by tests.",
+    pt="Aviso: tarefa '[b]{task}[]' marcada como eval=self possui testes; use eval=diff se ela deve ser avaliada por testes.",
+    en="Warning: task '[b]{task}[]' marked as eval=self has tests; use eval=diff if it should be evaluated by tests.",
 )
 _INDEXER_DIFF_MISSING_TESTS = Msg.parse(
-    pt="Aviso: tarefa '[b]{task}[]' marcada como diff não possui testes materializados.",
-    en="Warning: task '[b]{task}[]' marked as diff has no materialized tests.",
+    pt="Aviso: tarefa '[b]{task}[]' marcada como eval=diff não possui testes materializados.",
+    en="Warning: task '[b]{task}[]' marked as eval=diff has no materialized tests.",
 )
 
 class Elements:
@@ -121,7 +122,8 @@ class Elements:
         for i, line in enumerate(self.lines):
             if not isinstance(line, TaskLine):
                 continue
-            if line.tm.resource_type not in (TaskType.SELF, TaskType.DIFF):
+            eval_spec = get_eval_mode_spec(line.tm.eval)
+            if not eval_spec.supports_self_evaluation:
                 continue
             folder = line.materialized_folder
             if folder is None or not folder.is_dir():
@@ -131,9 +133,9 @@ class Elements:
             except (FileNotFoundError, OSError, ValueError):
                 has_tests = False
 
-            if line.tm.resource_type == TaskType.SELF and has_tests:
+            if line.tm.eval == EvalMode.SELF and has_tests:
                 message = _INDEXER_SELF_HAS_TESTS
-            elif line.tm.resource_type == TaskType.DIFF and not has_tests:
+            elif line.tm.eval == EvalMode.DIFF and not has_tests:
                 message = _INDEXER_DIFF_MISSING_TESTS
             else:
                 continue
@@ -163,8 +165,9 @@ class Elements:
 
 
 class Renderer:
-    def __init__(self, index_path: Path):
+    def __init__(self, index_path: Path, align: bool = True):
         self.index_path = index_path
+        self.align = align
 
     def get_render_line(self, item: Line, key_pad: int, fields_pad: int) -> str:
         if isinstance(item, TaskLine):
@@ -185,7 +188,7 @@ class Renderer:
         return max([len(k) for k in keys]) if len(keys) > 0 else 0
 
     def _calc_fields_pad(self, quests: list[QuestLine], header: list[TaskLine | str]) -> int:
-        max_len = len("type=diff gain=1 hard=1 size=1")
+        max_len = len("eval=diff gcs=32")
         all_task_lines: list[TaskLine] = [line for line in header if isinstance(line, TaskLine)]
         for quest in quests:
             all_task_lines.extend([line for line in quest.lines if isinstance(line, TaskLine)])
@@ -195,8 +198,8 @@ class Renderer:
         return max_len
 
     def _render(self, header: list[TaskLine | str], quests: list[QuestLine]) -> list[str]:
-        key_pad = self._calc_key_pad(quests, header)
-        fields_pad = self._calc_fields_pad(quests, header)
+        key_pad = self._calc_key_pad(quests, header) if self.align else 0
+        fields_pad = self._calc_fields_pad(quests, header) if self.align else 0
         output: list[str] = []
         for line in header:
             output.append(self.get_render_line(line, key_pad=key_pad, fields_pad=fields_pad))
@@ -314,7 +317,15 @@ class Merger:
                 self.quests[found_index].lines.append(line)
         return self.header, self.quests
 
-def fix_readme(index: Path, base_dir: Path, verbose: bool = True, save_titles: bool = False, load_titles: bool = False, yes: bool = False) -> None:
+def fix_readme(
+    index: Path,
+    base_dir: Path,
+    verbose: bool = True,
+    save_titles: bool = False,
+    load_titles: bool = False,
+    yes: bool = False,
+    align: bool = True,
+) -> None:
     index = index.resolve()
     elements = Elements(index_path=index, base_dir=base_dir, verbose=verbose)
     elements.load_lines()
@@ -336,5 +347,5 @@ def fix_readme(index: Path, base_dir: Path, verbose: bool = True, save_titles: b
     default_quest_name = base_dir.name
     header, quests = merger.insert_missing_tasks(default_quest_name, missing_entries)
     
-    renderer = Renderer(index_path=index)
+    renderer = Renderer(index_path=index, align=align)
     renderer.write_file(header, quests)

@@ -1,6 +1,8 @@
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+
 from loguru import logger
 
 from tko.game.game import Game
@@ -26,11 +28,11 @@ def test_duplicate_tasks_keep_only_first_occurrence(tmp_path: Path) -> None:
         tmp_path,
         "# Course\n\n"
         "## First <!-- @first -->\n"
-        "- [ ] `@same type=wiki` [First occurrence](first/README.md)\n"
-        "- [ ] `@same type=wiki` [Same quest duplicate](duplicate/README.md)\n"
+        "- [ ] `@same eval=none` [First occurrence](first/README.md)\n"
+        "- [ ] `@same eval=none` [Same quest duplicate](duplicate/README.md)\n"
         "## Second <!-- @second -->\n"
-        "- [ ] `@same type=wiki` [Other quest duplicate](other/README.md)\n"
-        "- [ ] `@unique type=wiki` [Unique](unique/README.md)\n",
+        "- [ ] `@same eval=none` [Other quest duplicate](other/README.md)\n"
+        "- [ ] `@unique eval=none` [Unique](unique/README.md)\n",
     )
 
     assert quest_tasks(builder, "first") == ["same"]
@@ -42,9 +44,9 @@ def test_task_key_prevents_later_quest_and_keeps_current_quest(tmp_path: Path) -
     builder = build_game(
         tmp_path,
         "# Course\n\n"
-        "- [ ] `@shared type=wiki` [Task before any quest](shared/README.md)\n"
+        "- [ ] `@shared eval=none` [Task before any quest](shared/README.md)\n"
         "## Rejected <!-- @shared -->\n"
-        "- [ ] `@after type=wiki` [Still in current quest](after/README.md)\n",
+        "- [ ] `@after eval=none` [Still in current quest](after/README.md)\n",
     )
 
     assert list(builder.collect_quests()) == ["base@_sem_quest"]
@@ -56,8 +58,8 @@ def test_quest_key_prevents_later_task(tmp_path: Path) -> None:
         tmp_path,
         "# Course\n\n"
         "## Shared <!-- @shared -->\n"
-        "- [ ] `@shared type=wiki` [Rejected task](shared/README.md)\n"
-        "- [ ] `@accepted type=wiki` [Accepted task](accepted/README.md)\n",
+        "- [ ] `@shared eval=none` [Rejected task](shared/README.md)\n"
+        "- [ ] `@accepted eval=none` [Accepted task](accepted/README.md)\n",
     )
 
     assert quest_tasks(builder, "shared") == ["accepted"]
@@ -69,11 +71,11 @@ def test_duplicate_quest_heading_does_not_change_current_quest(tmp_path: Path) -
         tmp_path,
         "# Course\n\n"
         "## First <!-- @first -->\n"
-        "- [ ] `@one type=wiki` [One](one/README.md)\n"
+        "- [ ] `@one eval=none` [One](one/README.md)\n"
         "## Second <!-- @second -->\n"
-        "- [ ] `@two type=wiki` [Two](two/README.md)\n"
+        "- [ ] `@two eval=none` [Two](two/README.md)\n"
         "## Repeated first <!-- @first -->\n"
-        "- [ ] `@three type=wiki` [Three](three/README.md)\n",
+        "- [ ] `@three eval=none` [Three](three/README.md)\n",
     )
 
     assert quest_tasks(builder, "first") == ["one"]
@@ -88,10 +90,10 @@ def test_requirements_are_ignored_for_gameplay(tmp_path: Path) -> None:
             tmp_path,
             "# Course\n\n"
             "## Base <!-- @base -->\n"
-            "- [ ] `@blocked type=wiki` [This key blocks a quest](blocked/README.md)\n"
+            "- [ ] `@blocked eval=none` [This key blocks a quest](blocked/README.md)\n"
             "## Rejected <!-- @blocked -->\n"
             "## Dependent <!-- @dependent deps=@blocked,@base -->\n"
-            "- [ ] `@work type=wiki` [Work](work/README.md)\n",
+            "- [ ] `@work eval=none` [Work](work/README.md)\n",
         )
     finally:
         logger.remove(sink_id)
@@ -106,9 +108,9 @@ def test_first_occurrence_is_reserved_before_language_filtering(tmp_path: Path) 
         tmp_path,
         "# Course\n\n"
         "## Python first <!-- @shared lang=python -->\n"
-        "- [ ] `@python_task type=wiki` [Python](python/README.md)\n"
+        "- [ ] `@python_task eval=none` [Python](python/README.md)\n"
         "## C duplicate <!-- @shared lang=c -->\n"
-        "- [ ] `@c_task type=wiki` [C](c/README.md)\n",
+        "- [ ] `@c_task eval=none` [C](c/README.md)\n",
     )
 
     builder.build_from("c")
@@ -123,7 +125,7 @@ def test_same_item_key_is_allowed_in_different_sources(tmp_path: Path) -> None:
     content = (
         "# Course\n\n"
         "## Quest <!-- @quest -->\n"
-        "- [ ] `@same type=wiki` [Same](same/README.md)\n"
+        "- [ ] `@same eval=none` [Same](same/README.md)\n"
     )
     first_index.write_text(content, encoding="utf-8")
     second_index.write_text(content, encoding="utf-8")
@@ -147,9 +149,9 @@ def test_quest_goal_uses_reference_task_xp(tmp_path: Path) -> None:
         tmp_path,
         "# Course\n\n"
         "## Quest <!-- @quest -->\n"
-        "- [x] `@reference gain=4 hard=2 size=3 type=diff` [Reference](reference/README.md)\n"
-        "- [ ] `@alternative gain=20 hard=1 size=1 type=diff` [Alternative](alternative/README.md)\n"
-        "- [x] `@material gain=100 hard=4 size=4 type=wiki` [Material](material/README.md)\n",
+        "- [x] `@reference gain=4 cost=2 size=3 eval=diff` [Reference](reference/README.md)\n"
+        "- [ ] `@alternative gain=20 cost=1 size=1 eval=diff` [Alternative](alternative/README.md)\n"
+        "- [x] `@material gain=100 cost=4 size=4 eval=none` [Material](material/README.md)\n",
     )
 
     quest = builder.collect_quests()["base@quest"]
@@ -162,9 +164,9 @@ def test_quest_goal_uses_all_non_wiki_task_xp_without_references(tmp_path: Path)
         tmp_path,
         "# Course\n\n"
         "## Quest <!-- @quest -->\n"
-        "- [ ] `@first gain=4 hard=2 size=3 type=diff` [First](first/README.md)\n"
-        "- [ ] `@second gain=8 hard=1 size=1 type=self` [Second](second/README.md)\n"
-        "- [ ] `@material gain=100 hard=4 size=4 type=wiki` [Material](material/README.md)\n",
+        "- [ ] `@first gain=4 cost=2 size=3 eval=diff` [First](first/README.md)\n"
+        "- [ ] `@second gain=8 cost=1 size=1 eval=self` [Second](second/README.md)\n"
+        "- [ ] `@material gain=100 cost=4 size=4 eval=none` [Material](material/README.md)\n",
     )
 
     quest = builder.collect_quests()["base@quest"]

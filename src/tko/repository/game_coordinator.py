@@ -2,7 +2,6 @@ from __future__ import annotations
 from loguru import logger
 from tko.i18n import Msg
 from tko.game.task import Task
-from tko.game.task_enums import TaskType
 from tko.logger.log_sort import LogSort
 from tko.repository.repository import Repository
 from tko.repository.remote_resolver import SourceResolver
@@ -41,13 +40,15 @@ class GameCoordinator:
             if key not in self.repo.game.tasks:
                 continue
             task: Task = self.repo.game.tasks[key]
+            if not task.config.awards_xp:
+                continue
             
             self_list = task_log.self_list
             if self_list:
                 _, self_item = self_list[-1]
                 task.info.copy_quality_from(self_item.info)
 
-            if task.config.type == TaskType.SELF:
+            if not task.config.is_automated:
                 if self_list:
                     _, self_item = self_list[-1]
                     task.info.rate = self_item.info.rate

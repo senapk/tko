@@ -10,7 +10,6 @@ from tko.game.game import Game
 from tko.util.decoder import Decoder
 from tko.feno.link_rebase import LinkRebase
 from tko.game.task import Task
-from tko.game.task_enums import TaskType
 from tko.feno.filter import CodeFilter
 from pathlib import Path
 from tko.loader.toml_parser import TomlParser
@@ -150,9 +149,10 @@ class CmdDown:
         self.destiny_folder.mkdir(exist_ok=True, parents=True)
         self.copy_markdown_files()
         self.copy_assets()
-        if self.task.location.task_type != TaskType.WIKI:
+        eval_spec = self.task.config.eval_spec
+        if eval_spec.materializes_draft:
             self.copy_drafts()
-        if self.task.location.task_type in (TaskType.DIFF, TaskType.CODE):
+        if eval_spec.materializes_tests:
             self.copy_tests()
         self.actions.fnprint("")
         self.actions.fnprint(_DOWN_ACTIVITY_DOWNLOADED_SUCCESS.t())

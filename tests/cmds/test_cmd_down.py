@@ -4,7 +4,7 @@ from types import SimpleNamespace
 from tko.cmds.cmd_down import CmdDown
 from tko.config.settings import Settings
 from tko.game.task import Task
-from tko.game.task_enums import TaskType
+from tko.game.task_enums import EvalMode
 from tko.game.task_location import TaskLocation
 
 
@@ -23,7 +23,7 @@ def test_external_read_materializes_markdown_and_assets_without_tests_or_drafts(
     task.location = TaskLocation(
         index_path=origin / "index.md",
         raw_link="README.md",
-            task_type=TaskType.WIKI,
+        eval=EvalMode.NONE,
         external_source=True,
     )
 

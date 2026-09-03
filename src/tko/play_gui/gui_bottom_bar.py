@@ -1,5 +1,4 @@
 from tko.game.task import Task
-from tko.game.task_enums import TaskType
 from tko.play.gui_actions_names import GuiActionsNames
 from tko.play_gui.gui_action_resolver import GuiActionResolver
 from tko.play.gui_keys import GuiKeys
@@ -32,7 +31,7 @@ class GuiBottomBar:
         try:
             selected = self.tree.get_selected_throw()
             if isinstance(selected, Task):
-                self_enabled = selected.config.type != TaskType.WIKI
+                self_enabled = selected.config.supports_self_evaluation
                 pin_enabled = True
                 if selected.basic.full_key in self.tree.state.pinned:
                     pin_label = GuiActionsNames.unpin

@@ -67,10 +67,9 @@ Uma `Source` é a unidade configurada de conteúdo, identificada por um nome e
 uma URI local ou Git. A fonte de autoria é apenas a fonte local editável
 selecionada; não existe um conceito separado de sandbox.
 
-Uma tarefa possui três dimensões independentes: tipo (`read` ou `make`),
-avaliação (`self` ou `test`) e materialização (`local` ou `external`). A
-materialização determina se a atividade precisa ser copiada para o workspace;
-o tipo determina se testes e rascunhos fazem sentido.
+Uma tarefa possui um único tipo (`wiki`, `self`, `diff` ou `code`). O tipo define
+se há draft, testes, autoavaliação e pontuação. Local ou externa é somente uma
+diferença de obtenção da pasta materializada, não uma dimensão pedagógica.
 
 ## Execução de código
 
@@ -130,8 +129,8 @@ Pacote principal:
 Responsabilidades:
 
 1. Parse de quests e tasks.
-2. Cálculo de métricas (rate, quality, XP).
-3. Controle de desbloqueio e progressão.
+2. Cálculo de métricas (rate, quality e `Task.xp`).
+3. Cálculo da meta da quest a partir das tarefas de referência.
 
 ## Fluxo de dados (resumo)
 

@@ -8,7 +8,7 @@ de publicacao, consulte primeiro o guia principal.
 
 ## Onde colocar testes
 
-Uma tarefa com avaliacao automatica normalmente usa `eval=test` na linha do
+Uma tarefa com avaliacao automatica normalmente usa `eval=diff` na linha do
 indice e possui casos de teste na propria pasta da tarefa:
 
 ```txt
@@ -145,7 +145,7 @@ aplicavel. Veja [Build all](tools/build-all.md).
 
 ## Checklist de testes
 
-- A linha da task usa `eval=test`.
+- A linha da task usa `eval=diff`.
 - O arquivo de testes esta na pasta da tarefa ou foi referenciado pelo fluxo de build.
 - Os exemplos do enunciado batem com os testes publicos.
 - A solucao de referencia passa nos testes.

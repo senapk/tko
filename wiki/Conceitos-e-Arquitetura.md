@@ -317,50 +317,50 @@ Essa escolha permite que o mesmo arquivo:
 Uma entrada contém, no mínimo:
 
 ```text
-chave + tipo + link
+chave + modo de avaliação + link
 ```
 
 Exemplo:
 
 ```md
-- [ ] `@carro type=make gain=2 hard=3 size=1 eval=test` [Um carro simples](labs/carro/README.md)
+- [ ] `@carro eval=diff gain=2 cost=3 size=1` [Um carro simples](labs/carro/README.md)
 ```
 
-Uma entrada pode declarar chave, tipo de ação, utilidade, dificuldade, tamanho, forma de avaliação e outros metadados pedagógicos.
+Uma entrada pode declarar chave, utilidade, custo, tamanho, modo de avaliação e outros metadados pedagógicos.
 
 Normalmente, a chave é igual ao nome da pasta da atividade. Essa é uma convenção útil, mas a chave continua explícita no índice e não precisa ser derivada obrigatoriamente do caminho.
 
-O tipo da atividade e sua forma de avaliação são dimensões independentes:
+O modo de avaliação define o comportamento da tarefa:
 
 ```text
-type=make -> o aluno deve produzir alguma coisa
+eval=none -> o aluno apenas consulta o material
 eval=self -> o aluno avalia quanto conseguiu realizar
-eval=test -> o resultado é verificado por testes cadastrados
+eval=diff -> o resultado é verificado por testes cadastrados
 ```
 
-Assim, `make` não implica necessariamente a existência de testes automáticos.
+Assim, somente `eval=diff` implica a existência de testes automáticos.
 
-## Atividades `read` e `make`
+## Modos de avaliação
 
-O índice distingue dois comportamentos principais.
+O índice distingue três comportamentos principais.
 
-`type=read` indica uma atividade ou recurso destinado à consulta. A tarefa deve apontar para um `README.md` local ou hospedado no GitHub. Quando a origem é externa, o TKO materializa o README, a pasta `assets` e os demais arquivos Markdown da mesma pasta na área de trabalho do usuário.
+`eval=none` indica uma atividade ou recurso destinado à consulta. A tarefa deve apontar para um `README.md` local ou hospedado no GitHub. Quando a origem é externa, o TKO materializa o README, a pasta `assets` e os demais arquivos Markdown da mesma pasta na área de trabalho do usuário.
 
-`type=make` indica que o estudante deve produzir ou modificar algum artefato: código, relatório, resumo, diagrama, projeto, experimento ou qualquer outro produto previsto pela atividade. Se o destino estiver dentro do workspace e pertencer a um índice gerenciado, o TKO trabalha diretamente no original. Caso contrário, cria uma cópia de trabalho.
+`eval=self` e `eval=diff` indicam que o estudante deve produzir ou modificar algum artefato. Se o destino estiver dentro do workspace e pertencer a um índice gerenciado, o TKO trabalha diretamente no original. Caso contrário, cria uma cópia de trabalho.
 
-Uma atividade `make` pode ser avaliada de diferentes formas. Com `eval=self`, o aluno atribui a própria avaliação de acordo com o que conseguiu realizar. Com `eval=test`, o TKO utiliza os testes fornecidos pelo autor.
+Com `eval=self`, o aluno atribui a própria avaliação de acordo com o que conseguiu realizar. Com `eval=diff`, o TKO utiliza os testes fornecidos pelo autor.
 
-Para uma tarefa externa `make`, a materialização também copia testes e rascunhos. Para uma tarefa externa `read`, esses arquivos não são copiados nem gerados.
+Para uma tarefa externa `eval=diff`, a materialização também copia testes e rascunhos. Para `eval=none`, esses arquivos não são copiados nem gerados.
 
 Uma tarefa local continua trabalhando diretamente na origem. Portanto, a
-materialização depende da procedência da tarefa, enquanto `type=read` e
-`type=make` descrevem apenas a intenção pedagógica:
+materialização depende da procedência da tarefa e do modo de avaliação:
 
 | Procedência | Tipo | Comportamento |
 |---|---|---|
-| Local | `read` ou `make` | Trabalha na origem |
-| Externa | `read` | Materializa README, assets e Markdown adicionais |
-| Externa | `make` | Materializa README, assets, Markdown, testes e rascunhos |
+| Local | qualquer modo | Trabalha na origem |
+| Externa | `eval=none` | Materializa README, assets e Markdown adicionais |
+| Externa | `eval=self` | Materializa README, assets, Markdown e rascunhos |
+| Externa | `eval=diff` | Materializa README, assets, Markdown, testes e rascunhos |
 
 ## Por que o tipo pertence ao índice
 
@@ -369,8 +369,8 @@ O produtor conhece a intenção pedagógica da atividade, mas o indexador não d
 O mesmo arquivo pode ser utilizado de formas distintas:
 
 ```md
-- [ ] `@heranca type=read` [Herança](wiki/heranca/README.md)
-- [ ] `@resumo-heranca type=make eval=self` [Resumo de herança](wiki/heranca/README.md)
+- [ ] `@heranca eval=none` [Herança](wiki/heranca/README.md)
+- [ ] `@resumo-heranca eval=self` [Resumo de herança](wiki/heranca/README.md)
 ```
 
 No primeiro caso, o aluno apenas consulta o texto. No segundo, deve produzir um resumo a partir dele.

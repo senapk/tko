@@ -80,8 +80,9 @@ def index_build(
     index: Path = typer.Argument(...),
     base: Path = typer.Argument(...),
     yes: bool = typer.Option(False, "--yes", "-y"),
+    no_align: bool = typer.Option(False, "--no-align", help="Do not align task keys and fields"),
 ):
-    fix_readme(index=index, base_dir=base, verbose=True, yes=yes)
+    fix_readme(index=index, base_dir=base, verbose=True, yes=yes, align=not no_align)
 
 
 @app.command("download", help="Materialize external activities")

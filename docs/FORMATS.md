@@ -97,24 +97,26 @@ Elementos comuns:
 Exemplo de linha:
 
 ```md
-- [ ] `@tres type=diff gain=1 hard=1 size=1` [Soma de três inteiros](labs/tres/README.md)
+- [ ] `@tres eval=diff gcs=1` [Soma de três inteiros](labs/tres/README.md)
 ```
 
 Semântica resumida:
 
-- `@chave` identifica task
-- `gain=1` define ganho pedagogico
-- `hard=1` e `size=1` definem dificuldade e tamanho, inclusive para tarefas `read`
-- `type` é obrigatório e pode ser `wiki`, `self`, `diff` ou `code`
-- todas as atividades são materializadas; `wiki` cria apenas o material, `self` cria também um draft, e `diff` cria código e testes
-- `type=self` usa autoavaliação; `type=diff` usa testes por entrada e saída; `type=code` é reservado para testes programáticos
-- somente `wiki` não oferece autoavaliação; as demais usam `src/feedback.toml`
-- o link deve apontar para um `README.md` local ou para um `README.md` no GitHub
+- `@chave` identifica a tarefa;
+- `[x]` marca a tarefa como referência para a meta da quest; `[ ]` marca uma alternativa;
+- `eval` é obrigatório e pode ser `none`, `self` ou `diff`;
+- `gain`, `cost` e `size` definem os atributos da tarefa;
+- o XP é `((gain + size) × cost) ÷ 2`; `eval=none` sempre possui XP zero;
+- tarefas externas são materializadas; `eval=none` cria apenas o material,
+  `eval=self` cria também um draft, e `eval=diff` cria código e testes;
+- `eval=self` usa feedback manual; `eval=diff` usa testes por entrada e saída;
+- somente `eval=none` não oferece autoavaliação; as demais usam `src/feedback.toml`;
+- o link deve apontar para um `README.md` local ou para um `README.md` no GitHub.
 
-Tarefas externas, tanto `read` quanto `make`, são materializadas na área de trabalho do
-usuário. A materialização copia o `README.md`, a pasta `assets` e os demais arquivos
-Markdown diretamente na pasta de origem. Somente tarefas externas `make` recebem testes
-e rascunhos.
+A meta da quest é calculada pela soma do XP das tarefas de referência avaliáveis. Se
+nenhuma tarefa for marcada como referência, todas as tarefas avaliáveis entram no cálculo.
+Local ou externo altera apenas a forma de obter a pasta materializada, não o contrato
+da atividade.
 
 ## Referências relacionadas
 

@@ -19,9 +19,9 @@ class GuiActionResolver:
         self.flags = flags
 
     def get_task_action(self, task: Task) -> tuple[str, Msg]:
-        if task.location.is_wiki and not task.location.is_external:
+        if task.location.is_non_evaluated and not task.location.is_external:
             return "B", TaskAction.VISITAR
-        if task.location.is_wiki and not self.task_formatter.is_downloaded(task):
+        if task.location.is_non_evaluated and not self.task_formatter.is_downloaded(task):
             return "Y", TaskAction.BAIXAR
         if not task.location.is_external:
             return "G", TaskAction.EXECUTAR

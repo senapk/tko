@@ -43,16 +43,27 @@ Comportamento no codigo:
 
 Nas linhas de tarefa, o parser extrai os três indicadores da atividade:
 
-- Ganho (`gain=1`, compatível com `xp=`).
-- Dificuldade (`hard=1`, compatível com `tier=`).
-- Tamanho (`size=1`).
-- Tipo (`type=make`, `type=read`) e modo de avaliação (`eval=test`, `eval=self`).
+- Ganho (`gain=1..3`).
+- Custo/dificuldade (`cost=1..6`).
+- Tamanho (`size=1..3`).
+- Modo de avaliação (`eval=none`, `eval=diff`, `eval=self`).
 
 Comportamento no codigo:
 
 - Parser de task: [src/tko/game/task_parser.py](../src/tko/game/task_parser.py)
 - Config de task: [src/tko/game/task_config.py](../src/tko/game/task_config.py)
 - Estado de jogo da task (xp/reachable): [src/tko/game/task_game.py](../src/tko/game/task_game.py)
+
+O XP base da tarefa é calculado pela raiz quadrada do produto dos três indicadores:
+
+$$
+\text{xp\_task} = \frac{(\text{gain} + \text{size}) \times \text{cost}}{2}
+$$
+
+Essa curva soma utilidade e tamanho e aplica `cost` como multiplicador. Por exemplo,
+`gain=1, cost=1, size=1` vale `1` XP, e `gain=3, cost=6, size=3` vale `18` XP.
+
+Valores internos de XP permanecem fracionários. A interface mostra tarefas com uma casa decimal truncada e somatórios sem parte fracionária.
 
 ## Como o TaskGrader calcula a nota
 
@@ -142,7 +153,7 @@ Esse comando ajuda a:
 - calcular `xpgoal` das quests somando o `gain` das tasks marcadas com `[x]`
 
 Pastas novas dentro de `labs/` que contêm `README.md` entram automaticamente na quest correspondente,
-com `type=make gain=1 hard=1 size=1 eval=test`. Links de tarefas devem apontar para `README.md` local
+com `eval=diff gain=1 cost=1 size=1`. Links de tarefas devem apontar para `README.md` local
 ou para `README.md` hospedado no GitHub; URLs HTTP/HTTPS genéricas não são aceitas.
 
 Guia detalhado:

@@ -56,6 +56,7 @@ def build_index(
     save: bool = typer.Option(False, "--save", help="Save README.md task title's inside task problems"),
     load: bool = typer.Option(False, "--load", help="Load README.md task title's from task problems"),
     yes: bool = typer.Option(False, "--yes", "-y", help="Remove invalid local task entries without asking"),
+    no_align: bool = typer.Option(False, "--no-align", help="Do not align task keys and fields"),
 ):
     from tko.feno.indexer import fix_readme
     fix_readme(
@@ -65,6 +66,7 @@ def build_index(
         save_titles=save, 
         load_titles=load,
         yes=yes,
+        align=not no_align,
     )
 
 @app.command("drafts", help="Create drafts for TKO task using src dir")

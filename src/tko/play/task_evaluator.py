@@ -7,7 +7,6 @@ from tko.play.opener import Opener
 from tko.play_tree.task_tree import TaskTree
 from tko.repository.repository import Repository
 from tko.logger.log_item_self import LogItemSelf
-from tko.game.task_enums import TaskType
 
 
 class TaskEvaluator:
@@ -27,7 +26,7 @@ class TaskEvaluator:
         except IndexError:
             return
         if isinstance(obj, Task):
-            if obj.config.type == TaskType.WIKI:
+            if not obj.config.supports_self_evaluation:
                 return
             task: Task = obj
             if not task.info.feedback:
@@ -44,7 +43,7 @@ class TaskEvaluator:
         except IndexError:
             return
         if isinstance(obj, Task):
-            if obj.config.type == TaskType.WIKI:
+            if not obj.config.supports_self_evaluation:
                 return
             feedback = Feedback(self.repo, obj)
             feedback_path = feedback.get_feedback_toml_path()

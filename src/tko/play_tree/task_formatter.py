@@ -1,5 +1,5 @@
 from tko.cmds.drafts_finder_cached import DraftsFinderCached
-from tko.game.task_enums import TaskType
+from tko.game.task_enums import EvalMode
 from tko.game.task import Task
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
@@ -46,20 +46,17 @@ class TaskFormatter:
 
         # mode
         test = "D"
-        code = "C"
         selF = "S"
 
         
-        if task.config.type == TaskType.DIFF:
+        if task.config.eval == EvalMode.DIFF:
             test_mode = test
-        elif task.config.type == TaskType.CODE:
-            test_mode = code
         else:
             test_mode = selF
 
-        if task.location.is_wiki and not task.location.is_external:
+        if task.location.is_non_evaluated and not task.location.is_external:
             state_mode = read
-        elif task.location.is_wiki:
+        elif task.location.is_non_evaluated:
             state_mode = down if self.is_downloaded(task) else empty
         elif not task.location.is_external:
             state_mode = static

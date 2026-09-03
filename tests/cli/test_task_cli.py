@@ -54,10 +54,10 @@ def test_task_list_prints_each_duplicate_key_only_once(tmp_path: Path) -> None:
     (tmp_path / "README.md").write_text(
         "# Course\n\n"
         "## First <!-- @first -->\n"
-        "- [ ] `@same type=wiki` [First](first/README.md)\n"
+        "- [ ] `@same eval=none` [First](first/README.md)\n"
         "## Second <!-- @second -->\n"
-        "- [ ] `@same type=wiki` [Duplicate](first/README.md)\n"
-        "- [ ] `@unique type=wiki` [Unique](unique/README.md)\n",
+        "- [ ] `@same eval=none` [Duplicate](first/README.md)\n"
+        "- [ ] `@unique eval=none` [Unique](unique/README.md)\n",
         encoding="utf-8",
     )
     (tmp_path / "first").mkdir()

@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from tko.game.task import Task
 from tko.game.task_location import TaskLocation
-from tko.game.task_enums import TaskType
+from tko.game.task_enums import EvalMode
 from tko.repository.git_cache import GitCache
 
 
@@ -46,14 +46,12 @@ class TaskResolver:
     def target_file(self, task: Task) -> Path | None:
         loc = task.location
 
-        match (loc.task_type):
-            case TaskType.NULL:
-                return None
-            case TaskType.WIKI:
+        match loc.eval:
+            case EvalMode.NONE:
                 if loc.is_external:
                     return self.__source_work_dir(task) / "README.md"
                 return None
-            case TaskType.SELF | TaskType.DIFF | TaskType.CODE | TaskType.MAKE:
+            case EvalMode.SELF | EvalMode.DIFF:
                 # if is git url, is import type
                 if loc.is_external:
                     return self.__source_work_dir(task) / "README.md"

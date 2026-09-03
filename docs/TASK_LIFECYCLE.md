@@ -41,9 +41,10 @@ O professor pode:
    do GitHub para o `README.md` da tarefa.
 
 2. Criar atividade nova no próprio repositório:
-   - enunciado
-   - testes e rascunhos, quando a atividade for `make`;
-   - apenas documentação Markdown e assets, quando a atividade for `read`.
+   - enunciado (`README.md`);
+   - assets opcionais;
+   - artefatos definidos pelo tipo: draft para `self`, código e testes para
+     `diff`, e futuramente testes programáticos para `code`.
 
 ## Fluxo do aluno
 
@@ -93,19 +94,19 @@ Comportamento padrão:
 
 ## Materialização de tarefas externas
 
-Uma tarefa local continua trabalhando diretamente na origem. Uma tarefa externa,
-seja `read` ou `make`, é copiada para a área de trabalho do aluno quando é
-baixada.
+Toda tarefa possui uma pasta materializada. Uma tarefa local trabalha diretamente
+na origem; uma tarefa externa é copiada para a área de trabalho do aluno quando
+é baixada.
 
-Em ambos os tipos, a cópia contém:
+Em ambos os casos, a pasta contém:
 
 - `README.md`;
 - a pasta `assets/`;
 - os demais arquivos Markdown diretamente na pasta da tarefa.
 
-Somente uma tarefa externa `make` recebe também arquivos de teste e rascunhos.
-Uma tarefa externa `read` é aberta a partir do README materializado e não gera
-rascunho nem copia testes.
+Os artefatos adicionais dependem exclusivamente do tipo da tarefa: `wiki` não
+recebe draft nem testes, `self` recebe draft, e `diff` recebe draft e testes.
+O tipo `code` fica reservado para testes programáticos futuros.
 
 ## Guias relacionados
 

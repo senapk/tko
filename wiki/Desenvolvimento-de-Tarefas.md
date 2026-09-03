@@ -57,45 +57,43 @@ Capacidades relevantes para autoria de tarefas:
 - Carga/transformacao de blocos via diretivas markdown.
 - Insercao de testes a partir de TOML (como `tests.toml`) em blocos renderizados.
 
-## Tipos de recurso
+## Modos de avaliação
 
-No parser, tarefas podem ser classificadas por `TaskType`:
+No parser, tarefas são classificadas por `EvalMode`:
 
-- `READ`: leitura ou consulta de recurso externo/local.
-- `MAKE`: tarefa de producao/execucao com fonte local/remota.
+- `NONE`: leitura ou consulta de recurso externo/local.
+- `SELF`: tarefa de produção com autoavaliação.
+- `DIFF`: tarefa de produção com testes.
 
 Regra de chave:
 
 - A chave sempre inicia com `@`.
-- O tipo da atividade e definido por `type=make` ou `type=read`.
+- O modo de avaliação é definido por `eval=none`, `eval=self` ou `eval=diff`.
 
 Para links GitHub em tarefas:
 
 - Se for URL GitHub reconhecida, o parser extrai `repository_url` e `relative_path`.
-- Tarefas externas `read` e `make` são materializadas no workspace do aluno.
+- Tarefas externas são materializadas no workspace do aluno.
 - Tarefas locais continuam trabalhando diretamente na origem.
-- Tarefas externas `read` recebem README, assets e Markdown adicionais, sem testes ou drafts.
-- Tarefas externas `make` também recebem testes e drafts.
+- Tarefas externas `eval=none` recebem README, assets e Markdown adicionais, sem testes ou drafts.
+- Tarefas externas `eval=self` recebem drafts; `eval=diff` recebe drafts e testes.
 
 ## Regras de tags e defaults
 
 `TaskMatcher` interpreta campos como:
 
 - `@chave`: identificador da task.
-- `gain=valor`: valor pedagogico, compativel com `xp=`.
-- `hard=valor`: dificuldade, compativel com `tier=`.
+- `gain=valor`: valor pedagogico.
+- `cost=valor`: custo/dificuldade da tarefa.
 - `size=valor`: tamanho ou extensao.
-- `type=make` ou `type=read`: tipo da atividade.
-- `eval=test` ou `eval=self`: modo de avaliacao.
+- `eval=none`, `eval=self` ou `eval=diff`: modo de avaliacao.
 
 Defaults aplicados pelo parser:
 
-- `gain=1`, `hard=1`, `size=1`.
-- `type=make`, se o tipo nao for informado.
-- `eval=test` para `type=make`.
-- `eval=self` e implicito para `type=read` e nao e emitido pelo indexador.
+- `gain=1`, `cost=1`, `size=1`.
+- O modo `eval` é obrigatório.
 
-Sintaxes antigas com `:read`, `:make`, `:test`, `:self`, `xp=` e `tier=` ainda sao aceitas por compatibilidade, mas novas documentacoes e exemplos devem usar os campos chave-valor canonicos.
+Sintaxes antigas com `:read`, `:make`, `:test`, `:self`, `xp=`, `tier=`, `hard=` e `type=` não são aceitas.
 
 ## Como adicionar um novo marcador/tag
 

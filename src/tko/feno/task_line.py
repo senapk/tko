@@ -1,5 +1,5 @@
 from pathlib import Path
-from tko.game.task_enums import TaskType
+from tko.game.task_enums import EvalMode
 from tko.i18n import  Msg
 from tko.game.task_matcher import TaskMatcher
 from tko.run.wdir import Wdir
@@ -68,7 +68,7 @@ class TaskLine:
         self.tm.raw_pos = ""
         relative_folder = readme_file.parent.resolve().relative_to(self.index_path.parent.resolve())
         self.tm.key = relative_folder.as_posix()
-        self.tm.resource_type = TaskType.DIFF
+        self.tm.eval = EvalMode.DIFF
         self.tm.title = title
         self.origin_key = self.tm.key
         return self

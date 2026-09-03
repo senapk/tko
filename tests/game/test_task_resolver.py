@@ -2,7 +2,7 @@ from pathlib import Path
 from dataclasses import replace
 
 from tko.game.task import Task
-from tko.game.task_enums import TaskType
+from tko.game.task_enums import EvalMode
 from tko.game.task_resolver import TaskResolver
 from tko.repository.git_cache import GitCache
 
@@ -11,7 +11,7 @@ def make_external_task(key: str) -> Task:
     task = Task()
     task.basic.source_name = "disc"
     task.basic.key = key
-    task.location = replace(task.location, task_type=TaskType.DIFF, external_source=True)
+    task.location = replace(task.location, eval=EvalMode.DIFF, external_source=True)
     return task
 
 

@@ -68,8 +68,8 @@ materializado.
 
 O tipo da tarefa descreve a atividade pedagógica:
 
-- `type=make`: produzir ou modificar algum artefato;
-- `type=read`: consultar e estudar o material.
+- `eval=diff` ou `eval=self`: produzir ou modificar algum artefato;
+- `eval=none`: consultar e estudar o material.
 
 O tipo não determina se a origem é local ou externa.
 

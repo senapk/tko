@@ -25,34 +25,35 @@ class TaskParser:
     Faz o parsing de linhas de tarefas no formato markdown, suportando tanto o modelo chave-valor quanto o modelo antigo.
 
     Formato canônico (chave-valor):
-        - [ ] `@t1 type=diff gain=10 hard=3 size=2` [Título](t1/README.md)
-        - [ ] `@t2 gain=5 type=wiki` [Material](wiki/material/README.md)
+        - [ ] `@t1 eval=diff gcs=312` [Título](t1/README.md)
+        - [ ] `@t2 gcs=2 eval=none` [Material](wiki/material/README.md)
 
     Campos suportados:
         - @chave: identificador único da task
         - gain=valor: utilidade / valor da tarefa (antigo xp)
-        - hard=valor: nível de dificuldade da tarefa (1-4, antigo tier)
+        - cost=valor: nível de custo da tarefa (1-6)
         - size=valor: tamanho / extensão da tarefa
-        - type=wiki, type=self, type=diff ou type=code: tipo e fluxo da tarefa
+        - gcs=valores: forma compacta, na ordem gain, cost, size
+        - eval=none, eval=self ou eval=diff: modo de avaliação e fluxo da tarefa
 
     Valores padrão:
         - gain: 1
-        - hard: 1
+        - cost: 1
         - size: 1
-        - type: obrigatório
+        - eval: obrigatório
 
     Notas:
         - Para links locais, @chave é derivada do caminho relativo ao índice.
         - Para links externos, @chave explícita é obrigatória.
         - Campos não obrigatórios assumem valores padrão.
-        - Sintaxe antiga (:15, :make, :read, :test, :self, xp=, tier= e eval=) é aceita para migração.
+        - Sintaxes antigas de tipo e pontuação não são aceitas.
         - Links externos devem ser URLs do GitHub apontando para um README.md; eles são tratados como tarefas remotas importáveis.
 
     Exemplos:
-        - [ ] `@t1  type=diff gain=8 hard=1 size=1` [Implementar soma](t1/README.md)
-        - [ ] `@t2  gain=5 type=wiki`              [Ler material](wiki/material/README.md)
-        - [ ] `@foo type=self gain=9 hard=2 size=2` [Tarefa de exemplo](exemplo/README.md)
-        - [ ] `@bar type=wiki`                     [Material externo](https://github.com/user/repo/blob/main/wiki/material/README.md)
+        - [ ] `@t1  eval=diff gcs=312` [Implementar soma](t1/README.md)
+        - [ ] `@t2  gcs=2 eval=none`   [Ler material](wiki/material/README.md)
+        - [ ] `@foo eval=self gcs=322`  [Tarefa de exemplo](exemplo/README.md)
+        - [ ] `@bar eval=none`                     [Material externo](https://github.com/user/repo/blob/main/wiki/material/README.md)
     """
 
     def __init__(self, index_path: Path, external_source: bool = False):
@@ -105,10 +106,10 @@ class TaskParser:
                 task.basic.key = ""
 
         task.game.gain = tm.gain
-        task.game.hard = tm.hard
+        task.game.cost = tm.cost
         task.game.size = tm.size
         task.is_reference = tm.is_ref
-        task.config = TaskConfig(type=tm.resource_type)
+        task.config = TaskConfig(eval=tm.eval)
         task.basic.title = self.__remove_tags_from_title(tm.title)
 
         if task.basic.key == "" or (tm.is_url and tm.key is None):
@@ -122,7 +123,7 @@ class TaskParser:
             raw_link=tm.link,
             line_number=line_num,
             line_data=line,
-            task_type=tm.resource_type,
+            eval=tm.eval,
             git_hub_url=GitHubUrl.parse(tm.link),
             external_source=self.external_source,
         )

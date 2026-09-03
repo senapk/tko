@@ -7,6 +7,7 @@ from tko.util.rt import RT
 from tko.game.xp_resume import SkillResume, XPResume
 from typing import Callable
 from tko.game.quest import Quest
+from tko.game.xp_display import truncate_total_xp
 
 
 class GuiSkillsBar:
@@ -36,9 +37,9 @@ class GuiSkillsBar:
         target100_value = resume_dict[skill].target100
         available_value = resume_dict[skill].available
         title = f"{skill[:self.name_size]:<{self.name_size}}"
-        obtained = f"{round(obtained_value):>{self.obtained_cut}}"
-        target = f"{round(target100_value):>{self.target_cut}}"
-        available = f"{round(available_value):>{self.available_cut}}"
+        obtained = f"{truncate_total_xp(obtained_value):>{self.obtained_cut}}"
+        target = f"{truncate_total_xp(target100_value):>{self.target_cut}}"
+        available = f"{truncate_total_xp(available_value):>{self.available_cut}}"
         text = RT(f"{title}:{obtained}/{target}/{available}", "X")
         
         skill_bar = self.style.build_progress_xp(
@@ -51,9 +52,9 @@ class GuiSkillsBar:
         return text + " " + skill_bar
 
     def get_entry_perc(self, resume_dict: dict[str, SkillResume], skill: str, value: float, dx: int) -> RT:
-        obtained_value = round(resume_dict[skill].obtained)
-        target100_value = round(resume_dict[skill].target100)
-        complete_value = round(value)
+        obtained_value = truncate_total_xp(resume_dict[skill].obtained)
+        target100_value = truncate_total_xp(resume_dict[skill].target100)
+        complete_value = truncate_total_xp(value)
         text = f"{skill}:{obtained_value:03d}/{target100_value:03d}/{complete_value:03d}"
         perc = resume_dict[skill].obtained / resume_dict[skill].target100 if resume_dict[skill].target100 != 0 else 0
         done_color = self.colors.progress_skill_done

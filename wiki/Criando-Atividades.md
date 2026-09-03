@@ -53,8 +53,8 @@ Exemplo minimo:
 
 ## Operacoes Basicas key=@basic tag=basic xpgoal=2 min=70%
 
-- [x] `@soma  type=make gain=1 hard=1 size=1 eval=test` [Soma](labs/soma/README.md)
-- [x] `@media type=make gain=1 hard=1 size=1 eval=test` [Media](labs/media/README.md)
+- [x] `@soma  eval=diff gain=1 cost=1 size=1` [Soma](labs/soma/README.md)
+- [x] `@media eval=diff gain=1 cost=1 size=1` [Media](labs/media/README.md)
 ```
 
 Use `[x]` nas tarefas que contam para a meta principal da quest. Ao rodar
@@ -93,27 +93,24 @@ Cada task e uma linha Markdown com checkbox, metadados entre crases e link para
 o recurso.
 
 ```md
-- [ ] `@soma type=make gain=1 hard=1 size=1 eval=test` [Soma](labs/soma/README.md)
-- [ ] `@intro gain=1 hard=1 size=1 type=read` [Texto introdutorio](wiki/intro/README.md)
+- [ ] `@soma eval=diff gain=1 cost=1 size=1` [Soma](labs/soma/README.md)
+- [ ] `@intro gain=1 cost=1 size=1 eval=none` [Texto introdutorio](wiki/intro/README.md)
 ```
 
 Campos mais usados:
 
 - `@chave`: identificador unico da task.
 - `gain=valor`: ganho pedagogico.
-- `hard=valor`: dificuldade.
+- `cost=valor`: custo/dificuldade.
 - `size=valor`: tamanho ou volume de trabalho.
-- `type=make`: tarefa de producao/programacao.
-- `type=read`: tarefa de leitura ou consulta.
-- `eval=test`: avaliacao automatica.
+- `eval=diff`: avaliacao automatica.
 - `eval=self`: autoavaliacao.
+- `eval=none`: leitura ou consulta sem avaliação.
 
 Padroes aplicados pelo TKO:
 
-- `gain=1`, `hard=1`, `size=1`.
-- `type=make`, quando o tipo nao e informado.
-- `eval=test` para `type=make`.
-- `eval=self` e implicito para `type=read`; o indexador nao grava esse campo.
+- `gain=1`, `cost=1`, `size=1`.
+- `eval` é obrigatório.
 
 Sintaxes antigas como `xp=`, `tier=`, `:make`, `:read`, `:test` e `:self` ainda
 sao aceitas por compatibilidade. Em repositorios novos, prefira sempre os
@@ -196,7 +193,7 @@ aponte para um `README.md`. Não use URLs HTTP genéricas, links para diretório
 ou links para outros arquivos Markdown.
 
 ```md
-- [ ] `@fila gain=2 hard=2 size=2 type=make eval=test` [Fila](https://github.com/qxcodeed/arcade/blob/main/labs/fila/README.md)
+- [ ] `@fila gain=2 cost=2 size=2 eval=diff` [Fila](https://github.com/qxcodeed/arcade/blob/main/labs/fila/README.md)
 ```
 
 A chave externa é obrigatória porque também define onde a atividade será
@@ -244,9 +241,9 @@ tko open
 - Cada task local aponta para um `README.md` existente.
 - Cada task externa aponta para um `README.md` local ou para uma URL GitHub de um `README.md` existente.
 - As chaves `@...` sao curtas, unicas e estaveis.
-- As linhas usam `gain`, `hard`, `size`, `type` e `eval`.
+- As linhas usam `gain`, `cost`, `size` e `eval`.
 - Os enunciados abrem corretamente no GitHub.
-- Os testes executam localmente nas tarefas com `eval=test`.
+- Os testes executam localmente nas tarefas com `eval=diff`.
 - `tko build index README.md labs` foi executado e o diff foi revisado.
 - O repositorio foi commitado e publicado.
 

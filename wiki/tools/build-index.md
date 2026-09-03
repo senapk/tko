@@ -88,9 +88,9 @@ Quando voce nao quiser contar esse total manualmente, marque com `[x]` as tarefa
 ```md
 ## Vetores <!-- key=@vetores min=70% -->
 
-- [x] `@soma     gain=2 hard=1 size=1 type=make eval=test` [Soma](labs/soma/README.md)
-- [x] `@media    type=make gain=3 hard=1 size=1 eval=test` [Media](labs/media/README.md)
-- [ ] `@desafio  type=make gain=5 hard=3 size=2 eval=test` [Desafio](labs/desafio/README.md)
+- [x] `@soma     gain=2 cost=1 size=1 eval=diff` [Soma](labs/soma/README.md)
+- [x] `@media    gain=3 cost=1 size=1 eval=diff` [Media](labs/media/README.md)
+- [ ] `@desafio  gain=5 cost=3 size=2 eval=diff` [Desafio](labs/desafio/README.md)
 ```
 
 Ao executar:
@@ -108,7 +108,7 @@ o indexer soma o `gain` das tarefas marcadas com `[x]` e grava esse valor em `xp
 Regras importantes:
 
 - Apenas tarefas marcadas com `[x]` entram nessa soma.
-- A soma usa o campo `gain`, nao `hard` nem `size`.
+- A soma usa o campo `gain`, nao `cost` nem `size`.
 - Se a quest ja tiver `xpgoal`, o valor sera substituido pela soma dos `[x]`.
 - Se nenhuma tarefa da quest estiver marcada com `[x]`, o `xpgoal` existente nao e recalculado por essa regra.
 - Em tempo de execucao, se uma quest ficar sem `xpgoal`, o TKO usa a soma de todas as tasks da quest como meta disponivel.

@@ -12,6 +12,7 @@ from tko.config.settings import Settings
 from tko.util.rbuffer import RBuffer
 from tko.util.rt import RT
 from tko.util.to_asc import SearchAsc
+from tko.game.xp_display import format_task_xp, truncate_total_xp
 
 class TreeRenderer:
     def __init__(
@@ -53,12 +54,12 @@ class TreeRenderer:
 
     def render_task(self, t: Task, focused: bool) -> RT:
         head = RBuffer()
-        head.add(f"{t.xp:>4g}", "y")
+        head.add(f"{format_task_xp(t.xp):>4}", "y")
         state, test = self.task_formatter.get_task_down_test_eval_symbol(t)
         head.add(" ")
         head.add(" ").add(test)
         head.add(" ").add(state)
-        head.add(" ").add(t.game.tier_symbol)
+        head.add(" ").add(t.game.cost_symbol)
 
         head.add(">" if focused else " ")
 
@@ -110,9 +111,9 @@ class TreeRenderer:
         color = "g" if QuestVisibilityService.is_reachable(q) else "y"
         body = RBuffer().add(q.ui.ligature.set_style(color))
         done, goal, _ = q.progress.get_obtained_goal_available()
-        done = round(done)
+        done = truncate_total_xp(done)
         done_str = f"{done:02}"
-        goal = round(goal)
+        goal = truncate_total_xp(goal)
         goal_str = f"{goal:02}"
 
         body.add(f" {done_str:>3}/{goal_str:>3}").add(" ")

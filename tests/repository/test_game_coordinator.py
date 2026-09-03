@@ -17,7 +17,7 @@ def test_ensure_managed_readmes_removes_missing_task_during_load(tmp_path: Path)
     source_dir.mkdir()
     index_file.write_text(
         "# labs\n\n"
-            "- [ ] `@missing type=wiki` [Missing](labs/missing/README.md)\n",
+            "- [ ] `@missing eval=none` [Missing](labs/missing/README.md)\n",
         encoding="utf-8",
     )
     remote = SimpleNamespace(name="labs")
@@ -41,10 +41,10 @@ def test_load_game_exposes_the_same_unique_tasks_in_quests_and_task_map(tmp_path
     index_file.write_text(
         "# Course\n\n"
         "## First <!-- @first -->\n"
-        "- [ ] `@same type=wiki` [First](first/README.md)\n"
+        "- [ ] `@same eval=none` [First](first/README.md)\n"
         "## Second <!-- @second -->\n"
-        "- [ ] `@same type=wiki` [Duplicate](first/README.md)\n"
-        "- [ ] `@unique type=wiki` [Unique](unique/README.md)\n",
+        "- [ ] `@same eval=none` [Duplicate](first/README.md)\n"
+        "- [ ] `@unique eval=none` [Unique](unique/README.md)\n",
         encoding="utf-8",
     )
     (tmp_path / "first").mkdir()
@@ -79,7 +79,7 @@ def test_game_loads_remote_source_from_materialized_index_offline(tmp_path: Path
     snapshot.write_text(
         "# Course\n\n"
         "## Basics key=@basics\n"
-        "- [ ] `@carro type=wiki` [Carro](labs/carro/README.md)\n",
+            "- [ ] `@carro eval=none` [Carro](labs/carro/README.md)\n",
         encoding="utf-8",
     )
     source = Source.from_git_file("disc", "https://github.com/user/course", index="README.md")

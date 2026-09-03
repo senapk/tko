@@ -1,6 +1,6 @@
 import re
 
-from tko.game.task_enums import TaskEval, TaskType
+from tko.game.task_enums import EvalMode
 
 def remove_emojis(text: str) -> str:
     emoji_pattern = re.compile(
@@ -18,10 +18,10 @@ def remove_emojis(text: str) -> str:
     return emoji_pattern.sub('', text)
 
 class TaskMatcher:
-    TYPE = "type="
     GAIN = "gain="
-    HARD = "hard="
+    COST = "cost="
     SIZE = "size="
+    GCS = "gcs="
     EVAL = "eval="
 
 
@@ -40,13 +40,9 @@ class TaskMatcher:
 
         self.key: str | None = None
 
-        self.resource_type = TaskType.NULL
-        self.eval = TaskEval.SELF
-        self._legacy_eval: TaskEval | None = None
-        self._legacy_read = False
-        self._explicit_type = False
+        self.eval: EvalMode | None = None
         self.gain = 1
-        self.hard = 1
+        self.cost = 1
         self.size = 1
 
     def match_pattern(self, line: str) -> bool:
@@ -65,13 +61,9 @@ class TaskMatcher:
         self.title = ""
         self.link = ""
         self.key = None
-        self.resource_type = TaskType.NULL
-        self.eval = TaskEval.SELF
-        self._legacy_eval = None
-        self._legacy_read = False
-        self._explicit_type = False
+        self.eval = None
         self.gain = 1
-        self.hard = 1
+        self.cost = 1
         self.size = 1
         self.is_ref = is_ref
         self.raw_pre = remove_emojis(match.group(1))
@@ -83,10 +75,6 @@ class TaskMatcher:
         text = self.filter_tags(self.raw_pre + " " + self.title + " " + self.raw_pos)
         words = [w for w in text.split()]
         self.__parse_fields(words)
-
-        text = text.replace(":", " :")
-        items = [w[1:].strip() for w in text.split() if w[0] == ':']
-        self.__parse_fields_legacy(items)
 
         self.__set_default_values()
         return True
@@ -120,104 +108,73 @@ class TaskMatcher:
         if self.key is not None:
             output.append(f"@{self.key}")
 
-        if self.resource_type != TaskType.NULL:
-            output.append(f"{TaskMatcher.TYPE}{self.resource_type.value}")
+        if self.eval is not None:
+            output.append(f"{TaskMatcher.EVAL}{self.eval.value}")
 
-        output.append(f"{TaskMatcher.GAIN}{self.gain}")
-        output.append(f"{TaskMatcher.HARD}{self.hard}")
-        output.append(f"{TaskMatcher.SIZE}{self.size}")
+        gcs = [self.gain, self.cost, self.size]
+        while len(gcs) > 1 and gcs[-1] == 1:
+            gcs.pop()
+        output.append(f"{TaskMatcher.GCS}{''.join(str(value) for value in gcs)}")
 
         return output
 
     def __parse_fields(self, words: list[str]):
+        compact_values: tuple[int, int, int] | None = None
+        explicit_gain: int | None = None
+        explicit_cost: int | None = None
+        explicit_size: int | None = None
+
         for item in words:
             item = item.lower()
-            if item.startswith(TaskMatcher.HARD):
-                if (hard_value := self.parse_int(item[len(TaskMatcher.HARD):])) is not None:
-                    self.hard = hard_value
+            if item.startswith(TaskMatcher.GCS):
+                compact_values = self.__parse_gcs(item[len(TaskMatcher.GCS):])
                 continue
-            if item.startswith("tier="):
-                if (hard_value := self.parse_int(item[len("tier="):])) is not None:
-                    self.hard = hard_value
+            if item.startswith(TaskMatcher.COST):
+                if (cost_value := self.parse_int(item[len(TaskMatcher.COST):])) is not None:
+                    explicit_cost = min(cost_value, 6)
                 continue
             if item.startswith(TaskMatcher.GAIN):
                 if (gain_value := self.parse_int(item[len(TaskMatcher.GAIN):])) is not None:
-                    self.gain = gain_value
-                continue
-            if item.startswith("xp="):
-                if (gain_value := self.parse_int(item[len("xp="):])) is not None:
-                    self.gain = gain_value
+                    explicit_gain = min(gain_value, 3)
                 continue
             if item.startswith(TaskMatcher.SIZE):
                 if (size_value := self.parse_int(item[len(TaskMatcher.SIZE):])) is not None:
-                    self.size = size_value
+                    explicit_size = min(size_value, 3)
                 continue
-            elif item == f"{TaskMatcher.TYPE}{TaskType.WIKI.value}" or item == f"{TaskMatcher.TYPE}read":
-                self.resource_type = TaskType.WIKI
-                self._legacy_read = item.endswith("read")
-                self._explicit_type = True
-            elif item == f"{TaskMatcher.TYPE}{TaskType.SELF.value}":
-                self.resource_type = TaskType.SELF
-                self._explicit_type = True
-            elif item == f"{TaskMatcher.TYPE}{TaskType.DIFF.value}":
-                self.resource_type = TaskType.DIFF
-                self._explicit_type = True
-            elif item == f"{TaskMatcher.TYPE}{TaskType.CODE.value}":
-                self.resource_type = TaskType.CODE
-                self._explicit_type = True
-            elif item == f"{TaskMatcher.TYPE}{TaskType.MAKE.value}":
-                self.resource_type = TaskType.MAKE
-                self._explicit_type = True
-            elif item == f"{TaskMatcher.EVAL}self":
-                self._legacy_eval = TaskEval.SELF
-            elif item in (f"{TaskMatcher.EVAL}test", f"{TaskMatcher.EVAL}diff"):
-                self._legacy_eval = TaskEval.TEST
+            elif item.startswith(TaskMatcher.EVAL):
+                value = item[len(TaskMatcher.EVAL):]
+                try:
+                    self.eval = EvalMode(value)
+                except ValueError as exc:
+                    raise ValueError("eval= must be one of none, self or diff") from exc
+            elif item.startswith(("hard=", "tier=", "xp=", "type=")):
+                raise ValueError("Obsolete task field; use eval=none|self|diff, gain=, cost= and size=")
+            elif item.startswith(":") and item[1:] in {"read", "make", "self", "diff", "test"}:
+                raise ValueError("Legacy colon task tags are unsupported; use eval=none|self|diff")
 
-    def __parse_fields_legacy(self, items: list[str]):
-        for tag in items:
-            # if c is digit, set xp
-            if tag.isdigit():
-                self.gain = int(tag)
-            elif tag == "test":
-                self._legacy_eval = TaskEval.TEST
-            elif tag == "diff":
-                self.resource_type = TaskType.DIFF
-            elif tag == "self":
-                self._legacy_eval = TaskEval.SELF
-            elif tag == TaskType.MAKE.value:
-                self.resource_type = TaskType.MAKE
-            elif tag in ("read", TaskType.WIKI.value):
-                self.resource_type = TaskType.WIKI
-                self._legacy_read = tag == "read"
+        if compact_values is not None:
+            self.gain, self.cost, self.size = compact_values
+        if explicit_gain is not None:
+            self.gain = explicit_gain
+        if explicit_cost is not None:
+            self.cost = explicit_cost
+        if explicit_size is not None:
+            self.size = explicit_size
 
+    @staticmethod
+    def __parse_gcs(value: str) -> tuple[int, int, int]:
+        if not re.fullmatch(r"[1-9][0-9]{0,2}", value):
+            raise ValueError("gcs= must contain one to three non-zero digits")
+
+        values = [int(digit) for digit in value]
+        gain, cost, size = (values + [1, 1, 1])[:3]
+        if not 1 <= gain <= 3 or not 1 <= cost <= 6 or not 1 <= size <= 3:
+            raise ValueError("gcs= values must be gain 1-3, cost 1-6 and size 1-3")
+        return gain, cost, size
 
     def __set_default_values(self):
-        if self.resource_type == TaskType.NULL:
-            raise ValueError("Task type is required: use type=wiki, type=self, type=diff or type=code")
-        if self.resource_type == TaskType.MAKE:
-            if self._legacy_eval == TaskEval.SELF:
-                self.resource_type = TaskType.SELF
-            elif self._legacy_eval == TaskEval.TEST:
-                self.resource_type = TaskType.DIFF
-            else:
-                raise ValueError("type=make is obsolete; use type=self or type=diff")
-        elif self._explicit_type and not self._legacy_read and self._legacy_eval is not None:
-            raise ValueError("eval= is obsolete; use type=wiki, type=self, type=diff or type=code")
-        if self.resource_type in (TaskType.SELF, TaskType.DIFF, TaskType.CODE):
-            self.eval = {TaskType.SELF: TaskEval.SELF, TaskType.DIFF: TaskEval.TEST, TaskType.CODE: TaskEval.TEST}[self.resource_type]
-
-
-    @property
-    def is_read(self):
-        return self.resource_type == TaskType.WIKI
-
-    @property
-    def is_wiki(self):
-        return self.resource_type == TaskType.WIKI
-    
-    @property
-    def is_make(self):
-        return self.resource_type != TaskType.WIKI and self.resource_type != TaskType.NULL
+        if self.eval is None:
+            raise ValueError("Task evaluation is required: use eval=none, eval=self or eval=diff")
 
     @property
     def is_url(self):

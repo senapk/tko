@@ -2,35 +2,35 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from tko.game.task_enums import TaskEval, TaskType
+from tko.game.task_enums import EvalMode
+from tko.game.eval_mode_spec import get_eval_mode_spec
 
 
 @dataclass(frozen=True, slots=True)
 class TaskConfig:
-    type: TaskType = TaskType.NULL
+    eval: EvalMode = EvalMode.NONE
 
     def clone(self) -> TaskConfig:
         return TaskConfig(
-            type=self.type,
+            eval=self.eval,
         )
     
     @property
-    def is_eval_test(self):
-        return self.type in (TaskType.DIFF, TaskType.CODE)
+    def eval_spec(self):
+        return get_eval_mode_spec(self.eval)
     
     @property
-    def is_eval_self(self):
-        return self.type == TaskType.SELF
+    def is_automated(self):
+        return self.eval_spec.supports_automated_tests
 
     @property
-    def is_wiki(self):
-        return self.type == TaskType.WIKI
+    def awards_xp(self):
+        return self.eval_spec.awards_xp
 
     @property
-    def test(self) -> TaskEval:
-        """Compatibilidade de leitura; novas configurações usam type."""
-        if self.type == TaskType.SELF:
-            return TaskEval.SELF
-        if self.type in (TaskType.DIFF, TaskType.CODE):
-            return TaskEval.TEST
-        return TaskEval.SELF
+    def is_non_evaluated(self):
+        return self.eval == EvalMode.NONE
+
+    @property
+    def supports_self_evaluation(self):
+        return self.eval_spec.supports_self_evaluation
