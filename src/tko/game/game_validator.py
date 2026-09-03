@@ -27,11 +27,10 @@ class GameValidator:
         
     def validate(self):
         self.tasks.clear()
-        self.__validate_requirements()
-        self.__check_cycle()
+        self.__validate_tasks()
         return self
 
-    def __validate_requirements(self):
+    def __validate_tasks(self):
         # verify is there are keys repeated between quests, tasks and groups
         keys = set(self.quests.keys())
         for q in self.quests.values():
@@ -55,28 +54,3 @@ class GameValidator:
         # trim titles
         for q in self.quests.values():
             q.basic.title = q.basic.title.strip()
-
-        # verificar auto dependencia
-        for q in self.quests.values():
-            for r in q.requirements.requires:
-                if q.basic.full_key == r:
-                    logger.error(str(_GAME_VALIDATOR_SELF_REF_ERROR).format(line_number=q.source.line_number, line=q.source.line))
-                    exit(1)
-
-
-    # call after create_requirements_pointers
-    def __check_cycle(self):
-        def dfs(qx: Quest, visitedx: list[str]):
-            if len(visitedx) > 0:
-                if visitedx[0] == qx.basic.full_key:
-                    logger.error(str(_GAME_VALIDATOR_CYCLE_DETECTED).format(visited=visitedx))
-                    exit(1)
-            if qx.basic.full_key in visitedx:
-                return
-            visitedx.append(qx.basic.full_key)
-            for r in qx.requirements.requires_ptr:
-                dfs(r, visitedx)
-
-        for q in self.quests.values():
-            visited: list[str] = []
-            dfs(q, visited)

@@ -78,7 +78,7 @@ opening["estuda"] = r"""
 Os botões de 1 a 4 habilitam os filtros de exibição.
 - Painel : mostra os gráficos de acompanhamento ou logs.
 - Trilhas: mostra a barra lateral de trilhas de habilidades.
-- Tópicos: mostra as missões (recomendadas ou todas).
+- Tópicos: mostra as missões (fixadas ou todas).
 - Tarefas: esconde as atividades já concluídas.
 
 - Aperte 'p' para ver outras opções de interface e ações.

@@ -213,7 +213,7 @@ def test_fix_readme_updates_quest_xpgoal_from_checked_tasks(tmp_path: Path) -> N
 
     index_path.write_text(
         "# Curso\n\n"
-        "## Vetores <!-- key=@vetores xpgoal=99 min=70% -->\n\n"
+        "## Vetores <!-- key=@vetores xpgoal=99 -->\n\n"
         "- [x] `@soma gain=2 hard=1 size=1 type=make eval=test` [Soma](base/soma/README.md)\n"
         "- [x] `@media gain=3 hard=1 size=1 type=make eval=test` [Media](base/media/README.md)\n"
         "- [ ] `@desafio gain=5 hard=3 size=2 type=make eval=test` [Desafio](base/desafio/README.md)\n",
@@ -223,7 +223,7 @@ def test_fix_readme_updates_quest_xpgoal_from_checked_tasks(tmp_path: Path) -> N
     fix_readme(index_path, base_dir, verbose=False)
 
     content = index_path.read_text(encoding="utf-8")
-    assert "## Vetores <!-- @vetores xpgoal=5 min=70% -->" in content
+    assert "## Vetores <!-- @vetores xpgoal=5 -->" in content
     assert "- [x]" in content
 
 

@@ -8,16 +8,13 @@ from tko.game.task import Task
 class QuestVisibilityService:
     @staticmethod
     def is_reachable(quest: Quest) -> bool:
-        return quest.state.is_reachable
+        return True
 
     @staticmethod
     def is_task_reachable(game: Game, task: Task) -> bool:
         quest = game.quests.get(task.quest_key)
-        if quest is None:
-            return False
-        return QuestVisibilityService.is_reachable(quest)
+        return quest is not None
 
     @staticmethod
     def is_quest_closed_in_inbox(quest: Quest) -> bool:
-        percent_all = quest.progress.get_percent()
-        return (not QuestVisibilityService.is_reachable(quest)) or percent_all >= 100
+        return False

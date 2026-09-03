@@ -24,3 +24,5 @@ class GuiActionsNames:
     calibrate = Msg.text(pt="Calibrar teclas", en="Calibrate keys")
     draft = Msg.text(pt="Rascunho", en="Draft")
     all = Msg.text(pt="Todos", en="All")
+    pin = Msg.text(pt="Fixar", en="Pin")
+    unpin = Msg.text(pt="Desfixar", en="Unpin")

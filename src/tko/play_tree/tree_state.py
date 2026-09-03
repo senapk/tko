@@ -23,6 +23,7 @@ class TreeFilter:
 class TreeState:
     def __init__(self):
         self.expanded: set[str] = set()
+        self.pinned: set[str] = set()
         self.selected: str = ""
         self.selected_index: int = 0
         self.search: str = ""

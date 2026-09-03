@@ -10,6 +10,7 @@ class TreeRepository:
 
     def load_state(self, state: TreeState):
         state.expanded = set(self.repo.data.expanded)
+        state.pinned = set(getattr(self.repo.data, "pinned", []))
         state.selected = self.repo.data.selected
         state.selected_index = self.repo.data.selected_index
 
@@ -18,6 +19,10 @@ class TreeRepository:
         self.repo.data.expanded = [
             x for x in state.expanded
             if x in self.game.quests.keys()
+        ]
+        self.repo.data.pinned = [
+            x for x in state.pinned
+            if x in self.game.tasks.keys()
         ]
 
         # salvar selecionado

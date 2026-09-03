@@ -12,10 +12,7 @@ class TreePresentationService:
         for quest in game.quests.values():
             if not quest.ui.visible:
                 continue
-            for req in quest.requirements.required_by_ptr:
-                if req.basic.full_key == state.selected:
-                    quest.ui.is_requirement_color = "y" if QuestVisibilityService.is_reachable(req) else "r"
-                    break
+            quest.ui.is_requirement_color = ""
             items.append(quest)
             color = "g" if QuestVisibilityService.is_reachable(quest) else "y"
             tasks: list[Task] = [task for task in quest.get_tasks() if task.ui.visible]

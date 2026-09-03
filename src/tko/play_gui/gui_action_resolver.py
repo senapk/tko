@@ -36,9 +36,7 @@ class GuiActionResolver:
             return "R", TaskAction.NENHUMA
         if isinstance(obj, Quest):
             quest: Quest = obj
-            if self.flags.task_view_mode.is_inbox() and not QuestVisibilityService.is_reachable(quest):
-                output = TaskAction.BLOQUEIO
-            elif quest.basic.full_key in self.tree.state.expanded:
+            if quest.basic.full_key in self.tree.state.expanded:
                 output = TaskAction.CONTRAIR
             else:
                 output = TaskAction.EXPANDIR

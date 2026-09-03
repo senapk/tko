@@ -1,5 +1,4 @@
 from tko.game.game import Game
-from tko.play.quest_visibility_service import QuestVisibilityService
 from tko.play_tree.task_formatter import TaskFormatter
 from tko.play_tree.tree_state import TreeFilter, TreeState
 from tko.util.to_asc import SearchAsc
@@ -28,28 +27,18 @@ class TreeFilterPolicy:
 
         return matches, first
 
-    def select_inbox_enabled(self, game: Game) -> set[str]:
-        max_count = 10
+    def select_pinned_enabled(self, game: Game, pinned: set[str]) -> set[str]:
         enabled: set[str] = set()
         for quest in game.quests.values():
-            if QuestVisibilityService.is_quest_closed_in_inbox(quest):
-                continue
-            enabled.add(quest.basic.full_key)
-            count = 0
-            tasks = sorted(
-                quest.get_tasks(),
-                key=lambda task: (task.grader.get_rate_percent() != 100),
-            )
-            for task in tasks:
-                if task.grader.get_rate_percent() == 100 and task.grader.get_quality_percent() == 100:
-                    continue
-                if self.task_formatter.is_downloaded_for_lang(task):
+            for task in quest.get_tasks():
+                if task.basic.full_key in pinned:
+                    enabled.add(quest.basic.full_key)
                     enabled.add(task.basic.full_key)
-                    count += 1
-                elif count < max_count:
-                    enabled.add(task.basic.full_key)
-                    count += 1
         return enabled
+
+    def select_inbox_enabled(self, game: Game) -> set[str]:
+        """Compatibilidade para integrações que ainda chamam o nome antigo."""
+        return self.select_pinned_enabled(game, getattr(self, "_pinned", set()))
 
     @staticmethod
     def enable_all(game: Game) -> set[str]:
@@ -68,5 +57,6 @@ class TreeFilterPolicy:
                 state.selected = first_match
             return enabled
         if tree_filter.should_use_inbox_filter:
+            self._pinned = state.pinned
             return self.select_inbox_enabled(game)
         return self.enable_all(game)

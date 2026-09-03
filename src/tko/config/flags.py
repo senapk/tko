@@ -55,29 +55,36 @@ class BoolFlag(Flag):
 
 
 class ViewMode(Flag):
-    INBOX = "inbox"
+    PINNED = "pinned"
+    INBOX = PINNED  # compatibilidade de API com o nome antigo
     ALL = "all"
 
     def __init__(self, id: str):
         super().__init__(
             id=id,
-            default_value=ViewMode.INBOX,
+            default_value=ViewMode.PINNED,
             msgs={
-                ViewMode.INBOX: "Mostrar inbox",
+                ViewMode.PINNED: "Mostrar fixadas",
                 ViewMode.ALL: "Habilitar todas as tarefas",
             },
-            description="Mostra inbox ou todas as atividades",
+            description="Mostra tarefas fixadas ou todas as atividades",
             keycode="",
         )
 
     def is_inbox(self):
-        return self.get_value() == ViewMode.INBOX
+        return self.is_pinned()
+
+    def is_pinned(self):
+        return self.get_value() == ViewMode.PINNED
 
     def is_all(self):
         return self.get_value() == ViewMode.ALL
 
     def set_view_inbox(self):
-        self._value = ViewMode.INBOX
+        self.set_view_pinned()
+
+    def set_view_pinned(self):
+        self._value = ViewMode.PINNED
 
     def set_view_all(self):
         self._value = ViewMode.ALL

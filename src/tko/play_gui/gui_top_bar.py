@@ -10,7 +10,7 @@ from tko.util.aligner import Aligner
 import time
 
 class _TopBarMsg:
-    RECOMMENDED = Msg.text(pt="Recomendadas", en="Recommended")
+    PINNED = Msg.text(pt="Fixadas", en="Pinned")
     ALL = Msg.text(pt="Todas", en="All")
     GRAPHS = Msg.text(pt="Gráficos", en="Graphs")
     LOGS = Msg.text(pt="Logs", en="Logs")
@@ -79,7 +79,7 @@ class GuiTopBar:
     def show(self, frame: Frame) -> None:
         vi = Button()
         pre = [
-            vi.toggle_bt(f"{str(_TopBarMsg.RECOMMENDED)}[{GuiKeys.inbox}]", self.flags.task_view_mode.is_inbox()),
+            vi.toggle_bt(f"{str(_TopBarMsg.PINNED)}[{GuiKeys.inbox}]", self.flags.task_view_mode.is_pinned()),
             vi.toggle_bt(f"{str(_TopBarMsg.ALL)}[{GuiKeys.all_tasks}]", self.flags.task_view_mode.is_all()),
         ]
         pos = [

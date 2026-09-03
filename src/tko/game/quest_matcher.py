@@ -4,9 +4,7 @@ from tko.game.quest import Quest
 class QuestMatcher:
     KEY = "key="
     TAG = "tag="
-    REQUIRES = "deps="
     GOAL = "xpgoal="
-    MIN = "min="
     LANG = "lang="
     ACTIVE = "active="
 
@@ -35,17 +33,6 @@ class QuestMatcher:
         if not self.quest.game.skill and self.quest.basic.key:
             self.quest.game.skill = self.quest.basic.key
 
-    def _process_deps(self, words: list[str]):
-        requires = [w[len(QuestMatcher.REQUIRES):] for w in words if w.startswith(QuestMatcher.REQUIRES)]
-        for req_key in requires:
-            for req in req_key.split(","):
-                if req.lower() != "none":
-                    self.quest.requirements.add_require_key(self.quest.basic.source_name, req)
-
-        required_legacy = [t[1:] for t in words if t[0] == "!"]
-        for req_key in required_legacy:
-            self.quest.requirements.add_require_key(self.quest.basic.source_name, req_key)
-
     def _process_goal(self, words: list[str]):
         for w in words:
             if w.startswith(QuestMatcher.GOAL):
@@ -57,31 +44,6 @@ class QuestMatcher:
                 except Exception:
                     self.warnings.append(f"Valor de goal inválido na linha {self.quest.source.line_number} do arquivo {self.quest.source.file}: {w[len(QuestMatcher.GOAL):]}. Usando valor 0.")
                     self.quest.game.goal_xp = 0
-
-    def _process_min(self, words: list[str]):
-         # threshold (novo formato)
-        for w in words:
-            if w.startswith(QuestMatcher.MIN):
-                try:
-                    w = w[len(QuestMatcher.MIN):]
-                    if w.endswith("%"):
-                        w = w[:-1]
-                    value = int(w)
-                    if value < 0 or value > 100:
-                        self.warnings.append(f"Valor de threshold fora do intervalo (0-100) na linha {self.quest.source.line_number} do arquivo {self.quest.source.file}: {value}. Usando valor 0.")
-                        value = 0
-                    self.quest.game.threshold = value
-                except Exception:
-                    self.warnings.append(f"Valor de threshold inválido na linha {self.quest.source.line_number} do arquivo {self.quest.source.file}: {w[len(QuestMatcher.MIN):]}. Usando valor 0.")
-                    self.quest.game.threshold = 0
-
-        # percent antigo (%)
-        qmin = [t[1:] for t in words if t[0] == "%"]
-        if qmin and not any(w.startswith(QuestMatcher.MIN) for w in words):
-            try:
-                self.quest.game.threshold = int(qmin[0])
-            except ValueError:
-                pass
 
     def _process_languages(self, words: list[str]):
         # languages (novo formato: lang=nome)
@@ -107,9 +69,7 @@ class QuestMatcher:
         words = text.split()
         self._process_key(words)
         self._process_skills(words)
-        self._process_deps(words)
         self._process_goal(words)
-        self._process_min(words)
         self._process_languages(words)
         self._process_active(words)
 
@@ -118,8 +78,8 @@ class QuestMatcher:
         # Remove campos já processados para título
         def is_field(w: str) -> bool:
             return (
-                w.startswith(QuestMatcher.KEY) or w.startswith(QuestMatcher.TAG) or w.startswith(QuestMatcher.REQUIRES) or
-                w.startswith(QuestMatcher.GOAL) or w.startswith(QuestMatcher.MIN) or
+                w.startswith(QuestMatcher.KEY) or w.startswith(QuestMatcher.TAG) or w.startswith("deps=") or
+                w.startswith(QuestMatcher.GOAL) or w.startswith("min=") or
                 w.startswith(QuestMatcher.ACTIVE) or w.startswith(QuestMatcher.LANG) or
                 w.startswith("factor=") or (w[0] in ["@", "%", "=", "+", "!"])
             )
@@ -131,15 +91,10 @@ class QuestMatcher:
         output: list[str] = []
         if quest.basic.key:
             output.append(f"@{quest.basic.key}")
-        if quest.requirements.requires:
-            output.append(f"{QuestMatcher.REQUIRES}{','.join(quest.requirements.requires)}")
         if quest.game.skill and quest.game.skill != quest.basic.key:
             output.append(f"{QuestMatcher.TAG}{quest.game.skill}")
         if quest.game.goal_xp > 0:
             output.append(f"{QuestMatcher.GOAL}{quest.game.goal_xp}")
-        threshold = quest.game.threshold
-        if threshold != quest.game.DEFAULT_MIN:
-            output.append(f"{QuestMatcher.MIN}{quest.game.threshold}%")
         for lang in quest.game.languages:
             output.append(f"{QuestMatcher.LANG}{lang}")
         if not quest.game.active:

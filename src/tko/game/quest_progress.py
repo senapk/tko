@@ -7,9 +7,8 @@ from tko.game.task import Task
 
 
 class QuestProgress:
-    def __init__(self, tasks_getter: Callable[[], list[Task]], min_percent_getter: Callable[[], int], goal_xp: Callable[[], int]):
+    def __init__(self, tasks_getter: Callable[[], list[Task]], goal_xp: Callable[[], int]):
         self._tasks_getter = tasks_getter
-        self._min_percent_getter = min_percent_getter
         self._goal_xp = goal_xp
 
     def get_obtained_goal_available(self) -> tuple[float, float, float]:
@@ -37,8 +36,3 @@ class QuestProgress:
         if totalm == 0:
             return 0
         return (obtainedm / goalm) * 100
-
-
-    def is_complete(self) -> bool:
-        value = self.get_percent()
-        return value >= self._min_percent_getter()

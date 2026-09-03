@@ -27,8 +27,8 @@ class _GuiHelpMsg:
 
     SECTION_INTERFACE = Msg.text(pt=" Interface ", 
                             en=" Interface ")
-    INTERFACE_INBOX = Msg.parse(pt="    Inbox [r]{}[] Mostra as tarefas sugeridas e iniciadas", 
-                          en="    Inbox [r]{}[] Shows suggested and started tasks")
+    INTERFACE_INBOX = Msg.parse(pt="  Fixadas [r]{}[] Mostra apenas as tarefas fixadas",
+                          en="  Pinned [r]{}[] Shows only pinned tasks")
     INTERFACE_ALL = Msg.parse(pt="    Todas [r]{}[] Mostra as todas tarefas cadastradas", 
                         en="    All [r]{}[] Shows all registered tasks")
     INTERFACE_PALETTE = Msg.parse(pt="   Paleta [r]{}[] Abre o menu de ações e configurações", 

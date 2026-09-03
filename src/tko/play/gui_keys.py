@@ -5,6 +5,7 @@ class GuiKeys:
 
     inbox = "1"
     all_tasks = "2"
+    pin = "f"
     
     panel_graph = "3"
     panel_logs = "4"

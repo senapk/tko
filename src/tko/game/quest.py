@@ -3,7 +3,6 @@ from tko.game.tree_item import TreeItem
 from tko.game.task import Task
 from tko.game.quest_source import QuestSource
 from tko.game.quest_config import QuestGame
-from tko.game.quest_requirements import QuestRequirements
 from tko.game.quest_state import QuestState
 from tko.game.quest_progress import QuestProgress
 
@@ -14,18 +13,13 @@ class Quest(TreeItem):
         super().__init__()
         self.source = QuestSource()
         self.game = QuestGame()
-        self.requirements = QuestRequirements()
         self.state = QuestState()
 
         self.basic.key = key
         self.basic.title = title
 
         self.__tasks: list[Task] = []
-        self.progress = QuestProgress( # using lambda functions to shared primitives
-            lambda: self.__tasks, 
-            lambda: self.game.threshold, 
-            lambda: self.game.goal_xp
-        )
+        self.progress = QuestProgress(lambda: self.__tasks, lambda: self.game.goal_xp)
     
     def update_tasks_reachable(self):
         for task in self.__tasks:
@@ -37,7 +31,7 @@ class Quest(TreeItem):
         line = str(self.source.line_number).rjust(3)
         tasks_size = str(len(self.__tasks)).rjust(2, "0")
         key = "" if self.basic.full_key == self.basic.title else self.basic.full_key + " "
-        output = f"{line} {tasks_size} {key}{self.basic.title} {self.game.skill} {self.requirements.requires}"
+        output = f"{line} {tasks_size} {key}{self.basic.title} {self.game.skill}"
         return output
 
     def add_task(self, task: Task):

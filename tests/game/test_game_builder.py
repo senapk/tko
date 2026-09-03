@@ -80,7 +80,7 @@ def test_duplicate_quest_heading_does_not_change_current_quest(tmp_path: Path) -
     assert quest_tasks(builder, "second") == ["two", "three"]
 
 
-def test_missing_requirements_warn_and_only_valid_requirements_remain(tmp_path: Path) -> None:
+def test_requirements_are_ignored_for_gameplay(tmp_path: Path) -> None:
     messages: list[str] = []
     sink_id = logger.add(messages.append, level="WARNING", format="{message}")
     try:
@@ -98,9 +98,7 @@ def test_missing_requirements_warn_and_only_valid_requirements_remain(tmp_path: 
 
     quests = builder.collect_quests()
     dependent = quests["base@dependent"]
-    assert dependent.requirements.requires == ["@base"]
-    assert dependent.requirements.requires_ptr == [quests["base@base"]]
-    assert any("carregando sem esse requisito" in message for message in messages)
+    assert not any("carregando sem esse requisito" in message for message in messages)
 
 
 def test_first_occurrence_is_reserved_before_language_filtering(tmp_path: Path) -> None:

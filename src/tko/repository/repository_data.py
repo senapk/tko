@@ -113,6 +113,7 @@ class RepositoryData:
         self.__sources: dict[str, Source] = {}
         self.set_source(Source.from_local_file("labs", Path("README.md"), is_editable=True))
         self.expanded: list[str] = []
+        self.pinned: list[str] = []
         self.flags: ConfigDict = {}
         self.audit: AuditConfig = AuditConfig()
         self.lang: str = ""
@@ -291,10 +292,12 @@ class RepositoryData:
             state = self._load_dict(data, "state")
             if state is not None:
                 self.expanded = self._load_list(state, "expanded", self.expanded)
+                self.pinned = self._load_list(state, "pinned", self.pinned)
                 self.selected = self._load_str(state, "selected", self.selected)
                 self.selected_index = self._load_int(state, "selected_index", self.selected_index)
             else:
                 self.expanded = self._load_list(data, "expanded", self.expanded)
+                self.pinned = self._load_list(data, "pinned", self.pinned)
                 self.selected = self._load_str(data, "selected", self.selected)
                 self.selected_index = self._load_int(data, "selected_index", self.selected_index)
 
@@ -349,6 +352,8 @@ class RepositoryData:
             "selected": self.selected,
             "selected_index": self.selected_index,
         }
+        if self.pinned:
+            state["pinned"] = list(self.pinned)
         output: ConfigDict = {
             "version": self.version,
             "profile": profile,

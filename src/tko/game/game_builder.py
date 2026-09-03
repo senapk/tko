@@ -65,7 +65,6 @@ class GameBuilder:
         self.__parse_file_content(content)
         self.__remove_empty_and_other_language_and_filtered(language)
         self.__calculate_total_xp()
-        self.__create_requirements_pointers()
         self.__create_cross_references()
         return True
 
@@ -95,31 +94,6 @@ class GameBuilder:
         for quest in self.quests.values():
             if quest.game.goal_xp == 0:
                 quest.game.goal_xp = self.__sum_quest_xp(quest)
-
-
-    def __create_requirements_pointers(self):
-        filename: Path = self.index_path
-        quests = self.collect_quests()
-        for q in quests.values():
-            q.requirements.requires_ptr.clear()
-            q.requirements.required_by_ptr.clear()
-        # verificar se todas as quests requeridas existem e adicionar o ponteiro
-        for q in quests.values():
-            valid_requirements: list[str] = []
-            for r in q.requirements.requires:
-                if r in quests:
-                    valid_requirements.append(r)
-                    q.requirements.requires_ptr.append(quests[r])
-                    quests[r].requirements.required_by_ptr.append(q)
-                else:
-                    logger.warning(
-                        _GAME_BUILDER_QUEST_REQUIRES_MISSING.t().format(filename=filename,
-                            line=q.source.line_number,
-                            quest=str(q),
-                            required=r,
-                        )
-                    )
-            q.requirements.requires = valid_requirements
 
     def __parse_file_content(self, content: str):
         lines = content.splitlines()

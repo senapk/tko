@@ -37,7 +37,6 @@ class Quest:
         self.ui = Ui()
         self.ui.visible = visible
         self._tasks = tasks
-        self.requirements = type("ReqWrap", (), {"required_by_ptr": []})()
 
     def get_tasks(self) -> list[Task]:
         return self._tasks

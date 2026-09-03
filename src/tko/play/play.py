@@ -138,6 +138,7 @@ class Play:
             cman.add_str(GuiKeys.self_evaluate_full, self.actions.evaluator.self_evaluate_full)
         cman.add_str(GuiKeys.inbox, lambda: self.flags.task_view_mode.set_view_inbox())
         cman.add_str(GuiKeys.all_tasks, lambda: self.flags.task_view_mode.set_view_all())
+        cman.add_str(GuiKeys.pin, self.toggle_pin)
 
         cman.add_str(GuiKeys.ask_help, self.show_help)
         cman.add_str(GuiKeys.panel_graph, lambda: self.open_toggle_panel(self.flags.panel.GRAPH))
@@ -157,6 +158,20 @@ class Play:
  
 
         return cman
+
+    def toggle_pin(self):
+        try:
+            selected = self.tree.get_selected_throw()
+        except IndexError:
+            return
+        from tko.game.task import Task
+        if not isinstance(selected, Task):
+            return
+        key = selected.basic.full_key
+        if key in self.tree.state.pinned:
+            self.tree.state.pinned.remove(key)
+        else:
+            self.tree.state.pinned.add(key)
 
     def open_toggle_panel(self, value: str):
         current = self.flags.panel.get_value()

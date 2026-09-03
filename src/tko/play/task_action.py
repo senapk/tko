@@ -9,3 +9,5 @@ class TaskAction:
     CONTRAIR = Msg.text(pt="Contrair", en="Collapse")
     NENHUMA = Msg.text(pt="Retornar", en="Return  ")
     BLOQUEIO = Msg.text(pt="Travado", en="Locked ")
+    FIXAR = Msg.text(pt="Fixar   ", en="Pin     ")
+    DESFIXAR = Msg.text(pt="Desfixar", en="Unpin   ")
