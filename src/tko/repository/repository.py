@@ -102,7 +102,23 @@ class Repository:
         if len(parts) > 1:
             source = parts[0]
             label = parts[1]
-        return self.paths.root_dir / source / label
+        root = self.paths.root_dir / source
+        if "/" not in label:
+            canonical = root / "labs" / label
+            if canonical.exists():
+                return canonical
+            legacy = root / label
+            if legacy.exists():
+                return legacy
+            return legacy
+        if label.startswith("labs/"):
+            canonical = root / label
+            if canonical.exists():
+                return canonical
+            legacy = root / label.removeprefix("labs/")
+            if legacy.exists():
+                return legacy
+        return root / label
 
     def __str__(self) -> str:
         return f"data: {self.data}\n"

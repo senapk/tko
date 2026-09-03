@@ -53,6 +53,22 @@ def test_task_folder_helpers_handle_prefixed_and_plain_labels(tmp_path: Path) ->
     assert repo.is_task_folder(tmp_path / "task1") is True
 
 
+def test_task_folder_helper_prefers_legacy_labs_compatibility(tmp_path: Path) -> None:
+    repo = Repository(tmp_path, make_run_settings(tmp_path), git_cache=None, recursive_search=False)
+    canonical = tmp_path / "disc" / "labs" / "carro"
+    canonical.mkdir(parents=True)
+
+    assert repo.get_task_folder_for_label("disc@carro") == canonical
+
+
+def test_task_folder_helper_uses_old_folder_when_canonical_is_absent(tmp_path: Path) -> None:
+    repo = Repository(tmp_path, make_run_settings(tmp_path), git_cache=None, recursive_search=False)
+    legacy = tmp_path / "disc" / "carro"
+    legacy.mkdir(parents=True)
+
+    assert repo.get_task_folder_for_label("disc@labs/carro") == legacy
+
+
 def test_authoring_remote_resolves_against_workspace(tmp_path: Path) -> None:
     repo = Repository(tmp_path, make_run_settings(tmp_path), git_cache=None, recursive_search=False)
 

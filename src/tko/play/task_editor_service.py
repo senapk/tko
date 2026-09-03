@@ -53,7 +53,9 @@ class TaskEditorService:
             return
         if isinstance(obj, Task):
             task: Task = obj
-            folder = self.repo.get_task_folder_for_label(task.basic.full_key)
+            folder = self.repo.task_resolver.target_folder(task)
+            if folder is None:
+                folder = self.repo.get_task_folder_for_label(task.basic.full_key)
             if os.path.exists(folder):
                 opener = Opener(self.settings).set_fman(self.fman).set_language(self.repo.data.lang)
                 opener.add_task_folder_to_open(folder)
