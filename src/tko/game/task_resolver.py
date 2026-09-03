@@ -13,7 +13,10 @@ class TaskResolver:
         self.remote_root_dir = repo_root_dir
 
     def __source_work_dir(self, task: Task) -> Path:
-        return self.remote_root_dir / task.basic.source_name / task.basic.key
+        key_path = Path(task.basic.key)
+        if key_path.parts and key_path.parts[0] == task.basic.source_name:
+            return self.remote_root_dir / key_path
+        return self.remote_root_dir / task.basic.source_name / key_path
 
     def target_folder(self, task: Task) -> Path | None:
         file = self.target_file(task)

@@ -5,6 +5,7 @@ from tko.run.solver_builder import SolverBuilder
 from tko.run.wdir_summary_service import WdirSummaryService
 from tko.run.wdir_target_resolver import WdirTargetResolver
 from tko.run.wdir_units_service import WdirUnitsService
+from tko.loader.test_discovery import TestDiscovery
 from tko.i18n import Msg
 from tko.util.rt import RT
 from pathlib import Path
@@ -61,7 +62,8 @@ class Wdir:
     def autoload(self):
         if self.autoload_folder is None:
             raise ValueError(_RUN_AUTOLOAD_FOLDER_NOT_SET.t() + " " + _RUN_AUTOLOAD_LANG_HINT.t())
-        source_list, solver_list = WdirTargetResolver.resolve_autoload(self.autoload_folder, self.lang)
+        _, solver_list = WdirTargetResolver.resolve_autoload(self.autoload_folder, self.lang)
+        source_list = TestDiscovery.sources(self.autoload_folder)
         self.setup_solver(solver_list)
         self.source_list = source_list
 

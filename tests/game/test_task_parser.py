@@ -58,8 +58,17 @@ def test_parse_line_returns_none_for_non_task_line() -> None:
     assert make_parser().parse_line("texto comum sem marcador", 1) is None
 
 
-def test_parse_line_returns_none_when_key_is_missing() -> None:
+def test_parse_line_returns_none_when_key_and_readme_are_missing() -> None:
     assert make_parser().parse_line("- [ ] [titulo sem chave](data/label/r.md)", 2) is None
+
+
+def test_parse_local_readme_derives_key_from_repository_path() -> None:
+    task = TaskParser(index_path=Path("/source/README.md")).parse_line(
+        "- [ ] [Carro](labs/carro/README.md)",
+    )
+
+    assert task is not None
+    assert task.basic.key == "labs/carro"
 
 
 def test_read_task_external_url_is_rejected() -> None:

@@ -23,7 +23,7 @@ Fluxo principal:
 2. Le o INDEX_MD linha por linha e interpreta entradas de tarefa.
 3. Remove do indice entradas locais cujo README.md nao existe mais.
 4. Detecta pastas de tarefa existentes em BASE_DIR que nao estao no indice.
-5. Adiciona essas entradas faltantes na secao de quest padrao (sandbox).
+5. Adiciona essas entradas faltantes na secao de quest padrao.
 6. Atualiza `xpgoal` das quests quando houver tarefas marcadas como referencia.
 7. Regrava o arquivo com alinhamento de chaves.
 

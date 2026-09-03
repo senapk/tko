@@ -44,7 +44,8 @@ class TaskParser:
         - eval: test para type=make, self para type=read
 
     Notas:
-        - Apenas @chave é obrigatória.
+        - Para links locais, @chave é derivada do caminho relativo ao índice.
+        - Para links externos, @chave explícita é obrigatória.
         - Campos não obrigatórios assumem valores padrão.
         - Sintaxe antiga (:15, :make, :read, :test, :self, xp=, tier=) ainda é suportada por compatibilidade.
         - Links externos devem ser URLs do GitHub apontando para um README.md; eles são tratados como tarefas remotas importáveis.
@@ -94,6 +95,16 @@ class TaskParser:
         task = self.task
         if tm.key is not None:
             task.basic.key = tm.key
+        elif not tm.is_url and Path(tm.link).name == "README.md":
+            link_path = Path(tm.link)
+            if link_path.is_absolute():
+                link_path = link_path.resolve()
+            else:
+                link_path = (self.index_path.parent / link_path).resolve()
+            try:
+                task.basic.key = link_path.parent.relative_to(self.index_path.parent.resolve()).as_posix()
+            except ValueError:
+                task.basic.key = ""
 
         task.game.gain = tm.gain
         task.game.hard = tm.hard
@@ -101,7 +112,7 @@ class TaskParser:
         task.config = TaskConfig(test=tm.eval)
         task.basic.title = self.__remove_tags_from_title(tm.title)
 
-        if task.basic.key == "":
+        if task.basic.key == "" or (tm.is_url and tm.key is None):
             return None
 
         TaskMatcher.validate_key(task.basic.key)

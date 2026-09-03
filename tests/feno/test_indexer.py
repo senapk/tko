@@ -18,6 +18,18 @@ def test_index_line_accepts_windows_separator_for_readme(tmp_path: Path) -> None
     assert tl.target_file == (index_path.parent / "user_001" / "README.md").resolve()
 
 
+def test_local_task_key_defaults_to_relative_activity_path(tmp_path: Path) -> None:
+    index_path = tmp_path / "index.md"
+    base_dir = tmp_path
+    task_dir = base_dir / "labs" / "carro"
+    task_dir.mkdir(parents=True)
+    (task_dir / "README.md").write_text("# Carro\n", encoding="utf-8")
+
+    line = TaskLine(index_path=index_path, base_dir=base_dir)
+    assert line.init_by_line("- [ ] [Carro](labs/carro/README.md)") is True
+    assert line.key == "labs/carro"
+
+
 def test_fix_readme_yes_removes_broken_local_target(tmp_path: Path) -> None:
     from tko.feno.indexer import fix_readme
 
@@ -122,7 +134,7 @@ def test_fix_readme_indexes_new_dirs(tmp_path: Path) -> None:
     # t1 should be present with aligned tags
     assert "@t1" in content
     # t2 should be auto-added
-    assert "@t2" in content
+    assert "@base/t2" in content
     assert "Tarefa Dois" in content
 
 
@@ -163,7 +175,7 @@ def test_fix_readme_uses_canonical_defaults_and_aligned_columns(tmp_path: Path) 
 
     fix_readme(index_path, base_dir, verbose=False)
 
-    line = next(line for line in index_path.read_text(encoding="utf-8").splitlines() if "@long_task" in line)
+    line = next(line for line in index_path.read_text(encoding="utf-8").splitlines() if "@base/long_task" in line)
     assert "type=make gain=1 hard=1 size=1 eval=test" in line
     assert "📖" not in line and "🛠" not in line
 

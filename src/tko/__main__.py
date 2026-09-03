@@ -20,6 +20,7 @@ from tko.cli.cli_profile import app as profile_app
 from tko.cli.cli_source import app as source_app
 from tko.cli.cli_reset import app as reset_app
 from tko.cli.cli_task import app as task_app
+from tko.cli.cli_index import app as index_app
 from tko.cli.cli_tools import app as util_app
 from tko.i18n import Msg, set_language
 from tko.util.Renderer import RenderMode
@@ -43,6 +44,7 @@ app = typer.Typer(name="tko", help=f"tko {__version__}", no_args_is_help=True, c
 app.add_typer(build_app, name="build")
 app.add_typer(audit_app, name="audit")
 app.add_typer(task_app, name="task")
+app.add_typer(index_app, name="index")
 app.add_typer(config_app, name="config")
 app.add_typer(reset_app, name="reset")
 app.add_typer(profile_app, name="profile")

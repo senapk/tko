@@ -67,6 +67,26 @@ def task_list(
     action.list(show_all=all, only_down=down, show_quests=quests)
 
 
+@app.command("tests", help="List test cases without running a solver")
+def task_tests(
+    target_list: list[str] = typer.Argument(..., help="README, test file or activity directory"),
+):
+    from tko.loader.test_discovery import TestDiscovery
+
+    for target_text in target_list:
+        target = Path(target_text)
+        try:
+            units = TestDiscovery.discover(target)
+        except (FileNotFoundError, ValueError) as error:
+            typer.echo(f"Unable to inspect {target}: {error}", err=True)
+            raise typer.Exit(code=1)
+
+        typer.echo(f"{target}: {len(units)} test(s)")
+        for unit in units:
+            label = unit.case or str(unit.index)
+            typer.echo(f"  {label} ({unit.source})")
+
+
 @app.command("down", help="Download a task using key, fzf or number selection")
 def task_down(
     ctx: typer.Context,

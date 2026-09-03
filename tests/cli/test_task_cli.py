@@ -74,3 +74,18 @@ def test_task_list_prints_each_duplicate_key_only_once(tmp_path: Path) -> None:
     assert result.exit_code == 0
     assert rendered.count("base@same") == 1
     assert rendered.count("base@unique") == 1
+
+
+def test_task_tests_lists_cases_without_running_solver(tmp_path: Path) -> None:
+    activity = tmp_path / "labs" / "carro"
+    activity.mkdir(parents=True)
+    (activity / "README.md").write_text(
+        "# Carro\n\n```toml\n[[tests]]\ninput = '1'\noutput = '1'\n```\n",
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(app, ["tests", str(activity)], obj=_make_app_context(tmp_path))
+
+    assert result.exit_code == 0
+    assert "1 test(s)" in result.stdout
+    assert "README.md" in result.stdout

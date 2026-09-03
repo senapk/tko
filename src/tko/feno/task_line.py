@@ -66,7 +66,7 @@ class TaskLine:
         self.tm.raw_line = ""
         self.tm.raw_pre = ""
         self.tm.raw_pos = ""
-        relative_folder = readme_file.parent.resolve().relative_to(self.base_dir.resolve())
+        relative_folder = readme_file.parent.resolve().relative_to(self.index_path.parent.resolve())
         self.tm.key = relative_folder.as_posix()
         self.tm.resource_type = TaskType.MAKE
         self.tm.eval = TaskEval.TEST
@@ -94,8 +94,8 @@ class TaskLine:
         if self.origin_key is not None:
             return self.origin_key
         if self.target_file is not None:
-            if self.target_file.resolve().is_relative_to(self.base_dir.resolve()):
-                return self.target_file.parent.name
+            if self.target_file.resolve().is_relative_to(self.index_path.parent.resolve()):
+                return self.target_file.parent.relative_to(self.index_path.parent.resolve()).as_posix()
         if self.origin_key is not None:
             return self.origin_key
         return ""

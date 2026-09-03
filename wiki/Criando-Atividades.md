@@ -35,10 +35,9 @@ Papeis dos arquivos:
 O repositorio de conteudo do professor nao precisa ter `.tko/`. Essa pasta e
 normalmente parte do workspace do aluno, nao do formato publico das tarefas.
 
-Quando uma tarefa externa é materializada, o TKO copia o `README.md`, a pasta
-`assets/` e todos os demais arquivos Markdown diretamente na pasta da tarefa.
-Arquivos de teste e rascunhos são copiados somente para tarefas externas do
-tipo `make`.
+Quando uma tarefa externa é materializada, o TKO copia o conteúdo da atividade
+para o caminho indicado pela chave. A URL original permanece em um comentário
+HTML para permitir atualizações posteriores.
 
 ## Modelo mental
 
@@ -126,8 +125,9 @@ Fluxo recomendado:
 
 1. Crie uma pasta para a tarefa, por exemplo `labs/minha_tarefa/`.
 2. Escreva o enunciado em `labs/minha_tarefa/README.md`.
-3. Adicione `tests.toml` se a tarefa tiver testes automaticos.
-4. Adicione a linha da task no `README.md` principal.
+3. Adicione os testes no formato mais adequado à atividade, se houver avaliação
+   automática.
+4. Adicione a linha da task no `README.md` principal, ou deixe o indexador criá-la.
 5. Rode o TKO localmente para validar.
 
 Exemplo:
@@ -139,6 +139,13 @@ $EDITOR labs/minha_tarefa/tests.toml
 $EDITOR README.md
 cd labs/minha_tarefa
 tko run
+```
+
+Para verificar os casos sem executar uma solução (inclusive quando os testes
+estão no README ou em outro formato suportado):
+
+```bash
+tko task tests labs/minha_tarefa
 ```
 
 ## Escrevendo testes simples
@@ -191,6 +198,18 @@ ou links para outros arquivos Markdown.
 ```md
 - [ ] `@fila gain=2 hard=2 size=2 type=make eval=test` [Fila](https://github.com/qxcodeed/arcade/blob/main/labs/fila/README.md)
 ```
+
+A chave externa é obrigatória porque também define onde a atividade será
+materializada. O índice do professor pode ser preparado e atualizado assim:
+
+```bash
+tko index download README.md
+tko index update README.md
+```
+
+O primeiro comando baixa as atividades externas ainda não materializadas. O
+segundo substitui as cópias locais pelas versões atuais, descartando alterações
+locais nessas pastas.
 
 Para preparar um indice externo com links absolutos e reutilizaveis:
 
