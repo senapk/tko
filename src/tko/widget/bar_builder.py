@@ -27,6 +27,12 @@ class BarBuilder:
         ex: obtained = 50, target100 = 70, available = 100, reference = 200, lenght = 20
         The obtained will be showed using '-', target, available, reference using styles[0], styles[1], styles[2] respectively.
         """
+        if length <= 0:
+            return RT()
+        if reference <= 0:
+            # Legacy sources may have no XP configuration yet. Keep the
+            # reserved visual space without attempting to scale zero XP.
+            return RT(" " * length)
         unit_value = reference / length
         obtained_len = round(obtained / unit_value)
         target100_len = round(target100 / unit_value)

@@ -202,6 +202,69 @@ def test_migrates_legacy_sandbox_fields_and_preserves_old_names(tmp_path: Path) 
     assert data["state"]["selected"] == "sandbox@old"
 
 
+def test_migrates_legacy_source_list_with_writable_sandbox(tmp_path: Path) -> None:
+    repo = make_repo(tmp_path)
+    legacy = repo.paths.legacy_config_file
+    legacy.parent.mkdir(parents=True, exist_ok=True)
+    legacy.write_text(
+        "version: '0.2'\n"
+        "sources:\n"
+        "- name: sandbox\n"
+        "  target: sandbox\n"
+        "  index: README.md\n"
+        "  type: local\n"
+        "  writeable: true\n"
+        "- name: fup\n"
+        "  target: https://github.com/qxcodefup/arcade.git\n"
+        "  index: README.md\n"
+        "  type: git\n"
+        "  writeable: false\n"
+        "- name: eval1\n"
+        "  target: https://github.com/senapk/fup_26_1_eval_1.git\n"
+        "  index: README.md\n"
+        "  type: git\n"
+        "  writeable: false\n"
+        "expanded:\n"
+        "- fup@mat\n"
+        "flags:\n"
+        "  inbox: all\n"
+        "  panel: skills\n"
+        "  task_graph_mode: time\n"
+        "  show_time: 'true'\n"
+        "audit:\n"
+        "  enabled: true\n"
+        "  interval_seconds: null\n"
+        "lang: go\n"
+        "selected: fup@tetris\n"
+        "selected_index: 23\n",
+        encoding="utf-8",
+    )
+
+    RepositoryLoader(repo).load()
+
+    data = read_toml(repo.paths.config_file)
+    assert data["profile"]["authoring_source"] == "sandbox"
+    assert data["profile"]["sources"] == {
+        "sandbox": {"uri": "sandbox/README.md"},
+        "fup": {"uri": "https://github.com/qxcodefup/arcade/blob/main/README.md"},
+        "eval1": {"uri": "https://github.com/senapk/fup_26_1_eval_1/blob/main/README.md"},
+    }
+    assert data["profile"]["audit"] == {"enabled": True}
+    assert data["preferences"] == {
+        "inbox": "all",
+        "panel": "skills",
+        "task_graph_mode": "time",
+        "show_time": "true",
+        "lang": "go",
+    }
+    assert data["state"] == {
+        "expanded": ["fup@mat"],
+        "selected": "fup@tetris",
+        "selected_index": 23,
+    }
+    assert Path(str(legacy) + ".backup").exists()
+
+
 def test_toml_takes_precedence_when_yaml_also_exists(tmp_path: Path) -> None:
     repo = make_repo(tmp_path)
     repo.paths.config_file.parent.mkdir(parents=True, exist_ok=True)

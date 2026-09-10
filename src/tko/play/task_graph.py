@@ -1,8 +1,8 @@
 from tko.config.settings import Settings
 from tko.repository.repository import Repository
-from uniplot import plot_to_string # type: ignore
 from tko.util.rbuffer import RBuffer
 from tko.util.rt import RT
+from tko.widget.terminal_chart import Series, TerminalChart
 from tko.logger.log_sort import LogSort
 from tko.logger.log_item_exec import LogItemExec
 from tko.logger.log_item_base import LogItemBase
@@ -108,51 +108,20 @@ class TaskGraph:
         return output
 
     def get_graph(self) -> list[RT]:
-        x_fix = 3
-        y_fix = 2
         if self.repo.flags.task_graph_mode.is_time_view():
-            result = plot_to_string( # type: ignore
-                color=["magenta", "green", "red"],
-                xs=[self.collected_elapsed, self.collected_elapsed, self.collected_elapsed],
-                ys=[self.collected_lines_len, self.collected_rate, self.collected_rate],
-                lines=[True, True, False], 
-                y_min=0,
-                y_max=101,
-                width=self.width + x_fix,
-                height=self.height + y_fix,
-                y_unit="%",
-                x_unit="min"
-            )
+            series = [
+                Series(list(zip(self.collected_elapsed, self.collected_lines_len)), "m"),
+                Series(list(zip(self.collected_elapsed, self.collected_rate)), "g"),
+                Series(list(zip(self.collected_elapsed, self.collected_rate)), "r", line=False),
+            ]
         else:
-            result = plot_to_string(
-                color=["magenta", "green", "blue", "red"], 
-                xs=[self.eixo, self.eixo, self.eixo, self.eixo], 
-                ys=[self.collected_lines_len, self.collected_rate, self.collected_elapsed, self.collected_rate], 
-                lines=[True, True, True, False], 
-                y_min=0, 
-                y_max=101, 
-                width=self.width + x_fix, 
-                height=self.height + y_fix, 
-                y_unit="%", 
-                x_unit="runs"
-            )
-        
-        if isinstance(result, str):
-            result = result.splitlines()
-        output: list[RT] = []
-        for line in result:
-            output.append(RT.from_ansi(line))
-        fixed: list[RT] = []
-        size = len(output)
-        for i, line in enumerate(output):
-            if i == 0 or i == size - 2:
-                continue
-            if i < size - 2:
-                fixed.append(line.slice(2))
-            else:
-                fixed.append(line)
-            
-        return fixed
+            series = [
+                Series(list(zip(self.eixo, self.collected_lines_len)), "m"),
+                Series(list(zip(self.eixo, self.collected_rate)), "g"),
+                Series(list(zip(self.eixo, self.collected_elapsed)), "b"),
+                Series(list(zip(self.eixo, self.collected_rate)), "r", line=False),
+            ]
+        return TerminalChart(self.width, self.height, series, y_min=0, y_max=100).render()
 
     # returns header and graph lines
     def get_output(self) -> tuple[list[RT], list[RT]]:

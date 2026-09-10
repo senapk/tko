@@ -21,6 +21,11 @@ def remove_emojis(text: str) -> str:
 
 class TaskMatcher:
     EVAL = "eval="
+    LEGACY_EVALS = {
+        "test": EvalMode.DIFF,
+        "diff": EvalMode.DIFF,
+        "self": EvalMode.SELF,
+    }
     PATTERN = r'(.*?)\[(.*?)\]\(([^()]*)\)(.*)$'
     REF_T = r'^- \[x\]' + PATTERN
     REF_F = r'^- \[ \]' + PATTERN
@@ -91,10 +96,15 @@ class TaskMatcher:
         declared = set(self.xp_config.variables) if self.xp_config and self.xp_config.is_configured else None
         for item in words:
             if item.startswith(self.EVAL):
+                value = item[len(self.EVAL):].lower()
                 try:
-                    self.eval = EvalMode(item[len(self.EVAL):].lower())
+                    self.eval = self.LEGACY_EVALS.get(value)
+                    if self.eval is None:
+                        self.eval = EvalMode(value)
                 except ValueError as exc:
                     raise ValueError("eval= must be one of none, self or diff") from exc
+        if self.eval is None:
+            self.eval = self.__legacy_eval(words)
         if declared is not None and self.eval == EvalMode.NONE:
             return
         for item in words:
@@ -116,9 +126,21 @@ class TaskMatcher:
                 # A source without XP YAML keeps arbitrary task annotations intact.
                 self.variable_tokens.append(item)
 
+    @staticmethod
+    def __legacy_eval(words: list[str]) -> EvalMode | None:
+        """Interpret evaluation markers accepted by repository.yaml-era indexes."""
+        tags = set(re.findall(r":([a-zA-Z]+)", " ".join(words).lower()))
+        if tags & {"self", "read"}:
+            return EvalMode.SELF
+        if tags & {"test", "diff", "make"}:
+            return EvalMode.DIFF
+        return None
+
     def __require_eval(self) -> None:
         if self.eval is None:
-            raise ValueError("Task evaluation is required: use eval=none, eval=self or eval=diff")
+            # Before the unified task format, a missing evaluation meant a
+            # test-based activity.  Keep old repository indexes loadable.
+            self.eval = EvalMode.DIFF
 
     @property
     def is_url(self) -> bool:

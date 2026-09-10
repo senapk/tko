@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from loguru import logger
 from tko.i18n import Msg
-from tko.repository.remote import Source
+from tko.repository.remote import Source, SourceKeys, SourceType
 from tko.repository.remote_resolver import SourceResolver
 from tko.repository.git_cache import GitCache
 from typing import cast
@@ -230,6 +230,27 @@ class RepositoryData:
                 sources.append(item)
         return sources
 
+    @staticmethod
+    def _legacy_authoring_source(sources: list[ConfigDict]) -> str | None:
+        """Return the unambiguous editable local source from a 0.2 config.
+
+        The YAML format had no ``authoring_source`` field.  Its writable local
+        source was the sandbox, so preserve that identity when converting it to
+        the profile-based format.
+        """
+        candidates: list[str] = []
+        for source in sources:
+            name = source.get(SourceKeys.NAME)
+            source_type = source.get(SourceKeys.TYPE)
+            writeable = source.get(SourceKeys.WRITEABLE)
+            if (
+                isinstance(name, str)
+                and source_type == SourceType.LOCAL_FILE.value
+                and writeable is True
+            ):
+                candidates.append(name)
+        return candidates[0] if len(candidates) == 1 else None
+
     def _load_profile_from_dict(self, profile: ConfigDict) -> None:
         self.profile_name = self._load_str(profile, "name", "")
         authoring_source = self._load_str(profile, "authoring_source", self.authoring_source)
@@ -318,9 +339,20 @@ class RepositoryData:
             # Load the 'source' field with specific validation
             source_data = self._load_source_list(data, "sources")
             if source_data is not None:
-                existing_authoring = self.get_source(self.authoring_source)
+                # repository.yaml (0.2) did not name its authoring source.
+                # Infer it only when its writable local sandbox is unambiguous.
+                legacy_authoring = (
+                    self._legacy_authoring_source(source_data)
+                    if profile is None and sandbox_name is None
+                    else None
+                )
+                existing_authoring = (
+                    None if legacy_authoring is not None else self.get_source(self.authoring_source)
+                )
                 self._load_sources_list(source_data)
-                if existing_authoring is not None:
+                if legacy_authoring is not None:
+                    self.authoring_source = legacy_authoring
+                elif existing_authoring is not None:
                     self.set_source(existing_authoring)
             elif "sources" in data:
                 raise TypeError("The 'sources' field must be a list.")

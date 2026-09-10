@@ -36,6 +36,20 @@ class TestTaskMatcher:
         assert matcher.variables == {}
         assert matcher.get_filled_fields() == ["@task", "eval=diff", "gain=3", "gcs=312"]
 
-    def test_requires_evaluation_mode(self) -> None:
-        with pytest.raises(ValueError, match="Task evaluation is required"):
-            TaskMatcher(config()).match_pattern("- [ ] `@task value=2 depth=1` [Title](task/README.md)")
+    def test_legacy_task_without_evaluation_defaults_to_diff(self) -> None:
+        matcher = TaskMatcher(config())
+
+        assert matcher.match_pattern("- [ ] `@task value=2 depth=1` [Title](task/README.md)")
+        assert matcher.eval == EvalMode.DIFF
+
+    def test_legacy_eval_test_is_an_alias_for_diff(self) -> None:
+        matcher = TaskMatcher()
+
+        assert matcher.match_pattern("- [ ] `@task eval=test` [Title](task/README.md)")
+        assert matcher.eval == EvalMode.DIFF
+
+    def test_legacy_colon_self_is_an_alias_for_self(self) -> None:
+        matcher = TaskMatcher()
+
+        assert matcher.match_pattern("- [ ] `@task :self` [Title](task/README.md)")
+        assert matcher.eval == EvalMode.SELF

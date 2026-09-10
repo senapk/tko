@@ -1,8 +1,7 @@
 from tko.logger.logger import Logger
-from uniplot import plot_to_string # type: ignore
 from tko.util.rt import RT
 from tko.logger.delta import Delta
-from icecream import ic # type: ignore
+from tko.widget.terminal_chart import Series, TerminalChart
 
 class DailyGraph:
     def __init__(self, logger: Logger, width: int, height: int):
@@ -69,37 +68,14 @@ class DailyGraph:
             day += 1
 
         eixo = [x / 7 for x in eixo]
-        self.eixo = [x / 7 for x in self.eixo]
-
-        x_fix = 3
-        y_fix = 1
-        result: list[str] = plot_to_string(
-            xs=[eixo, self.eixo], 
-            ys=[bar, accumulates], 
-            lines=[True, True], 
+        accumulated_axis = [x / 7 for x in self.eixo]
+        fixed = TerminalChart(
+            self.width,
+            self.height,
+            [Series(list(zip(eixo, bar)), "c"), Series(list(zip(accumulated_axis, accumulates)), "m")],
             y_min=0,
-            width=self.width + x_fix, 
-            height=self.height + y_fix, 
-            y_unit="%", 
-            x_unit="w"
-        )
-
-        if isinstance(result, str):
-            result = result.splitlines()
-        
-        decoded: list[RT] = []
-        for line in result:
-            decoded.append(RT.from_ansi(line))
-
-        fixed: list[RT] = []
-        qtd = len(decoded)
-        for i, line in enumerate(decoded):
-            if i == 0 or i == qtd - 2:
-                continue
-            if i == qtd - 1:
-                fixed.append(line)
-            else:
-                fixed.append(line.slice(2))
+            y_max=100,
+        ).render()
 
 
         

@@ -33,7 +33,6 @@ dependencies = [
     "pymdown-extensions>=10.15",
     "pyyaml>=6.0.2",
     "typer>=0.25.0",
-    "uniplot==0.17.1",
     "watchdog>=6.0.0",
     "wcwidth>=0.2.13",
     "icecream>=2.1.4",
