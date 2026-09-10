@@ -14,6 +14,8 @@ from tko.play.task_download_service import TaskDownloadService
 from tko.play.task_editor_service import TaskEditorService
 from tko.cmds.cmd_run import Run
 from tko.cmds.cmd_down import CmdDown
+from tko.cmds.default_draft_creator import DefaultDraftCreator
+from tko.cmds.drafts_finder_cached import DraftsFinderCached
 from tko.i18n import Msg
 from tko.util.param import Param
 
@@ -89,8 +91,12 @@ class TaskLauncher:
             return
 
         if not run.context.wdir.solver:
-            cmd = CmdDown(self.repo, task.basic.full_key, self.settings)
-            cmd.execute()
+            if task.location.is_external:
+                cmd = CmdDown(self.repo, task.basic.full_key, self.settings)
+                cmd.execute()
+            else:
+                _, drafts_folder = DraftsFinderCached(task_folder, self.repo.data.lang).search_for_solvers()
+                DefaultDraftCreator(self.settings).create(drafts_folder, self.repo.data.lang)
             msg = Floating().bottom().right().set_warning().set_countdown(Floating.Time.MEDIUM)
             msg.put_text("\n" + str(_TaskLauncherMsg.NO_SOURCE_FOR_LANG).format(lang=self.repo.data.lang))
             msg.put_text("\n" + str(_TaskLauncherMsg.DRAFT_CREATED) + "\n")

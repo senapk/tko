@@ -4,6 +4,7 @@ from typing import Callable
 import os
 
 from tko.cmds.drafts_finder_cached import DraftsFinderCached
+from tko.cmds.default_draft_creator import DefaultDraftCreator
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
 from tko.game.game import Game
@@ -267,15 +268,7 @@ class DownActions:
                 self.fnprint(_DOWN_FILE_UNCHANGED.t().format(path=self.folder_and_file(path)))
 
     def create_default_draft(self, destiny: Path, language: str):
-        filename = "draft."
-        draft_path = destiny / (filename + language)
-        os.makedirs(os.path.dirname(draft_path), exist_ok=True)
-        lang_drafts: dict[str, str] = self.settings.get_languages_settings().get_languages_with_drafts()
-        if not os.path.exists(draft_path):
-            with open(draft_path, "w", encoding="utf-8") as f:
-                if language in lang_drafts.keys():
-                    f.write(lang_drafts[language])
-                else:
-                    f.write("")
+        draft_path = DefaultDraftCreator(self.settings).create(destiny, language)
+        if draft_path is not None:
             self.fnprint(_DOWN_FILE_EMPTY.t().format(path=self.folder_and_file(draft_path, 3)))
         return draft_path
