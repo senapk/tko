@@ -73,4 +73,11 @@ class GameCoordinator:
                 with open(filename, "w", encoding="utf-8") as f:
                     f.write(f"# {source.name}\n\n")
             if filename.exists():
-                fix_readme(index=filename.resolve(), base_dir=basedir, verbose=False, load_titles=True, yes=True)
+                fix_readme(
+                    index=filename.resolve(),
+                    base_dir=basedir,
+                    verbose=False,
+                    load_titles=True,
+                    yes=True,
+                    warn_key_path_mismatches=True,
+                )

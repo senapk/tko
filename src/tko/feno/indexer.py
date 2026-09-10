@@ -10,6 +10,7 @@ from tko.feno.task_line import TaskLine, TestsFinder
 from tko.feno.indexer_md import IndexerMd
 from tko.game.task_enums import EvalMode
 from tko.game.eval_mode_spec import get_eval_mode_spec
+from loguru import logger
 
 
 
@@ -51,6 +52,10 @@ _INDEXER_SELF_HAS_TESTS = Msg.parse(
 _INDEXER_DIFF_MISSING_TESTS = Msg.parse(
     pt="Aviso: tarefa '[b]{task}[]' marcada como eval=diff não possui testes materializados.",
     en="Warning: task '[b]{task}[]' marked as eval=diff has no materialized tests.",
+)
+_INDEXER_KEY_PATH_MISMATCH = Msg.parse(
+    pt="Aviso: chave da tarefa '{key}' diverge do caminho local '{path}' no índice {index}:{line}.",
+    en="Warning: task key '{key}' differs from local path '{path}' in index {index}:{line}.",
 )
 
 class Elements:
@@ -140,6 +145,23 @@ class Elements:
             else:
                 continue
             Console.print(RT(f" {self.index_path}:{i + 1} - ", "r") + RT.parse(str(message).format(task=line.key)))
+
+    def warn_key_path_mismatches(self) -> None:
+        """Warn when an explicit local task key does not name its linked folder."""
+        for line_number, line in enumerate(self.lines, 1):
+            if not isinstance(line, TaskLine) or line.origin_key is None:
+                continue
+            path_key = line.path_key
+            if path_key is None or line.origin_key == path_key:
+                continue
+            logger.warning(
+                str(_INDEXER_KEY_PATH_MISMATCH).format(
+                    key=line.origin_key,
+                    path=path_key,
+                    index=self.index_path,
+                    line=line_number,
+                )
+            )
 
     def fix_titles(self, save_titles: bool = False, load_titles: bool = False) -> None:
         for line in self.lines:
@@ -325,10 +347,13 @@ def fix_readme(
     load_titles: bool = False,
     yes: bool = False,
     align: bool = True,
+    warn_key_path_mismatches: bool = False,
 ) -> None:
     index = index.resolve()
     elements = Elements(index_path=index, base_dir=base_dir, verbose=verbose)
     elements.load_lines()
+    if warn_key_path_mismatches:
+        elements.warn_key_path_mismatches()
     missing = elements.missing_local_targets()
     if yes:
         elements.remove_missing_local_targets(missing)

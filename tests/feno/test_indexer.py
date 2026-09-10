@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+from loguru import logger
 
 from tko.feno.indexer import TaskLine
 from tko.util.console import Console
@@ -29,6 +30,26 @@ def test_local_task_key_defaults_to_relative_activity_path(tmp_path: Path) -> No
     line = TaskLine(index_path=index_path, base_dir=base_dir)
     assert line.init_by_line("- [ ] `eval=none` [Carro](labs/carro/README.md)") is True
     assert line.key == "labs/carro"
+
+
+def test_fix_readme_warns_when_explicit_key_differs_from_local_path(tmp_path: Path) -> None:
+    from tko.feno.indexer import fix_readme
+
+    index_path = tmp_path / "README.md"
+    task_dir = tmp_path / "labs" / "sum"
+    task_dir.mkdir(parents=True)
+    (task_dir / "README.md").write_text("# Sum\n", encoding="utf-8")
+    index_path.write_text(
+        "- [ ] `@wrong eval=none` [Sum](labs/sum/README.md)\n", encoding="utf-8"
+    )
+    messages: list[str] = []
+    sink_id = logger.add(messages.append, level="WARNING", format="{message}")
+    try:
+        fix_readme(index_path, tmp_path / "labs", verbose=False, warn_key_path_mismatches=True)
+    finally:
+        logger.remove(sink_id)
+
+    assert any("'wrong'" in message and "'labs/sum'" in message for message in messages)
 
 
 def test_fix_readme_yes_removes_broken_local_target(tmp_path: Path) -> None:

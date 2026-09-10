@@ -9,6 +9,7 @@ from tko.repository.repository_config import RepositoryLoader
 from tko.repository.remote import Source
 from tko.game.game import Game
 from tko.repository.remote_resolver import SourceResolver
+from loguru import logger
 
 
 def test_ensure_managed_readmes_removes_missing_task_during_load(tmp_path: Path) -> None:
@@ -34,6 +35,32 @@ def test_ensure_managed_readmes_removes_missing_task_during_load(tmp_path: Path)
     )
 
     assert "labs/missing/README.md" not in index_file.read_text(encoding="utf-8")
+
+
+def test_managed_source_warns_when_task_key_differs_from_path(tmp_path: Path) -> None:
+    index_file = tmp_path / "README.md"
+    source_dir = tmp_path / "labs"
+    task_dir = source_dir / "task"
+    task_dir.mkdir(parents=True)
+    (task_dir / "README.md").write_text("# Task\n", encoding="utf-8")
+    index_file.write_text(
+        "- [ ] `@wrong eval=none` [Task](labs/task/README.md)\n", encoding="utf-8"
+    )
+    remote = SimpleNamespace(name="labs")
+    repo = SimpleNamespace(sources={"labs": remote})
+    resolver = SimpleNamespace(
+        is_local_internal=lambda _remote: True,
+        source_work_dir=lambda _source: source_dir,
+        resolve_index_file=lambda _remote, load_git=False: (index_file, True),
+    )
+    messages: list[str] = []
+    sink_id = logger.add(messages.append, level="WARNING", format="{message}")
+    try:
+        GameCoordinator(repo).ensure_managed_readmes_fixed(repo, resolver)
+    finally:
+        logger.remove(sink_id)
+
+    assert any("'wrong'" in message and "'labs/task'" in message for message in messages)
 
 
 def test_load_game_exposes_the_same_unique_tasks_in_quests_and_task_map(tmp_path: Path) -> None:

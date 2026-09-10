@@ -100,6 +100,17 @@ class TaskLine:
         return ""
 
     @property
+    def path_key(self) -> str | None:
+        """Key implied by a local task README, relative to the index file."""
+        if self.target_file is None:
+            return None
+        target_folder = self.target_file.parent.resolve()
+        index_folder = self.index_path.parent.resolve()
+        if not target_folder.is_relative_to(index_folder):
+            return None
+        return target_folder.relative_to(index_folder).as_posix()
+
+    @property
     def materialized_folder(self) -> Path | None:
         """Return the local folder whose contents are checked by the indexer."""
         if self.target_file is not None:
