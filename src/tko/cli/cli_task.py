@@ -1,33 +1,45 @@
-from shutil import which
-
 import typer
 from pathlib import Path
 from typing import Optional
 from tko.cli.common import load_repo
-from tko.cli.selector import select_with_fzf, select_with_number
-from tko.game.task import Task
+from tko.cli.task_selector import TaskSelector
 
 from tko.config.settings import Settings
 
-def save_key_on_repo(repo_path: Path, key: str):
-    key_file = repo_path / ".tko" / ".fzf"
-    key_file.parent.mkdir(parents=True, exist_ok=True)
-    key_file.write_text(key)
-
-def load_key_from_repo(repo_path: Path) -> Optional[str]:
-    key_file = repo_path / ".tko" / ".fzf"
-    if key_file.exists():
-        return key_file.read_text().strip()
-    return None
-
 app = typer.Typer(help="Manage individual tasks")
+
+
+@app.command("show", help="Show task information, files, scores and graph")
+def task_show(
+    ctx: typer.Context,
+    label: str | None = typer.Argument(None, help="Task key (for example: labs/fila or course@labs/fila)"),
+    width: int = typer.Option(100, "--width", "-w", help="Graph width"),
+    height: int = typer.Option(12, "--height", help="Graph height"),
+    fzf: bool = typer.Option(False, "--fzf", "-f", help="Use fzf to select a task"),
+):
+    from tko.cmds.cmd_task import CmdTask
+
+    settings: Settings = ctx.obj
+    repo, _ = load_repo(settings.rs, show_warnings=True, auto_load=True)
+    if repo is None:
+        raise typer.Exit(code=1)
+    try:
+        task = TaskSelector(repo, settings).select(label, fzf)
+        if task is None:
+            typer.echo("No materialized task selected")
+            raise typer.Exit(code=0)
+        CmdTask.show(settings, repo, task.basic.full_key, width, height)
+    except ValueError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=1)
 @app.command("open", help="Open a task in tui")
 def task_open(
     ctx: typer.Context,
     target_list: Optional[list[str]] = typer.Argument(None, help="Solvers, test cases or directories to load"),
     index: Optional[int] = typer.Option(None, "--index", "-i", help="Run a specific test index"),
     pattern: str = typer.Option("@.in @.sol", "--pattern", "-p", help="Input/output file pattern (default: '@.in @.sol')"),
-    filter: bool = typer.Option(False, "--filter", "-f", help="Filter solver files in temporary directory before running")
+    filter: bool = typer.Option(False, "--filter", "-F", help="Filter solver files in temporary directory before running"),
+    fzf: bool = typer.Option(False, "--fzf", "-f", help="Use fzf to select a task"),
 ):
     from tko.util.param import Param
     from tko.util.pattern_loader import PatternLoader
@@ -42,9 +54,22 @@ def task_open(
     if filter:
         param.set_filter(True)
     repo, _ = load_repo(settings.rs, show_warnings=True, auto_load=True)
-    
-    targets = [Path(x) for x in target_list] if target_list else []
+    if repo is None:
+        raise typer.Exit(code=1)
+
+    selected_task = None
+    if not target_list:
+        selected_task = TaskSelector(repo, settings).select(use_fzf=fzf)
+        if selected_task is None:
+            typer.echo("No materialized task selected")
+            raise typer.Exit(code=0)
+        target_folder = TaskSelector(repo, settings).task_folder(selected_task)
+        target_list = [str(target_folder)]
+
+    targets = [Path(x) for x in target_list]
     cmd_run = Run(settings=settings, target_list=targets, param=param, language=None, repo=repo)
+    if selected_task is not None:
+        cmd_run.set_task(repo, selected_task)
     cmd_run.set_curses()
     cmd_run.execute()
 
@@ -69,9 +94,22 @@ def task_list(
 
 @app.command("tests", help="List test cases without running a solver")
 def task_tests(
-    target_list: list[str] = typer.Argument(..., help="README, test file or activity directory"),
+    ctx: typer.Context,
+    target_list: Optional[list[str]] = typer.Argument(None, help="README, test file or activity directory"),
+    fzf: bool = typer.Option(False, "--fzf", "-f", help="Use fzf to select a task"),
 ):
     from tko.loader.test_discovery import TestDiscovery
+
+    if not target_list:
+        settings: Settings = ctx.obj
+        repo, _ = load_repo(settings.rs, show_warnings=True, auto_load=True)
+        if repo is None:
+            raise typer.Exit(code=1)
+        task = TaskSelector(repo, settings).select(use_fzf=fzf)
+        if task is None:
+            typer.echo("No materialized task selected")
+            raise typer.Exit(code=0)
+        target_list = [str(TaskSelector(repo, settings).task_folder(task))]
 
     for target_text in target_list:
         target = Path(target_text)
@@ -93,43 +131,18 @@ def task_down(
     pattern: str | None = typer.Argument(None, help="Task key (e.g. fup@mumia)"),
     fzf: bool = typer.Option(False, "--fzf", "-f", help="Use fzf to select a task")
 ):
-    from tko.cli.common import load_repo
     from tko.cmds.cmd_down import CmdDown
-    from tko.cmds.cmd_open import CmdOpen
-
     settings: Settings = ctx.obj
     repo, _ = load_repo(settings.rs, show_warnings=True, auto_load=True)
     if repo is None:
         return
     
-    action = CmdOpen(settings, repo)
-    tree = action.build_tree(show_all=True, full_key=False, quests_keys=True)
-    items = [
-        (elem.basic.full_key, x.plain() if settings.rs.monochrome else x.ansi()) 
-        for x, elem in tree.get_rendered_items(show_selected=False)
-        if isinstance(elem, Task) and not elem.location.is_non_evaluated and elem.location.is_external
-    ]
-    if not items:
-        typer.echo("No downloadable tasks found")
+    selector = TaskSelector(repo, settings)
+    result_task = selector.select(pattern, fzf, mode="downloadable")
+    if result_task is None:
+        typer.echo("No downloadable task selected")
         raise typer.Exit(code=0)
-    found = False
-
-    if pattern is not None:
-        found = len([ (key, text) for key, text in items if pattern == key ]) == 1
-
-    if found and pattern is not None:
-        result = pattern
-    else:    
-        has_fzf = which("fzf") is not None
-        if fzf and has_fzf:
-            last_selected_key = load_key_from_repo(repo.paths.root_dir)
-            result = select_with_fzf(items, pattern, selected=last_selected_key)
-        else:
-            result = select_with_number(items, pattern)
-        if result is None:
-            typer.echo("No task selected")
-            raise typer.Exit(code=0)
-        save_key_on_repo(repo.paths.root_dir, result)
+    result = result_task.basic.full_key
     
     try:
         CmdDown(repo, result, settings).execute()

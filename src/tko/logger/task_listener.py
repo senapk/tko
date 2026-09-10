@@ -15,6 +15,17 @@ class TaskListener:
         self.task_history: list[LogSort] = []
         self.last_key: str = ""
 
+    def get_task_log(self, task_key: str) -> LogSort | None:
+        """Find history written before/after the path-based task key migration."""
+        log = self.task_dict.get(task_key)
+        if log is not None:
+            return log
+        if "@" not in task_key:
+            return None
+        source, path = task_key.split("@", 1)
+        legacy_path = path.removeprefix("labs/") if path.startswith("labs/") else f"labs/{path}"
+        return self.task_dict.get(f"{source}@{legacy_path}")
+
     def handle_log_entry(self, item: LogItemBase, new_entry: bool = False):
         _ = new_entry
         without_inc_time = DeltaMode(DeltaAction.without_inc_time)

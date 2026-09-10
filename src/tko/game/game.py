@@ -45,6 +45,10 @@ class Game:
     def get_task(self, key: str) -> Task | None:
         if key in self.tasks:
             return self.tasks[key]
+        if "@" in key:
+            source, path = key.split("@", 1)
+            legacy_path = path.removeprefix("labs/") if path.startswith("labs/") else f"labs/{path}"
+            return self.tasks.get(f"{source}@{legacy_path}")
         return None
         
     def set_sources(self, sources: dict[str, Source], language: str):

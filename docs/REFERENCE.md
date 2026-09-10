@@ -51,9 +51,15 @@ Exemplos:
 
 ```bash
 tko task list
-tko task open <chave_da_tarefa>
-tko task run
+tko task show [chave_da_tarefa]
+tko task open [diretorio] [-f|--fzf]
+tko task tests [README_ou_diretorio] [-f|--fzf]
+tko task down [chave_da_tarefa] [-f|--fzf]
 ```
+
+Sem argumento, `show`, `open` e `tests` usam a tarefa da pasta atual quando
+possível; caso contrário, oferecem seleção numérica ou FZF. Em `open`, o filtro
+de solver usa `--filter` ou `-F`.
 
 ## build
 

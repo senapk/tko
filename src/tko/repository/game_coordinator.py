@@ -37,9 +37,9 @@ class GameCoordinator:
     def _load_tasks_from_log_into_game(self):
         task_dict: dict[str, LogSort] = self.repo.logger.tasks.task_dict
         for key, task_log in task_dict.items():
-            if key not in self.repo.game.tasks:
+            task = self.repo.game.get_task(key)
+            if task is None:
                 continue
-            task: Task = self.repo.game.tasks[key]
             if not task.config.awards_xp:
                 continue
             

@@ -48,7 +48,7 @@ class TimeFormatter:
     def get_task_hours_minutes(self, task: Task) -> tuple[int, int]:
         if task.basic.full_key in self.cache_task_times:
             return self.cache_task_times[task.basic.full_key]
-        logsort = self.repo.logger.tasks.task_dict.get(task.basic.full_key, None)
+        logsort = self.repo.logger.tasks.get_task_log(task.basic.full_key)
         if logsort is not None and len(logsort.delta_list.base_list) > 0:
             delta, _ = logsort.delta_list.base_list[-1]
             hours = delta.accumulated.seconds // 3600

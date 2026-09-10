@@ -30,8 +30,7 @@ class TaskGraph:
         self.versions = 0
 
         self.log_sort: LogSort | None = None
-        if task_key in self.logger.tasks.task_dict:
-            self.log_sort = self.logger.tasks.task_dict[task_key]
+        self.log_sort = self.logger.tasks.get_task_log(task_key)
 
         self.raw_text: list[RT] = self.prepare_xray()
 

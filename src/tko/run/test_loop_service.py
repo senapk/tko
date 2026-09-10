@@ -43,7 +43,7 @@ class TestLoopService:
         if self.ctx.config.show_track_info:
             if self.ctx.repo is not None:
                 logger = self.ctx.repo.logger
-                log_sort: LogSort | None = logger.tasks.task_dict.get(self.ctx.get_task().basic.full_key, None)
+                log_sort: LogSort | None = logger.tasks.get_task_log(self.ctx.get_task().basic.full_key)
                 if log_sort is not None:
                     user_data = TaskCollected().setup(log_sort, self.ctx.get_task(), None)
                     Console.print(
