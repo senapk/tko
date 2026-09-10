@@ -128,7 +128,7 @@ Repositórios de referência:
 - [Filtragem e Rascunhos](wiki/tools/filter.md)
 - [Markdown Preprocessor](wiki/tools/mdpp.md)
 - [Rebase de links markdown](wiki/tools/rebase-links.md)
-- [Build all: pipeline de mdpp, filter e drafts](wiki/tools/build-all.md)
+- [Build task: pipeline de mdpp, filter e drafts](wiki/tools/build-all.md)
 - [Build index: manter e atualizar índices](wiki/tools/build-index.md)
 
 ## Referência e suporte

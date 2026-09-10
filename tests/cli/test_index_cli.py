@@ -14,11 +14,34 @@ def test_index_build_no_align_compacts_task_columns(tmp_path: Path) -> None:
     (task_dir / "README.md").write_text("# A\n", encoding="utf-8")
     index_path.write_text("- [ ] `@a eval=none` [A](base/a/README.md)\n", encoding="utf-8")
 
-    result = runner.invoke(app, ["build", str(index_path), str(base_dir), "--no-align"])
+    result = runner.invoke(app, ["build", str(index_path), "--from", str(base_dir), "--no-align"])
 
     assert result.exit_code == 0
     assert "`eval=none`" in index_path.read_text(encoding="utf-8")
     assert "@a" not in index_path.read_text(encoding="utf-8")
+
+
+def test_index_build_discovers_tasks_from_multiple_sources(tmp_path: Path) -> None:
+    index_path = tmp_path / "README.md"
+    labs_task = tmp_path / "labs" / "carro"
+    wiki_task = tmp_path / "wiki" / "git"
+    labs_task.mkdir(parents=True)
+    wiki_task.mkdir(parents=True)
+    (labs_task / "README.md").write_text("# Carro\n", encoding="utf-8")
+    (wiki_task / "README.md").write_text("# Git\n", encoding="utf-8")
+    index_path.write_text("# Atividades\n", encoding="utf-8")
+
+    result = CliRunner().invoke(
+        app,
+        ["build", str(index_path), "--from", "labs", "--from", "wiki", "--no-align"],
+    )
+
+    assert result.exit_code == 0, result.output
+    content = index_path.read_text(encoding="utf-8")
+    assert "## labs" in content
+    assert "## wiki" in content
+    assert "[Carro](labs/carro/README.md)" in content
+    assert "[Git](wiki/git/README.md)" in content
 
 
 def test_index_download_converts_remote_link_to_local_source_metadata(tmp_path: Path, monkeypatch) -> None:

@@ -60,30 +60,37 @@ Ele pode carregar testes de `tests.toml` e inserir blocos renderizados no
 
 ## Convertendo entre formatos
 
+O destino pode ser omitido. Nesse caso, o resultado é escrito como TOML na
+saída padrão:
+
+```bash
+tko util tests tests.toml > normalized.toml
+```
+
 Gerar `t.vpl` a partir de `tests.toml`:
 
 ```bash
-tko build tests t.vpl tests.toml
+tko util tests tests.toml -o t.vpl
 ```
 
 Gerar `t.tio` a partir de `README.md` e `extra.tio`:
 
 ```bash
-tko build tests t.tio README.md extra.tio
+tko util tests README.md extra.tio -o t.tio
 ```
 
 Extrair testes para uma pasta:
 
 ```bash
 mkdir pasta
-tko build tests pasta tests.toml
+tko util tests tests.toml -o pasta
 ```
 
 Extrair de `cases.tio`:
 
 ```bash
 mkdir pasta
-tko build tests pasta cases.tio
+tko util tests cases.tio -o pasta
 ```
 
 ## Testes em pasta
@@ -104,20 +111,20 @@ Para rodar uma solucao usando essa pasta:
 tko run Solver.java pasta
 ```
 
-## Padrao de nomes com `-p`
+## Padrao de nomes com `--write-pattern`
 
-Use `-p` para escolher os nomes dos arquivos gerados. O caractere `@` funciona
+Use `--write-pattern` para escolher os nomes dos arquivos gerados. O caractere `@` funciona
 como marcador da numeracao.
 
 ```bash
-tko build tests pasta/ cases.tio -p "in.@ out.@"
+tko util tests cases.tio -o pasta/ --write-pattern "in.@ out.@"
 ```
 
 Padroes comuns:
 
-- `-p "@.in @.out"`
-- `-p "in@ out@"`
-- `-p "in.@ out.@"`
+- `--write-pattern "@.in @.out"`
+- `--write-pattern "in@ out@"`
+- `--write-pattern "in.@ out.@"`
 
 ## Gerando rascunhos para alunos
 
@@ -137,11 +144,11 @@ Para tarefas que usam preprocessamento de Markdown, rebase de links, VPL ou
 rascunhos, o comando mais conveniente e:
 
 ```bash
-tko build all
+tko task build
 ```
 
 Ele executa a preparacao da tarefa e gera artefatos de publicacao quando
-aplicavel. Veja [Build all](tools/build-all.md).
+aplicavel. Veja [Build task](tools/build-all.md).
 
 ## Checklist de testes
 

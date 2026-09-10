@@ -63,7 +63,7 @@ expr: "value"
 ```
 
 Use `[x]` nas tarefas que contam para a meta principal da quest. Ao rodar
-`tko build index`, o TKO pode usar essas marcacoes para recalcular o `xpgoal`.
+`tko index build`, o TKO pode usar essas marcacoes para recalcular o `xpgoal`.
 Tarefas extras ou desafios podem ficar com `[ ]`.
 
 ## Criando quests
@@ -174,7 +174,7 @@ consulte [Criando testes e conversoes](Criando-Tarefas-e-Testes.md).
 Depois de criar, renomear ou remover tarefas locais, rode:
 
 ```bash
-tko build index README.md labs
+tko index build README.md --from labs --from wiki
 ```
 
 Esse comando:
@@ -257,7 +257,7 @@ tko open
 - As linhas usam `gain`, `cost`, `size` e `eval`.
 - Os enunciados abrem corretamente no GitHub.
 - Os testes executam localmente nas tarefas com `eval=diff`.
-- `tko build index README.md labs` foi executado e o diff foi revisado.
+- `tko index build README.md --from labs --from wiki` foi executado e o diff foi revisado.
 - O repositorio foi commitado e publicado.
 
 ## Referencias

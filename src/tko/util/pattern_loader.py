@@ -3,6 +3,7 @@ from loguru import logger
 import re
 from tko.i18n import Msg
 
+DEFAULT_DIRECTORY_PATTERN = "@.in @.sol"
 
 
 
@@ -22,6 +23,10 @@ _PATTERN_OUTPUT_FILE_NOT_FOUND = Msg.text(
     pt="fail: arquivo {file} não encontrado",
     en="fail: file {file} not found",
 )
+_PATTERN_INVALID_FORMAT = Msg.text(
+    pt="  fail: o padrão deve conter exatamente os nomes de entrada e saída",
+    en="  fail: the pattern must contain exactly input and output filenames",
+)
 
 
 class FileSource:
@@ -36,12 +41,11 @@ class FileSource:
 
 
 class PatternLoader:
-    pattern: str = ""
-
-    def __init__(self):
-        parts = PatternLoader.pattern.split(" ")
-        self.input_pattern = parts[0]
-        self.output_pattern = parts[1] if len(parts) > 1 else ""
+    def __init__(self, pattern: str = DEFAULT_DIRECTORY_PATTERN):
+        parts = pattern.split()
+        if len(parts) != 2:
+            raise ValueError(_PATTERN_INVALID_FORMAT.t().plain())
+        self.input_pattern, self.output_pattern = parts
         self._check_pattern()
 
     def _check_pattern(self):
@@ -62,14 +66,13 @@ class PatternLoader:
         return FileSource(label, self.input_pattern.replace("@", label), self.output_pattern.replace("@", label))
 
     def get_file_sources(self, filename_list: list[str]) -> list[FileSource]:
-        input_re = self.input_pattern.replace(".", "\\.")
-        input_re = input_re.replace("@", "(.*)")
+        input_re = re.escape(self.input_pattern).replace("@", "(.+?)")
         file_source_list: list[FileSource] = []
         for filename in filename_list:
-            match = re.findall(input_re, filename)
+            match = re.fullmatch(input_re, filename)
             if not match:
                 continue
-            label = match[0]
+            label = match.group(1) if "@" in self.input_pattern else ""
             file_source = self.make_file_source(label)
             if file_source.output_file not in filename_list:
                 logger.error(_PATTERN_OUTPUT_FILE_NOT_FOUND.t().format(file=file_source.output_file))

@@ -1,6 +1,6 @@
 from loguru import logger
 from pathlib import Path
-from tko.feno.mdpp import TocMaker, Toc, TocTable, Toch, Load, Links, Action, Save, Mdpp
+from tko.feno.mdpp import TocMaker, Toc, TocTable, Toch, Load, Links, Action, Mdpp
 
 def test_toc_maker_get_md_link():
     assert TocMaker.get_md_link("## Hello World") == "hello-world"
@@ -559,28 +559,6 @@ def test_links_load_links_nested_and_ignores_hidden(tmp_path: Path):
     assert "- [b.md](docs/sub/b.md)" in out
     assert ".hidden.md" not in out
 
-def test_save_execute(tmp_path: Path):
-    content = f"""
-[](save)[]({tmp_path}/output.txt)
-```text
-saved content
-```
-[](save)
-"""
-    Save.execute(content)
-    assert (tmp_path / "output.txt").read_text() == "saved content\n"
-
-def test_save_execute_relative(tmp_path: Path):
-    content = """
-[](save)[](rel_output.txt)
-```text
-relative content
-```
-[](save)
-"""
-    Save.execute(content, target_dir=tmp_path)
-    assert (tmp_path / "rel_output.txt").read_text() == "relative content\n"
-
 def test_mdpp_update_file_full_workflow(tmp_path: Path):
     (tmp_path / "helper.py").write_text("def add(a, b):\n    return a + b\n")
     (tmp_path / "tests.toml").write_text("""[[tests]]
@@ -615,11 +593,6 @@ output = "3"
 <!-- links docs -->
 <!-- links -->
 
-[](save)[](saved.txt)
-```text
-hello from markdown
-```
-[](save)
 """)
 
     modified = Mdpp.update_file(readme, Action.RUN)
@@ -630,8 +603,6 @@ hello from markdown
     assert "def add(a, b):" in content
     assert ">>>>>>>> INSERT" in content
     assert "- [guide.md](docs/guide.md)" in content
-    assert (tmp_path / "saved.txt").read_text() == "hello from markdown\n"
-
     # Now test CLEAN mode
     cleaned = Mdpp.update_file(readme, Action.CLEAN)
     assert cleaned is True

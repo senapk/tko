@@ -33,6 +33,11 @@ _PLAY_KEY_NOT_RECOGNIZED = Msg.text(
     en="Key char:{char}, code:{code}, not recognized",
 )
 
+_PLAY_NO_PINNED_TASKS = Msg.text(
+    pt="Nenhuma tarefa fixada.",
+    en="No pinned tasks.",
+)
+
 class Play:
     def __init__(self, settings: Settings, repo: Repository, watcher: RepositoryWatcher | None):
         self.settings = settings
@@ -136,7 +141,7 @@ class Play:
         cman.add_str(GuiKeys.self_evaluate, self.actions.evaluator.self_evaluate)
         if ic.enabled:
             cman.add_str(GuiKeys.self_evaluate_full, self.actions.evaluator.self_evaluate_full)
-        cman.add_str(GuiKeys.inbox, lambda: self.flags.task_view_mode.set_view_inbox())
+        cman.add_str(GuiKeys.inbox, self.switch_to_pinned)
         cman.add_str(GuiKeys.all_tasks, lambda: self.flags.task_view_mode.set_view_all())
         cman.add_str(GuiKeys.pin, self.toggle_pin)
 
@@ -158,6 +163,22 @@ class Play:
  
 
         return cman
+
+    def switch_to_pinned(self):
+        """Switch to pinned tasks when possible, otherwise keep the view."""
+        if self.flags.task_view_mode.is_pinned():
+            return
+        if not self.tree.has_pinned_tasks():
+            self.fman.add_floating(
+                Floating()
+                .bottom()
+                .right()
+                .set_warning()
+                .put_text(str(_PLAY_NO_PINNED_TASKS))
+                .set_countdown(Floating.Time.FAST)
+            )
+            return
+        self.flags.task_view_mode.set_view_pinned()
 
     def toggle_pin(self):
         try:

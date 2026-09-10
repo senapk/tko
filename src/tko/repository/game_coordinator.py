@@ -75,7 +75,7 @@ class GameCoordinator:
             if filename.exists():
                 fix_readme(
                     index=filename.resolve(),
-                    base_dir=basedir,
+                    base_dirs=[basedir],
                     verbose=False,
                     load_titles=True,
                     yes=True,

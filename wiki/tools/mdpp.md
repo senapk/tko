@@ -293,29 +293,7 @@ Resultado:
 
 ---
 
-## 7. Diretiva SAVE
-
-Permite extrair o conteúdo de um bloco Markdown fenced e salvá-lo em arquivo no disco.
-
-Sintaxe:
-
-~~~md
-[](save)[](caminho/do/arquivo.txt)
-```text
-conteúdo a salvar
-```
-[](save)
-~~~
-
-Comportamento:
-- Se o arquivo não existir, é criado.
-- Se o arquivo existir e o conteúdo for diferente, é atualizado.
-- Se o conteúdo já for idêntico, a gravação é ignorada.
-- Caminhos relativos são resolvidos a partir do diretório do arquivo `.md`.
-
----
-
-## 8. Pipeline Completo do Arquivo
+## 7. Pipeline Completo do Arquivo
 
 Ao processar um documento `.md` com `tko tool mdpp`, a ordem das diretivas executadas é:
 
@@ -323,13 +301,12 @@ Ao processar um documento `.md` com `tko tool mdpp`, a ordem das diretivas execu
 2. `TocTable.execute` (`<!-- toc-table -->` e `<!-- toch -->`)
 3. `Load.execute` (`<!-- load ... -->`)
 4. `Links.execute` (`<!-- links ... -->`)
-5. `Save.execute` (`[](save)...[](save)`)
 
 Se houver alterações no texto final, o arquivo Markdown é regravado de forma atômica/segura.
 
 ---
 
-## 9. Uso Programático em Python
+## 8. Uso Programático em Python
 
 ```python
 from pathlib import Path

@@ -81,6 +81,11 @@ class TaskTree:
             self.state.scroll : self.state.scroll + height
         ]
         return self.get_rendered_items(visible_items)
+
+    def has_pinned_tasks(self) -> bool:
+        """Return whether the current pin set contains a visible task."""
+        enabled = self.filter_policy.select_pinned_enabled(self.game, self.state.pinned)
+        return bool(enabled)
     
     def get_rendered_items(self, items: list[IsTreeItem] | None = None, show_selected: bool = True) -> list[tuple[RT, IsTreeItem]]:
         if items is None:
@@ -90,6 +95,17 @@ class TaskTree:
         return [ (self.renderer.render(item, selected, matcher), item) for item in items ]
     
     def update(self, force_view_all: bool = False):
+        # A persisted pinned view can become empty after unpinning or when a
+        # task is removed.  In that case keep the play screen useful by
+        # falling back to the complete task list.
+        if (
+            not force_view_all
+            and self.repo.flags.task_view_mode.is_pinned()
+            and not self.has_pinned_tasks()
+        ):
+            self.repo.flags.task_view_mode.set_view_all()
+            force_view_all = True
+
         tree_filter = TreeFilter(
             inbox_mode=self.repo.flags.task_view_mode.is_inbox() and not force_view_all,
             search_text=self.state.search

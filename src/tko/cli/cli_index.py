@@ -94,11 +94,25 @@ def _materialize(index: Path, paths: list[str], update: bool) -> int:
 @app.command("build", help="Validate and update a local activity index")
 def index_build(
     index: Path = typer.Argument(...),
-    base: Path = typer.Argument(...),
+    from_sources: list[Path] = typer.Option(..., "--from", help="Task source directory; repeat for multiple sources"),
+    save: bool = typer.Option(False, "--save", help="Copy index titles into task READMEs"),
+    load: bool = typer.Option(False, "--load", help="Load task README titles into the index"),
     yes: bool = typer.Option(False, "--yes", "-y"),
     no_align: bool = typer.Option(False, "--no-align", help="Do not align task keys and fields"),
 ):
-    fix_readme(index=index, base_dir=base, verbose=True, yes=yes, align=not no_align)
+    source_dirs = [path if path.is_absolute() else index.parent / path for path in from_sources]
+    for source_dir in source_dirs:
+        if not source_dir.is_dir():
+            raise typer.BadParameter(f"Source directory not found: {source_dir}", param_hint="--from")
+    fix_readme(
+        index=index,
+        base_dirs=source_dirs,
+        verbose=True,
+        save_titles=save,
+        load_titles=load,
+        yes=yes,
+        align=not no_align,
+    )
 
 
 @app.command("download", help="Materialize external activities")

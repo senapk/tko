@@ -2,28 +2,29 @@
 
 Este guia explica o comando:
 
-    tko build index INDEX_MD BASE_DIR
+    tko index build INDEX_MD --from SOURCE [--from SOURCE...]
 
 Exemplo:
 
-    tko build index README.md labs
+    tko index build README.md --from labs --from wiki
 
 Onde:
 
 - INDEX_MD: arquivo markdown de indice (lista de tarefas).
-- BASE_DIR: pasta com as subpastas das tarefas (cada uma com README.md).
+- SOURCE: pasta com as subpastas das tarefas (cada uma com README.md). A opção
+  pode ser repetida para várias fontes.
 
 ## O que o comando faz
 
-O comando sincroniza o indice com o conteudo real de BASE_DIR.
+O comando sincroniza o indice com o conteudo real de todas as fontes.
 
 Fluxo principal:
 
-1. Varre BASE_DIR e coleta todos os README.md de tarefas diretas.
+1. Varre cada SOURCE e coleta todos os README.md de tarefas diretas.
 2. Le o INDEX_MD linha por linha e interpreta entradas de tarefa.
 3. Remove do indice entradas locais cujo README.md nao existe mais.
-4. Detecta pastas de tarefa existentes em BASE_DIR que nao estao no indice.
-5. Adiciona essas entradas faltantes na secao de quest padrao.
+4. Detecta tarefas existentes em qualquer SOURCE que nao estao no indice.
+5. Adiciona entradas faltantes em uma secao por fonte.
 6. Atualiza `xpgoal` das quests quando houver tarefas marcadas como referencia.
 7. Regrava o arquivo com alinhamento de chaves.
 
@@ -31,8 +32,8 @@ Fluxo principal:
 
 Uma entrada e considerada faltante quando:
 
-- existe BASE_DIR/NOME_DA_TAREFA/README.md
-- mas a chave @NOME_DA_TAREFA nao aparece nas tarefas do indice
+- existe SOURCE/NOME_DA_TAREFA/README.md
+- mas o caminho SOURCE/NOME_DA_TAREFA nao aparece nas tarefas do indice
 
 Quando isso acontece, o comando gera automaticamente uma linha de tarefa usando:
 
@@ -40,9 +41,9 @@ Quando isso acontece, o comando gera automaticamente uma linha de tarefa usando:
 - titulo: primeiro cabecalho de nivel 1 (# Titulo) do README.md da tarefa
 - link: caminho relativo para README.md
 
-Se nao existir secao iniciando com:
+Se nao existir secao com o nome da fonte, por exemplo:
 
-    ## sandbox
+    ## labs
 
 ela e criada e as novas entradas sao inseridas nela.
 
@@ -64,11 +65,11 @@ O comando possui duas opcoes para sincronizar titulo entre indice e README da ta
 
 Carregar titulo do README para o indice:
 
-    tko build index README.md labs --load
+    tko index build README.md --from labs --from wiki --load
 
 Salvar titulo do indice para o README da tarefa:
 
-    tko build index README.md labs --save
+    tko index build README.md --from labs --from wiki --save
 
 Resumo:
 
@@ -96,7 +97,7 @@ Quando voce nao quiser contar esse total manualmente, marque com `[x]` as tarefa
 Ao executar:
 
 ```bash
-tko build index README.md labs
+tko index build README.md --from labs --from wiki
 ```
 
 o indexer soma o `gain` das tarefas marcadas com `[x]` e grava esse valor em `xpgoal`:
@@ -115,7 +116,7 @@ Regras importantes:
 
 ## Boas praticas
 
-- Rode o comando sempre que criar, renomear ou remover tarefas em BASE_DIR.
+- Rode o comando sempre que criar, renomear ou remover tarefas em qualquer SOURCE.
 - Use `[x]` para marcar as tarefas que contam para a meta principal da quest, deixando tarefas extras ou desafios com `[ ]`.
 - Mantenha uma secao sandbox para receber entradas auto-geradas.
 - Revise o diff apos rodar para confirmar ordem e agrupamento desejados.
@@ -123,11 +124,12 @@ Regras importantes:
 ## Exemplo de ciclo de manutencao
 
 1. Criou pasta nova labs/nova_tarefa/README.md.
-2. Removeu pasta antiga labs/tarefa_antiga/.
+2. Criou pasta nova wiki/nova_referencia/README.md.
+3. Removeu pasta antiga labs/tarefa_antiga/.
 3. Executou:
 
-    tko build index README.md labs
+    tko index build README.md --from labs --from wiki
 
 4. Resultado esperado:
-- Entrada de @nova_tarefa adicionada.
+- Entradas de labs/nova_tarefa e wiki/nova_referencia adicionadas.
 - Linha da tarefa_antiga removida se o README nao existir.

@@ -38,10 +38,6 @@ _MDPP_FILE_NOT_FOUND = Msg.text(
     pt="arquivo {path} não encontrado",
     en="file {path} not found",
 )
-_MDPP_FILE_UPDATED = Msg.text(
-    pt="arquivo {path} atualizado",
-    en="file {path} updated",
-)
 _MDPP_FILE_NOT_MARKDOWN = Msg.text(
     pt="Arquivo {path} não é um arquivo markdown",
     en="File {path} is not a markdown file",
@@ -509,26 +505,6 @@ class Load:
         # O sub substitui as ocorrências usando a função de callback
         return re.sub(regex, replace_tag_fn, content, flags=re.MULTILINE | re.DOTALL)
 
-class Save:
-    @staticmethod
-    # execute filename and content
-    def execute(file_content: str, target_dir: Path | None = None) -> None:
-        regex = r"\[\]\(save\)\[\]\((.*?)\)\n```[a-z]*\n(.*?)```\n\[\]\(save\)"
-        matches = re.finditer(regex, file_content, re.MULTILINE | re.DOTALL)
-        content_old = ""        
-        for match in matches:
-            path_str = match.group(1)
-            content = match.group(2)
-            path = Path(path_str)
-            if not path.is_absolute() and target_dir is not None:
-                path = (target_dir / path).resolve()
-            exists = path.is_file()
-            if exists:
-                content_old = Decoder.load(path)
-            if not exists or content != content_old:
-                Decoder.save(path, content)
-                logger.info(str(_MDPP_FILE_UPDATED).format(path=path))
-
 class MdppMain:
     @staticmethod
     def fix_path(target: Path):
@@ -565,8 +541,6 @@ class Mdpp:
         updated = TocTable.execute(updated, action)
         updated = Load.execute(updated, target_dir, action)
         updated = Links.execute(target, updated, action)
-        Save.execute(updated, target_dir)
-        
         if updated != original:
             Decoder.save(path, updated)
             return True

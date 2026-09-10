@@ -10,6 +10,7 @@ from tko.i18n import Msg
 from tko.util.rt import RT
 from pathlib import Path
 from tko.config.settings import Settings
+from tko.util.pattern_loader import DEFAULT_DIRECTORY_PATTERN
 
 
 _RUN_NO_SOURCE_FILES = Msg.text(
@@ -78,8 +79,8 @@ class Wdir:
         self.setup_solver(solvers)
         self.source_list = sources
 
-    def build_unit_list(self):
-        self.pack_list, loading_failures = WdirUnitsService.load_packs(self.source_list)
+    def build_unit_list(self, directory_pattern: str = DEFAULT_DIRECTORY_PATTERN):
+        self.pack_list, loading_failures = WdirUnitsService.load_packs(self.source_list, directory_pattern)
         if loading_failures > 0 and loading_failures == len(self.source_list):
             raise FileNotFoundError(_RUN_NO_TEST_CASES.t())
         self.unit_list = WdirUnitsService.merge_unique_units(self.pack_list)

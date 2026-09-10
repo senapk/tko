@@ -11,6 +11,7 @@ from tko.run.unit import Unit
 from tko.util.decoder import Decoder
 from pathlib import Path
 from tko.util.console import Console
+from tko.util.pattern_loader import DEFAULT_DIRECTORY_PATTERN
 
 
 _LOADER_TARGET_FORMAT_NOT_SUPPORTED = Msg.text(
@@ -52,9 +53,9 @@ class Loader:
         return "\n" + "\n".join(code)
 
     @staticmethod
-    def parse_source(source: Path) -> list[Unit]:
+    def parse_source(source: Path, directory_pattern: str = DEFAULT_DIRECTORY_PATTERN) -> list[Unit]:
         if source.is_dir():
-            return DirParser.parse_dir(source)
+            return DirParser.parse_dir(source, directory_pattern)
         if source.is_file():
             #  if PreScript.exists():
             #      source = PreScript.process_source(source)

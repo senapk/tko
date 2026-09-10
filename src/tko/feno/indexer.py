@@ -11,6 +11,7 @@ from tko.feno.indexer_md import IndexerMd
 from tko.game.task_enums import EvalMode
 from tko.game.eval_mode_spec import get_eval_mode_spec
 from loguru import logger
+from collections.abc import Sequence
 
 
 
@@ -59,9 +60,18 @@ _INDEXER_KEY_PATH_MISMATCH = Msg.parse(
 )
 
 class Elements:
-    def __init__(self, index_path: Path, base_dir: Path, verbose: bool = True):
+    def __init__(
+        self,
+        index_path: Path,
+        base_dir: Path | None = None,
+        verbose: bool = True,
+        base_dirs: Sequence[Path] | None = None,
+    ):
         self.index_path = index_path
-        self.base_dir = base_dir
+        self.base_dirs = [path.resolve() for path in (base_dirs or ([base_dir] if base_dir is not None else []))]
+        if not self.base_dirs:
+            raise ValueError("At least one index source directory is required")
+        self.base_dir = self.base_dirs[0]
         self.verbose = verbose
         self.lines: list[QuestLine | TaskLine | str] = []
 
@@ -169,7 +179,7 @@ class Elements:
             if not isinstance(line, TaskLine) or line.target_file is None:
                 continue
             target = line.target_file.resolve()
-            if not target.exists() or not target.is_relative_to(self.base_dir):
+            if not target.exists() or not any(target.is_relative_to(base) for base in self.base_dirs):
                 continue
             path_key = line.path_key
             if path_key is None:
@@ -257,53 +267,34 @@ class Renderer:
 
 class Finder:
     def __init__(self, indexer: Elements):
-        self.base_dir = indexer.base_dir
+        self.base_dirs = indexer.base_dirs
         self.lines = indexer.lines
         self.index_path = indexer.index_path
 
-    def _get_folder_keys(self) -> set[str]:
-        keys: set[str] = set()
-        if not self.base_dir.exists():
-            return keys
-        for path in self.base_dir.iterdir():
-            if path.is_dir():
-                readme = (path / 'README.md').resolve()
-                if readme.exists():
-                    keys.add(path.name)
-        return keys
-
-    def _get_indexed_folder_keys(self, lines: list[Line]) -> set[str]:
-        """Return direct base-dir folders already represented in the index.
-
-        A task key can include the source folder (``labs/example``) while the
-        finder scans ``base_dir / example``. Comparing task keys directly
-        makes that one task look absent on every index refresh.
-        """
-        folder_keys: set[str] = set()
+    def _get_indexed_targets(self, lines: list[Line]) -> set[Path]:
+        targets: set[Path] = set()
         for line in lines:
             if not isinstance(line, TaskLine) or line.target_file is None:
                 continue
-            folder = line.target_file.resolve().parent
-            if folder.parent == self.base_dir:
-                folder_keys.add(folder.name)
-        return folder_keys
+            targets.add(line.target_file.resolve())
+        return targets
 
     def create_tasks_from_unused_dirs(self) -> dict[Path, TaskLine]:
-        folder_keys = self._get_folder_keys()
-        indexed_folder_keys = self._get_indexed_folder_keys(self.lines)
-        missing_keys = folder_keys - indexed_folder_keys
-
         output: dict[Path, TaskLine] = {}
-        for m in sorted(missing_keys):
-            tl = TaskLine(index_path=self.index_path, base_dir=self.base_dir)
-            readme = (self.base_dir / m / 'README.md').resolve()
-            if not readme.exists():
+        indexed_targets = self._get_indexed_targets(self.lines)
+        for base_dir in self.base_dirs:
+            if not base_dir.exists():
                 continue
-            title = IndexerMd.load_title_from_markdown_file(readme)
-            if title is None:
-                continue
-            tl.init_by_readme_file(readme, title)
-            output[readme] = tl
+            for folder in sorted(path for path in base_dir.iterdir() if path.is_dir()):
+                readme = (folder / "README.md").resolve()
+                if not readme.exists() or readme in indexed_targets or readme in output:
+                    continue
+                title = IndexerMd.load_title_from_markdown_file(readme)
+                if title is None:
+                    continue
+                tl = TaskLine(index_path=self.index_path, base_dir=base_dir)
+                tl.init_by_readme_file(readme, title)
+                output[readme] = tl
         return output
 
 
@@ -311,7 +302,7 @@ class Merger:
     def __init__(self, indexer: Elements):
         self.lines = indexer.lines
         self.index_path = indexer.index_path
-        self.base_dir = indexer.base_dir
+        self.base_dirs = indexer.base_dirs
         self.verbose = indexer.verbose
         self.header: list[str | TaskLine] = []
         self.quests: list[QuestLine] = []
@@ -366,37 +357,48 @@ class Merger:
                 return index
         return -1
 
-    def insert_missing_tasks(self, default_quest_name: str, missing_entries: dict[Path, TaskLine]) -> tuple[list[TaskLine | str], list[QuestLine]]:
+    def _source_name(self, readme: Path) -> str:
+        for base_dir in self.base_dirs:
+            if readme.resolve().is_relative_to(base_dir):
+                return base_dir.name
+        return readme.parent.parent.name
+
+    def insert_missing_tasks(self, missing_entries: dict[Path, TaskLine]) -> tuple[list[TaskLine | str], list[QuestLine]]:
         self._split_header_and_quests()
         self._remove_duplicate_local_tasks()
-        found_index = self._search_sandbox_quest_index(default_quest_name)
+        grouped: dict[str, list[TaskLine]] = {}
+        for readme, line in missing_entries.items():
+            grouped.setdefault(self._source_name(readme), []).append(line)
 
-        if found_index == -1:
-            sandbox_quest = QuestLine()
-            sandbox_quest.qp.quest.basic.title = default_quest_name
-            sandbox_quest.qp.raw_line = f"## {default_quest_name}"
-            self.quests.append(sandbox_quest)
-            found_index = len(self.quests) - 1
-
-        if missing_entries:
+        for source_name, entries in grouped.items():
+            found_index = self._search_sandbox_quest_index(source_name)
+            if found_index == -1:
+                source_quest = QuestLine()
+                source_quest.qp.quest.basic.title = source_name
+                source_quest.qp.raw_line = f"## {source_name}"
+                self.quests.append(source_quest)
+                found_index = len(self.quests) - 1
             if self.verbose:
-                Console.print(str(_INDEXER_MISSING_HOOKS_ADDING).format(count=len(missing_entries), quest=default_quest_name))
-            for _, line in missing_entries.items():
-                self.quests[found_index].lines.append(line)
+                Console.print(str(_INDEXER_MISSING_HOOKS_ADDING).format(count=len(entries), quest=source_name))
+            self.quests[found_index].lines.extend(entries)
         return self.header, self.quests
 
 def fix_readme(
     index: Path,
-    base_dir: Path,
+    base_dir: Path | None = None,
     verbose: bool = True,
     save_titles: bool = False,
     load_titles: bool = False,
     yes: bool = False,
     align: bool = True,
     warn_key_path_mismatches: bool = False,
+    base_dirs: Sequence[Path] | None = None,
 ) -> None:
     index = index.resolve()
-    elements = Elements(index_path=index, base_dir=base_dir, verbose=verbose)
+    source_dirs = list(base_dirs or ([base_dir] if base_dir is not None else []))
+    if not source_dirs:
+        raise ValueError("At least one index source directory is required")
+    elements = Elements(index_path=index, base_dirs=source_dirs, verbose=verbose)
     elements.load_lines()
     missing = elements.missing_local_targets()
     if yes:
@@ -416,8 +418,7 @@ def fix_readme(
     missing_entries = finder.create_tasks_from_unused_dirs()
     
     merger = Merger(elements)
-    default_quest_name = base_dir.name
-    header, quests = merger.insert_missing_tasks(default_quest_name, missing_entries)
+    header, quests = merger.insert_missing_tasks(missing_entries)
     
     renderer = Renderer(index_path=index, align=align)
     renderer.write_file(header, quests)

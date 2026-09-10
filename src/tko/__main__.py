@@ -11,7 +11,6 @@ from icecream import ic  # type: ignore
 
 from tko.__init__ import __version__
 from tko.cli.cli_audit import app as audit_app
-from tko.cli.cli_build import app as build_app
 from tko.cli.cli_class import app as class_app
 from tko.cli.cli_collect import app as collect_app
 from tko.cli.cli_config import app as config_app
@@ -41,7 +40,6 @@ if os.name != "nt":
 app = typer.Typer(name="tko", help=f"tko {__version__}", no_args_is_help=True, context_settings={"help_option_names": ["-h", "--help"]})
 
 
-app.add_typer(build_app, name="build")
 app.add_typer(audit_app, name="audit")
 app.add_typer(task_app, name="task")
 app.add_typer(index_app, name="index")

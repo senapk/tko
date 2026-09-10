@@ -9,6 +9,27 @@ from tko.config.settings import Settings
 app = typer.Typer(help="Manage individual tasks")
 
 
+@app.command("build", help="Build task artifacts and update task README.md")
+def task_build(
+    targets: list[str] | None = typer.Argument(None, help="Task directories"),
+    check: bool = typer.Option(False, "--check", "-c", help="Check if the file needs to be rebuilt"),
+    brief: bool = typer.Option(False, "--brief", "-b", help="Brief mode"),
+    moodle: bool = typer.Option(False, "--moodle", "-m", help="Build for Moodle VPL"),
+    local: bool = typer.Option(False, "--local", "-l", help="Don't search for remote.cfg to create absolute links"),
+    erase: bool = typer.Option(False, "--erase", "-e", help="Erase temporary files"),
+):
+    from tko.feno.build import build_task
+
+    build_task(
+        targets=[Path(target) for target in (targets or [])],
+        remote=not local,
+        check=check,
+        erase=erase,
+        brief=brief,
+        moodle=moodle,
+    )
+
+
 @app.command("show", help="Show task information, files, scores and graph")
 def task_show(
     ctx: typer.Context,
@@ -37,16 +58,13 @@ def task_open(
     ctx: typer.Context,
     target_list: Optional[list[str]] = typer.Argument(None, help="Solvers, test cases or directories to load"),
     index: Optional[int] = typer.Option(None, "--index", "-i", help="Run a specific test index"),
-    pattern: str = typer.Option("@.in @.sol", "--pattern", "-p", help="Input/output file pattern (default: '@.in @.sol')"),
     filter: bool = typer.Option(False, "--filter", "-F", help="Filter solver files in temporary directory before running"),
     fzf: bool = typer.Option(False, "--fzf", "-f", help="Use fzf to select a task"),
 ):
     from tko.util.param import Param
-    from tko.util.pattern_loader import PatternLoader
     from tko.cmds.cmd_run import Run
     
     settings: Settings = ctx.obj
-    PatternLoader.pattern = pattern
     param = Param.Basic().set_index(index)
     if settings:
         param.set_diff_mode(settings.app.diff_mode)

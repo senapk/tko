@@ -1,14 +1,14 @@
-# Build all - pipeline de automacao de artefatos
+# Build task - pipeline de automacao de artefatos
 
 Este guia documenta o que o comando abaixo faz na pratica:
 
 ```bash
-tko build all
+tko task build
 ```
 
 ## Visao geral
 
-O comando tko build all roda um pipeline de preparacao de artefatos por pasta alvo.
+O comando tko task build roda um pipeline de preparacao de artefatos por pasta alvo.
 
 No fluxo padrao, ele:
 
@@ -29,13 +29,13 @@ No fluxo moodle (opcional), ele tambem:
 Uso basico:
 
 ```bash
-tko build all
+tko task build
 ```
 
 Com alvos especificos:
 
 ```bash
-tko build all labs/tres labs/media
+tko task build labs/tres labs/media
 ```
 
 Opcoes principais:
@@ -106,22 +106,22 @@ Na raiz de uma tarefa:
 
 ```bash
 # pipeline padrao: mdpp + drafts (+ local.sh se existir)
-tko build all .
+tko task build .
 
 # pipeline completo para moodle
-tko build all . -m
+tko task build . -m
 
 # so reconstruir se houver mudancas
-tko build all . -c -m
+tko task build . -c -m
 ```
 
 ## Quando usar cada modo
 
-- build all sem -m:
+- task build sem -m:
   - ciclo rapido de preparacao local.
   - atualizacao de markdown e drafts.
 
-- build all com -m:
+- task build com -m:
   - geracao de artefatos para publicacao/empacotamento (README rebaseado, html, tests.vpl e starters).
 
 ## Observacoes importantes

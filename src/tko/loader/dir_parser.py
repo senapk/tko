@@ -4,7 +4,7 @@ from pathlib import Path
 
 from tko.run.unit import Unit
 from tko.util.decoder import Decoder
-from tko.util.pattern_loader import PatternLoader
+from tko.util.pattern_loader import DEFAULT_DIRECTORY_PATTERN, PatternLoader
 from tko.i18n import Msg
 
 
@@ -18,8 +18,8 @@ _LOADER_FAILED_TO_LOAD = Msg.text(
 
 class DirParser:
     @staticmethod
-    def parse_dir(folder: Path) -> list[Unit]:  # Updated return type to list[Unit]
-        pattern_loader = PatternLoader()
+    def parse_dir(folder: Path, pattern: str = DEFAULT_DIRECTORY_PATTERN) -> list[Unit]:
+        pattern_loader = PatternLoader(pattern)
         files = sorted(os.listdir(folder))
         matches = pattern_loader.get_file_sources(files)
 

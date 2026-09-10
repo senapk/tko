@@ -136,5 +136,5 @@ Casos minimos para parser:
 ## Guias relacionados
 
 - [Gamificação e progressão](Gamificacao-e-Progressao.md)
-- [Build all: pipeline de mdpp, filter e drafts](tools/build-all.md)
+- [Build task: pipeline de mdpp, filter e drafts](tools/build-all.md)
 - [Build index: manter e atualizar índices](tools/build-index.md)

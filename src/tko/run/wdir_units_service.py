@@ -5,6 +5,7 @@ from pathlib import Path
 from tko.loader.loader import Loader
 from tko.i18n import Msg
 from tko.run.unit import Unit
+from tko.util.pattern_loader import DEFAULT_DIRECTORY_PATTERN
 
 
 
@@ -17,12 +18,18 @@ _RUN_PACK_LOAD_FAILED = Msg.text(
 
 class WdirUnitsService:
     @staticmethod
-    def load_packs(source_list: list[Path]) -> tuple[list[list[Unit]], int]:
+    def load_packs(
+        source_list: list[Path],
+        directory_pattern: str = DEFAULT_DIRECTORY_PATTERN,
+    ) -> tuple[list[list[Unit]], int]:
         pack_list: list[list[Unit]] = []
         loading_failures = 0
         for source in source_list:
             try:
-                raw_list: list[Unit] = Loader.parse_source(source)
+                if directory_pattern == DEFAULT_DIRECTORY_PATTERN:
+                    raw_list = Loader.parse_source(source)
+                else:
+                    raw_list = Loader.parse_source(source, directory_pattern)
                 unit_list: list[Unit] = []
                 for unit in raw_list:
                     if unit.get_expected() == "" and unit.get_input() == "":

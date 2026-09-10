@@ -13,7 +13,6 @@ def register_main_commands(app: typer.Typer):
         ctx: typer.Context,
         target_list: Optional[list[str]] = typer.Argument(None, help="Solvers files, test cases or directories containing them"),
         index: Optional[int] = typer.Option(None, "--index", "-i", help="Run a specific test index"),
-        pattern: str = typer.Option("@.in @.sol", "--pattern", "-p", help="Input/output file pattern"),
         language: str = typer.Option(None, "--lang", "-l", help="Language for autoloading (e.g. py, cpp, java, go, kt)"),
         filter: bool = typer.Option(False, "--filter", "-f", help="Filter solver files in temporary directory before running"),
         eval: bool = typer.Option(False, "--eval", "-e", help="Show percentage of passed tests"),
@@ -25,14 +24,12 @@ def register_main_commands(app: typer.Typer):
     ):
         from tko.cli.common import load_repo
         from tko.util.param import Param
-        from tko.util.pattern_loader import PatternLoader
         from tko.enums.diff_count import DiffCount
         from tko.enums.diff_mode import DiffMode
         from tko.cmds.cmd_run import Run
         
         settings: Settings = ctx.obj
 
-        PatternLoader.pattern = pattern
         param = Param.Basic().set_index(index)
         if none:
             param.set_diff_count(DiffCount.NONE)

@@ -150,7 +150,7 @@ class Actions:
             Log.resume("Mdpp ", end="")
             Log.verbose(f"Mdpp updading")
 
-def build_all(targets: list[Path], remote: bool, check: bool, erase: bool, brief: bool, moodle: bool):
+def build_task(targets: list[Path], remote: bool, check: bool, erase: bool, brief: bool, moodle: bool):
     Log.set_verbose(not brief)
 
     if len(targets) == 0:

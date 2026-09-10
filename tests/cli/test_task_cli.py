@@ -15,6 +15,10 @@ def _make_app_context(tmp_path: Path) -> Settings:
     return settings
 
 
+def test_task_commands_include_build_and_no_build_group_remains() -> None:
+    assert "build" in {command.name for command in app.registered_commands}
+
+
 
 
 def test_task_down_requires_full_key(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:

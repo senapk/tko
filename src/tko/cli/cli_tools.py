@@ -55,6 +55,31 @@ def tool_mdpp(
         Mdpp.update_file(target, action, quiet)
 
 
+@app.command("tests", help="Convert test cases between supported formats")
+def tool_tests(
+    ctx: typer.Context,
+    origins: list[str] = typer.Argument(..., help="Input test targets"),
+    output: str | None = typer.Option(None, "--output", "-o", help="Output file or directory; defaults to TOML on stdout"),
+    read_pattern: str = typer.Option("@.in @.sol", "--read-pattern", help="Input/output filename pattern for directory origins"),
+    write_pattern: str = typer.Option("@.in @.sol", "--write-pattern", help="Input/output filename pattern for directory targets"),
+    unlabel: bool = typer.Option(False, "--unlabel", "-u", help="Remove all labels"),
+    number: bool = typer.Option(False, "--number", "-n", help="Number labels"),
+    sort: bool = typer.Option(False, "--sort", "-s", help="Sort test cases by input size"),
+):
+    from tko.cmds.cmd_build import CmdBuild
+    from tko.util.param import Param
+
+    manip = Param.Manip().set_unlabel(unlabel).set_to_sort(sort).set_to_number(number)
+    CmdBuild(
+        None if output is None else Path(output),
+        [Path(origin) for origin in origins],
+        manip,
+        ctx.obj,
+        read_pattern=read_pattern,
+        write_pattern=write_pattern,
+    ).execute()
+
+
 @app.command("older", help="Check if the source is newer than the target")
 def tool_older(
     targets: list[str] = typer.Argument(..., help="Target files or directories")

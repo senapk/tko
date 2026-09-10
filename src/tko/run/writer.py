@@ -1,7 +1,7 @@
 from loguru import logger
 import os
 
-from tko.util.pattern_loader import PatternLoader
+from tko.util.pattern_loader import DEFAULT_DIRECTORY_PATTERN, PatternLoader
 from tko.loader.toml_parser import TomlParser
 from tko.run.unit import Unit
 from tko.util.decoder import Decoder
@@ -59,6 +59,13 @@ class Writer:
         return text
 
     @staticmethod
+    def render_toml(unit_list: list[Unit]) -> str:
+        return "\n".join(
+            TomlParser.data_to_toml_test(unit.case, unit.get_input(), unit.get_expected())
+            for unit in unit_list
+        )
+
+    @staticmethod
     def save_dir_files(folder: Path, pattern_loader: PatternLoader, label: str, unit: Unit) -> None:
         file_source = pattern_loader.make_file_source(label)
         with open(os.path.join(folder, file_source.input_file), "w", encoding="utf-8") as f:
@@ -67,10 +74,15 @@ class Writer:
             f.write(unit.get_expected())
 
     @staticmethod
-    def save_target(target: Path, unit_list: list[Unit], quiet: bool) -> bool:
+    def save_target(
+        target: Path,
+        unit_list: list[Unit],
+        quiet: bool,
+        pattern: str = DEFAULT_DIRECTORY_PATTERN,
+    ) -> bool:
         def save_dir(_target: Path, _unit_list: list[Unit]):
             folder = _target
-            pattern_loader = PatternLoader()
+            pattern_loader = PatternLoader(pattern)
             number = 0
             for unit in _unit_list:
                 Writer.save_dir_files(folder, pattern_loader, str(number).zfill(2), unit)
@@ -80,7 +92,7 @@ class Writer:
             if _target.suffix == ".tio":
                 _new = "\n".join([Writer.to_tio(unit) for unit in _unit_list])
             elif _target.suffix == ".toml":
-                _new = "\n".join([TomlParser.data_to_toml_test(unit.case, unit.get_input(), unit.get_expected()) for unit in _unit_list])
+                _new = Writer.render_toml(_unit_list)
             else:
                 _new = "\n".join([Writer.to_vpl(unit) for unit in _unit_list])
 

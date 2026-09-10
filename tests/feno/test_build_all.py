@@ -34,7 +34,7 @@ def test_build_all_moodle_writes_rebased_readme_and_artifacts(
 
     monkeypatch.setattr(build_module.Cases, "run", staticmethod(fake_cases_run))
 
-    build_module.build_all(
+    build_module.build_task(
         targets=[task],
         remote=True,
         check=False,

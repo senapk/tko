@@ -34,7 +34,7 @@
 
 - [Marcadores e tipos de tarefas](game/tasks.md): sintaxe das linhas de task.
 - [Build index](tools/build-index.md): manutenção do índice.
-- [Build all](tools/build-all.md): pipeline de artefatos.
+- [Build task](tools/build-all.md): pipeline de artefatos.
 - [Markdown preprocessor](tools/mdpp.md): diretivas e transformações.
 - [Filtragem](tools/filter.md): operadores de corte e geração de drafts.
 - [Rebase de links](tools/rebase-links.md): ajuste de links Markdown.
