@@ -48,23 +48,30 @@ class SourceXpConfig:
         if not isinstance(data, dict):
             raise XpExpressionError(f"{source_name}:{index_path}: YAML front matter must be a mapping")
 
-        has_variables = "var" in data
-        has_expression = "xp" in data
-        if not has_variables and not has_expression:
+        has_args = "args" in data
+        has_expr = "expr" in data
+        has_legacy = "var" in data or "xp" in data
+        if has_legacy:
+            raise XpExpressionError(
+                f"{source_name}:{index_path}: YAML fields 'var'/'xp' are not supported; use 'args'/'expr'"
+            )
+        if not has_args and not has_expr:
             return cls(source_name=source_name, index_path=index_path)
-        if has_variables != has_expression:
-            raise XpExpressionError(f"{source_name}:{index_path}: YAML fields 'var' and 'xp' must be declared together")
+        if has_args != has_expr:
+            raise XpExpressionError(
+                f"{source_name}:{index_path}: YAML fields 'args' and 'expr' must be declared together"
+            )
 
-        variables = data["var"]
-        expression = data["xp"]
+        variables = data["args"]
+        expression = data["expr"]
         if not isinstance(variables, list) or not all(isinstance(item, str) for item in variables):
-            raise XpExpressionError(f"{source_name}:{index_path}: 'var' must be a list of variable names")
+            raise XpExpressionError(f"{source_name}:{index_path}: 'args' must be a list of variable names")
         if not isinstance(expression, str):
-            raise XpExpressionError(f"{source_name}:{index_path}: 'xp' must be a string formula")
+            raise XpExpressionError(f"{source_name}:{index_path}: 'expr' must be a string formula")
         if not variables:
-            raise XpExpressionError(f"{source_name}:{index_path}: 'var' must not be empty")
+            raise XpExpressionError(f"{source_name}:{index_path}: 'args' must not be empty")
         if len(set(variables)) != len(variables) or any(_IDENTIFIER.fullmatch(name) is None for name in variables):
-            raise XpExpressionError(f"{source_name}:{index_path}: 'var' contains an invalid or duplicate variable name")
+            raise XpExpressionError(f"{source_name}:{index_path}: 'args' contains an invalid or duplicate variable name")
 
         try:
             tree = ast.parse(expression, mode="eval")
@@ -106,7 +113,9 @@ class SourceXpConfig:
 
     def calculate(self, values: dict[str, float], task_key: str, line_number: int) -> float:
         if not self.is_configured:
-            return 0.0
+            # Simple repositories do not need to introduce a metric just to
+            # make evaluable tasks contribute to progress.
+            return 1.0
         missing = [name for name in self.variables if name not in values]
         if missing:
             raise XpExpressionError(f"{self._context(task_key, line_number)}: missing variable(s): {', '.join(missing)}")

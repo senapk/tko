@@ -54,14 +54,14 @@ def test_task_list_prints_each_duplicate_key_only_once(tmp_path: Path) -> None:
     (tmp_path / "README.md").write_text(
         "# Course\n\n"
         "## First <!-- @first -->\n"
-        "- [ ] `@same eval=none` [First](first/README.md)\n"
+        "- [ ] `eval=none` [First](same/README.md)\n"
         "## Second <!-- @second -->\n"
-        "- [ ] `@same eval=none` [Duplicate](first/README.md)\n"
-        "- [ ] `@unique eval=none` [Unique](unique/README.md)\n",
+        "- [ ] `eval=none` [Duplicate](same/README.md)\n"
+        "- [ ] `eval=none` [Unique](unique/README.md)\n",
         encoding="utf-8",
     )
-    (tmp_path / "first").mkdir()
-    (tmp_path / "first" / "README.md").write_text("# First\n", encoding="utf-8")
+    (tmp_path / "same").mkdir()
+    (tmp_path / "same" / "README.md").write_text("# First\n", encoding="utf-8")
     (tmp_path / "unique").mkdir()
     (tmp_path / "unique" / "README.md").write_text("# Unique\n", encoding="utf-8")
     ctx = _make_app_context(tmp_path)

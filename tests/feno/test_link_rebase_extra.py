@@ -31,6 +31,22 @@ def test_rebase_task_markdown_link_from_github_downloaded_file() -> None:
     assert "- [ ]`@tres            :1:main`[Soma de três inteiros](https://github.com/qxcodefup/arcade/blob/main/base/tres/README.md)" in result
 
 
+def test_rebase_index_materializes_task_links_with_source_metadata() -> None:
+    structure = GitHubUrl(user="qxcodefup", repo="arcade", branch="main", relative_path="")
+    content = (
+        "- [ ] `@tres eval=diff` [Soma de três inteiros](base/tres/README.md)\n"
+        "[Guia](docs/guia.md)\n"
+    )
+
+    result = LinkRebase.rebase_index(content, structure)
+
+    assert result.splitlines()[0] == (
+        "- [ ] `eval=diff` [Soma de três inteiros](base/tres/README.md) "
+        "<!-- source=https://github.com/qxcodefup/arcade/blob/main/base/tres/README.md -->"
+    )
+    assert result.splitlines()[1] == "[Guia](https://github.com/qxcodefup/arcade/blob/main/docs/guia.md)"
+
+
 def test_rebase_uses_parent_folder_for_root_readme_url() -> None:
     structure = GitHubUrl(
         user="qxcodepoo",

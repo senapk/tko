@@ -163,6 +163,21 @@ class Elements:
                 )
             )
 
+    def normalize_managed_task_keys(self) -> None:
+        """Make each managed local task key match its activity-folder path."""
+        for line in self.lines:
+            if not isinstance(line, TaskLine) or line.target_file is None:
+                continue
+            target = line.target_file.resolve()
+            if not target.exists() or not target.is_relative_to(self.base_dir):
+                continue
+            path_key = line.path_key
+            if path_key is None:
+                continue
+            # The path itself is now the only task identity.  A legacy key is
+            # intentionally discarded when the line is rendered.
+            line.origin_key = None
+
     def fix_titles(self, save_titles: bool = False, load_titles: bool = False) -> None:
         for line in self.lines:
             folder_title: str = ""
@@ -257,17 +272,26 @@ class Finder:
                     keys.add(path.name)
         return keys
 
-    def _get_line_keys(self, lines: list[Line]) -> set[str]:
-        line_keys: set[str] = set()
+    def _get_indexed_folder_keys(self, lines: list[Line]) -> set[str]:
+        """Return direct base-dir folders already represented in the index.
+
+        A task key can include the source folder (``labs/example``) while the
+        finder scans ``base_dir / example``. Comparing task keys directly
+        makes that one task look absent on every index refresh.
+        """
+        folder_keys: set[str] = set()
         for line in lines:
-            if isinstance(line, TaskLine):
-                line_keys.add(line.key)
-        return line_keys
+            if not isinstance(line, TaskLine) or line.target_file is None:
+                continue
+            folder = line.target_file.resolve().parent
+            if folder.parent == self.base_dir:
+                folder_keys.add(folder.name)
+        return folder_keys
 
     def create_tasks_from_unused_dirs(self) -> dict[Path, TaskLine]:
         folder_keys = self._get_folder_keys()
-        line_keys = self._get_line_keys(self.lines)
-        missing_keys = folder_keys - line_keys
+        indexed_folder_keys = self._get_indexed_folder_keys(self.lines)
+        missing_keys = folder_keys - indexed_folder_keys
 
         output: dict[Path, TaskLine] = {}
         for m in sorted(missing_keys):
@@ -315,6 +339,27 @@ class Merger:
         self.header = header
         self.quests = quests
 
+    def _remove_duplicate_local_tasks(self) -> None:
+        """Keep the first index entry for each local task README."""
+        seen: set[Path] = set()
+
+        def unique(lines: list[TaskLine | str]) -> list[TaskLine | str]:
+            output: list[TaskLine | str] = []
+            for line in lines:
+                if not isinstance(line, TaskLine) or line.target_file is None:
+                    output.append(line)
+                    continue
+                target = line.target_file.resolve()
+                if target in seen:
+                    continue
+                seen.add(target)
+                output.append(line)
+            return output
+
+        self.header = unique(self.header)
+        for quest in self.quests:
+            quest.lines = unique(quest.lines)
+
     def _search_sandbox_quest_index(self, default_quest_name: str) -> int:
         for index, quest in enumerate(self.quests):
             if quest.key == default_quest_name or quest.quest.basic.title == default_quest_name:
@@ -323,6 +368,7 @@ class Merger:
 
     def insert_missing_tasks(self, default_quest_name: str, missing_entries: dict[Path, TaskLine]) -> tuple[list[TaskLine | str], list[QuestLine]]:
         self._split_header_and_quests()
+        self._remove_duplicate_local_tasks()
         found_index = self._search_sandbox_quest_index(default_quest_name)
 
         if found_index == -1:
@@ -352,8 +398,6 @@ def fix_readme(
     index = index.resolve()
     elements = Elements(index_path=index, base_dir=base_dir, verbose=verbose)
     elements.load_lines()
-    if warn_key_path_mismatches:
-        elements.warn_key_path_mismatches()
     missing = elements.missing_local_targets()
     if yes:
         elements.remove_missing_local_targets(missing)
@@ -361,6 +405,9 @@ def fix_readme(
             Console.print(str(_INDEXER_REMOVED_MISSING_LOCAL_TASKS).format(count=len(missing)))
     elif verbose:
         elements.ask_remove_missing_local_targets(missing)
+    elements.normalize_managed_task_keys()
+    if warn_key_path_mismatches:
+        elements.warn_key_path_mismatches()
     elements.fix_titles(save_titles, load_titles)
     if verbose:
         elements.print_test_type_warnings()

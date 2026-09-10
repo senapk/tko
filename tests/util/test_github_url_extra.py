@@ -58,6 +58,32 @@ def test_github_url_download_and_rebase_calls_pipeline(
     assert calls["save_content"] == "rebased content"
 
 
+def test_github_url_download_and_rebase_uses_index_pipeline_when_requested(
+    monkeypatch: MonkeyPatch, tmp_path: Path
+) -> None:
+    url = GitHubUrlDownloader("https://github.com/user/repo/blob/main/README.md")
+    downloaded = tmp_path / "downloaded.md"
+    downloaded.write_text("irrelevant", encoding="utf-8")
+    calls: dict[str, object] = {}
+
+    monkeypatch.setattr(
+        github_url_mod.urllib.request,
+        "urlretrieve",
+        lambda _remote, filename: (str(downloaded), None),
+    )
+    monkeypatch.setattr(github_url_mod.Decoder, "load", lambda _path: "source content")
+    def fake_rebase_index(content: str, _structure: GitHubUrl) -> str:
+        calls["content"] = content
+        return "index content"
+
+    monkeypatch.setattr(github_url_mod.LinkRebase, "rebase_index", staticmethod(fake_rebase_index))
+    monkeypatch.setattr(github_url_mod.Decoder, "save", lambda _path, content: calls.setdefault("saved", content))
+
+    url.download_and_rebase(str(tmp_path / "out.md"), index=True)
+
+    assert calls == {"content": "source content", "saved": "index content"}
+
+
 def test_github_url_structure_repository_and_github_urls() -> None:
     structure = GitHubUrl(
         user="user",

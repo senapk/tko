@@ -25,7 +25,8 @@ URL do GitHub que aponte para um `README.md`.
 - Para URL GitHub, o parser extrai a estrutura do repositório e do caminho.
 - Isso permite reutilizar listas de tarefas publicadas em outros repositorios.
 
-Para preparar um indice remoto com links absolutos e reutilizaveis, use:
+Para preparar um índice remoto reutilizável, com tarefas materializáveis e
+origem remota em comentários `source`, use:
 
 ```bash
 tko tool rebase @fup -o README.fup.md
@@ -83,7 +84,7 @@ Para links GitHub em tarefas:
 `TaskMatcher` interpreta campos como:
 
 - `@chave`: identificador da task.
-- `nome=valor`: variável numérica declarada no campo `var` do YAML da fonte.
+- `nome=valor`: variável numérica declarada no campo `args` do YAML da fonte.
 - `eval=none`, `eval=self` ou `eval=diff`: modo de avaliacao.
 
 O modo `eval` é obrigatório. Em tarefas avaliáveis, todas as variáveis declaradas

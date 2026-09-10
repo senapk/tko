@@ -11,7 +11,7 @@ INDEX = Path("/source/README.md")
 
 def source_config(variables: str, formula: str) -> SourceXpConfig:
     return SourceXpConfig.from_markdown(
-        f"---\nvar: [{variables}]\nxp: {formula!r}\n---\n", "course", INDEX
+        f"---\nargs: [{variables}]\nexpr: {formula!r}\n---\n", "course", INDEX
     )
 
 
@@ -59,9 +59,73 @@ def test_missing_declared_variable_has_task_context() -> None:
         parse("- [ ] `@task value=3 eval=self` [Title](task/README.md)", "value, depth", "value + depth")
 
 
-def test_unconfigured_source_assigns_zero_xp() -> None:
+def test_unconfigured_source_assigns_default_xp() -> None:
     task = TaskParser(INDEX).parse_line("- [ ] `@legacy gain=3 eval=diff` [Legacy](legacy/README.md)", 7)
-    assert task is not None and task.xp == 0.0
+    assert task is not None and task.xp == 1.0
+
+
+def test_legacy_var_xp_front_matter_is_rejected() -> None:
+    with pytest.raises(XpExpressionError, match="not supported"):
+        SourceXpConfig.from_markdown(
+            '---\nvar: [value]\nxp: "value"\n---\n',
+            "course",
+            INDEX,
+        )
+
+
+def test_materialized_task_source_comment_does_not_make_task_external() -> None:
+    task = TaskParser(INDEX).parse_line(
+        "- [ ] `@labs/fila eval=diff` [Fila](labs/fila/README.md) "
+        "<!-- source=https://github.com/org/repo/blob/main/labs/fila/README.md -->",
+        7,
+    )
+
+    assert task is not None
+    assert task.location.raw_link == "labs/fila/README.md"
+    assert task.location.git_hub_url is None
+    assert task.location.is_external is False
+
+
+def test_source_comment_is_not_an_xp_variable() -> None:
+    task = parse(
+        "- [ ] `value=3 eval=diff` [Fila](labs/fila/README.md) "
+        "<!-- source=https://github.com/org/repo/blob/main/labs/fila/README.md -->"
+    )
+
+    assert task is not None and task.xp == 3.0
+
+
+def test_local_readme_path_is_the_task_identity_without_a_visible_key() -> None:
+    task = TaskParser(INDEX).parse_line(
+        "- [ ] `eval=diff` [Fila](labs/fila/README.md)", 7
+    )
+
+    assert task is not None
+    assert task.basic.key == "labs/fila"
+
+
+def test_legacy_key_does_not_override_local_readme_path() -> None:
+    task = TaskParser(INDEX).parse_line(
+        "- [ ] `@wrong eval=diff` [Fila](labs/fila/README.md)", 7
+    )
+
+    assert task is not None
+    assert task.basic.key == "labs/fila"
+
+
+def test_local_readme_in_index_root_has_no_task_identity() -> None:
+    task = TaskParser(INDEX).parse_line("- [ ] `eval=diff` [Root](README.md)", 7)
+
+    assert task is None
+
+
+def test_at_sign_in_the_title_is_not_treated_as_a_task_key() -> None:
+    task = TaskParser(INDEX).parse_line(
+        "- [ ] `eval=none` [Fale com @monitor](labs/fila/README.md)", 7
+    )
+
+    assert task is not None
+    assert task.basic.title == "Fale com @monitor"
 
 
 @pytest.mark.parametrize(

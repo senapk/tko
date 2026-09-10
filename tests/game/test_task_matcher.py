@@ -9,7 +9,7 @@ from tko.game.task_matcher import TaskMatcher
 
 def config() -> SourceXpConfig:
     return SourceXpConfig.from_markdown(
-        '---\nvar: [value, depth]\nxp: "value * depth"\n---\n', "course", Path("README.md")
+        '---\nargs: [value, depth]\nexpr: "value * depth"\n---\n', "course", Path("README.md")
     )
 
 
@@ -17,10 +17,10 @@ class TestTaskMatcher:
     def test_extracts_declared_numeric_variables(self) -> None:
         matcher = TaskMatcher(config())
         assert matcher.match_pattern("- [ ] `@task value=3 depth=2 eval=self` [Title](task/README.md)")
-        assert matcher.key == "task"
+        assert matcher.legacy_key == "task"
         assert matcher.eval == EvalMode.SELF
         assert matcher.variables == {"value": 3.0, "depth": 2.0}
-        assert matcher.get_filled_fields() == ["@task", "eval=self", "value=3", "depth=2"]
+        assert matcher.get_filled_fields() == ["eval=self", "value=3", "depth=2"]
 
     def test_rejects_undeclared_variable(self) -> None:
         with pytest.raises(ValueError, match="Undeclared task variable: scope"):
@@ -34,7 +34,7 @@ class TestTaskMatcher:
         matcher = TaskMatcher()
         assert matcher.match_pattern("- [ ] `@task gain=3 gcs=312 eval=diff` [Title](task/README.md)")
         assert matcher.variables == {}
-        assert matcher.get_filled_fields() == ["@task", "eval=diff", "gain=3", "gcs=312"]
+        assert matcher.get_filled_fields() == ["eval=diff", "gain=3", "gcs=312"]
 
     def test_legacy_task_without_evaluation_defaults_to_diff(self) -> None:
         matcher = TaskMatcher(config())

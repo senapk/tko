@@ -4,8 +4,8 @@ Uma tarefa é definida por uma linha Markdown com checkbox e link:
 
 ```md
 ---
-var: [value, depth]
-xp: "value * depth"
+args: [value, depth]
+expr: "value * depth"
 ---
 
 - [ ] `@t1 value=3 depth=2 eval=diff` [Implementar função soma](t1/README.md)
@@ -16,7 +16,7 @@ xp: "value * depth"
 
 ## Variáveis e XP
 
-`var` declara os nomes das variáveis que a fonte usa e `xp` declara sua fórmula.
+`args` declara os nomes das variáveis que a fonte usa e `expr` declara sua fórmula.
 Os significados pedagógicos desses nomes pertencem à própria fonte; o TKO só aceita
 valores numéricos e calcula o XP final. A task não retém as variáveis após o parsing.
 `eval=` continua sendo o único campo operacional fixo.
@@ -35,4 +35,5 @@ O sistema preserva o valor fracionário nos cálculos. A lista de tarefas o most
 o front matter e as variáveis existentes; ele não converte métricas em um formato
 global nem inventa valores para novas tarefas.
 
-Fontes sem `var` e `xp` recebem XP zero durante a migração.
+Fontes sem `args` e `expr` atribuem 1 XP a cada tarefa avaliável. Tarefas com
+`eval=none` continuam recebendo 0 XP.

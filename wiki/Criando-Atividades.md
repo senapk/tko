@@ -50,8 +50,8 @@ Exemplo minimo:
 
 ```md
 ---
-var: [value]
-xp: "value"
+args: [value]
+expr: "value"
 ---
 
 # Minha Disciplina
@@ -105,7 +105,7 @@ o recurso.
 Campos mais usados:
 
 - `@chave`: identificador unico da task.
-- `nome=valor`: variável numérica declarada em `var` no YAML da fonte.
+- `nome=valor`: variável numérica declarada em `args` no YAML da fonte.
 - `eval=diff`: avaliacao automatica.
 - `eval=self`: autoavaliacao.
 - `eval=none`: leitura ou consulta sem avaliação.
@@ -195,22 +195,33 @@ aponte para um `README.md`. Não use URLs HTTP genéricas, links para diretório
 ou links para outros arquivos Markdown.
 
 ```md
-- [ ] `@fila gain=2 cost=2 size=2 eval=diff` [Fila](https://github.com/qxcodeed/arcade/blob/main/labs/fila/README.md)
+- [ ] `gain=2 cost=2 size=2 eval=diff` [Fila](https://github.com/qxcodeed/arcade/blob/main/labs/fila/README.md)
 ```
 
-A chave externa é obrigatória porque também define onde a atividade será
-materializada. O índice do professor pode ser preparado e atualizado assim:
+A identidade da tarefa é inferida do diretório do `README.md`. `tko index
+download` é a transição explícita desse formato legado: ele baixa a atividade
+na pasta indicada pela URL e reescreve a linha para que o jogo use o caminho
+local, preservando a origem no comentário canônico:
+
+```md
+- [ ] `gain=2 cost=2 size=2 eval=diff` [Fila](labs/fila/README.md) <!-- source=https://github.com/qxcodeed/arcade/blob/main/labs/fila/README.md -->
+```
+
+Depois disso, a URL serve apenas para atualização do índice; abrir, executar e
+criar rascunhos para a tarefa usam exclusivamente o `README.md` local. O índice
+do professor pode ser preparado e atualizado assim:
 
 ```bash
 tko index download README.md
 tko index update README.md
 ```
 
-O primeiro comando baixa as atividades externas ainda não materializadas. O
-segundo substitui as cópias locais pelas versões atuais, descartando alterações
-locais nessas pastas.
+O primeiro comando baixa as atividades com URL como link principal. O segundo
+localiza apenas comentários `source`, substitui as cópias locais pelas versões
+atuais e descarta alterações locais nessas pastas.
 
-Para preparar um indice externo com links absolutos e reutilizaveis:
+Para preparar um índice externo reutilizável, com tarefas no formato local e
+origem remota em comentários `source`:
 
 ```bash
 tko tool rebase @fup -o README.fup.md

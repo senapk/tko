@@ -1,6 +1,8 @@
 import re
 from tko.util.git_hub_url import GitHubUrl
 from pathlib import Path, PurePosixPath
+from tko.feno.task_source import activity_path_from_source_url, replace_source_comment
+from tko.game.task_matcher import TaskMatcher
 
 class LinkRebase:
 
@@ -93,6 +95,42 @@ class LinkRebase:
             ghu.tree_url,
             is_local=False,
         )
+
+    @staticmethod
+    def rebase_index(content: str, ghu: GitHubUrl) -> str:
+        """Rebase an activity index into portable materialized-task entries.
+
+        Ordinary Markdown links still become absolute so the copied index can
+        render anywhere. Task links are different: their local link names the
+        future materialized folder, while the remote URL is retained only as
+        provenance for ``tko index update``.
+        """
+        rebased = LinkRebase.rebase(content, ghu)
+        output: list[str] = []
+
+        for line in rebased.splitlines(keepends=True):
+            ending = "\n" if line.endswith("\n") else ""
+            task_line = line[:-1] if ending else line
+            matcher = TaskMatcher()
+            if not matcher.match_pattern(task_line) or not matcher.is_url:
+                output.append(line)
+                continue
+
+            try:
+                folder = activity_path_from_source_url(matcher.link)
+            except ValueError:
+                # Non-activity checklist links retain ordinary rebase behavior.
+                output.append(line)
+                continue
+
+            local_link = (folder / "README.md").as_posix()
+            canonical = task_line.replace(f"({matcher.link})", f"({local_link})")
+            if matcher.legacy_key_token is not None:
+                canonical = canonical.replace(matcher.legacy_key_token, "", 1)
+                canonical = re.sub(r"`\s+", "`", canonical, count=1)
+            output.append(replace_source_comment(canonical, matcher.link) + ending)
+
+        return "".join(output)
 
     @staticmethod
     def change_to_relative_folder(content: str, relative_folder: Path, preserve_assets: bool = False):

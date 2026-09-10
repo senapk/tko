@@ -1,6 +1,9 @@
 # Rebase de links markdown
 
 O comando `tko tool rebase` recalcula links de um markdown para funcionar a partir de um novo arquivo de saída.
+Ao rebasear um índice vindo do GitHub, as linhas de tarefa passam ao formato
+materializável: o link aponta para o `README.md` local e a URL remota é
+registrada em `<!-- source=... -->`. Os demais links continuam absolutos.
 
 ## Parâmetros
 

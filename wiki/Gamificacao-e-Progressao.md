@@ -51,7 +51,7 @@ Comportamento no codigo:
 - Config de task: [src/tko/game/task_config.py](../src/tko/game/task_config.py)
 - Estado de jogo da task (xp/reachable): [src/tko/game/task_game.py](../src/tko/game/task_game.py)
 
-O XP base é calculado no parsing pela fórmula `xp` do YAML de cada fonte. Depois
+O XP base é calculado no parsing pela expressão `expr` do YAML de cada fonte. Depois
 disso, a gamificação trabalha somente com o valor final de XP, sem reter variáveis.
 
 Valores internos de XP permanecem fracionários. A interface mostra tarefas com uma casa decimal truncada e somatórios sem parte fracionária.

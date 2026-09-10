@@ -6,6 +6,7 @@ from tko.run.wdir import Wdir
 from tko.config.settings import Settings
 from urllib.parse import urlparse
 from tko.util.git_hub_url import GitHubUrl
+from tko.feno.task_source import activity_path_from_local_link, replace_source_comment, source_url_from_line
 
 _INDEXER_INVALID_LABEL = Msg.text(
     pt="Rótulo inválido na linha: {label}",
@@ -29,6 +30,7 @@ class TaskLine:
         self.origin_key: str | None = None
         self.target_file: Path | None = None
         self.url: str | None = None
+        self.source_url: str | None = None
         
         self.index_path: Path = index_path.resolve()
         self.base_dir: Path = base_dir.resolve()
@@ -39,7 +41,15 @@ class TaskLine:
         if not tm.match_pattern(line):
             return False
 
-        self.origin_key = tm.key
+        # This is provenance only.  In particular, it must not change whether
+        # the Markdown activity link is interpreted as local or remote.
+        self.source_url = source_url_from_line(line)
+        if self.source_url is not None:
+            # Normalize the old ``source:`` spelling whenever the index is
+            # rendered, without making provenance a task variable.
+            self.tm.raw_pos = replace_source_comment(self.tm.raw_pos, self.source_url)
+
+        self.origin_key = tm.legacy_key
         if self.origin_key is not None:
             TaskMatcher.validate_key(self.origin_key)
         if self.tm.is_url:
@@ -52,13 +62,8 @@ class TaskLine:
                 raise ValueError(f"Task GitHub link must point to a README.md file: {self.tm.link}")
             return True
 
-        link = Path(tm.link)
-        if link.name != "README.md":
-            raise ValueError(f"Task activity must point to a README file: {link}")
-        if link.is_absolute():
-            self.target_file = Path(link).resolve()
-        else:
-            self.target_file = (self.index_path.parent / link).resolve()
+        folder = activity_path_from_local_link(tm.link)
+        self.target_file = (self.index_path.parent / folder / "README.md").resolve()
         return True
 
     def init_by_readme_file(self, readme_file: Path, title: str):
@@ -66,11 +71,9 @@ class TaskLine:
         self.tm.raw_line = ""
         self.tm.raw_pre = ""
         self.tm.raw_pos = ""
-        relative_folder = readme_file.parent.resolve().relative_to(self.index_path.parent.resolve())
-        self.tm.key = relative_folder.as_posix()
         self.tm.eval = EvalMode.DIFF
         self.tm.title = title
-        self.origin_key = self.tm.key
+        self.origin_key = None
         return self
 
     def get_pre(self, key_pad: int, fields_pad: int) -> str:
@@ -79,23 +82,23 @@ class TaskLine:
         tags_str = " ".join(tags)
 
         words = self.tm.raw_pre.replace("`", " ").replace("- [ ]", " ").replace("- [x]", " ").replace("<!--", " ").replace("-->", " ").split()
-        left = " ".join(x for x in words if not self.tm.is_field(x))
-
-        key_tag = f"@{self.key}"
+        left = " ".join(
+            x for x in words
+            if not self.tm.is_field(x) and x != self.tm.legacy_key_token
+        )
+        legacy_tag = f"{self.tm.legacy_key_token} " if self.url and self.tm.legacy_key_token else ""
         if left:
-            out = f" `{key_tag:<{key_pad + 1}} {tags_str:<{fields_pad}}` {left} "
+            out = f" `{legacy_tag}{tags_str:<{fields_pad}}` {left} "
         else:
-            out = f" `{key_tag:<{key_pad + 1}} {tags_str:<{fields_pad}}` "
+            out = f" `{legacy_tag}{tags_str:<{fields_pad}}` "
         return out
 
     @property
     def key(self) -> str:
-        if self.origin_key is not None:
-            return self.origin_key
-        if self.target_file is not None:
-            if self.target_file.resolve().is_relative_to(self.index_path.parent.resolve()):
-                return self.target_file.parent.relative_to(self.index_path.parent.resolve()).as_posix()
-        if self.origin_key is not None:
+        path_key = self.path_key
+        if path_key is not None:
+            return path_key
+        if self.url is not None and self.origin_key is not None:
             return self.origin_key
         return ""
 

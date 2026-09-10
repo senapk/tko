@@ -2,6 +2,7 @@ import re
 
 from tko.game.source_xp_config import SourceXpConfig
 from tko.game.task_enums import EvalMode
+from tko.feno.task_source import strip_source_comments
 
 
 def remove_emojis(text: str) -> str:
@@ -40,7 +41,8 @@ class TaskMatcher:
         self.title: str = ""
         self.link: str = ""
         self.is_ref: bool = False
-        self.key: str | None = None
+        self.legacy_key: str | None = None
+        self.legacy_key_token: str | None = None
         self.eval: EvalMode | None = None
         self.variables: dict[str, float] = {}
         self.variable_tokens: list[str] = []
@@ -58,35 +60,41 @@ class TaskMatcher:
         self.title = remove_emojis(match.group(2))
         self.link = match.group(3).replace("\\", "/")
         self.raw_pos = remove_emojis(match.group(4))
-        self.key = None
+        self.legacy_key = None
+        self.legacy_key_token = None
         self.eval = None
         self.variables = {}
         self.variable_tokens = []
         self.is_ref = is_ref
-        self.__parse_key()
+        self.__parse_legacy_key()
         words = self.filter_tags(self.raw_pre + " " + self.title + " " + self.raw_pos).split()
         self.__parse_fields(words)
         self.__require_eval()
         return True
 
     def filter_tags(self, text: str) -> str:
-        return text.replace("`", " ").replace("<!--", " ").replace("-->", " ")
+        return strip_source_comments(text).replace("`", " ").replace("<!--", " ").replace("-->", " ")
 
-    def __parse_key(self) -> None:
-        words = self.filter_tags(self.raw_pre + " " + self.raw_pos + " " + self.title).split()
+    def __parse_legacy_key(self) -> None:
+        """Read old ``@key`` metadata without making it part of the format.
+
+        Canonical tasks derive their identity from the local README path.  The
+        token is retained solely so old direct GitHub links can still load
+        until they are materialized.
+        """
+        words = self.filter_tags(self.raw_pre).split()
         for item in words:
             if item.startswith("@"):
-                self.key = TaskMatcher.__filter_task_key(item)
+                self.legacy_key = TaskMatcher.__filter_task_key(item)
+                self.legacy_key_token = item
                 break
 
     @staticmethod
     def is_field(value: str) -> bool:
-        return value.startswith("@") or value.startswith(":") or ("=" in value and value.count("=") == 1)
+        return value.startswith(":") or ("=" in value and value.count("=") == 1)
 
     def get_filled_fields(self) -> list[str]:
         output: list[str] = []
-        if self.key is not None:
-            output.append(f"@{self.key}")
         if self.eval is not None:
             output.append(f"{self.EVAL}{self.eval.value}")
         output.extend(self.variable_tokens)

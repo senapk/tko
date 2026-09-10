@@ -105,7 +105,7 @@ def tool_rebase_links(
         with tempfile.TemporaryDirectory() as tmpdir:
             temp_file: str = str(Path(tmpdir) / "temp.md")
             ghu_downloader: GitHubUrlDownloader = GitHubUrlDownloader(target)
-            ghu_downloader.download_and_rebase(temp_file)
+            ghu_downloader.download_and_rebase(temp_file, index=True)
             Console.print(_CLI_TOOL_REBASE_URL_DOWNLOADED.t().format(url=target))
             Console.print(_CLI_TOOL_REBASE_DONE)
             Console.print(_CLI_TOOL_REBASE_SAVED_PATH.t().format(path=output_path))

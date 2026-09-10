@@ -28,11 +28,11 @@ def test_duplicate_tasks_keep_only_first_occurrence(tmp_path: Path) -> None:
         tmp_path,
         "# Course\n\n"
         "## First <!-- @first -->\n"
-        "- [ ] `@same eval=none` [First occurrence](first/README.md)\n"
-        "- [ ] `@same eval=none` [Same quest duplicate](duplicate/README.md)\n"
+        "- [ ] `eval=none` [First occurrence](same/README.md)\n"
+        "- [ ] `eval=none` [Same quest duplicate](same/README.md)\n"
         "## Second <!-- @second -->\n"
-        "- [ ] `@same eval=none` [Other quest duplicate](other/README.md)\n"
-        "- [ ] `@unique eval=none` [Unique](unique/README.md)\n",
+        "- [ ] `eval=none` [Other quest duplicate](same/README.md)\n"
+        "- [ ] `eval=none` [Unique](unique/README.md)\n",
     )
 
     assert quest_tasks(builder, "first") == ["same"]
@@ -147,7 +147,7 @@ def test_same_item_key_is_allowed_in_different_sources(tmp_path: Path) -> None:
 def test_quest_goal_uses_reference_task_xp(tmp_path: Path) -> None:
     builder = build_game(
         tmp_path,
-        "---\nvar: [value]\nxp: \"value\"\n---\n\n# Course\n\n"
+        "---\nargs: [value]\nexpr: \"value\"\n---\n\n# Course\n\n"
         "## Quest <!-- @quest -->\n"
         "- [x] `@reference value=6 eval=diff` [Reference](reference/README.md)\n"
         "- [ ] `@alternative value=20 eval=diff` [Alternative](alternative/README.md)\n"
@@ -162,7 +162,7 @@ def test_quest_goal_uses_reference_task_xp(tmp_path: Path) -> None:
 def test_quest_goal_uses_all_non_wiki_task_xp_without_references(tmp_path: Path) -> None:
     builder = build_game(
         tmp_path,
-        "---\nvar: [value]\nxp: \"value\"\n---\n\n# Course\n\n"
+        "---\nargs: [value]\nexpr: \"value\"\n---\n\n# Course\n\n"
         "## Quest <!-- @quest -->\n"
         "- [ ] `@first value=6 eval=diff` [First](first/README.md)\n"
         "- [ ] `@second value=8 eval=self` [Second](second/README.md)\n"
@@ -178,13 +178,13 @@ def test_each_source_uses_its_own_xp_formula(tmp_path: Path) -> None:
     first = tmp_path / "first.md"
     second = tmp_path / "second.md"
     first.write_text(
-        "---\nvar: [value]\nxp: \"value\"\n---\n"
+        "---\nargs: [value]\nexpr: \"value\"\n---\n"
         "## Quest <!-- @quest -->\n"
         "- [ ] `@task value=3 eval=diff` [Task](task/README.md)\n",
         encoding="utf-8",
     )
     second.write_text(
-        "---\nvar: [gain, depth]\nxp: \"gain * depth\"\n---\n"
+        "---\nargs: [gain, depth]\nexpr: \"gain * depth\"\n---\n"
         "## Quest <!-- @quest -->\n"
         "- [ ] `@task gain=3 depth=2 eval=diff` [Task](task/README.md)\n",
         encoding="utf-8",

@@ -9,7 +9,6 @@ from tko.repository.repository_config import RepositoryLoader
 from tko.repository.remote import Source
 from tko.game.game import Game
 from tko.repository.remote_resolver import SourceResolver
-from loguru import logger
 
 
 def test_ensure_managed_readmes_removes_missing_task_during_load(tmp_path: Path) -> None:
@@ -37,7 +36,7 @@ def test_ensure_managed_readmes_removes_missing_task_during_load(tmp_path: Path)
     assert "labs/missing/README.md" not in index_file.read_text(encoding="utf-8")
 
 
-def test_managed_source_warns_when_task_key_differs_from_path(tmp_path: Path) -> None:
+def test_managed_source_normalizes_task_key_to_path(tmp_path: Path) -> None:
     index_file = tmp_path / "README.md"
     source_dir = tmp_path / "labs"
     task_dir = source_dir / "task"
@@ -53,14 +52,11 @@ def test_managed_source_warns_when_task_key_differs_from_path(tmp_path: Path) ->
         source_work_dir=lambda _source: source_dir,
         resolve_index_file=lambda _remote, load_git=False: (index_file, True),
     )
-    messages: list[str] = []
-    sink_id = logger.add(messages.append, level="WARNING", format="{message}")
-    try:
-        GameCoordinator(repo).ensure_managed_readmes_fixed(repo, resolver)
-    finally:
-        logger.remove(sink_id)
+    GameCoordinator(repo).ensure_managed_readmes_fixed(repo, resolver)
 
-    assert any("'wrong'" in message and "'labs/task'" in message for message in messages)
+    content = index_file.read_text(encoding="utf-8")
+    assert "[Task](labs/task/README.md)" in content
+    assert "@wrong" not in content
 
 
 def test_load_game_exposes_the_same_unique_tasks_in_quests_and_task_map(tmp_path: Path) -> None:
@@ -68,14 +64,14 @@ def test_load_game_exposes_the_same_unique_tasks_in_quests_and_task_map(tmp_path
     index_file.write_text(
         "# Course\n\n"
         "## First <!-- @first -->\n"
-        "- [ ] `@same eval=none` [First](first/README.md)\n"
+        "- [ ] `eval=none` [First](same/README.md)\n"
         "## Second <!-- @second -->\n"
-        "- [ ] `@same eval=none` [Duplicate](first/README.md)\n"
-        "- [ ] `@unique eval=none` [Unique](unique/README.md)\n",
+        "- [ ] `eval=none` [Duplicate](same/README.md)\n"
+        "- [ ] `eval=none` [Unique](unique/README.md)\n",
         encoding="utf-8",
     )
-    (tmp_path / "first").mkdir()
-    (tmp_path / "first" / "README.md").write_text("# First\n", encoding="utf-8")
+    (tmp_path / "same").mkdir()
+    (tmp_path / "same" / "README.md").write_text("# First\n", encoding="utf-8")
     (tmp_path / "unique").mkdir()
     (tmp_path / "unique" / "README.md").write_text("# Unique\n", encoding="utf-8")
     rs = RunSettings(changedir=tmp_path)
@@ -106,7 +102,7 @@ def test_game_loads_remote_source_from_materialized_index_offline(tmp_path: Path
     snapshot.write_text(
         "# Course\n\n"
         "## Basics key=@basics\n"
-            "- [ ] `@carro eval=none` [Carro](labs/carro/README.md)\n",
+            "- [ ] `eval=none` [Carro](labs/carro/README.md)\n",
         encoding="utf-8",
     )
     source = Source.from_git_file("disc", "https://github.com/user/course", index="README.md")
@@ -119,4 +115,4 @@ def test_game_loads_remote_source_from_materialized_index_offline(tmp_path: Path
 
     game.build(resolver)
 
-    assert "disc@carro" in game.tasks
+    assert "disc@labs/carro" in game.tasks

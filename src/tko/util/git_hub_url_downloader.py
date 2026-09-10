@@ -50,11 +50,15 @@ class GitHubUrlDownloader:
         content = Decoder.load(tempfile)
         return content
 
-    def download_and_rebase(self, filename: str):
+    def download_and_rebase(self, filename: str, index: bool = False):
         [tempfile, __content] = urllib.request.urlretrieve(self.fixed_url, filename)
         content = Decoder.load(tempfile)
         if self.url_structure is not None:
-            rebased = LinkRebase.rebase(content, self.url_structure)
+            rebased = (
+                LinkRebase.rebase_index(content, self.url_structure)
+                if index
+                else LinkRebase.rebase(content, self.url_structure)
+            )
             content = rebased
         Decoder.save(filename, content)
         return

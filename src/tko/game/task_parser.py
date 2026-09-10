@@ -5,6 +5,7 @@ from tko.game.task_location import TaskLocation
 from tko.game.task_matcher import TaskMatcher
 from tko.game.source_xp_config import SourceXpConfig
 from tko.util.git_hub_url import GitHubUrl
+from tko.feno.task_source import activity_path_from_local_link
 from tko.i18n import Msg
 from icecream import ic # type: ignore
 from pathlib import Path
@@ -28,8 +29,8 @@ class TaskParser:
     A configured source supplies the variable names and formula in its leading YAML
     front matter. Variables are transient: this parser stores only the resulting XP.
 
-    `eval=none` remains XP-free and does not need variables. An unconfigured source
-    is accepted for migration and assigns zero XP to every task.
+    `eval=none` remains XP-free and does not need variables. An unconfigured
+    source assigns the default one XP to every evaluable task.
     """
 
     def __init__(self, index_path: Path, external_source: bool = False, xp_config: SourceXpConfig | None = None):
@@ -40,8 +41,7 @@ class TaskParser:
 
     def __remove_tags_from_title(self, text: str) -> str:
         """
-        Remove tags (prefixos começando com : ou @) do título extraído do índice.
-        Exemplo: ':read @foo Título' -> 'Título'
+        Remove campos de configuração do título extraído do índice.
         """
         words: list[str] = [w for w in text.split()]
         output: list[str] = []
@@ -73,16 +73,13 @@ class TaskParser:
             source = self.xp_config.source_name or "source"
             raise ValueError(f"{source}:{self.index_path}:{line_num}: {exc}") from exc
         task = self.task
-        if tm.key is not None:
-            task.basic.key = tm.key
-        elif not tm.is_url and Path(tm.link).name == "README.md":
-            link_path = Path(tm.link)
-            if link_path.is_absolute():
-                link_path = link_path.resolve()
-            else:
-                link_path = (self.index_path.parent / link_path).resolve()
+        if tm.is_url:
+            # Direct remote links are migration-only. They retain their old
+            # explicit key until ``tko index download`` creates a local link.
+            task.basic.key = tm.legacy_key or ""
+        else:
             try:
-                task.basic.key = link_path.parent.relative_to(self.index_path.parent.resolve()).as_posix()
+                task.basic.key = activity_path_from_local_link(tm.link).as_posix()
             except ValueError:
                 task.basic.key = ""
 
@@ -90,7 +87,7 @@ class TaskParser:
         task.config = TaskConfig(eval=tm.eval)
         task.basic.title = self.__remove_tags_from_title(tm.title)
 
-        if task.basic.key == "" or (tm.is_url and tm.key is None):
+        if task.basic.key == "":
             return None
 
         TaskMatcher.validate_key(task.basic.key)
@@ -128,5 +125,4 @@ class TaskParser:
                 )
             return
 
-        if Path(link).name != "README.md":
-            raise ValueError(f"Task activity must point to a README file: {link}")
+        activity_path_from_local_link(link)
