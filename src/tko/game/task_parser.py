@@ -3,6 +3,7 @@ from tko.game.task import Task
 from tko.game.task_config import TaskConfig
 from tko.game.task_location import TaskLocation
 from tko.game.task_matcher import TaskMatcher
+from tko.game.source_xp_config import SourceXpConfig
 from tko.util.git_hub_url import GitHubUrl
 from tko.i18n import Msg
 from icecream import ic # type: ignore
@@ -22,44 +23,20 @@ _TASK_PARSER_EDIT_EXTERNAL_URL = Msg.text(
 
 class TaskParser:
     """
-    Faz o parsing de linhas de tarefas no formato markdown, suportando tanto o modelo chave-valor quanto o modelo antigo.
+    Parses Markdown task lines using the source's optional XP configuration.
 
-    Formato canônico (chave-valor):
-        - [ ] `@t1 eval=diff gcs=312` [Título](t1/README.md)
-        - [ ] `@t2 gcs=2 eval=none` [Material](wiki/material/README.md)
+    A configured source supplies the variable names and formula in its leading YAML
+    front matter. Variables are transient: this parser stores only the resulting XP.
 
-    Campos suportados:
-        - @chave: identificador único da task
-        - gain=valor: utilidade / valor da tarefa (antigo xp)
-        - cost=valor: nível de custo da tarefa (1-6)
-        - size=valor: tamanho / extensão da tarefa
-        - gcs=valores: forma compacta, na ordem gain, cost, size
-        - eval=none, eval=self ou eval=diff: modo de avaliação e fluxo da tarefa
-
-    Valores padrão:
-        - gain: 1
-        - cost: 1
-        - size: 1
-        - eval: obrigatório
-
-    Notas:
-        - Para links locais, @chave é derivada do caminho relativo ao índice.
-        - Para links externos, @chave explícita é obrigatória.
-        - Campos não obrigatórios assumem valores padrão.
-        - Sintaxes antigas de tipo e pontuação não são aceitas.
-        - Links externos devem ser URLs do GitHub apontando para um README.md; eles são tratados como tarefas remotas importáveis.
-
-    Exemplos:
-        - [ ] `@t1  eval=diff gcs=312` [Implementar soma](t1/README.md)
-        - [ ] `@t2  gcs=2 eval=none`   [Ler material](wiki/material/README.md)
-        - [ ] `@foo eval=self gcs=322`  [Tarefa de exemplo](exemplo/README.md)
-        - [ ] `@bar eval=none`                     [Material externo](https://github.com/user/repo/blob/main/wiki/material/README.md)
+    `eval=none` remains XP-free and does not need variables. An unconfigured source
+    is accepted for migration and assigns zero XP to every task.
     """
 
-    def __init__(self, index_path: Path, external_source: bool = False):
+    def __init__(self, index_path: Path, external_source: bool = False, xp_config: SourceXpConfig | None = None):
         self.index_path = index_path
         self.task: Task = Task()
         self.external_source = external_source
+        self.xp_config = xp_config or SourceXpConfig(index_path=index_path)
 
     def __remove_tags_from_title(self, text: str) -> str:
         """
@@ -88,9 +65,13 @@ class TaskParser:
 
         Retorna None se a linha não corresponder ao padrão esperado.
         """
-        tm = TaskMatcher()
-        if not tm.match_pattern(line):
-            return None
+        tm = TaskMatcher(self.xp_config)
+        try:
+            if not tm.match_pattern(line):
+                return None
+        except ValueError as exc:
+            source = self.xp_config.source_name or "source"
+            raise ValueError(f"{source}:{self.index_path}:{line_num}: {exc}") from exc
         task = self.task
         if tm.key is not None:
             task.basic.key = tm.key
@@ -105,9 +86,6 @@ class TaskParser:
             except ValueError:
                 task.basic.key = ""
 
-        task.game.gain = tm.gain
-        task.game.cost = tm.cost
-        task.game.size = tm.size
         task.is_reference = tm.is_ref
         task.config = TaskConfig(eval=tm.eval)
         task.basic.title = self.__remove_tags_from_title(tm.title)
@@ -127,6 +105,11 @@ class TaskParser:
             git_hub_url=GitHubUrl.parse(tm.link),
             external_source=self.external_source,
         )
+
+        if task.config.awards_xp:
+            task.game.xp = self.xp_config.calculate(tm.variables, task.basic.key, line_num)
+        else:
+            task.game.xp = 0.0
 
         return task
 

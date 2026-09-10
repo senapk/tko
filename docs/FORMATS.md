@@ -89,6 +89,23 @@ Placeholders:
 
 O README de trilha funciona como índice de quests e tasks.
 
+No início do arquivo, a fonte pode declarar as variáveis usadas para pontuar suas
+próprias tarefas e a fórmula de XP:
+
+```md
+---
+var: [value, depth, scope]
+xp: "(value * depth * scope) ** (1 / 3)"
+---
+```
+
+`var` e `xp` pertencem à fonte. Cada task avaliável fornece os valores como
+`value=3 depth=2 scope=1`; o TKO calcula o XP durante o parsing e retém apenas
+esse resultado para a gamificação. A fórmula aceita números, variáveis declaradas,
+`+`, `-`, `*`, `/`, `**` e parênteses. Fontes sem esses dois campos recebem XP zero
+durante a migração. Tarefas `eval=none` continuam com XP zero e não precisam das
+variáveis.
+
 Elementos comuns:
 
 1. Cabeçalhos (`##`/`###`) representando quests.
@@ -97,7 +114,7 @@ Elementos comuns:
 Exemplo de linha:
 
 ```md
-- [ ] `@tres eval=diff gcs=1` [Soma de três inteiros](labs/tres/README.md)
+- [ ] `@tres eval=diff value=2 depth=1 scope=1` [Soma de três inteiros](labs/tres/README.md)
 ```
 
 Semântica resumida:
@@ -105,8 +122,8 @@ Semântica resumida:
 - `@chave` identifica a tarefa;
 - `[x]` marca a tarefa como referência para a meta da quest; `[ ]` marca uma alternativa;
 - `eval` é obrigatório e pode ser `none`, `self` ou `diff`;
-- `gain`, `cost` e `size` definem os atributos da tarefa;
-- o XP é `((gain + size) × cost) ÷ 2`; `eval=none` sempre possui XP zero;
+- os pares `nome=valor` são variáveis transitórias declaradas por `var`;
+- o XP é definido pela fórmula `xp` da fonte; `eval=none` sempre possui XP zero;
 - tarefas externas são materializadas; `eval=none` cria apenas o material,
   `eval=self` cria também um draft, e `eval=diff` cria código e testes;
 - `eval=self` usa feedback manual; `eval=diff` usa testes por entrada e saída;

@@ -160,7 +160,7 @@ def test_fix_readme_preserves_eval_self(tmp_path: Path) -> None:
 
     content = index_path.read_text(encoding="utf-8")
     assert "eval=self" in content
-    assert "gcs=22" in content
+    assert "gain=2 cost=2 size=1" in content
 
 
 def test_fix_readme_uses_canonical_defaults_and_aligned_columns(tmp_path: Path) -> None:
@@ -176,7 +176,8 @@ def test_fix_readme_uses_canonical_defaults_and_aligned_columns(tmp_path: Path) 
     fix_readme(index_path, base_dir, verbose=False)
 
     line = next(line for line in index_path.read_text(encoding="utf-8").splitlines() if "@base/long_task" in line)
-    assert "eval=diff gcs=1" in line
+    assert "eval=diff" in line
+    assert "gcs=" not in line
     assert "📖" not in line and "🛠" not in line
 
 
@@ -198,8 +199,8 @@ def test_fix_readme_can_skip_column_alignment(tmp_path: Path) -> None:
     fix_readme(index_path, base_dir, verbose=False, align=False)
 
     task_lines = [line for line in index_path.read_text(encoding="utf-8").splitlines() if line.startswith("- [")]
-    assert "`@a eval=none gcs=1`" in task_lines[0]
-    assert "`@long_task eval=diff gcs=2`" in task_lines[1]
+    assert "`@a eval=none`" in task_lines[0]
+    assert "`@long_task eval=diff gain=2`" in task_lines[1]
 
 
 def test_fix_readme_aligns_columns_by_default(tmp_path: Path) -> None:
@@ -220,8 +221,8 @@ def test_fix_readme_aligns_columns_by_default(tmp_path: Path) -> None:
     fix_readme(index_path, base_dir, verbose=False)
 
     task_lines = [line for line in index_path.read_text(encoding="utf-8").splitlines() if line.startswith("- [")]
-    assert "`@a         eval=none gcs=1 `" in task_lines[0]
-    assert "`@long_task eval=diff gcs=3 `" in task_lines[1]
+    assert "@a" in task_lines[0] and "eval=none" in task_lines[0] and "gcs=" not in task_lines[0]
+    assert "@long_task" in task_lines[1] and "eval=diff gain=20" in task_lines[1]
 
 
 @pytest.mark.parametrize(
@@ -299,7 +300,29 @@ def test_fix_readme_preserves_none_fields(tmp_path: Path) -> None:
     fix_readme(index_path, base_dir, verbose=False)
 
     line = next(line for line in index_path.read_text(encoding="utf-8").splitlines() if "@reading" in line)
-    assert "eval=none gcs=332" in line
+    assert "eval=none gain=4 cost=3 size=2" in line
+
+
+def test_fix_readme_preserves_yaml_front_matter_and_variable_fields(tmp_path: Path) -> None:
+    from tko.feno.indexer import fix_readme
+
+    index_path = tmp_path / "README.md"
+    base_dir = tmp_path / "base"
+    task_dir = base_dir / "task"
+    task_dir.mkdir(parents=True)
+    (task_dir / "README.md").write_text("# Task\n", encoding="utf-8")
+    index_path.write_text(
+        "---\nvar: [value, depth]\nxp: \"value * depth\"\n---\n"
+        "- [ ] `@task value=3 depth=2 eval=diff` [Task](base/task/README.md)\n",
+        encoding="utf-8",
+    )
+
+    fix_readme(index_path, base_dir, verbose=False, align=False)
+
+    content = index_path.read_text(encoding="utf-8")
+    assert "var: [value, depth]" in content
+    assert 'xp: "value * depth"' in content
+    assert "`@task eval=diff value=3 depth=2`" in content
 
 
 def test_fix_readme_removes_quest_xpgoal(tmp_path: Path) -> None:

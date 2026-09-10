@@ -7,6 +7,7 @@ from tko.game.quest import Quest
 from tko.game.task import Task
 from tko.util.decoder import Decoder
 from tko.i18n import Msg
+from tko.game.source_xp_config import SourceXpConfig
 
 _GAME_BUILDER_README_FETCH_ERROR = Msg.text(
     pt="Erro ao obter o arquivo README da fonte {name}",
@@ -49,6 +50,7 @@ class GameBuilder:
         self.active_quest: Quest | None = None
         self._registered_keys: set[str] = set()
         self.interactive: bool = False
+        self.xp_config = SourceXpConfig(source_name=source_name, index_path=index_path)
 
     def set_interactive(self, interactive: bool):
         self.interactive = interactive
@@ -62,6 +64,7 @@ class GameBuilder:
 
         filename = self.index_path
         content = Decoder.load(filename)
+        self.xp_config = SourceXpConfig.from_markdown(content, self.source_name, filename)
         self.__parse_file_content(content)
         self.__remove_empty_and_other_language_and_filtered(language)
         self.__calculate_total_xp()
@@ -104,7 +107,11 @@ class GameBuilder:
             if quest is not None:
                 self.__add_quest(quest_parser.finish_quest())
                 continue
-            tp = TaskParser(index_path=self.index_path, external_source=self.external_source)
+            tp = TaskParser(
+                index_path=self.index_path,
+                external_source=self.external_source,
+                xp_config=self.xp_config,
+            )
             task = tp.parse_line(line, line_num + 1)
             if task is not None:
                 task.basic.source_name = self.source_name

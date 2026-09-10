@@ -83,15 +83,11 @@ Para links GitHub em tarefas:
 `TaskMatcher` interpreta campos como:
 
 - `@chave`: identificador da task.
-- `gain=valor`: valor pedagogico.
-- `cost=valor`: custo/dificuldade da tarefa.
-- `size=valor`: tamanho ou extensao.
+- `nome=valor`: variável numérica declarada no campo `var` do YAML da fonte.
 - `eval=none`, `eval=self` ou `eval=diff`: modo de avaliacao.
 
-Defaults aplicados pelo parser:
-
-- `gain=1`, `cost=1`, `size=1`.
-- O modo `eval` é obrigatório.
+O modo `eval` é obrigatório. Em tarefas avaliáveis, todas as variáveis declaradas
+pela fonte são obrigatórias; `eval=none` continua sem XP e sem essa exigência.
 
 Sintaxes antigas com `:read`, `:make`, `:test`, `:self`, `xp=`, `tier=`, `hard=` e `type=` não são aceitas.
 

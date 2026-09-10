@@ -49,12 +49,17 @@ O indice trabalha com dois niveis:
 Exemplo minimo:
 
 ```md
+---
+var: [value]
+xp: "value"
+---
+
 # Minha Disciplina
 
 ## Operacoes Basicas key=@basic tag=basic xpgoal=2 min=70%
 
-- [x] `@soma  eval=diff gain=1 cost=1 size=1` [Soma](labs/soma/README.md)
-- [x] `@media eval=diff gain=1 cost=1 size=1` [Media](labs/media/README.md)
+- [x] `@soma  eval=diff value=1` [Soma](labs/soma/README.md)
+- [x] `@media eval=diff value=1` [Media](labs/media/README.md)
 ```
 
 Use `[x]` nas tarefas que contam para a meta principal da quest. Ao rodar
@@ -93,23 +98,20 @@ Cada task e uma linha Markdown com checkbox, metadados entre crases e link para
 o recurso.
 
 ```md
-- [ ] `@soma eval=diff gain=1 cost=1 size=1` [Soma](labs/soma/README.md)
-- [ ] `@intro gain=1 cost=1 size=1 eval=none` [Texto introdutorio](wiki/intro/README.md)
+- [ ] `@soma eval=diff value=1` [Soma](labs/soma/README.md)
+- [ ] `@intro eval=none` [Texto introdutorio](wiki/intro/README.md)
 ```
 
 Campos mais usados:
 
 - `@chave`: identificador unico da task.
-- `gain=valor`: ganho pedagogico.
-- `cost=valor`: custo/dificuldade.
-- `size=valor`: tamanho ou volume de trabalho.
+- `nome=valor`: variável numérica declarada em `var` no YAML da fonte.
 - `eval=diff`: avaliacao automatica.
 - `eval=self`: autoavaliacao.
 - `eval=none`: leitura ou consulta sem avaliação.
 
 Padroes aplicados pelo TKO:
 
-- `gain=1`, `cost=1`, `size=1`.
 - `eval` é obrigatório.
 
 Sintaxes antigas como `xp=`, `tier=`, `:make`, `:read`, `:test` e `:self` ainda

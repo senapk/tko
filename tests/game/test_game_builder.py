@@ -147,11 +147,11 @@ def test_same_item_key_is_allowed_in_different_sources(tmp_path: Path) -> None:
 def test_quest_goal_uses_reference_task_xp(tmp_path: Path) -> None:
     builder = build_game(
         tmp_path,
-        "# Course\n\n"
+        "---\nvar: [value]\nxp: \"value\"\n---\n\n# Course\n\n"
         "## Quest <!-- @quest -->\n"
-        "- [x] `@reference gain=4 cost=2 size=3 eval=diff` [Reference](reference/README.md)\n"
-        "- [ ] `@alternative gain=20 cost=1 size=1 eval=diff` [Alternative](alternative/README.md)\n"
-        "- [x] `@material gain=100 cost=4 size=4 eval=none` [Material](material/README.md)\n",
+        "- [x] `@reference value=6 eval=diff` [Reference](reference/README.md)\n"
+        "- [ ] `@alternative value=20 eval=diff` [Alternative](alternative/README.md)\n"
+        "- [x] `@material eval=none` [Material](material/README.md)\n",
     )
 
     quest = builder.collect_quests()["base@quest"]
@@ -162,13 +162,38 @@ def test_quest_goal_uses_reference_task_xp(tmp_path: Path) -> None:
 def test_quest_goal_uses_all_non_wiki_task_xp_without_references(tmp_path: Path) -> None:
     builder = build_game(
         tmp_path,
-        "# Course\n\n"
+        "---\nvar: [value]\nxp: \"value\"\n---\n\n# Course\n\n"
         "## Quest <!-- @quest -->\n"
-        "- [ ] `@first gain=4 cost=2 size=3 eval=diff` [First](first/README.md)\n"
-        "- [ ] `@second gain=8 cost=1 size=1 eval=self` [Second](second/README.md)\n"
-        "- [ ] `@material gain=100 cost=4 size=4 eval=none` [Material](material/README.md)\n",
+        "- [ ] `@first value=6 eval=diff` [First](first/README.md)\n"
+        "- [ ] `@second value=8 eval=self` [Second](second/README.md)\n"
+        "- [ ] `@material eval=none` [Material](material/README.md)\n",
     )
 
     quest = builder.collect_quests()["base@quest"]
 
-    assert quest.game.goal_xp == 8.0
+    assert quest.game.goal_xp == 14.0
+
+
+def test_each_source_uses_its_own_xp_formula(tmp_path: Path) -> None:
+    first = tmp_path / "first.md"
+    second = tmp_path / "second.md"
+    first.write_text(
+        "---\nvar: [value]\nxp: \"value\"\n---\n"
+        "## Quest <!-- @quest -->\n"
+        "- [ ] `@task value=3 eval=diff` [Task](task/README.md)\n",
+        encoding="utf-8",
+    )
+    second.write_text(
+        "---\nvar: [gain, depth]\nxp: \"gain * depth\"\n---\n"
+        "## Quest <!-- @quest -->\n"
+        "- [ ] `@task gain=3 depth=2 eval=diff` [Task](task/README.md)\n",
+        encoding="utf-8",
+    )
+    sources = {"first": Source.from_local_file("first", first), "second": Source.from_local_file("second", second)}
+    resolver = SimpleNamespace(resolve_index_file=lambda source, load_git: ({"first": first, "second": second}[source.name], True))
+
+    game = Game().set_sources(sources, "")
+    game.build(resolver)  # type: ignore[arg-type]
+
+    assert game.tasks["first@task"].xp == 3.0
+    assert game.tasks["second@task"].xp == 6.0

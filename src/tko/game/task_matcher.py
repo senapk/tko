@@ -1,6 +1,8 @@
 import re
 
+from tko.game.source_xp_config import SourceXpConfig
 from tko.game.task_enums import EvalMode
+
 
 def remove_emojis(text: str) -> str:
     emoji_pattern = re.compile(
@@ -14,185 +16,125 @@ def remove_emojis(text: str) -> str:
         "]+",
         flags=re.UNICODE,
     )
-
     return emoji_pattern.sub('', text)
 
+
 class TaskMatcher:
-    GAIN = "gain="
-    COST = "cost="
-    SIZE = "size="
-    GCS = "gcs="
     EVAL = "eval="
-
-
     PATTERN = r'(.*?)\[(.*?)\]\(([^()]*)\)(.*)$'
     REF_T = r'^- \[x\]' + PATTERN
     REF_F = r'^- \[ \]' + PATTERN
     ALLOWED = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-+/"
+    NUMBER = re.compile(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?\Z")
 
-    def __init__(self):
+    def __init__(self, xp_config: SourceXpConfig | None = None):
+        self.xp_config = xp_config
         self.raw_line: str = ""
         self.raw_pre: str = ""
         self.raw_pos: str = ""
         self.title: str = ""
         self.link: str = ""
         self.is_ref: bool = False
-
         self.key: str | None = None
-
         self.eval: EvalMode | None = None
-        self.gain = 1
-        self.cost = 1
-        self.size = 1
+        self.variables: dict[str, float] = {}
+        self.variable_tokens: list[str] = []
 
     def match_pattern(self, line: str) -> bool:
-        is_ref: bool = False
         match = re.match(TaskMatcher.REF_T, line)
-        if match is not None:
-            is_ref = True
-        else:
+        is_ref = match is not None
+        if match is None:
             match = re.match(TaskMatcher.REF_F, line)
             if match is None:
                 return False
 
         self.raw_line = line
-        self.raw_pre = ""
-        self.raw_pos = ""
-        self.title = ""
-        self.link = ""
-        self.key = None
-        self.eval = None
-        self.gain = 1
-        self.cost = 1
-        self.size = 1
-        self.is_ref = is_ref
         self.raw_pre = remove_emojis(match.group(1))
         self.title = remove_emojis(match.group(2))
         self.link = match.group(3).replace("\\", "/")
         self.raw_pos = remove_emojis(match.group(4))
+        self.key = None
+        self.eval = None
+        self.variables = {}
+        self.variable_tokens = []
+        self.is_ref = is_ref
         self.__parse_key()
-
-        text = self.filter_tags(self.raw_pre + " " + self.title + " " + self.raw_pos)
-        words = [w for w in text.split()]
+        words = self.filter_tags(self.raw_pre + " " + self.title + " " + self.raw_pos).split()
         self.__parse_fields(words)
-
-        self.__set_default_values()
+        self.__require_eval()
         return True
-    
 
-    
     def filter_tags(self, text: str) -> str:
         return text.replace("`", " ").replace("<!--", " ").replace("-->", " ")
 
-    def __parse_key(self):
-        text = self.filter_tags(self.raw_pre + " " + self.raw_pos + " " + self.title)
-        words = [w for w in text.split()]
+    def __parse_key(self) -> None:
+        words = self.filter_tags(self.raw_pre + " " + self.raw_pos + " " + self.title).split()
         for item in words:
             if item.startswith("@"):
                 self.key = TaskMatcher.__filter_task_key(item)
                 break
 
     @staticmethod
-    def parse_int(value: str) -> int | None:
-        try:
-            return int(value)
-        except ValueError:
-            return None
-
-    @staticmethod
-    def is_field(v: str) -> bool:
-        return ( v.startswith("@") or v.startswith(":") or ("=" in v and len(v.split("=")) == 2))
+    def is_field(value: str) -> bool:
+        return value.startswith("@") or value.startswith(":") or ("=" in value and value.count("=") == 1)
 
     def get_filled_fields(self) -> list[str]:
         output: list[str] = []
         if self.key is not None:
             output.append(f"@{self.key}")
-
         if self.eval is not None:
-            output.append(f"{TaskMatcher.EVAL}{self.eval.value}")
-
-        gcs = [self.gain, self.cost, self.size]
-        while len(gcs) > 1 and gcs[-1] == 1:
-            gcs.pop()
-        output.append(f"{TaskMatcher.GCS}{''.join(str(value) for value in gcs)}")
-
+            output.append(f"{self.EVAL}{self.eval.value}")
+        output.extend(self.variable_tokens)
         return output
 
-    def __parse_fields(self, words: list[str]):
-        compact_values: tuple[int, int, int] | None = None
-        explicit_gain: int | None = None
-        explicit_cost: int | None = None
-        explicit_size: int | None = None
-
+    def __parse_fields(self, words: list[str]) -> None:
+        declared = set(self.xp_config.variables) if self.xp_config and self.xp_config.is_configured else None
         for item in words:
-            item = item.lower()
-            if item.startswith(TaskMatcher.GCS):
-                compact_values = self.__parse_gcs(item[len(TaskMatcher.GCS):])
-                continue
-            if item.startswith(TaskMatcher.COST):
-                if (cost_value := self.parse_int(item[len(TaskMatcher.COST):])) is not None:
-                    explicit_cost = min(cost_value, 6)
-                continue
-            if item.startswith(TaskMatcher.GAIN):
-                if (gain_value := self.parse_int(item[len(TaskMatcher.GAIN):])) is not None:
-                    explicit_gain = min(gain_value, 3)
-                continue
-            if item.startswith(TaskMatcher.SIZE):
-                if (size_value := self.parse_int(item[len(TaskMatcher.SIZE):])) is not None:
-                    explicit_size = min(size_value, 3)
-                continue
-            elif item.startswith(TaskMatcher.EVAL):
-                value = item[len(TaskMatcher.EVAL):]
+            if item.startswith(self.EVAL):
                 try:
-                    self.eval = EvalMode(value)
+                    self.eval = EvalMode(item[len(self.EVAL):].lower())
                 except ValueError as exc:
                     raise ValueError("eval= must be one of none, self or diff") from exc
-            elif item.startswith(("hard=", "tier=", "xp=", "type=")):
-                raise ValueError("Obsolete task field; use eval=none|self|diff, gain=, cost= and size=")
-            elif item.startswith(":") and item[1:] in {"read", "make", "self", "diff", "test"}:
-                raise ValueError("Legacy colon task tags are unsupported; use eval=none|self|diff")
+        if declared is not None and self.eval == EvalMode.NONE:
+            return
+        for item in words:
+            if item.startswith(self.EVAL):
+                continue
+            if "=" not in item or item.count("=") != 1:
+                continue
+            name, raw_value = item.split("=", 1)
+            if not name:
+                continue
+            if declared is not None:
+                if name not in declared:
+                    raise ValueError(f"Undeclared task variable: {name}")
+                if self.NUMBER.fullmatch(raw_value) is None:
+                    raise ValueError(f"Task variable {name!r} must be an integer or real number")
+                self.variables[name] = float(raw_value)
+                self.variable_tokens.append(item)
+            else:
+                # A source without XP YAML keeps arbitrary task annotations intact.
+                self.variable_tokens.append(item)
 
-        if compact_values is not None:
-            self.gain, self.cost, self.size = compact_values
-        if explicit_gain is not None:
-            self.gain = explicit_gain
-        if explicit_cost is not None:
-            self.cost = explicit_cost
-        if explicit_size is not None:
-            self.size = explicit_size
-
-    @staticmethod
-    def __parse_gcs(value: str) -> tuple[int, int, int]:
-        if not re.fullmatch(r"[1-9][0-9]{0,2}", value):
-            raise ValueError("gcs= must contain one to three non-zero digits")
-
-        values = [int(digit) for digit in value]
-        gain, cost, size = (values + [1, 1, 1])[:3]
-        if not 1 <= gain <= 3 or not 1 <= cost <= 6 or not 1 <= size <= 3:
-            raise ValueError("gcs= values must be gain 1-3, cost 1-6 and size 1-3")
-        return gain, cost, size
-
-    def __set_default_values(self):
+    def __require_eval(self) -> None:
         if self.eval is None:
             raise ValueError("Task evaluation is required: use eval=none, eval=self or eval=diff")
 
     @property
-    def is_url(self):
+    def is_url(self) -> bool:
         return self.link.startswith("http://") or self.link.startswith("https://")
 
     @staticmethod
     def __filter_task_key(key: str) -> str | None:
-        # Remove leading @ and filter remaining characters
         if not key.startswith("@"):
             return None
-        key = key[1:]
-        new_key = ""
-        for c in key:
-            if c in TaskMatcher.ALLOWED:
-                new_key += c
+        filtered = ""
+        for char in key[1:]:
+            if char in TaskMatcher.ALLOWED:
+                filtered += char
             else:
                 break
-        return new_key if new_key else None
+        return filtered or None
 
     @staticmethod
     def validate_key(key: str) -> None:

@@ -41,12 +41,9 @@ Comportamento no codigo:
 
 ## Tasks: como entram na gamificacao
 
-Nas linhas de tarefa, o parser extrai os três indicadores da atividade:
-
-- Ganho (`gain=1..3`).
-- Custo/dificuldade (`cost=1..6`).
-- Tamanho (`size=1..3`).
-- Modo de avaliação (`eval=none`, `eval=diff`, `eval=self`).
+Nas linhas de tarefa, o parser extrai as variáveis numéricas declaradas no YAML
+da fonte e o modo de avaliação (`eval=none`, `eval=diff`, `eval=self`). Os nomes
+e significados das variáveis pertencem à fonte.
 
 Comportamento no codigo:
 
@@ -54,14 +51,8 @@ Comportamento no codigo:
 - Config de task: [src/tko/game/task_config.py](../src/tko/game/task_config.py)
 - Estado de jogo da task (xp/reachable): [src/tko/game/task_game.py](../src/tko/game/task_game.py)
 
-O XP base da tarefa é calculado pela raiz quadrada do produto dos três indicadores:
-
-$$
-\text{xp\_task} = \frac{(\text{gain} + \text{size}) \times \text{cost}}{2}
-$$
-
-Essa curva soma utilidade e tamanho e aplica `cost` como multiplicador. Por exemplo,
-`gain=1, cost=1, size=1` vale `1` XP, e `gain=3, cost=6, size=3` vale `18` XP.
+O XP base é calculado no parsing pela fórmula `xp` do YAML de cada fonte. Depois
+disso, a gamificação trabalha somente com o valor final de XP, sem reter variáveis.
 
 Valores internos de XP permanecem fracionários. A interface mostra tarefas com uma casa decimal truncada e somatórios sem parte fracionária.
 

@@ -59,8 +59,6 @@ class TreeRenderer:
         head.add(" ")
         head.add(" ").add(test)
         head.add(" ").add(state)
-        head.add(" ").add(t.game.cost_symbol)
-
         head.add(">" if focused else " ")
 
         if self.layout.insert_quest_keys:

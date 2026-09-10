@@ -34,4 +34,4 @@ def test_build_index_no_align_compacts_task_columns(tmp_path: Path) -> None:
     result = runner.invoke(app, ["index", str(index_path), str(base_dir), "--no-align"])
 
     assert result.exit_code == 0
-    assert "`@a eval=none gcs=1`" in index_path.read_text(encoding="utf-8")
+    assert "`@a eval=none`" in index_path.read_text(encoding="utf-8")

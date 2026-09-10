@@ -129,7 +129,7 @@ Pacote principal:
 Responsabilidades:
 
 1. Parse de quests e tasks.
-2. Cálculo de métricas (rate, quality e `Task.xp`).
+2. Parsing das variáveis transitórias declaradas pela fonte e cálculo de `Task.xp`.
 3. Cálculo da meta da quest a partir das tarefas de referência.
 
 ## Fluxo de dados (resumo)
