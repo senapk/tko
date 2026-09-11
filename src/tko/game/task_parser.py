@@ -84,7 +84,10 @@ class TaskParser:
                 task.basic.key = ""
 
         task.is_reference = tm.is_ref
-        task.config = TaskConfig(eval=tm.eval)
+        eval_mode = tm.eval
+        if eval_mode is None:
+            raise AssertionError("matched task is missing its evaluation mode")
+        task.config = TaskConfig(eval=eval_mode)
         task.basic.title = self.__remove_tags_from_title(tm.title)
 
         if task.basic.key == "":
@@ -98,7 +101,7 @@ class TaskParser:
             raw_link=tm.link,
             line_number=line_num,
             line_data=line,
-            eval=tm.eval,
+            eval=eval_mode,
             git_hub_url=GitHubUrl.parse(tm.link),
             external_source=self.external_source,
         )

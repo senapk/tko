@@ -16,7 +16,9 @@ class TreeLayout:
         self.key_size_min = 20
         self.sentence_cut_min_size = 30
 
-        self.fixed_task_itens_size = 11
+        # Percentage (5) + XP/star/source/eval/feedback prefix (12).  The
+        # optional time column is accounted for in ``sentence_cut_size``.
+        self.fixed_task_itens_size = 17
         self.use_full_key: bool = False
         self.insert_quest_keys: bool = False
 
@@ -49,7 +51,7 @@ class TreeLayout:
             return 100
         size = self.get_tree_size_fn() - self.fixed_task_itens_size
         if self.flags.show_time.is_true():
-            size -= 7
+            size -= 6
         return size
         
     def __calculate(self):

@@ -26,7 +26,7 @@ class LanguageSetter:
     def check_ui_lang_in_text_mode(settings: Settings, selected: str | None = None) -> str:
         language = selected if selected in SUPPORTED_LANGUAGES else settings.app.ui_language
         if language not in SUPPORTED_LANGUAGES:
-            language = SUPPORTED_LANGUAGES[0]
+            language = "pt-BR"
         if language != settings.app.ui_language:
             settings.app.ui_language = language
             settings.save_settings()

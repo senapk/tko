@@ -220,12 +220,13 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
         self.refresh_view()
 
     def action_self_evaluate(self) -> None:
-        if self.repo is None:
+        repo = self.repo
+        if repo is None:
             self.notify("Não há repositório para registrar a autoavaliação.", severity="warning")
             return
         from tko.ui_textual.dialogs import GradeDialog
 
-        feedback = Feedback(self.repo, self.current_task)
+        feedback = Feedback(repo, self.current_task)
         self.push_screen(
             GradeDialog(self.current_task, feedback, self.settings.app.ui_language == "pt-BR"),
             lambda result: self._save_self_evaluation(feedback, result),
@@ -249,7 +250,10 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
         self.current_task.info.study = result.study
         self.current_task.info.boss = result.boss
         self.current_task.info.feedback = True
-        self.repo.logger.store(LogItemSelf().set_task(self.current_task))
+        repo = self.repo
+        if repo is None:
+            return
+        repo.logger.store(LogItemSelf().set_task(self.current_task))
         self.notify("Autoavaliação registrada.")
         self.refresh_view()
 
@@ -265,5 +269,5 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
         with self.suspend():
             self.opener.open_files()
 
-    def action_quit(self) -> None:
+    async def action_quit(self) -> None:
         self.exit()

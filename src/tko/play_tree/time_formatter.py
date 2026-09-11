@@ -42,8 +42,8 @@ class TimeFormatter:
 
     def format_hours_minutes(self, color: str, hours: int, minutes: int) -> RT:
         if hours > 0 or minutes > 0:
-            return RT(f"{hours:02}h{minutes:02}m ", color)
-        return RT("------ ")
+            return RT(f"{hours:02}h{minutes:02} ", color)
+        return RT("----- ")
 
     def get_task_hours_minutes(self, task: Task) -> tuple[int, int]:
         if task.basic.full_key in self.cache_task_times:

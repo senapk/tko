@@ -4,6 +4,7 @@ from tko.game.task import Task
 from tko.repository.repository import Repository
 from tko.config.settings import Settings
 from tko.util.rt import RT
+from tko.util.symbols import Symbols
 
 
 class TaskFormatter:
@@ -37,35 +38,21 @@ class TaskFormatter:
             return key + title, key, title
         return basic.title, "", basic.title
 
-    def get_task_down_test_eval_symbol(self, task: Task) -> tuple[str, str]:
-        # state
-        read = "R"
-        static = "X" #Symbols.circle_filled
-        empty = "○" #Symbols.square_void
-        down = "●" #Symbols.square_filled
-
-        # mode
-        test = "D"
-        selF = "S"
-
-        
-        if task.config.eval == EvalMode.DIFF:
-            test_mode = test
-        else:
-            test_mode = selF
-
-        if task.location.is_non_evaluated and not task.location.is_external:
-            state_mode = read
-        elif task.location.is_non_evaluated:
-            state_mode = down if self.is_downloaded(task) else empty
-        elif not task.location.is_external:
-            state_mode = static
+    def get_task_source_eval_symbols(self, task: Task) -> tuple[str, str]:
+        """Return the compact source and evaluation codes used by the tree."""
+        if not task.location.is_external:
+            source_mode = "G"  # Fonte gerenciada pelo repositório.
         elif self.is_downloaded_for_lang(task):
-            state_mode = down
+            source_mode = Symbols.circle_filled  # Fonte externa materializada nesta linguagem.
         else:
-            state_mode = empty
-        
-        return (state_mode, test_mode)
+            source_mode = Symbols.circle_void  # Fonte externa ainda imaterializada.
+
+        eval_mode = {
+            EvalMode.NONE: "N",
+            EvalMode.SELF: "S",
+            EvalMode.DIFF: "D",
+        }[task.config.eval]
+        return source_mode, eval_mode
 
     @staticmethod
     def color_task_title(key: str, title: str) -> RT:

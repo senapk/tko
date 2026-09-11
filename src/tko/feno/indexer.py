@@ -137,7 +137,10 @@ class Elements:
         for i, line in enumerate(self.lines):
             if not isinstance(line, TaskLine):
                 continue
-            eval_spec = get_eval_mode_spec(line.tm.eval)
+            eval_mode = line.tm.eval
+            if eval_mode is None:
+                continue
+            eval_spec = get_eval_mode_spec(eval_mode)
             if not eval_spec.supports_self_evaluation:
                 continue
             folder = line.materialized_folder

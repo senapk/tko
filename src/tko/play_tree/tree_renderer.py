@@ -12,6 +12,7 @@ from tko.util.rbuffer import RBuffer
 from tko.util.rt import RT
 from tko.util.to_asc import SearchAsc
 from tko.game.xp_display import format_task_xp
+from tko.util.symbols import Symbols
 
 class TreeRenderer:
     def __init__(
@@ -51,15 +52,21 @@ class TreeRenderer:
         return RT("")
 
     def render_task(self, t: Task, focused: bool) -> RT:
-        head = RBuffer()
-        head.add(format_task_xp(t.xp), "y")
+        status = RBuffer()
+        status.add(f"{format_task_xp(t.xp):>3}", "y")
         pinned = t.basic.full_key in self.state.pinned
-        head.add(" * " if pinned else " - ", "y" if pinned else "")
-        state, test = self.task_formatter.get_task_down_test_eval_symbol(t)
-        head.add(test)
-        head.add(" ").add(state)
-        # Textual owns the selection cursor. Do not bake a second, legacy
-        # focus marker into the label, otherwise it remains in stale rows.
+        status.add(" ★ " if pinned else " ☆ ", "y" if pinned else "")
+        if self.flags.show_time.is_true():
+            h, m = self.time_formatter.get_task_hours_minutes(t)
+            status.add(self.time_formatter.format_hours_minutes("g", h, m))
+        status.add(self.time_formatter.format_percent_3s(t.grader.full_percent)).add(" ")
+
+        head = RBuffer()
+        # XP has a fixed three-cell column, while preserving its established
+        # one-decimal representation for values below ten.
+        source, evaluation = self.task_formatter.get_task_source_eval_symbols(t)
+        feedback = Symbols.success if t.info.feedback else Symbols.failure
+        head.add(source, "c").add(" ").add(evaluation, "m").add(" ").add(feedback, "g" if t.info.feedback else "")
         head.add(" ")
 
         if self.layout.insert_quest_keys:
@@ -85,15 +92,6 @@ class TreeRenderer:
             output = output.slice(0, self.layout.sentence_cut_size - 1) + "…"
         else:
             output = output.ljust(self.layout.sentence_cut_size, RT(" "))
-        status = RBuffer().add(self.time_formatter.format_percent_3s(t.grader.full_percent))
-        feedback = "B" if t.info.boss else "F" if t.info.feedback else "-"
-        if self.flags.show_time.is_true():
-            h, m = self.time_formatter.get_task_hours_minutes(t)
-            # ``format_hours_minutes`` ends with a separator, so feedback
-            # remains directly after the time without extra alignment logic.
-            status.add(" ").add(self.time_formatter.format_hours_minutes("g", h, m)).add(feedback).add(" ")
-        else:
-            status.add(" ").add(feedback).add(" ")
         return status.to_rt() + output
 
     def render_quest(self, q: Quest, focused: bool) -> RT:

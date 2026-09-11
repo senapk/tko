@@ -6,6 +6,11 @@ build-backend = "setuptools.build_meta"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 
+[tool.pyright]
+include = ["src"]
+pythonVersion = "3.12"
+extraPaths = ["src", ".venv/lib/python3.12/site-packages"]
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 

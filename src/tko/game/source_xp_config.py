@@ -131,7 +131,10 @@ class SourceXpConfig:
 
     def _evaluate(self, node: ast.expr, values: dict[str, float]) -> float:
         if isinstance(node, ast.Constant):
-            return float(node.value)
+            value = node.value
+            if isinstance(value, int | float) and not isinstance(value, bool):
+                return float(value)
+            raise AssertionError("formula tree was not validated")
         if isinstance(node, ast.Name):
             return values[node.id]
         if isinstance(node, ast.UnaryOp):

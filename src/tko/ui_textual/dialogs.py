@@ -50,13 +50,15 @@ class TextInputDialog(ModalScreen[str | None]):
         cancel_label: str = "Cancelar",
     ) -> None:
         super().__init__()
-        self.title, self.prompt, self.value = title, prompt, value
+        self.dialog_title: str = title
+        self.prompt: str = prompt
+        self.value: str = value
         self.confirm_label, self.cancel_label = confirm_label, cancel_label
         values = frozenset(forbidden)
         self.validator = Function(lambda text: text not in values, failure_description="Valor já existe.")
 
     def compose(self) -> ComposeResult:
-        yield Vertical(Label(self.title), Static(self.prompt), Input(self.value, validators=self.validator, id="value"), Button(self.confirm_label, id="confirm", variant="primary"), Button(self.cancel_label, id="cancel"), id="dialog")
+        yield Vertical(Label(self.dialog_title), Static(self.prompt), Input(self.value, validators=self.validator, id="value"), Button(self.confirm_label, id="confirm", variant="primary"), Button(self.cancel_label, id="cancel"), id="dialog")
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "cancel":
@@ -87,12 +89,15 @@ class ChoiceDialog(ModalScreen[str | None]):
 
     def __init__(self, title: str, options: Iterable[tuple[str, str]], value: str | None = None, hint: str = "↑/↓ ou clique para escolher • Enter seleciona • Esc cancela") -> None:
         super().__init__()
-        self.title, self.options, self.value, self.hint = title, list(options), value, hint
+        self.dialog_title: str = title
+        self.options: list[tuple[str, str]] = list(options)
+        self.value: str | None = value
+        self.hint: str = hint
 
     def compose(self) -> ComposeResult:
         options = [Option(label, id=value) for value, label in self.options]
         yield Vertical(
-            Label(self.title),
+            Label(self.dialog_title),
             OptionList(*options, id="choice"),
             Static(self.hint),
             id="dialog",
@@ -127,14 +132,14 @@ class CommandPalette(ModalScreen[str | None]):
 
     def __init__(self, commands: Iterable[tuple[str, str]], title: str = "Actions and settings", hint: str = "↑/↓ or click to choose • Enter runs • Esc closes") -> None:
         super().__init__()
-        self.commands = list(commands)
-        self.title = title
-        self.hint = hint
+        self.commands: list[tuple[str, str]] = list(commands)
+        self.dialog_title: str = title
+        self.hint: str = hint
 
     def compose(self) -> ComposeResult:
         options = [Option(label, id=command) for command, label in self.commands]
         yield Vertical(
-            Label(self.title),
+            Label(self.dialog_title),
             OptionList(*options, id="commands"),
             Static(self.hint),
             id="palette-dialog",

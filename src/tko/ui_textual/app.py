@@ -1,13 +1,17 @@
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
+from pathlib import Path
+from typing import Protocol
 
 from rich.text import Text
+from textual import events, on
 from textual.app import App, ComposeResult
 from textual.binding import Binding, BindingsMap
 from textual.containers import Horizontal, ScrollableContainer, Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Button, Footer, Input, Label, Static, Tree
+from textual.widgets._tree import NodeID, TreeNode
 
 from tko.config.flags import PanelMode
 from tko.config.app_settings import ToggleOption
@@ -29,6 +33,37 @@ from tko.ui_textual.rt_adapter import to_rich_text
 from tko.util.rt import RT
 
 
+class TreeViewState(Protocol):
+    """Subset of tree state required by the Textual tree widget."""
+
+    selected: str
+    expanded: set[str]
+
+
+class TreeViewTaskFormatter(Protocol):
+    """Task materialization query required for mouse activation."""
+
+    def is_downloaded_for_lang(self, task: Task) -> bool: ...
+
+
+class TaskTreeViewModel(Protocol):
+    """Presentation-model contract consumed by :class:`TaskTreeView`."""
+
+    @property
+    def state(self) -> TreeViewState: ...
+
+    @property
+    def task_formatter(self) -> TreeViewTaskFormatter: ...
+
+    def update(self) -> None: ...
+
+    def get_rendered_items(self) -> Iterable[tuple[RT, IsTreeItem]]: ...
+
+    def move_left(self) -> None: ...
+
+    def move_right(self) -> None: ...
+
+
 class HelpScreen(ModalScreen[None]):
     """Native modal screen for the keyboard-reference view."""
 
@@ -45,12 +80,12 @@ class HelpScreen(ModalScreen[None]):
         title = "Atalhos do TKO" if self.portuguese else "TKO shortcuts"
         content = (
             "↑/↓ navegar  •  ←/→ expandir/contrair  •  Enter abrir/executar\n"
-            "/ buscar  •  F fixar  •  1/2 tarefas  •  3/4/5 painel\n"
+            "/ buscar  •  f fixar  •  b baixar  •  1/2 tarefas  •  3/4/5 painel\n"
             "[/] expandir/compactar tudo  •  R recarregar  •  q sair\n\n"
             "Pressione Esc para fechar."
             if self.portuguese
             else "↑/↓ navigate  •  ←/→ expand/collapse  •  Enter open/run\n"
-            "/ search  •  F pin  •  1/2 tasks  •  3/4/5 panel\n"
+            "/ search  •  f pin  •  b download  •  1/2 tasks  •  3/4/5 panel\n"
             "[/] expand/collapse all  •  R reload  •  q quit\n\n"
             "Press Esc to close."
         )
@@ -62,8 +97,8 @@ class HelpScreen(ModalScreen[None]):
 
     BINDINGS = [Binding("escape,question_mark", "dismiss", "Fechar", show=False)]
 
-    def action_dismiss(self) -> None:
-        self.dismiss()
+    async def action_dismiss(self, result: None = None) -> None:
+        await self.dismiss(result)
 
 
 class TaskTreeView(Tree[IsTreeItem]):
@@ -74,18 +109,19 @@ class TaskTreeView(Tree[IsTreeItem]):
         Binding("right", "legacy_right", "Expandir", show=False),
     ]
 
-    def __init__(self, model: TaskTree) -> None:
+    def __init__(self, model: TaskTreeViewModel) -> None:
         super().__init__("TKO", id="task-tree")
         self.model = model
+        self.task_formatter = model.task_formatter
         self.show_root = False
         self.guide_depth = 2
-        self._node_by_key: dict[str, object] = {}
+        self._node_by_key: dict[str, TreeNode[IsTreeItem]] = {}
 
     def rebuild(self) -> None:
         self.model.update()
         self.clear()
         self._node_by_key.clear()
-        quest_nodes: dict[str, object] = {}
+        quest_nodes: dict[str, TreeNode[IsTreeItem]] = {}
         for sentence, item in self.model.get_rendered_items():
             label = to_rich_text(sentence)
             if isinstance(item, Quest):
@@ -108,12 +144,69 @@ class TaskTreeView(Tree[IsTreeItem]):
         if selected is not None:
             self.move_cursor(selected)  # type: ignore[arg-type]
 
+    def is_current_node(self, node: TreeNode[IsTreeItem]) -> bool:
+        """Return whether an event belongs to the current rebuilt tree."""
+        item = node.data
+        return item is not None and self._node_by_key.get(item.basic.full_key) is node
+
     def action_legacy_left(self) -> None:
         self.model.move_left()
         self.rebuild()
 
     def action_legacy_right(self) -> None:
         self.model.move_right()
+        self.rebuild()
+
+    @on(events.Click)
+    def _handle_mouse_click(self, event: events.Click) -> None:
+        """Use the mouse for tree navigation, never for task activation."""
+        # Textual dispatches both this override and Tree._on_click through the
+        # MRO. Without preventing its default action, Tree subsequently emits
+        # NodeSelected and activates the task (or toggles a quest a second
+        # time).
+        event.prevent_default()
+        meta = event.style.meta
+        line = meta.get("line")
+        node = self.get_node_at_line(line) if isinstance(line, int) else None
+        if node is None:
+            # Labels receive a node id from Textual; guides receive a line.
+            node_id = meta.get("node")
+            if isinstance(node_id, int):
+                node = self._tree_nodes.get(NodeID(node_id))
+        if node is None:
+            node = self.get_node_at_line(event.y + self.scroll_offset.y)
+        if node is None or node.data is None:
+            return
+
+        # Mouse interaction is deliberately selection-only. Expansion and
+        # activation remain explicit keyboard operations, except for an
+        # explicit double-click on a quest.
+        self.cursor_line = node._line
+        self.model.state.selected = node.data.basic.full_key
+        self.post_message(Tree.NodeHighlighted(node))
+        if event.chain >= 2 and isinstance(node.data, Quest):
+            self.toggle_fold(node)
+        elif event.chain >= 2 and isinstance(node.data, Task):
+            if self.task_formatter.is_downloaded_for_lang(node.data):
+                # Reuse the exact NodeSelected route used by Enter. The app
+                # then decides whether this materialized task starts Tester.
+                self.post_message(Tree.NodeSelected(node))
+            else:
+                self.notify(
+                    "Aperte Enter ou clique b para baixar a tarefa.",
+                    severity="information",
+                )
+
+    def toggle_fold(self, node: TreeNode[IsTreeItem]) -> None:
+        """Toggle a quest and rebuild from the authoritative tree state."""
+        quest = node.data
+        if not isinstance(quest, Quest):
+            return
+        key = quest.basic.full_key
+        if key in self.model.state.expanded:
+            self.model.state.expanded.discard(key)
+        else:
+            self.model.state.expanded.add(key)
         self.rebuild()
 
 
@@ -149,6 +242,7 @@ class TkoApp(App[Callable[[], None] | None]):
         Binding(GuiKeys.panel_logs, "show_logs", "Logs", show=False),
         Binding(GuiKeys.panel_skills, "show_skills", "Trilhas", show=False),
         Binding(GuiKeys.pin, "toggle_pin", "Fixar"),
+        Binding(GuiKeys.down_task, "download", "Baixar"),
         Binding(GuiKeys.self_evaluate, "self_evaluate", "Avaliar"),
         Binding("delete", "delete_task", "Excluir"),
         Binding(GuiKeys.expand_all, "expand_all", "Expandir", show=False),
@@ -192,6 +286,7 @@ class TkoApp(App[Callable[[], None] | None]):
             Binding(GuiKeys.panel_logs, "show_logs", "Logs", show=False),
             Binding(GuiKeys.panel_skills, "show_skills", self._t("Trilhas", "Skills"), show=False),
             Binding(GuiKeys.pin, "toggle_pin", self._t("Fixar", "Pin")),
+            Binding(GuiKeys.down_task, "download", self._t("Baixar", "Download")),
             Binding(GuiKeys.self_evaluate, "self_evaluate", self._t("Avaliar", "Evaluate")),
             Binding("delete", "delete_task", self._t("Excluir", "Delete")),
             Binding(GuiKeys.expand_all, "expand_all", self._t("Expandir", "Expand"), show=False),
@@ -244,11 +339,13 @@ class TkoApp(App[Callable[[], None] | None]):
             self.refresh_panel()
 
     def on_tree_node_expanded(self, event: Tree.NodeExpanded[IsTreeItem]) -> None:
-        if isinstance(event.node.data, Quest):
+        tree = self.query_one(TaskTreeView)
+        if tree.is_current_node(event.node) and isinstance(event.node.data, Quest):
             self.model.state.expanded.add(event.node.data.basic.full_key)
 
     def on_tree_node_collapsed(self, event: Tree.NodeCollapsed[IsTreeItem]) -> None:
-        if isinstance(event.node.data, Quest):
+        tree = self.query_one(TaskTreeView)
+        if tree.is_current_node(event.node) and isinstance(event.node.data, Quest):
             self.model.state.expanded.discard(event.node.data.basic.full_key)
 
     def on_tree_node_selected(self, event: Tree.NodeSelected[IsTreeItem]) -> None:
@@ -290,10 +387,8 @@ class TkoApp(App[Callable[[], None] | None]):
             return None
 
     def _top_text(self) -> Text:
-        mode = self._t("Fixadas", "Pinned") if self.repo.flags.task_view_mode.is_pinned() else self._t("Todas", "All")
-        panel = self.repo.flags.panel.get_value().title()
         suffix = "  •  Atualização disponível" if self.need_update else ""
-        return Text(f"{self.repo.paths.root_dir.name.upper()}  |  {mode}  |  {panel}{suffix}")
+        return Text(f"{self.repo.paths.root_dir.name.upper()}{suffix}")
 
     def _refresh_topbar(self) -> None:
         actions = [
@@ -325,7 +420,8 @@ class TkoApp(App[Callable[[], None] | None]):
             "top-logs": self.action_show_logs,
             "top-skills": self.action_show_skills,
         }
-        action = actions.get(event.button.id)
+        button_id = event.button.id
+        action = actions.get(button_id) if button_id is not None else None
         if action is not None:
             action()
 
@@ -396,11 +492,11 @@ class TkoApp(App[Callable[[], None] | None]):
             self._hide_search()
             self.refresh_view()
 
-    def action_escape(self) -> None:
+    async def action_escape(self) -> None:
         if self.search.search_mode:
             self.action_cancel_search()
             return
-        self.action_quit()
+        await self.action_quit()
 
     def action_show_pinned(self) -> None:
         if not self.model.has_pinned_tasks():
@@ -439,6 +535,17 @@ class TkoApp(App[Callable[[], None] | None]):
             self.notify("Tarefa fixada.")
         self.model.save_state()
         self.refresh_view()
+
+    def action_download(self) -> None:
+        """Materialize the selected task while preserving existing starters."""
+        task = self._selected_item()
+        if not isinstance(task, Task):
+            self.notify(
+                self._t("Selecione uma tarefa para baixar.", "Select a task to download."),
+                severity="warning",
+            )
+            return
+        self._download_task(task)
 
     def action_expand_all(self) -> None:
         self.model.expand_all()
@@ -527,11 +634,7 @@ class TkoApp(App[Callable[[], None] | None]):
         if command is None:
             return
         if command == "download":
-            task = self._selected_item()
-            if isinstance(task, Task):
-                self._download_task(task)
-            else:
-                self.notify("Selecione uma tarefa para baixar.", severity="warning")
+            self.action_download()
         elif command == "evaluate":
             self._ask_self_evaluation()
         elif command == "delete":
@@ -637,7 +740,10 @@ class TkoApp(App[Callable[[], None] | None]):
         from tko.ui_textual.dialogs import TextInputDialog
 
         task = self._selected_item()
-        folder = self.repo.task_resolver.target_folder(task) if isinstance(task, Task) else None
+        if not isinstance(task, Task):
+            self.notify("Selecione uma tarefa para excluir.", severity="warning")
+            return
+        folder = self.repo.task_resolver.target_folder(task)
         if folder is None or not folder.exists():
             self.notify("A tarefa selecionada não possui pasta local.", severity="warning")
             return
@@ -651,16 +757,14 @@ class TkoApp(App[Callable[[], None] | None]):
             lambda value: self._delete_task(task, folder, value),
         )
 
-    def _delete_task(self, task: Task, folder: object, value: str | None) -> None:
+    def _delete_task(self, task: Task, folder: Path, value: str | None) -> None:
         if value != task.basic.key:
             self.notify("A confirmação não corresponde à chave da tarefa.", severity="error")
             return
-        from pathlib import Path
         import shutil
 
-        target = Path(folder)  # folder was resolved before the confirmation dialog.
         try:
-            shutil.rmtree(target)
+            shutil.rmtree(folder)
         except OSError as error:
             self.notify(str(error), severity="error", timeout=8)
             return
@@ -729,7 +833,10 @@ class TkoApp(App[Callable[[], None] | None]):
             return
         from tko.cli.audit_preview import run_audit_preview
 
-        self._run_after_exit(lambda: run_audit_preview(files))
+        def open_preview() -> None:
+            run_audit_preview(files)
+
+        self._run_after_exit(open_preview)
 
     def action_activate(self) -> None:
         item = self._selected_item()
@@ -834,7 +941,7 @@ class TkoApp(App[Callable[[], None] | None]):
         self.settings.save_settings()
         self.exit(result=callback)
 
-    def action_quit(self) -> None:
+    async def action_quit(self) -> None:
         self.model.save_state()
         self.settings.save_settings()
         self.exit()
