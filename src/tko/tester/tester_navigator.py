@@ -32,7 +32,7 @@ class TesterNavigator:
         self.notify = notify or (lambda _message: None)
 
     def _locked(self, arrow: str) -> None:
-        self.notify(f"{arrow}\nAtividade travada\nAperte {GuiKeys.lock} para destravar")
+        self.notify(f"{arrow}\nAtividade travada\nAperte {GuiKeys.pin} para destravar")
 
     def go_left(self, state: TesterState) -> None:
         if state.mode in (SeqMode.intro, SeqMode.finished):

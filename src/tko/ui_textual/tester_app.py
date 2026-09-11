@@ -52,7 +52,7 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
         Binding("down", "scroll_down", "Descer"),
         Binding("enter,t", "run_tests", "Testar"),
         Binding("e,backspace", "run_free", "Executar"),
-        Binding("f", "toggle_lock", "Fixar"),
+        Binding(GuiKeys.pin, "toggle_lock", "Fixar"),
         Binding("tab", "change_main", "Solução"),
         Binding("d", "toggle_diff", "Diff"),
         Binding("l", "change_limit", "Limite"),
