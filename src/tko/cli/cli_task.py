@@ -14,19 +14,17 @@ def task_build(
     targets: list[str] | None = typer.Argument(None, help="Task directories"),
     check: bool = typer.Option(False, "--check", "-c", help="Check if the file needs to be rebuilt"),
     brief: bool = typer.Option(False, "--brief", "-b", help="Brief mode"),
-    moodle: bool = typer.Option(False, "--moodle", "-m", help="Build for Moodle VPL"),
-    local: bool = typer.Option(False, "--local", "-l", help="Don't search for remote.cfg to create absolute links"),
+    moodle: str | None = typer.Option(None, "--moodle", "-m", help="GitHub repository URL for Moodle VPL build"),
     erase: bool = typer.Option(False, "--erase", "-e", help="Erase temporary files"),
 ):
     from tko.feno.build import build_task
 
     build_task(
         targets=[Path(target) for target in (targets or [])],
-        remote=not local,
+        remote_url=moodle,
         check=check,
         erase=erase,
         brief=brief,
-        moodle=moodle,
     )
 
 
@@ -88,7 +86,7 @@ def task_open(
     cmd_run = Run(settings=settings, target_list=targets, param=param, language=None, repo=repo)
     if selected_task is not None:
         cmd_run.set_task(repo, selected_task)
-    cmd_run.set_curses()
+    cmd_run.set_tui()
     cmd_run.execute()
 
 @app.command("list", help="List tasks")

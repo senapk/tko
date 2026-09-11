@@ -8,7 +8,7 @@ from tko.util.rt import RT
 class DiffBuilderDown:
     def __init__(self, width: int, unit: Unit):
         self.width = width
-        self.curses = False
+        self.tui = False
         self.db = DiffBuilder(width)
         self.unit = unit
         self.output: list[RT] = []
@@ -25,8 +25,8 @@ class DiffBuilderDown:
         self.__standalone_diff = True
         return self
 
-    def set_curses(self):
-        self.curses = True
+    def set_tui(self):
+        self.tui = True
         return self
 
     @staticmethod
@@ -71,11 +71,11 @@ class DiffBuilderDown:
             ending = "╮"
         else:
             opening = "├"
-            ending = "┤" if self.curses else "╯"
+            ending = "┤" if self.tui else "╯"
         self.output.append(RT(DiffBuilder.vexpected, color).center_in(self.width, Symbols.hbar, opening, ending))
         for line, _ in self.expected_received:
             if line is not None:
-                if self.curses:
+                if self.tui:
                     self.output.append(line.ljust(self.width - 1, " ") + Symbols.vbar)
                 else:
                     self.output.append(line)
@@ -89,7 +89,7 @@ class DiffBuilderDown:
             ending = Symbols.hbar
         else:
             opening = "├"
-            ending = "┤" if self.curses else Symbols.hbar
+            ending = "┤" if self.tui else Symbols.hbar
         self.output.append(RT(DiffBuilder.vreceived, color).center_in(self.width, Symbols.hbar, opening, ending))
 
         # lines
@@ -101,7 +101,7 @@ class DiffBuilderDown:
             received.pop()
         
         for line in received:
-            if self.curses and not self.no_diff_mode:
+            if self.tui and not self.no_diff_mode:
                 self.output.append(line.ljust(self.width - 1, " ").trim_end(self.width) + Symbols.vbar)
             else:
                 self.output.append(line)
@@ -116,7 +116,7 @@ class DiffBuilderDown:
 
         if not include_rendering:
             return False
-        ending = "┤" if self.curses else "╮"
+        ending = "┤" if self.tui else "╮"
         self.output.append(RT(DiffBuilder.vunequal, "b").center_in(self.width, Symbols.hbar, "├", ending))
         for line in self.db.first_failure_diff(self.unit.get_expected(), self.unit.get_received(), self.first_failure):
             self.output.append((RT("│") + line).ljust(self.width - 1, " ") + "│")

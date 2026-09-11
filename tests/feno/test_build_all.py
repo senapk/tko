@@ -11,10 +11,6 @@ def test_build_all_moodle_writes_rebased_readme_and_artifacts(
     task = root / "base" / "soma"
     src = task / "src" / "py"
     src.mkdir(parents=True)
-    (root / "remote.toml").write_text(
-        'user = "user"\nrepository = "repo"\nbranch = "main"\n',
-        encoding="utf-8",
-    )
     (task / "README.md").write_text(
         "# Soma\n\n"
         "![cover](cover.png)\n"
@@ -33,14 +29,14 @@ def test_build_all_moodle_writes_rebased_readme_and_artifacts(
         cases_file.write_text("case=sample\ninput=\noutput=\"\"\n", encoding="utf-8")
 
     monkeypatch.setattr(build_module.Cases, "run", staticmethod(fake_cases_run))
+    monkeypatch.chdir(root)
 
     build_module.build_task(
         targets=[task],
-        remote=True,
+        remote_url="https://github.com/user/repo/tree/main",
         check=False,
         erase=False,
         brief=True,
-        moodle=True,
     )
 
     readme = (task / ".cache" / "README.md").read_text(encoding="utf-8")
@@ -59,3 +55,26 @@ def test_build_all_moodle_writes_rebased_readme_and_artifacts(
         encoding="utf-8"
     ) == 'print("visible")\n'
     assert not (task / ".cache" / "mapi.json").exists()
+
+
+def test_build_runs_mdpp_only_after_local_steps(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    task = tmp_path / "task"
+    task.mkdir()
+    calls: list[str] = []
+
+    monkeypatch.setattr(build_module.Actions, "load_title", lambda _self: calls.append("title"))
+    monkeypatch.setattr(build_module.Actions, "create_cache", lambda _self: calls.append("cache"))
+    monkeypatch.setattr(build_module.Actions, "recreate_cache", lambda _self: calls.append("recreate"))
+    monkeypatch.setattr(build_module.Actions, "copy_drafts", lambda _self: calls.append("drafts"))
+    monkeypatch.setattr(build_module.Actions, "run_local_sh", lambda _self: calls.append("local"))
+    monkeypatch.setattr(build_module.Actions, "update_markdown", lambda _self: calls.append("mdpp"))
+
+    build_module.build_task(
+        targets=[task],
+        remote_url=None,
+        check=False,
+        erase=False,
+        brief=True,
+    )
+
+    assert calls == ["title", "cache", "recreate", "drafts", "local", "mdpp"]

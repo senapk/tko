@@ -57,8 +57,8 @@ class Run:
         self.context.set_timeout(timeout)
         return self
 
-    def set_curses(self, value: bool = True):
-        self.context.set_curses(value)
+    def set_tui(self, value: bool = True):
+        self.context.set_tui(value)
         return self
    
     def set_lang(self, lang: str):
@@ -98,16 +98,15 @@ class Run:
             RunPresenter(self.context).list_mode()
             return 0
         
-        # Decidir entre curses (TUI) e raw terminal
-        if self.context.config.curses_mode:
-            # TUI mode: criar Tester
-            return self._run_in_curses_mode(loader)
+        # Decide between Textual TUI and raw terminal output.
+        if self.context.config.tui_mode:
+            return self._run_in_tui_mode(loader)
         else:
             # Raw terminal mode: usar RunExecutor
             return self._run_in_raw_terminal_mode()
 
-    def _run_in_curses_mode(self, loader: RunLoader) -> int:
-        """Execute in curses TUI mode."""
+    def _run_in_tui_mode(self, loader: RunLoader) -> int:
+        """Execute in the Textual TUI."""
         tester = Tester(settings = self.context.settings, repo = self.context.repo, wdir = self.context.wdir, task = self.context.get_task(), watcher = self.watcher)
         
         # Set opener
@@ -138,7 +137,7 @@ class Run:
 
     def _missing_target(self) -> bool:
         if not self.context.wdir.solver and not self.context.wdir.has_tests:
-            if not self.context.config.curses_mode:
+            if not self.context.config.tui_mode:
                 Console.print(RT(f"fail: {_RUN_NO_SOURCE_OR_TESTS}"))
             return True
         return False

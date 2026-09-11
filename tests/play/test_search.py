@@ -55,13 +55,9 @@ class _DummyTree:
         return None
 
 
-class _DummyFloatingManager:
-    pass
-
-
 def test_finish_search_does_not_raise_when_selected_item_disappears():
     tree = _DummyTree()
-    search = Search(tree=cast(Any, tree), fman=cast(Any, _DummyFloatingManager()))
+    search = Search(tree=cast(Any, tree))
     search.search_mode = True
 
     # Must not raise; this used to crash the TUI loop when selection became stale.
@@ -74,7 +70,7 @@ def test_finish_search_does_not_raise_when_selected_item_disappears():
 def test_update_index_uses_filter_policy_first_match():
     tree = _DummyTree()
     tree.filter_policy = _FilterPolicyFirst("repo@q1@t2")
-    search = Search(tree=cast(Any, tree), fman=cast(Any, _DummyFloatingManager()))
+    search = Search(tree=cast(Any, tree))
 
     search.update_index()
 
@@ -83,7 +79,7 @@ def test_update_index_uses_filter_policy_first_match():
 
 def test_toggle_search_starts_session_and_forces_expanded_view():
     tree = _DummyTree()
-    search = Search(tree=cast(Any, tree), fman=cast(Any, _DummyFloatingManager()))
+    search = Search(tree=cast(Any, tree))
 
     search.toggle_search()
 

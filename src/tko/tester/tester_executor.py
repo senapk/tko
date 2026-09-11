@@ -2,7 +2,6 @@ from typing import Callable
 
 from tko.config.settings import Settings
 from tko.game.task import Task
-from tko.floating.floating_manager import FloatingManager
 from tko.tester.tester_state import TesterState
 from tko.tester.tester_top_bar import TesterTopBar
 from tko.tester.tester_execution_service import TesterExecutionService
@@ -20,14 +19,12 @@ class TesterExecutor:
         rep: Repository | None,
         wdir: Wdir,
         task: Task,
-        fman: FloatingManager,
         top_bar: TesterTopBar,
     ) -> None:
         self.settings = settings
         self.rep = rep
         self.wdir = wdir
         self.task = task
-        self.fman = fman
         self.top_bar = top_bar
         self.tracker = Tracker()
         self.execution_service = TesterExecutionService(

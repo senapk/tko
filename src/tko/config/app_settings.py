@@ -1,8 +1,7 @@
 from __future__ import annotations
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, asdict
 import enum
 from typing import Any
-import curses
 
 from tko.enums.diff_mode import DiffMode
 from tko.util.rt import RT
@@ -10,16 +9,6 @@ from tko.util.rt import RT
 
 class ToggleOption(enum.Enum):
     IMAGES = "use_images"
-
-class AppKeys(enum.Enum):
-    LEFT = "left"
-    RIGHT = "right"
-    UP = "up"
-    DOWN = "down"
-    PG_UP = "pg_up"
-    PG_DOWN = "pg_down"
-    BACKSPACE = "backspace"
-    ESC = "esc"
 
 @dataclass
 class AppSettings:
@@ -31,17 +20,6 @@ class AppSettings:
     last_tko_check_update: str = ""
     last_version: str = ""
     panel_size_percent: float = 60.0
-
-    keys: dict[AppKeys, int] = field(default_factory=lambda: {
-        AppKeys.LEFT: curses.KEY_LEFT,
-        AppKeys.RIGHT: curses.KEY_RIGHT,
-        AppKeys.UP: curses.KEY_UP,
-        AppKeys.DOWN: curses.KEY_DOWN,
-        AppKeys.PG_UP: curses.KEY_PPAGE,
-        AppKeys.PG_DOWN: curses.KEY_NPAGE,
-        AppKeys.BACKSPACE: curses.KEY_BACKSPACE,
-        AppKeys.ESC: 27,
-    })
 
     @property
     def ui_language(self) -> str:
@@ -64,18 +42,10 @@ class AppSettings:
     def toggle_diff(self) -> None:
         self.diff_mode = DiffMode.DOWN if self.diff_mode == DiffMode.SIDE else DiffMode.SIDE
 
-    # -------- keys --------
-    def set_key(self, action: AppKeys, key_code: int) -> None:
-        self.keys[action] = key_code
-
-    def get_key(self, action: AppKeys) -> int:
-        return self.keys.get(action, 0)
-
     # -------- serialization --------
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
         data["diff_mode"] = self.diff_mode.value
-        data["keys"] = {k.value: v for k, v in self.keys.items()}
         return data
 
     @classmethod
@@ -87,8 +57,6 @@ class AppSettings:
                 obj.ui_language = value
             elif key == "diff_mode":
                 obj.diff_mode = DiffMode(value)
-            elif key == "keys":
-                obj.keys = {AppKeys(k): v for k, v in value.items()}
             elif hasattr(obj, key):
                 setattr(obj, key, value)
 

@@ -20,6 +20,7 @@ O `mdpp` oferece ações e diretivas estruturadas:
 - `toc-table` — gera sumário horizontal em tabela (alias legado: `toch`)
 - `links PATH` — insere links para arquivos e diretórios
 - `load PATH [OPTIONS]` — carrega e transforma conteúdo de arquivos
+- `tests PATH [--limit N]` — apresenta os casos de teste como tabela
 - `save` — grava blocos de código Markdown de volta em arquivos
 - `clean` — limpa o conteúdo gerado, preservando os marcadores
 
@@ -176,28 +177,28 @@ Sintaxe base:
 
 ### 6.1 Opções de Modificação
 
-- `--extract TAG`: extrai exclusivamente o trecho delimitado por `[[TAG]] ... [[TAG]]`. Suporta múltiplas linhas e tags comentadas (ex.: `// [[TAG]]`, `# [[TAG]]`).
 - `--filter`: aplica o filtro de visibilidade do TKO (`@KEEP`, `@DROP`, `@COM`, `@UNC`).
 - `--rm-comments`: remove linhas que contenham comentários de código no início (`#` para `.py`, `'` para `.puml`, `//` para outras linguagens). *(Alias legado: `--rmcom`)*.
 - `--fenced`: envolve o conteúdo carregado em um bloco de código Markdown com linguagem inferida pela extensão do arquivo.
 - `--fenced LANG`: envolve o conteúdo carregado em um bloco de código com a linguagem `LANG` especificada explicitamente (ex.: `--fenced py`, `--fenced cpp`, `--fenced ts`).
 
-### 6.2 Opções de Geração de Testes (TOML)
+As opções `--extract`, `--tests`, `--tests-table` e `--tests-tio` não são
+aceitas em `load`; use a diretiva `tests` para gerar tabelas de teste.
 
-Para arquivos TOML de testes, o `mdpp` oferece duas ações de formato independentes e mutuamente exclusivas:
+### 7. Diretiva TESTS
 
-- `--tests-tio`: gera todos os casos de teste no formato TIO padrão (`>>>>>>>> INSERT ... ======== EXPECT ... <<<<<<<< FINISH`).
-- `--tests-tio N`: gera os primeiros `N` casos de teste no formato TIO (`N > 0`; `N = 0` gera todos).
-- `--tests-table`: gera todos os casos de teste formatados como tabela Markdown/HTML (`<table>`).
-- `--tests-table N`: gera os primeiros `N` casos de teste formatados como tabela Markdown/HTML (`N > 0`; `N = 0` gera todos).
+As diretivas de testes são independentes de `load`.
 
-> **Atenção:** As opções `--tests-tio` e `--tests-table` são mutuamente exclusivas. Não utilize ambas no mesmo bloco `load`.
+```md
+<!-- tests cases.toml -->
+<!-- tests -->
+```
 
-#### Compatibilidade Legada de Testes:
-- `--tests` e `--tests N` são aceitos como aliases legados para `--tests-tio` e `--tests-tio N`.
-- A antiga combinação `--tests --table` está depreciada e mapeia para `--tests-table` com aviso de depreciação.
+`tests` renderiza entrada e saída em uma tabela HTML. Sem `--limit`, todos os
+casos são exibidos. Use `--limit N` para mostrar os primeiros `N` casos;
+`--limit 0` também exibe todos.
 
-### 6.3 Ordem do Pipeline de Transformação
+### Ordem do Pipeline de Transformação
 
 Independentemente da ordem em que as flags são escritas na diretiva, as transformações do `load` são executadas sempre na seguinte ordem fixa:
 
@@ -207,8 +208,6 @@ extract
 filter
    ↓
 remove comments (--rm-comments)
-   ↓
-tests (--tests-tio OU --tests-table)
    ↓
 fenced (--fenced / --fenced LANG)
 ```
@@ -227,28 +226,26 @@ possui o mesmo resultado que:
 
 ### 6.4 Exemplos de LOAD
 
-#### Exemplo com `--extract` e `--fenced`:
+#### Exemplo com `--fenced`:
 
 Arquivo de origem (`src/app.py`):
 
 ```python
-# [[solution]]
 def soma(a: int, b: int) -> int:
     return a + b
-# [[solution]]
 ```
 
 Markdown:
 
 ```md
-<!-- load src/app.py --extract solution --fenced -->
+<!-- load src/app.py --fenced -->
 <!-- load -->
 ```
 
 Resultado:
 
 ````md
-<!-- load src/app.py --extract solution --fenced -->
+<!-- load src/app.py --fenced -->
 ```py
 def soma(a: int, b: int) -> int:
     return a + b
@@ -256,7 +253,7 @@ def soma(a: int, b: int) -> int:
 <!-- load -->
 ````
 
-#### Exemplo com `--tests-tio`:
+#### Exemplo com `tests`:
 
 Arquivo `tests.toml`:
 
@@ -273,22 +270,16 @@ output = "9"
 Markdown:
 
 ```md
-<!-- load tests.toml --tests-tio 1 -->
-<!-- load -->
+<!-- tests tests.toml -->
+<!-- tests -->
 ```
 
 Resultado:
 
 ````md
-<!-- load tests.toml --tests-tio 1 -->
-```py
->>>>>>>> INSERT
-1 2
-======== EXPECT
-3
-<<<<<<<< FINISH
-```
-<!-- load -->
+<!-- tests tests.toml --limit 1 -->
+<table>...</table>
+<!-- tests -->
 ````
 
 ---
@@ -299,8 +290,9 @@ Ao processar um documento `.md` com `tko tool mdpp`, a ordem das diretivas execu
 
 1. `Toc.execute` (`<!-- toc -->`)
 2. `TocTable.execute` (`<!-- toc-table -->` e `<!-- toch -->`)
-3. `Load.execute` (`<!-- load ... -->`)
-4. `Links.execute` (`<!-- links ... -->`)
+3. `Tests.execute` (`<!-- tests ... -->`)
+4. `Load.execute` (`<!-- load ... -->`)
+5. `Links.execute` (`<!-- links ... -->`)
 
 Se houver alterações no texto final, o arquivo Markdown é regravado de forma atômica/segura.
 

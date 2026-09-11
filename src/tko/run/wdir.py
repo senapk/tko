@@ -41,7 +41,7 @@ class Wdir:
         self.source_list: list[Path] = []
         self.pack_list: list[list[Unit]] = []
         self.unit_list: list[Unit] = []
-        self.curses_mode: bool = False
+        self.tui_mode: bool = False
         self.lang: str | None = None
         self.autoload_folder: Path | None = None
 

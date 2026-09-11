@@ -9,9 +9,6 @@ import pytest
 
 from tko.config.run_settings import RunSettings
 from tko.config.settings import Settings
-from tko.floating.floating_input_text import FloatingInputText
-from tko.game.game import Game
-from tko.play.draft_creator import DraftCreator
 from tko.repository.remote import Source, SourceType
 from tko.repository.repository import Repository
 from tko.repository.repository_config import RepositoryLoader
@@ -149,32 +146,6 @@ def test_rejects_missing_authoring_source(tmp_path: Path) -> None:
                 }
             }
         )
-
-
-def test_create_lab_uses_authoring_source_folder_index_and_identity(tmp_path: Path) -> None:
-    repo = make_repo(tmp_path)
-    repo.data.lang = "py"
-    (tmp_path / "README.md").write_text("# labs\n\n", encoding="utf-8")
-    fman = SimpleNamespace(items=[], add_floating=lambda item: fman.items.append(item))  # type: ignore[attr-defined]
-    tree = SimpleNamespace(state=SimpleNamespace(selected="", expanded=set()))  # type: ignore[arg-type]
-    game = Game()
-    def mock_get_languages_with_drafts() -> dict[str, Any]:
-        return {}
-    def mock_get_languages_settings() -> object:
-        return SimpleNamespace(get_languages_with_drafts=mock_get_languages_with_drafts)
-    settings_obj = cast(Settings, SimpleNamespace(get_languages_settings=mock_get_languages_settings))
-    creator = DraftCreator(repo, settings_obj, fman, tree, game, lambda: None)  # type: ignore[arg-type]
-
-    creator.create_draft()
-    floating = fman.items[-1]
-    assert isinstance(floating, FloatingInputText)
-    floating.action("Ponteiros @ponteiros")
-
-    assert (tmp_path / "labs" / "ponteiros" / "README.md").exists()
-    index = (tmp_path / "README.md").read_text(encoding="utf-8")
-    assert "labs/ponteiros/README.md" in index
-    assert tree.state.selected == "labs@ponteiros"
-    assert repo.data.selected == "labs@ponteiros"
 
 
 def test_migrates_legacy_sandbox_fields_and_preserves_old_names(tmp_path: Path) -> None:

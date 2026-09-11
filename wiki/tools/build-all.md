@@ -12,14 +12,13 @@ O comando tko task build roda um pipeline de preparacao de artefatos por pasta a
 
 No fluxo padrao, ele:
 
-- Atualiza markdown com o preprocessador mdpp.
 - Gera starters em .cache/starter a partir de src usando filtro por marcadores.
 - Pode executar local.sh quando existir.
-- Atualiza markdown novamente (para refletir mudancas causadas pelo passo anterior).
+- Atualiza markdown com o preprocessador mdpp ao final do rebuild.
 
 No fluxo moodle (opcional), ele tambem:
 
-- Gera README rebaseado para remoto/local.
+- Gera README rebaseado usando uma URL GitHub indicada explicitamente.
 - Gera HTML do enunciado.
 - Gera arquivo de testes.
 - Mantem os starters filtrados por linguagem em `.cache/starter`.
@@ -42,8 +41,7 @@ Opcoes principais:
 
 - -c, --check: so reconstrui quando detectar mudancas.
 - -b, --brief: reduz logs.
-- -m, --moodle: ativa pipeline de artefatos Moodle (README rebaseado, html, tests.vpl e starters).
-- -l, --local: nao usa configuracao remota para links absolutos.
+- -m, --moodle URL: ativa pipeline de artefatos Moodle usando a URL raiz do repositório GitHub para rebasear links (README rebaseado, html, tests.vpl e starters).
 - -e, --erase: apaga arquivos temporarios de saida (README.md, README.html, tests.vpl em .cache).
 
 ## Ordem real das etapas
@@ -52,16 +50,15 @@ Para cada alvo (diretorio):
 
 1. Carrega titulo do README.
 2. Garante pasta .cache.
-3. Executa mdpp no README da origem.
-4. Se precisar rebuild (ou sem --check), limpa .cache e segue:
-5. Gera starters com DeepFilter de src para .cache/starter.
-6. Executa local.sh (se existir).
-7. Executa mdpp novamente.
-8. Se --moodle:
+3. Se precisar rebuild (ou sem --check), limpa .cache e segue:
+4. Gera starters com DeepFilter de src para .cache/starter.
+5. Executa local.sh (se existir).
+6. Executa mdpp no README da origem.
+7. Se --moodle URL:
    - rebase de links (README para .cache/README.md)
    - gera .cache/README.html
    - gera .cache/tests.vpl
-9. Se --erase, remove alguns artefatos temporarios.
+8. Se --erase, remove alguns artefatos temporarios.
 
 ## Artefatos gerados
 
@@ -105,23 +102,23 @@ Os rascunhos usados como starters ficam em .cache/starter durante a montagem de 
 Na raiz de uma tarefa:
 
 ```bash
-# pipeline padrao: mdpp + drafts (+ local.sh se existir)
+# pipeline padrao: drafts + local.sh + mdpp
 tko task build .
 
 # pipeline completo para moodle
-tko task build . -m
+tko task build . --moodle https://github.com/usuario/repositorio/tree/main
 
 # so reconstruir se houver mudancas
-tko task build . -c -m
+tko task build . -c --moodle https://github.com/usuario/repositorio/tree/main
 ```
 
 ## Quando usar cada modo
 
-- task build sem -m:
+- task build sem --moodle:
   - ciclo rapido de preparacao local.
   - atualizacao de markdown e drafts.
 
-- task build com -m:
+- task build com --moodle URL:
   - geracao de artefatos para publicacao/empacotamento (README rebaseado, html, tests.vpl e starters).
 
 ## Observacoes importantes
@@ -129,4 +126,4 @@ tko task build . -c -m
 - Se nenhum alvo for informado, o comando usa o diretorio atual.
 - Pastas iniciadas com ., _ e + sao ignoradas no pipeline.
 - local.sh e opcional e executado no diretorio da tarefa.
-- O comportamento de links remotos depende de remote.toml quando aplicavel.
+- A URL passada para --moodle define os links remotos. O caminho da tarefa é calculado relativamente ao diretório em que o comando é executado.

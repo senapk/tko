@@ -16,7 +16,7 @@ class TreeLayout:
         self.key_size_min = 20
         self.sentence_cut_min_size = 30
 
-        self.fixed_task_itens_size = 10
+        self.fixed_task_itens_size = 11
         self.use_full_key: bool = False
         self.insert_quest_keys: bool = False
 

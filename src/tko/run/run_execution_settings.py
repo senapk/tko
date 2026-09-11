@@ -9,7 +9,7 @@ from tko.run.run_config import RunConfig
 class RunExecutionSettings:
     no_run: bool = False
     timeout: int = 0
-    curses_mode: bool = False
+    tui_mode: bool = False
     show_track_info: bool = False
     show_self_info: bool = False
     run_without_ask: bool = True
@@ -22,7 +22,7 @@ class RunExecutionSettings:
         return cls(
             no_run=config.no_run,
             timeout=config.timeout,
-            curses_mode=config.curses_mode,
+            tui_mode=config.tui_mode,
             show_track_info=config.show_track_info,
             show_self_info=config.show_self_info,
             run_without_ask=config.run_without_ask,

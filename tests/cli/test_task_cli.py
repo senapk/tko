@@ -19,6 +19,25 @@ def test_task_commands_include_build_and_no_build_group_remains() -> None:
     assert "build" in {command.name for command in app.registered_commands}
 
 
+def test_task_build_passes_explicit_moodle_url(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    received: dict[str, object] = {}
+
+    def fake_build_task(**kwargs: object) -> None:
+        received.update(kwargs)
+
+    monkeypatch.setattr("tko.feno.build.build_task", fake_build_task)
+
+    result = CliRunner().invoke(
+        app,
+        ["build", "task", "--moodle", "https://github.com/user/repo/tree/main"],
+        obj=_make_app_context(tmp_path),
+    )
+
+    assert result.exit_code == 0
+    assert received["remote_url"] == "https://github.com/user/repo/tree/main"
+    assert received["targets"] == [Path("task")]
+
+
 
 
 def test_task_down_requires_full_key(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:

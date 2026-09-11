@@ -9,10 +9,10 @@ class DiffBuilder:
 
     def __init__(self, width: int):
         self.width = width
-        self.curses = False
+        self.tui = False
 
-    def set_curses(self):
-        self.curses = True
+    def set_tui(self):
+        self.tui = True
         return self
 
     @staticmethod

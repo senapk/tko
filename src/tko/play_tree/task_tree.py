@@ -53,6 +53,9 @@ class TaskTree:
 
     def save_state(self):
         self.state_service.save()
+        from tko.repository.repository_config import RepositoryLoader
+
+        RepositoryLoader(self.repo).save()
 
     def get_selected_throw(self) -> IsTreeItem:
         return self.selection.get_selected_throw(self.items)

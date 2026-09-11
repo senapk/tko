@@ -7,9 +7,6 @@ from tko.util.symbols import Symbols
 class _GuiHelpMsg:
     SECTION_CONFIG = Msg.parse(pt="[g] Configuração []", en="[g] Configuration [g]")
 
-    CALIBRATE_LINE = Msg.parse(pt=" Calibrar [r]{}[] Para calibrar os direcionais do teclado", 
-                         en=" Calibrate [r]{}[] To calibrate the keyboard arrow keys")
-
     SECTION_SYMBOLS = Msg.text(pt=" Símbolos ", en=" Symbols ")
     SYMBOL_STUDY_WRITE_NOHELP = Msg.parse(pt=" [g]{}[] Estudo/Consulta, [y]{}[] Escrever e refazer, [r]{}[] Fazer sem consulta", 
                                     en=" [g]{}[] Study/Consult, [y]{}[] Write and redo, [r]{}[] Do without help")
@@ -62,9 +59,6 @@ class GuiHelpInfo:
     def show() -> list[RT]:
         help_lines: list[RT] = []
         dx = 65
-        help_lines.append(_GuiHelpMsg.SECTION_CONFIG.t().center(dx, RT("-")))
-        help_lines.append(_GuiHelpMsg.CALIBRATE_LINE.t().format(GuiKeys.calibrate))
-
         help_lines.append(_GuiHelpMsg.SECTION_SYMBOLS.t().set_style("g").center(dx, RT("-")))
         help_lines.append(_GuiHelpMsg.SYMBOL_STUDY_WRITE_NOHELP.t().format(Symbols.loss_free, Symbols.loss_part, Symbols.loss_zero))
         help_lines.append(_GuiHelpMsg.SYMBOL_SELF_EVAL.t().format(

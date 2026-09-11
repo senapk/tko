@@ -23,7 +23,6 @@ from tko.cli.cli_index import app as index_app
 from tko.cli.cli_tools import app as util_app
 from tko.i18n import Msg, set_language
 from tko.util.Renderer import RenderMode
-from tko.widget.fmt import Fmt
 from tko.util.console import Console
 
 
@@ -95,7 +94,6 @@ def main_callback(
     if mono:
         Console.stdout = PrintWriter(sys.stdout, RenderMode.PLAIN)
         Console.stderr = PrintWriter(sys.stderr, RenderMode.PLAIN)
-        Fmt.mono = mono
 
     configure_loguru(sett.get_log_file(), debug)
     

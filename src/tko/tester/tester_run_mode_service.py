@@ -36,9 +36,6 @@ class TesterRunModeService:
             self.wdir.autoload()
         self.wdir.build_unit_list()
 
-        from tko.widget.fmt import Fmt
-        Fmt.clear()
-
         solver_names = tester_util.get_solver_names(self.wdir)
         index = self.task.main_idx % len(solver_names)
         solver_selected = solver_names[index % len(solver_names)]

@@ -5,8 +5,8 @@ from tko.play_tree.tree_repository import TreeRepository
 from tko.play_tree.tree_state import TreeState
 
 
-def make_repo_data(expanded: list[str], selected: str, selected_index: int):
-    return SimpleNamespace(expanded=expanded, selected=selected, selected_index=selected_index)
+def make_repo_data(expanded: list[str], selected: str, selected_index: int, pinned: list[str] | None = None):
+    return SimpleNamespace(expanded=expanded, pinned=pinned or [], selected=selected, selected_index=selected_index)
 
 
 def test_load_state_restores_selected_index_and_selection():
@@ -23,14 +23,16 @@ def test_load_state_restores_selected_index_and_selection():
 
 def test_save_state_filters_unknown_quests_and_persists_selection_fields():
     repo = cast(Any, SimpleNamespace(data=make_repo_data([], "", 0)))
-    game = cast(Any, SimpleNamespace(quests={"repo@q1": object()}))
+    game = cast(Any, SimpleNamespace(quests={"repo@q1": object()}, tasks={"repo@q1@t1": object()}))
     state = TreeState()
     state.expanded = {"repo@q1", "repo@missing"}
+    state.pinned = {"repo@q1@t1", "repo@missing"}
     state.selected = "repo@q1"
     state.selected_index = 3
 
     TreeRepository(repo, game).save_state(state)
 
     assert repo.data.expanded == ["repo@q1"]
+    assert repo.data.pinned == ["repo@q1@t1"]
     assert repo.data.selected == "repo@q1"
     assert repo.data.selected_index == 3

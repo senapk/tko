@@ -1,11 +1,10 @@
 
 
 class GuiKeys:
-    calibrate = "c"
 
     inbox = "1"
     all_tasks = "2"
-    pin = "f"
+    pin = "F"
     
     panel_graph = "3"
     panel_logs = "4"
@@ -17,7 +16,7 @@ class GuiKeys:
 
     panel_resize_inc = ">"
     panel_resize_dec = "<"
-    palette = "p"
+    palette = "P"
     images = "I"
     down_task = "b"
     activate = "\n"
@@ -27,7 +26,6 @@ class GuiKeys:
     collapse_all = "["
     create_draft = "r"
     set_lang_drafts = "L"
-    toggle_ui_language = "P"
     open_url = "u"
     key_quit = "q"
     edit= "v"

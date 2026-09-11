@@ -2,8 +2,10 @@ from math import trunc
 
 
 def format_task_xp(value: float) -> str:
-    """Format an individual task XP value with one truncated decimal place."""
-    return f"{trunc(value * 10) / 10:.1f}"
+    """Format task XP in at most three cells for the tree prefix."""
+    if value < 10:
+        return f"{trunc(value * 10) / 10:.1f}"
+    return str(trunc(value))
 
 
 def truncate_total_xp(value: float) -> int:

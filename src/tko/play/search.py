@@ -1,14 +1,11 @@
 from tko.play_tree.task_tree import TaskTree
-from tko.floating.floating_manager import FloatingManager
 from tko.play.search_session_service import SearchSessionService
 from tko.play.search_service import SearchService
-import curses
 
 class Search:
-    def __init__(self, tree: TaskTree, fman: FloatingManager):
+    def __init__(self, tree: TaskTree):
         self.tree = tree
         self.game = tree.game
-        self.fman = fman
         self.repo = tree.repo
         self.search_mode: bool = False
         self.session = SearchSessionService(tree)
@@ -40,19 +37,3 @@ class Search:
     def cancel_search(self):
         self.search_mode = False
         self.session.cancel()
-
-    def process_search(self, key: int):
-        if key == curses.KEY_EXIT:
-            self.cancel_search()
-        elif key == ord("\n"):
-            self.finish_search()
-        elif key == curses.KEY_UP:
-            self.tree.move_up()
-        elif key == curses.KEY_DOWN:
-            self.tree.move_down()
-        elif key == curses.KEY_LEFT or key == curses.KEY_BACKSPACE:
-            self.tree.state.search = self.tree.state.search[:-1]
-            self.update_index()
-        elif 32 <= key < 127:
-            self.tree.state.search += chr(key).lower()
-            self.update_index()

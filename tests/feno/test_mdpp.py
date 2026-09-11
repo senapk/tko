@@ -1,6 +1,6 @@
 from loguru import logger
 from pathlib import Path
-from tko.feno.mdpp import TocMaker, Toc, TocTable, Toch, Load, Links, Action, Mdpp
+from tko.feno.mdpp import TocMaker, Toc, TocTable, Toch, Load, Links, Tests, Action, Mdpp
 
 def test_toc_maker_get_md_link():
     assert TocMaker.get_md_link("## Hello World") == "hello-world"
@@ -168,38 +168,6 @@ def test_load_rmcom_multiple_suffixes():
     assert Load.rm_comments(Path("main.c"), c_style) == "run();\nshow();"
     assert Load.rm_comments(Path("diag.puml"), puml_style) == "@startuml\n@enduml"
 
-def test_load_extract_between_tags():
-    content = "a\n[[tag]]\nb\nc\n[[tag]]\nd"
-    out = Load.extract_between_tags(content, "tag")
-    assert out == "b\nc\n"
-
-def test_load_extract_multiline_block():
-    content = """// preamble
-[[solution]]
-linha 1
-linha 2
-linha 3
-[[solution]]
-// postamble
-"""
-    out = Load.extract_between_tags(content, "solution")
-    assert out == "linha 1\nlinha 2\nlinha 3\n"
-
-def test_load_extract_with_comments_and_multiple_tags():
-    content = """// [[setup]]
-setup_code();
-// [[setup]]
-
-# [[solution]]
-sol_line_1
-sol_line_2
-# [[solution]]
-"""
-    setup = Load.extract_between_tags(content, "setup")
-    sol = Load.extract_between_tags(content, "solution")
-    assert setup == "setup_code();\n"
-    assert sol == "sol_line_1\nsol_line_2\n"
-
 def test_load_parse_tags_and_warnings():
     messages: list[str] = []
 
@@ -210,91 +178,39 @@ def test_load_parse_tags_and_warnings():
     )
 
     try:
-        params = Load.parse_tags(
-            "--fenced --extract sec --rm-comments --filter --tests-tio 2"
-        )
+        params = Load.parse_tags("--fenced --rm-comments --filter")
 
         assert params.fenced == ""
-        assert params.extract == "sec"
         assert params.rm_comments is True
         assert params.filter is True
-        assert params.tests_tio == 2
 
-        invalid = Load.parse_tags(
-            "--extract --tests nope --unknown"
-        )
-
-        assert invalid.extract is None
-        assert invalid.tests_tio is None
+        Load.parse_tags("--unknown")
 
         text = "\n".join(messages)
 
-        assert "faltando valor para --extract" in text
-        assert "valor inválido ou faltando para --tests" in text
         assert "tag não reconhecida '--unknown'" in text
 
     finally:
         logger.remove(sink_id)
 
-def test_load_parse_tags_tests_tio_and_tests_table():
-    p1 = Load.parse_tags("--tests-tio")
-    assert p1.tests_tio == 0
-    assert p1.tests_table is None
-
-    p2 = Load.parse_tags("--tests-tio 5")
-    assert p2.tests_tio == 5
-    assert p2.tests_table is None
-
-    p3 = Load.parse_tags("--tests-table")
-    assert p3.tests_table == 0
-    assert p3.tests_tio is None
-
-    p4 = Load.parse_tags("--tests-table 3")
-    assert p4.tests_table == 3
-    assert p4.tests_tio is None
-
-def test_load_parse_tags_legacy_tests_alias():
-    p1 = Load.parse_tags("--tests")
-    assert p1.tests_tio == 0
-    assert p1.tests_table is None
-
-    p2 = Load.parse_tags("--tests 4")
-    assert p2.tests_tio == 4
-    assert p2.tests_table is None
-
-def test_load_parse_tags_mutually_exclusive_tests():
+def test_load_rejects_removed_test_options():
     messages: list[str] = []
-    sink_id = logger.add(messages.append, level="WARNING", format="{message}")
+    sink_id = logger.add(messages.append, level="ERROR", format="{message}")
     try:
-        p = Load.parse_tags("--tests-tio 2 --tests-table 3")
-        assert p.tests_tio is None
-        assert p.tests_table is None
+        Load.parse_tags("--tests --tests-table --tests-tio")
         text = "\n".join(messages)
-        assert "--tests-tio e --tests-table são mutuamente exclusivos" in text
+        assert "a opção --tests não é suportada em load" in text
+        assert "a opção --tests-table não é suportada em load" in text
+        assert "a opção --tests-tio não é suportada em load" in text
     finally:
         logger.remove(sink_id)
 
-def test_load_parse_tags_legacy_tests_and_table_deprecation():
+def test_load_rejects_removed_extract_option():
     messages: list[str] = []
-    sink_id = logger.add(messages.append, level="WARNING", format="{message}")
+    sink_id = logger.add(messages.append, level="ERROR", format="{message}")
     try:
-        p = Load.parse_tags("--tests 2 --table")
-        assert p.tests_table == 2
-        assert p.tests_tio is None
-        text = "\n".join(messages)
-        assert "está depreciada, use --tests-table" in text
-    finally:
-        logger.remove(sink_id)
-
-def test_load_parse_tags_table_alone():
-    messages: list[str] = []
-    sink_id = logger.add(messages.append, level="WARNING", format="{message}")
-    try:
-        p = Load.parse_tags("--table")
-        assert p.tests_table is None
-        assert p.tests_tio is None
-        text = "\n".join(messages)
-        assert "tag não reconhecida '--table'" in text
+        Load.parse_tags("--extract solution")
+        assert "a opção --extract não é suportada em load" in "\n".join(messages)
     finally:
         logger.remove(sink_id)
 
@@ -317,14 +233,14 @@ b
 c
 '''
 """
-    out = Load.generate_tests_from_test_toml(toml_content, tmp_path / "cases.toml", 0, True)
+    out = Load.generate_tests_table_from_toml(toml_content, tmp_path / "cases.toml")
     assert out.count("<table>") == 2
     assert "Entrada" in out
     assert "Saída" in out
     assert "1\n2\n" in out
     assert "b\nc\n" in out
 
-def test_generate_table_from_test_toml_limited_cases(tmp_path: Path):
+def test_generate_table_from_test_toml_all_cases_with_multiline_content(tmp_path: Path):
     toml_content = """[[tests]]
 input = '''
 left
@@ -341,15 +257,11 @@ output = '''
 case
 '''
 """
-    out = Load.generate_tests_from_test_toml(toml_content, tmp_path / "cases.toml", 1, False)
-    assert out.count("<table>") == 0
-    assert "```py" in out
-    assert ">>>>>>>> INSERT" in out
-    assert "======== EXPECT" in out
-    assert "<<<<<<<< FINISH" in out
+    out = Load.generate_tests_table_from_toml(toml_content, tmp_path / "cases.toml")
+    assert out.count("<table>") == 2
     assert "left\n" in out
     assert "right\n" in out
-    assert "second\n" not in out
+    assert "second\n" in out
 
 def test_load_execute(tmp_path: Path):
     target_dir = tmp_path
@@ -433,38 +345,72 @@ def test_load_execute_multiple_blocks(tmp_path: Path):
     assert "print('b')" in out
     assert out.count("```py") == 2
 
-def test_load_execute_tests_tio(tmp_path: Path):
-    toml_file = tmp_path / "tests.toml"
-    toml_file.write_text("""[[tests]]
-input = "1\\n2"
-output = "3"
-[[tests]]
-input = "4"
-output = "4"
-""")
-    content = """<!-- load tests.toml --tests-tio 1 -->
-<!-- load -->
-"""
-    out = Load.execute(content, tmp_path, Action.RUN)
-    assert ">>>>>>>> INSERT" in out
-    assert "1\n2" in out
-    assert "output = \"4\"" not in out
-
-def test_load_execute_tests_table(tmp_path: Path):
+def test_tests_execute_renders_all_cases_and_honors_limit(tmp_path: Path):
     toml_file = tmp_path / "tests.toml"
     toml_file.write_text("""[[tests]]
 input = "10"
 output = "20"
+[[tests]]
+input = "30"
+output = "40"
+[[tests]]
+input = "50"
+output = "60"
+[[tests]]
+input = "70"
+output = "80"
+[[tests]]
+input = "90"
+output = "100"
 """)
-    content = """<!-- load tests.toml --tests-table -->
-<!-- load -->
+    content = """<!-- tests tests.toml -->
+<!-- tests -->
+
+<!-- tests tests.toml --limit 2 -->
+<!-- tests -->
+
+<!-- tests tests.toml --limit 0 -->
+<!-- tests -->
 """
-    out = Load.execute(content, tmp_path, Action.RUN)
-    assert "<table>" in out
-    assert "Entrada" in out
-    assert "Saída" in out
-    assert "10" in out
-    assert "20" in out
+    out = Tests.execute(content, tmp_path, Action.RUN)
+    blocks = out.split("<!-- tests -->")
+    assert blocks[0].count("<table>") == 5
+    assert blocks[1].count("<table>") == 2
+    assert blocks[2].count("<table>") == 5
+
+    cleaned = Tests.execute(out, tmp_path, Action.CLEAN)
+    assert cleaned == """<!-- tests tests.toml -->
+<!-- tests -->
+
+<!-- tests tests.toml --limit 2 -->
+<!-- tests -->
+
+<!-- tests tests.toml --limit 0 -->
+<!-- tests -->
+"""
+
+def test_tests_execute_expands_loaded_cases_and_warns_on_invalid_limit(tmp_path: Path):
+    cases = tmp_path / "cases.toml"
+    cases.write_text("""[[tests]]
+input = "one"
+output = "1"
+[[tests]]
+input = "two"
+output = "2"
+""")
+    root = tmp_path / "tests.toml"
+    root.write_text('load = "cases.toml"\n')
+    messages: list[str] = []
+    sink_id = logger.add(messages.append, level="WARNING", format="{message}")
+    try:
+        content = """<!-- tests tests.toml --limit nope -->
+<!-- tests -->
+"""
+        out = Tests.execute(content, tmp_path, Action.RUN)
+        assert out.count("<table>") == 2
+        assert "valor inválido ou faltando para --limit" in "\n".join(messages)
+    finally:
+        logger.remove(sink_id)
 
 def test_load_execute_fenced_explicit_lang(tmp_path: Path):
     data_file = tmp_path / "query.txt"
@@ -477,31 +423,26 @@ def test_load_execute_fenced_explicit_lang(tmp_path: Path):
 
 def test_load_pipeline_order_invariance(tmp_path: Path):
     py_file = tmp_path / "full.py"
-    py_file.write_text("""# Header
-[[solution]]
-# @KEEP
+    py_file.write_text("""# @KEEP
 keep_var = 1
 # @DROP
 drop_var = 2
 # Comment line
 result = keep_var
-[[solution]]
-# Footer
 """)
-    content1 = """<!-- load full.py --extract solution --filter --rm-comments --fenced py -->
+    content1 = """<!-- load full.py --filter --rm-comments --fenced py -->
 <!-- load -->
 """
-    content2 = """<!-- load full.py --fenced py --rm-comments --filter --extract solution -->
+    content2 = """<!-- load full.py --fenced py --rm-comments --filter -->
 <!-- load -->
 """
     out1 = Load.execute(content1, tmp_path, Action.RUN)
     out2 = Load.execute(content2, tmp_path, Action.RUN)
-    assert out1.replace("full.py --extract solution --filter --rm-comments --fenced py", "CMD") == \
-           out2.replace("full.py --fenced py --rm-comments --filter --extract solution", "CMD")
+    assert out1.replace("full.py --filter --rm-comments --fenced py", "CMD") == \
+           out2.replace("full.py --fenced py --rm-comments --filter", "CMD")
     assert "keep_var = 1" in out1
     assert "drop_var = 2" not in out1
     assert "# Comment line" not in out1
-    assert "# Header" not in out1
     assert "```py" in out1
 
 def test_links_execute(tmp_path: Path):
@@ -585,8 +526,8 @@ output = "3"
 
 ## Tests
 
-<!-- load tests.toml --tests-tio -->
-<!-- load -->
+<!-- tests tests.toml -->
+<!-- tests -->
 
 ## Documentation
 
@@ -601,14 +542,14 @@ output = "3"
     assert "- [Overview](#overview)" in content
     assert "[Overview](#overview) | [Tests](#tests) | [Documentation](#documentation)" in content
     assert "def add(a, b):" in content
-    assert ">>>>>>>> INSERT" in content
+    assert "<table>" in content
     assert "- [guide.md](docs/guide.md)" in content
     # Now test CLEAN mode
     cleaned = Mdpp.update_file(readme, Action.CLEAN)
     assert cleaned is True
     clean_content = readme.read_text()
     assert "def add" not in clean_content
-    assert ">>>>>>>> INSERT" not in clean_content
+    assert "<table>" not in clean_content
     assert "<!-- toc -->\n<!-- toc -->" in clean_content
     assert "<!-- toc-table -->\n<!-- toc-table -->" in clean_content
     assert "<!-- links docs -->\n<!-- links -->" in clean_content

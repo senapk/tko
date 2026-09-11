@@ -7,12 +7,11 @@ from tko.play_tree.time_formatter import TimeFormatter
 from tko.config.flags import Flags
 from tko.play_tree.tree_layout import TreeLayout
 from tko.play_tree.tree_state import TreeState
-from tko.play.quest_visibility_service import QuestVisibilityService
 from tko.config.settings import Settings
 from tko.util.rbuffer import RBuffer
 from tko.util.rt import RT
 from tko.util.to_asc import SearchAsc
-from tko.game.xp_display import format_task_xp, truncate_total_xp
+from tko.game.xp_display import format_task_xp
 
 class TreeRenderer:
     def __init__(
@@ -32,7 +31,6 @@ class TreeRenderer:
         self.settings = settings
         self.flags = flags
         self.state = state
-        self.filler = "."
 
     def mark_search_match(self, text: RT, matcher: SearchAsc):
         pos = matcher.find(text.plain())
@@ -54,12 +52,15 @@ class TreeRenderer:
 
     def render_task(self, t: Task, focused: bool) -> RT:
         head = RBuffer()
-        head.add(f"{format_task_xp(t.xp):>4}", "y")
+        head.add(format_task_xp(t.xp), "y")
+        pinned = t.basic.full_key in self.state.pinned
+        head.add(" * " if pinned else " - ", "y" if pinned else "")
         state, test = self.task_formatter.get_task_down_test_eval_symbol(t)
-        head.add(" ")
-        head.add(" ").add(test)
+        head.add(test)
         head.add(" ").add(state)
-        head.add(">" if focused else " ")
+        # Textual owns the selection cursor. Do not bake a second, legacy
+        # focus marker into the label, otherwise it remains in stale rows.
+        head.add(" ")
 
         if self.layout.insert_quest_keys:
             key = t.quest_key
@@ -79,44 +80,26 @@ class TreeRenderer:
         )
         title = self.task_formatter.color_task_title(_key, _title)
 
-        focus_color = self.settings.colors.focused_item if focused else ""
-        # focus_color = ""
-        if focused:
-            title = title.add_style(focus_color)
         output += title
         if len(output) > self.layout.sentence_cut_size:
             output = output.slice(0, self.layout.sentence_cut_size - 1) + "…"
         else:
-            output = output.ljust(self.layout.sentence_cut_size, RT(" ", focus_color))
-        tail = RBuffer().add(output).add(" ")
-
-        value = t.grader.full_percent
-        if t.info.boss:
-            tail.add("B")
-        elif t.info.feedback:
-            tail.add("F")
-        else:
-            tail.add("-")
-        
-        tail.add(" ").add(self.time_formatter.format_percent_3s(value))
+            output = output.ljust(self.layout.sentence_cut_size, RT(" "))
+        status = RBuffer().add(self.time_formatter.format_percent_3s(t.grader.full_percent))
+        feedback = "B" if t.info.boss else "F" if t.info.feedback else "-"
         if self.flags.show_time.is_true():
             h, m = self.time_formatter.get_task_hours_minutes(t)
-            tail.add(" ").add(self.time_formatter.format_hours_minutes("g", h, m))
-            
-        return tail.to_rt()
+            # ``format_hours_minutes`` ends with a separator, so feedback
+            # remains directly after the time without extra alignment logic.
+            status.add(" ").add(self.time_formatter.format_hours_minutes("g", h, m)).add(feedback).add(" ")
+        else:
+            status.add(" ").add(feedback).add(" ")
+        return status.to_rt() + output
 
     def render_quest(self, q: Quest, focused: bool) -> RT:
-        color = "g" if QuestVisibilityService.is_reachable(q) else "y"
-        body = RBuffer().add(q.ui.ligature.set_style(color))
-        done, goal, _ = q.progress.get_obtained_goal_available()
-        done = truncate_total_xp(done)
-        done_str = f"{done:02}"
-        goal = truncate_total_xp(goal)
-        goal_str = f"{goal:02}"
-
-        body.add(f" {done_str:>3}/{goal_str:>3}").add(" ")
-        
-        body.add(">" if focused else " ")
+        # The expand/collapse marker is provided by Textual's Tree. Keep the
+        # quest label to its metadata and name so the order is predictable.
+        body = RBuffer()
 
         color = q.ui.is_requirement_color
 
@@ -124,20 +107,17 @@ class TreeRenderer:
             q,
             self.flags.panel.is_skills(),
         ).add_style(color)
-        if focused:
-            color = self.settings.colors.focused_item
-            title = title.add_style(color)
         output = body.add(title).to_rt()
         
         if len(output) > self.layout.sentence_cut_size:
             output = output.slice(0, self.layout.sentence_cut_size - 1) + "…"
         else:
-            output = output.ljust(self.layout.sentence_cut_size, RT(self.filler, color))
-        tail = RBuffer().add(output).add("   ")
-        percent_text = self.quest_formatter.get_percent_text(q)
-        tail.add(percent_text)
+            output = output.ljust(self.layout.sentence_cut_size, RT(" ", color))
+        completed, total = q.progress.get_completion()
+        status = RBuffer().add(f"{completed:02}/{total:02}")
         if self.flags.show_time.is_true():
             h, m = self.time_formatter.get_quest_time(q)
-            tail.add(" ").add(self.time_formatter.format_hours_minutes("g", h, m))
-
-        return tail.to_rt()
+            status.add(" ").add(self.time_formatter.format_hours_minutes("g", h, m))
+        else:
+            status.add(" ")
+        return status.to_rt() + output

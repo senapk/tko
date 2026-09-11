@@ -2,13 +2,13 @@ from tko.feno.title import FenoTitle
 from tko.feno.older import Older
 from tko.feno.html import convert_markdown_to_html
 from tko.feno.cases import Cases
-from tko.feno.git_hub_cfg import GithubCfg
 from tko.feno.link_rebase import LinkRebase
 from tko.feno.log import Log
 from tko.feno.mdpp import Mdpp
 from tko.feno.filter import DeepFilter
 from tko.i18n import Msg
 from tko.util.decoder import Decoder
+from tko.util.git_hub_url import GitHubUrl
 from pathlib import Path
 from tko.util.console import Console
 import subprocess
@@ -39,11 +39,11 @@ class Actions:
         self.output_cases = self.cache / "tests.vpl"
         self.output_starter = self.cache / "starter"
         self.output_html = self.cache / "README.html"
-        self.make_remote: bool = False
+        self.remote_url: str | None = None
         self.use_pandoc: bool = False
 
-    def set_use_remote(self, make_remote: bool):
-        self.make_remote = make_remote
+    def set_remote_url(self, remote_url: str | None):
+        self.remote_url = remote_url
         return self
 
     def in_blacklist(self):
@@ -90,18 +90,17 @@ class Actions:
 
     def remote_md(self):
         content = Decoder.load(self.source_readme)
-        if self.make_remote:
-            cfg = GithubCfg(self.source_dir, self.make_remote)
-            if cfg.remote is not None:
-                try:
-                    relative_readme = self.source_readme.resolve().relative_to(cfg.get_cfg_path().parent)
-                    remote = cfg.remote.set_relative_path(relative_readme.as_posix())
-                    content = LinkRebase.rebase(content, remote)
-                except ValueError:
-                    pass
-        else:
-            relative_folder = Path(os.path.relpath(self.source_readme.parent, self.output_readme.parent))
-            content = LinkRebase.change_to_relative_folder(content, relative_folder)
+        if self.remote_url is None:
+            raise ValueError("remote URL is required for Moodle builds")
+        remote = GitHubUrl.parse(self.remote_url)
+        if remote is None:
+            raise ValueError(f"invalid GitHub URL: {self.remote_url}")
+        try:
+            relative_readme = self.source_readme.resolve().relative_to(Path.cwd().resolve())
+            remote = remote.set_relative_path(relative_readme.as_posix())
+            content = LinkRebase.rebase(content, remote)
+        except ValueError:
+            pass
 
         Decoder.save(self.output_readme, content)
         Log.resume("Readme ", end="")
@@ -150,7 +149,7 @@ class Actions:
             Log.resume("Mdpp ", end="")
             Log.verbose(f"Mdpp updading")
 
-def build_task(targets: list[Path], remote: bool, check: bool, erase: bool, brief: bool, moodle: bool):
+def build_task(targets: list[Path], remote_url: str | None, check: bool, erase: bool, brief: bool):
     Log.set_verbose(not brief)
 
     if len(targets) == 0:
@@ -162,7 +161,7 @@ def build_task(targets: list[Path], remote: bool, check: bool, erase: bool, brie
             Console.print(f"\n    {_FENO_BUILD_TARGET_NOT_DIRECTORY}".format(target=target))
             continue
         hook = target.name
-        actions = Actions(target).set_use_remote(remote)
+        actions = Actions(target).set_remote_url(remote_url)
 
         if not actions.in_blacklist():
             continue
@@ -172,7 +171,7 @@ def build_task(targets: list[Path], remote: bool, check: bool, erase: bool, brie
 
         actions.load_title()
         actions.create_cache()
-        actions.update_markdown()
+        moodle = remote_url is not None
 
         if not check or actions.need_rebuild(moodle):
             actions.recreate_cache()  # erase .cache

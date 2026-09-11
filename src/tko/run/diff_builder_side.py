@@ -7,7 +7,7 @@ from tko.util.rt import RT
 class DiffBuilderSide:
     def __init__(self, width: int, unit: Unit):
         self.width = width
-        self.curses = False
+        self.tui = False
         self.db = DiffBuilder(width)
         self.unit: Unit = unit
         self.output: list[RT] = []
@@ -15,8 +15,8 @@ class DiffBuilderSide:
         self.__standalone_diff = False
         self.expected_received, self.first_failure = self.db.render_diff(self.unit.get_expected(), self.unit.get_received())
 
-    def set_curses(self):
-        self.curses = True
+    def set_tui(self):
+        self.tui = True
         return self
 
     def split_screen(self, a: RT | None, b: RT | None, unequal: RT | None = None) -> RT:

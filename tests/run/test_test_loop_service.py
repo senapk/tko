@@ -134,10 +134,10 @@ def test_run_execution_settings_are_extracted_from_config():
     config = RunConfig()
     config.no_run = True
     config.timeout = 12
-    config.curses_mode = True
+    config.tui_mode = True
 
     settings = RunExecutionSettings.from_config(config)
 
     assert settings.no_run is True
     assert settings.timeout == 12
-    assert settings.curses_mode is True
+    assert settings.tui_mode is True

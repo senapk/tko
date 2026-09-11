@@ -36,8 +36,9 @@ dependencies = [
     "watchdog>=6.0.0",
     "wcwidth>=0.2.13",
     "icecream>=2.1.4",
-    "windows-curses; platform_system=='Windows'",
     "loguru>=0.7.3",
+    "textual>=6.8,<7",
+    "rich>=14.0,<15",
 ]
 
 [project.optional-dependencies]

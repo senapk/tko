@@ -69,8 +69,8 @@ class RunContext:
         self.execution_settings = RunExecutionSettings.from_config(self.config)
         return self
 
-    def set_curses(self, value: bool = True) -> RunContext:
-        self.config.curses_mode = value
+    def set_tui(self, value: bool = True) -> RunContext:
+        self.config.tui_mode = value
         self.execution_settings = RunExecutionSettings.from_config(self.config)
         return self
 

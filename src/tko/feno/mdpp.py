@@ -14,21 +14,17 @@ from tko.loader.unit_data import UnitData
 
 
 
-_MDPP_MISSING_EXTRACT_VALUE = Msg.text(
-    pt="faltando valor para --extract",
-    en="missing value for --extract",
+_MDPP_INVALID_TESTS_LIMIT = Msg.text(
+    pt="valor inválido ou faltando para --limit",
+    en="invalid or missing value for --limit",
 )
-_MDPP_INVALID_TESTS_INTEGER = Msg.text(
-    pt="valor inválido ou faltando para --tests",
-    en="invalid or missing integer for --tests",
+_MDPP_LOAD_TESTS_OPTION_REMOVED = Msg.text(
+    pt="a opção {tag} não é suportada em load; use a diretiva tests",
+    en="the {tag} option is not supported in load; use the tests directive",
 )
-_MDPP_MUTUALLY_EXCLUSIVE_TESTS = Msg.text(
-    pt="--tests-tio e --tests-table são mutuamente exclusivos",
-    en="--tests-tio and --tests-table are mutually exclusive",
-)
-_MDPP_DEPRECATED_TESTS_TABLE = Msg.text(
-    pt="a combinação --tests --table está depreciada, use --tests-table",
-    en="the combination --tests --table is deprecated, use --tests-table",
+_MDPP_LOAD_EXTRACT_OPTION_REMOVED = Msg.text(
+    pt="a opção --extract não é suportada em load",
+    en="the --extract option is not supported in load",
 )
 _MDPP_UNRECOGNIZED_TAG = Msg.text(
     pt="tag não reconhecida '{tag}'",
@@ -223,11 +219,8 @@ class Links:
 
 @dataclass
 class LoadParams:
-    extract: str | None = None
     filter: bool = False
     rm_comments: bool = False
-    tests_tio: int | None = None
-    tests_table: int | None = None
     fenced: str | None = None
 
     @property
@@ -238,34 +231,7 @@ class LoadParams:
     def rmcom(self, value: bool) -> None:
         self.rm_comments = value
 
-    @property
-    def tests(self) -> int | None:
-        return self.tests_tio
-
-    @tests.setter
-    def tests(self, value: int | None) -> None:
-        self.tests_tio = value
-
-    @property
-    def table(self) -> bool:
-        return self.tests_table is not None
-
-    @table.setter
-    def table(self, value: bool) -> None:
-        if value and self.tests_tio is not None:
-            self.tests_table = self.tests_tio
-            self.tests_tio = None
-
 class Load:
-    @staticmethod
-    def extract_between_tags(content: str, tag: str) -> str:
-        escaped = re.escape(tag)
-        regex = r"\[\[" + escaped + r"\]\].*?\r?\n(.*?)^[^\r\n]*?\[\[" + escaped + r"\]\]"
-        match = re.search(regex, content, re.MULTILINE | re.DOTALL)
-        if match:
-            return match.group(1)
-        return ""
-
     @staticmethod
     def rm_comments(target: Path, content: str) -> str:
         com = "//"
@@ -295,12 +261,6 @@ class Load:
         params = LoadParams()
         tokens = tag_str.split()
         
-        raw_tests_tio: int | None = None
-        raw_tests_table: int | None = None
-        raw_tests: int | None = None
-        had_legacy_table: bool = False
-        mutually_exclusive_error: bool = False
-
         i = 0
         while i < len(tokens):
             token = tokens[i]
@@ -313,86 +273,19 @@ class Load:
                 else:
                     params.fenced = ""  # Se não houver valor, apenas ativa o fenced sem linguagem específica
             elif token == "--extract":
-                val = Load.__get_value(tokens, i)
-                if val:
-                    params.extract = val
-                    i += 1  # Consome o valor
-                else:
-                    logger.warning(str(_MDPP_MISSING_EXTRACT_VALUE))
+                logger.error(str(_MDPP_LOAD_EXTRACT_OPTION_REMOVED))
+                if Load.__get_value(tokens, i) is not None:
+                    i += 1
             elif token == "--filter":
                 params.filter = True
             elif token in ("--rm-comments", "--rmcom"):
                 params.rm_comments = True
-            elif token == "--tests-tio":
-                val = Load.__get_value(tokens, i)
-                if val is not None:
-                    try:
-                        parsed = int(val)
-                        if parsed < 0:
-                            raise ValueError
-                        raw_tests_tio = parsed
-                        i += 1
-                    except ValueError:
-                        logger.warning(str(_MDPP_INVALID_TESTS_INTEGER))
-                        i += 1
-                else:
-                    raw_tests_tio = 0
-            elif token == "--tests-table":
-                val = Load.__get_value(tokens, i)
-                if val is not None:
-                    try:
-                        parsed = int(val)
-                        if parsed < 0:
-                            raise ValueError
-                        raw_tests_table = parsed
-                        i += 1
-                    except ValueError:
-                        logger.warning(str(_MDPP_INVALID_TESTS_INTEGER))
-                        i += 1
-                else:
-                    raw_tests_table = 0
-            elif token == "--tests":
-                val = Load.__get_value(tokens, i)
-                if val is not None:
-                    try:
-                        parsed = int(val)
-                        if parsed < 0:
-                            raise ValueError
-                        raw_tests = parsed
-                        i += 1
-                    except ValueError:
-                        logger.warning(str(_MDPP_INVALID_TESTS_INTEGER))
-                        i += 1
-                else:
-                    raw_tests = 0
-            elif token == "--table":
-                had_legacy_table = True
+            elif token in ("--tests", "--tests-table", "--tests-tio"):
+                logger.error(str(_MDPP_LOAD_TESTS_OPTION_REMOVED).format(tag=token))
             elif token.startswith("--"):
                 logger.warning(str(_MDPP_UNRECOGNIZED_TAG).format(tag=token))
             
             i += 1  # Sempre avança para o próximo token
-
-        if (raw_tests_tio is not None or raw_tests is not None) and (raw_tests_table is not None):
-            logger.warning(str(_MDPP_MUTUALLY_EXCLUSIVE_TESTS))
-            mutually_exclusive_error = True
-
-        if not mutually_exclusive_error:
-            if raw_tests_table is not None:
-                params.tests_table = raw_tests_table
-                if had_legacy_table:
-                    logger.warning(str(_MDPP_DEPRECATED_TESTS_TABLE))
-            elif raw_tests_tio is not None:
-                params.tests_tio = raw_tests_tio
-                if had_legacy_table:
-                    logger.warning(str(_MDPP_DEPRECATED_TESTS_TABLE))
-            elif raw_tests is not None:
-                if had_legacy_table:
-                    logger.warning(str(_MDPP_DEPRECATED_TESTS_TABLE))
-                    params.tests_table = raw_tests
-                else:
-                    params.tests_tio = raw_tests
-            elif had_legacy_table:
-                logger.warning(str(_MDPP_UNRECOGNIZED_TAG).format(tag="--table"))
 
         return params
 
@@ -408,7 +301,7 @@ class Load:
         return input_pad, output_pad
 
     @staticmethod
-    def generate_tests_from_test_toml(content: str, path: Path, cases: int, use_table: bool) -> str:
+    def generate_tests_table_from_toml(content: str, path: Path, limit: int | None = None) -> str:
         def format_table(_input: str, _output: str, pad_input: int, pad_output: int) -> str:
             pad_input += 3
             if pad_input % 2 == 0:
@@ -426,26 +319,12 @@ class Load:
             
             return table_start + _input + table_mid + _output + table_end
         
-        def format_simple_test_cases(_input: str, _output: str, pad: int) -> str:
-            opening = "```py"
-            before = f'{">>>>>>>> INSERT"}'
-            middle = f'{"======== EXPECT"}'
-            ending = f'{"<<<<<<<< FINISH"}'
-            closing = "```"
-            return f"{opening}\n{before}\n{_input}{middle}\n{_output}{ending}\n{closing}"
-
         from tko.loader.toml_parser import TomlParser
         test_data_list: list[UnitData] = TomlParser.extract_toml_units(content, path)
-        if cases == 0:
-            cases = len(test_data_list)
-        elif cases > 0:
-            test_data_list = test_data_list[:cases]
+        if limit is not None:
+            test_data_list = test_data_list[:limit]
         pad_input, pad_output = Load.__calc_input_and_output_pad(test_data_list)
-        if use_table:
-            table_data_list = [format_table(unit.input, unit.output, pad_input, pad_output) for unit in test_data_list]
-        else:
-            pad = max(20, pad_input, pad_output)
-            table_data_list = [format_simple_test_cases(unit.input, unit.output, pad) for unit in test_data_list]
+        table_data_list = [format_table(unit.input, unit.output, pad_input, pad_output) for unit in test_data_list]
 
         return "\n\n".join(table_data_list)
 
@@ -458,22 +337,13 @@ class Load:
 
         data = Decoder.load(abspath)
 
-        # 1. extract
-        if params.extract:
-            tag = params.extract
-            data = Load.extract_between_tags(data, tag)
-        # 2. filter
+        # 1. filter
         if params.filter:
             data = Filter(Path(rel_path)).process(data)
-        # 3. remove comments
+        # 2. remove comments
         if params.rm_comments:
             data = Load.rm_comments(abspath, data)
-        # 4. tests-tio OR tests-table
-        if params.tests_tio is not None:
-            data = Load.generate_tests_from_test_toml(data, abspath, params.tests_tio, use_table=False)
-        elif params.tests_table is not None:
-            data = Load.generate_tests_from_test_toml(data, abspath, params.tests_table, use_table=True)
-        # 5. fenced
+        # 3. fenced
         if params.fenced is not None:
             if params.fenced == "":
                 lang = abspath.suffix[1:] if abspath.suffix.startswith(".") else ""
@@ -503,6 +373,56 @@ class Load:
             return "\n".join(result)
 
         # O sub substitui as ocorrências usando a função de callback
+        return re.sub(regex, replace_tag_fn, content, flags=re.MULTILINE | re.DOTALL)
+
+
+class Tests:
+    """Renderiza casos de teste TOML como tabela."""
+
+    @staticmethod
+    def _parse_command(full_command: str) -> tuple[str, int | None]:
+        tokens = full_command.split()
+        path_str = tokens[0]
+        limit: int | None = None
+        index = 1
+        while index < len(tokens):
+            token = tokens[index]
+            if token == "--limit":
+                if index + 1 >= len(tokens):
+                    logger.warning(str(_MDPP_INVALID_TESTS_LIMIT))
+                else:
+                    try:
+                        parsed = int(tokens[index + 1])
+                        if parsed < 0:
+                            raise ValueError
+                        limit = parsed or None
+                    except ValueError:
+                        logger.warning(str(_MDPP_INVALID_TESTS_LIMIT))
+                    index += 1
+            elif token.startswith("--"):
+                logger.warning(str(_MDPP_UNRECOGNIZED_TAG).format(tag=token))
+            index += 1
+        return path_str, limit
+
+    @staticmethod
+    def execute(content: str, target_dir: Path, action: Action = Action.RUN) -> str:
+        regex = r"<!-- tests\s+(.+?)\s*-->\n(.*?)(?=<!-- tests -->)<!-- tests -->"
+
+        def replace_tag_fn(match: re.Match[str]) -> str:
+            full_command = match.group(1).strip()
+            result = [f"<!-- tests {full_command} -->"]
+            if action == Action.RUN:
+                path_str, limit = Tests._parse_command(full_command)
+                path = (Path(target_dir) / path_str).resolve()
+                if not path.is_file():
+                    logger.warning(str(_MDPP_FILE_NOT_FOUND).format(path=path_str))
+                else:
+                    result.append(
+                        Load.generate_tests_table_from_toml(Decoder.load(path), path, limit)
+                    )
+            result.append("<!-- tests -->")
+            return "\n".join(result)
+
         return re.sub(regex, replace_tag_fn, content, flags=re.MULTILINE | re.DOTALL)
 
 class MdppMain:
@@ -539,6 +459,7 @@ class Mdpp:
         updated = original
         updated = Toc.execute(updated, action)
         updated = TocTable.execute(updated, action)
+        updated = Tests.execute(updated, target_dir, action)
         updated = Load.execute(updated, target_dir, action)
         updated = Links.execute(target, updated, action)
         if updated != original:

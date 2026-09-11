@@ -1,0 +1,840 @@
+from __future__ import annotations
+
+from collections.abc import Callable
+
+from rich.text import Text
+from textual.app import App, ComposeResult
+from textual.binding import Binding, BindingsMap
+from textual.containers import Horizontal, ScrollableContainer, Vertical
+from textual.screen import ModalScreen
+from textual.widgets import Button, Footer, Input, Label, Static, Tree
+
+from tko.config.flags import PanelMode
+from tko.config.app_settings import ToggleOption
+from tko.config.settings import Settings
+from tko.game.quest import Quest
+from tko.game.task import Task
+from tko.game.tree_item import IsTreeItem
+from tko.play.daily_graph import DailyGraph
+from tko.play.gui_keys import GuiKeys
+from tko.play.search import Search
+from tko.play.task_action import TaskAction
+from tko.play_gui.gui_graph_panel import GuiGraphPanel
+from tko.play_gui.gui_skills_bar import GuiSkillsBar
+from tko.play_tree.task_formatter import TaskFormatter
+from tko.play_tree.task_tree import TaskTree
+from tko.repository.repository import Repository
+from tko.repository.repository_watcher import RepositoryWatcher
+from tko.ui_textual.rt_adapter import to_rich_text
+from tko.util.rt import RT
+
+
+class HelpScreen(ModalScreen[None]):
+    """Native modal screen for the keyboard-reference view."""
+
+    DEFAULT_CSS = """
+    HelpScreen { align: center middle; }
+    #help-dialog { width: 76; height: auto; max-height: 80%; padding: 1 2; border: round $accent; background: $surface; }
+    """
+
+    def __init__(self, portuguese: bool = True) -> None:
+        super().__init__()
+        self.portuguese = portuguese
+
+    def compose(self) -> ComposeResult:
+        title = "Atalhos do TKO" if self.portuguese else "TKO shortcuts"
+        content = (
+            "↑/↓ navegar  •  ←/→ expandir/contrair  •  Enter abrir/executar\n"
+            "/ buscar  •  F fixar  •  1/2 tarefas  •  3/4/5 painel\n"
+            "[/] expandir/compactar tudo  •  R recarregar  •  q sair\n\n"
+            "Pressione Esc para fechar."
+            if self.portuguese
+            else "↑/↓ navigate  •  ←/→ expand/collapse  •  Enter open/run\n"
+            "/ search  •  F pin  •  1/2 tasks  •  3/4/5 panel\n"
+            "[/] expand/collapse all  •  R reload  •  q quit\n\n"
+            "Press Esc to close."
+        )
+        yield Vertical(
+            Label(title, classes="title"),
+            Static(content, markup=False),
+            id="help-dialog",
+        )
+
+    BINDINGS = [Binding("escape,question_mark", "dismiss", "Fechar", show=False)]
+
+    def action_dismiss(self) -> None:
+        self.dismiss()
+
+
+class TaskTreeView(Tree[IsTreeItem]):
+    """Tree widget whose nodes mirror the existing TaskTree state."""
+
+    BINDINGS = [
+        Binding("left", "legacy_left", "Contrair", show=False),
+        Binding("right", "legacy_right", "Expandir", show=False),
+    ]
+
+    def __init__(self, model: TaskTree) -> None:
+        super().__init__("TKO", id="task-tree")
+        self.model = model
+        self.show_root = False
+        self.guide_depth = 2
+        self._node_by_key: dict[str, object] = {}
+
+    def rebuild(self) -> None:
+        self.model.update()
+        self.clear()
+        self._node_by_key.clear()
+        quest_nodes: dict[str, object] = {}
+        for sentence, item in self.model.get_rendered_items():
+            label = to_rich_text(sentence)
+            if isinstance(item, Quest):
+                expanded = item.basic.full_key in self.model.state.expanded
+                node = self.root.add(label, data=item, expand=expanded, allow_expand=True)
+                quest_nodes[item.basic.full_key] = node
+                self._node_by_key[item.basic.full_key] = node
+            elif isinstance(item, Task):
+                parent = quest_nodes.get(item.quest_key, self.root)
+                node = parent.add_leaf(label, data=item)
+                self._node_by_key[item.basic.full_key] = node
+        selected_key = self.model.state.selected
+        if self.is_mounted:
+            # Nodes receive their screen line during the next layout pass, so
+            # restore the cursor after Textual has refreshed this tree.
+            self.call_after_refresh(self._restore_cursor, selected_key)
+
+    def _restore_cursor(self, key: str) -> None:
+        selected = self._node_by_key.get(key)
+        if selected is not None:
+            self.move_cursor(selected)  # type: ignore[arg-type]
+
+    def action_legacy_left(self) -> None:
+        self.model.move_left()
+        self.rebuild()
+
+    def action_legacy_right(self) -> None:
+        self.model.move_right()
+        self.rebuild()
+
+
+class TkoApp(App[Callable[[], None] | None]):
+    """The Textual replacement for the repository browser in ``tko open``."""
+
+    TITLE = "TKO"
+    ENABLE_COMMAND_PALETTE = False
+    CSS = """
+    Screen { layout: vertical; background: #080808; }
+    #topbar { height: 1; padding: 0 1; background: $primary-darken-2; color: $text; }
+    #topbar .top-action { width: auto; min-width: 0; height: 1; padding: 0 1; border: none; background: transparent; color: $text; }
+    #topbar .top-action:hover { background: $primary; }
+    #topbar .top-action.active { background: $accent; color: $text; text-style: bold; }
+    #top-context { width: 1fr; height: 1; padding: 0 1; content-align: right middle; }
+    #body { height: 1fr; background: #080808; }
+    #task-tree { width: 45%; height: 100%; min-width: 28; border: round $primary; background: #080808; }
+    #side-panel { width: 55%; height: 100%; min-width: 30; border: round $secondary; padding: 0 1; background: #080808; }
+    #side-content { width: auto; min-width: 100%; height: auto; text-wrap: nowrap; background: #080808; }
+    Footer { background: #080808; }
+    #search { display: none; margin: 0 1; }
+    #search.visible { display: block; }
+    .title { text-style: bold; }
+    """
+
+    BINDINGS = [
+        Binding("q", "quit", "Sair", show=False),
+        Binding("escape", "escape", "Sair"),
+        Binding("slash", "search", "Buscar"),
+        Binding(GuiKeys.inbox, "show_pinned", "Fixadas", show=False),
+        Binding(GuiKeys.all_tasks, "show_all", "Todas", show=False),
+        Binding(GuiKeys.panel_graph, "show_graph", "Gráfico", show=False),
+        Binding(GuiKeys.panel_logs, "show_logs", "Logs", show=False),
+        Binding(GuiKeys.panel_skills, "show_skills", "Trilhas", show=False),
+        Binding(GuiKeys.pin, "toggle_pin", "Fixar"),
+        Binding(GuiKeys.self_evaluate, "self_evaluate", "Avaliar"),
+        Binding("delete", "delete_task", "Excluir"),
+        Binding(GuiKeys.expand_all, "expand_all", "Expandir", show=False),
+        Binding(GuiKeys.collapse_all, "collapse_all", "Compactar", show=False),
+        Binding(GuiKeys.reload_game, "reload", "Recarregar"),
+        Binding(GuiKeys.show_duration, "toggle_time", "Tempo"),
+        Binding(GuiKeys.set_lang_drafts, "choose_language", "Linguagem"),
+        Binding(GuiKeys.palette, "palette", "Ações"),
+        Binding("less_than_sign", "panel_smaller", "\u00a0", key_display="<", tooltip="Diminuir painel"),
+        Binding("greater_than_sign", "panel_larger", "\u00a0", key_display=">", tooltip="Aumentar painel"),
+        Binding("pageup", "scroll_logs_up", "Logs acima", show=False),
+        Binding("pagedown", "scroll_logs_down", "Logs abaixo", show=False),
+        Binding("question_mark", "help", "Ajuda"),
+    ]
+
+    def __init__(self, settings: Settings, repo: Repository, watcher: RepositoryWatcher | None, need_update: bool = False) -> None:
+        super().__init__()
+        self.settings = settings
+        self._bindings = BindingsMap(self._localized_bindings())
+        self.repo = repo
+        self.watcher = watcher
+        self.need_update = need_update
+        self.model = TaskTree(settings, repo)
+        # TreeRenderer keeps task and quest text within the available tree
+        # content width. The callback is evaluated only while rendering, after
+        # the widget has a layout size.
+        self.model.layout.get_tree_size_fn = self._tree_content_width
+        self.task_formatter = TaskFormatter(settings, repo)
+        self.search = Search(self.model)
+        self.graph = GuiGraphPanel(settings, repo, repo.flags)
+        self.skills = GuiSkillsBar(repo.game, settings.colors, repo.flags, lambda: self._selected_source())
+
+    def _localized_bindings(self) -> list[Binding]:
+        return [
+            Binding("q", "quit", self._t("Sair", "Quit"), show=False),
+            Binding("escape", "escape", self._t("Sair", "Quit")),
+            Binding("slash", "search", self._t("Buscar", "Search")),
+            Binding(GuiKeys.inbox, "show_pinned", self._t("Fixadas", "Pinned"), show=False),
+            Binding(GuiKeys.all_tasks, "show_all", self._t("Todas", "All"), show=False),
+            Binding(GuiKeys.panel_graph, "show_graph", self._t("Gráfico", "Graph"), show=False),
+            Binding(GuiKeys.panel_logs, "show_logs", "Logs", show=False),
+            Binding(GuiKeys.panel_skills, "show_skills", self._t("Trilhas", "Skills"), show=False),
+            Binding(GuiKeys.pin, "toggle_pin", self._t("Fixar", "Pin")),
+            Binding(GuiKeys.self_evaluate, "self_evaluate", self._t("Avaliar", "Evaluate")),
+            Binding("delete", "delete_task", self._t("Excluir", "Delete")),
+            Binding(GuiKeys.expand_all, "expand_all", self._t("Expandir", "Expand"), show=False),
+            Binding(GuiKeys.collapse_all, "collapse_all", self._t("Compactar", "Collapse"), show=False),
+            Binding(GuiKeys.reload_game, "reload", self._t("Recarregar", "Reload")),
+            Binding(GuiKeys.show_duration, "toggle_time", self._t("Tempo", "Time")),
+            Binding(GuiKeys.set_lang_drafts, "choose_language", self._t("Linguagem", "Programming")),
+            Binding("I", "toggle_ui_language", self._t("Interface", "Interface")),
+            Binding(GuiKeys.palette, "palette", self._t("Ações", "Actions")),
+            Binding("less_than_sign", "panel_smaller", "\u00a0", key_display="<", tooltip=self._t("Diminuir painel", "Shrink panel")),
+            Binding("greater_than_sign", "panel_larger", "\u00a0", key_display=">", tooltip=self._t("Aumentar painel", "Grow panel")),
+            Binding("pageup", "scroll_logs_up", self._t("Logs acima", "Logs up"), show=False),
+            Binding("pagedown", "scroll_logs_down", self._t("Logs abaixo", "Logs down"), show=False),
+            Binding("question_mark", "help", self._t("Ajuda", "Help")),
+        ]
+
+    def _t(self, portuguese: str, english: str) -> str:
+        return portuguese if self.settings.app.ui_language == "pt-BR" else english
+
+    def _refresh_language(self) -> None:
+        self._bindings = BindingsMap(self._localized_bindings())
+        self.screen.refresh_bindings()
+        self.query_one("#search", Input).placeholder = self._t("Buscar tarefas…", "Search tasks…")
+        self.refresh_view()
+
+    def compose(self) -> ComposeResult:
+        with Horizontal(id="topbar"):
+            yield Button(id="top-pinned", classes="top-action")
+            yield Button(id="top-all", classes="top-action")
+            yield Button(id="top-graph", classes="top-action")
+            yield Button(id="top-logs", classes="top-action")
+            yield Button(id="top-skills", classes="top-action")
+            yield Static(id="top-context")
+        yield Input(placeholder=self._t("Buscar tarefas…", "Search tasks…"), id="search")
+        with Horizontal(id="body"):
+            yield TaskTreeView(self.model)
+            with ScrollableContainer(id="side-panel"):
+                yield Static(id="side-content")
+        yield Footer()
+
+    def on_mount(self) -> None:
+        self._apply_panel_size()
+        self.refresh_view()
+        self.call_after_refresh(self.refresh_view)
+        self.query_one(TaskTreeView).focus()
+
+    def on_tree_node_highlighted(self, event: Tree.NodeHighlighted[IsTreeItem]) -> None:
+        if event.node.data is not None:
+            self.model.state.selected = event.node.data.basic.full_key
+            self.refresh_panel()
+
+    def on_tree_node_expanded(self, event: Tree.NodeExpanded[IsTreeItem]) -> None:
+        if isinstance(event.node.data, Quest):
+            self.model.state.expanded.add(event.node.data.basic.full_key)
+
+    def on_tree_node_collapsed(self, event: Tree.NodeCollapsed[IsTreeItem]) -> None:
+        if isinstance(event.node.data, Quest):
+            self.model.state.expanded.discard(event.node.data.basic.full_key)
+
+    def on_tree_node_selected(self, event: Tree.NodeSelected[IsTreeItem]) -> None:
+        if event.node.data is not None:
+            self.action_activate()
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        if event.input.id != "search":
+            return
+        self.model.state.search = event.value.lower()
+        self.search.update_index()
+        self.refresh_tree()
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        if event.input.id == "search":
+            self.search.finish_search()
+            self._hide_search()
+            self.refresh_view()
+
+    def on_resize(self) -> None:
+        if self.is_mounted:
+            self.refresh_view()
+
+    def _tree_content_width(self) -> int:
+        """Width available to a rendered tree row, excluding its border."""
+        tree = self.query_one("#task-tree", TaskTreeView)
+        return max(30, tree.size.width - 2)
+
+    def _selected_source(self) -> str:
+        try:
+            return self.model.get_selected_throw().basic.source_name
+        except IndexError:
+            return ""
+
+    def _selected_item(self) -> IsTreeItem | None:
+        try:
+            return self.model.get_selected_throw()
+        except IndexError:
+            return None
+
+    def _top_text(self) -> Text:
+        mode = self._t("Fixadas", "Pinned") if self.repo.flags.task_view_mode.is_pinned() else self._t("Todas", "All")
+        panel = self.repo.flags.panel.get_value().title()
+        suffix = "  •  Atualização disponível" if self.need_update else ""
+        return Text(f"{self.repo.paths.root_dir.name.upper()}  |  {mode}  |  {panel}{suffix}")
+
+    def _refresh_topbar(self) -> None:
+        actions = [
+            ("top-pinned", "1", self._t("Fixadas", "Pinned"), self.repo.flags.task_view_mode.is_pinned()),
+            ("top-all", "2", self._t("Todas", "All"), not self.repo.flags.task_view_mode.is_pinned()),
+            ("top-graph", "3", self._t("Gráfico", "Graph"), self.repo.flags.panel.is_graph()),
+            ("top-logs", "4", "Logs", self.repo.flags.panel.is_logs()),
+            ("top-skills", "5", self._t("Trilhas", "Skills"), self.repo.flags.panel.is_skills()),
+        ]
+        for identifier, key, label, active in actions:
+            button = self.query_one(f"#{identifier}", Button)
+            button.label = f"{key} {label}"
+            button.set_class(active, "active")
+        self.query_one("#top-context", Static).update(self._top_text())
+
+    def refresh_tree(self) -> None:
+        self.query_one(TaskTreeView).rebuild()
+        self.refresh_panel()
+
+    def refresh_view(self) -> None:
+        self._refresh_topbar()
+        self.refresh_tree()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        actions = {
+            "top-pinned": self.action_show_pinned,
+            "top-all": self.action_show_all,
+            "top-graph": self.action_show_graph,
+            "top-logs": self.action_show_logs,
+            "top-skills": self.action_show_skills,
+        }
+        action = actions.get(event.button.id)
+        if action is not None:
+            action()
+
+    def refresh_panel(self) -> None:
+        panel = self.query_one("#side-panel", ScrollableContainer)
+        width = max(12, panel.size.width - 2)
+        item = self._selected_item()
+        lines: list[RT]
+        if self.repo.flags.panel.is_skills():
+            lines = self._skill_lines(width)
+        elif self.repo.flags.panel.is_logs():
+            _, header, lines = self.graph.get_history()
+            lines = header + lines
+        else:
+            lines = self._graph_lines(item, width, max(3, panel.size.height - 2))
+        self.query_one("#side-content", Static).update(Text("\n").join(to_rich_text(line) for line in lines))
+
+    def action_scroll_logs_up(self) -> None:
+        if self.repo.flags.panel.is_logs():
+            self.query_one("#side-panel", ScrollableContainer).scroll_page_up()
+
+    def action_scroll_logs_down(self) -> None:
+        if self.repo.flags.panel.is_logs():
+            self.query_one("#side-panel", ScrollableContainer).scroll_page_down()
+
+    def _graph_lines(self, item: IsTreeItem | None, width: int, height: int) -> list[RT]:
+        if isinstance(item, Task):
+            _, header, lines = self.graph.get_task_graph(item.basic.full_key, width, height)
+            return header + lines
+        if isinstance(item, Quest):
+            header, lines = DailyGraph(self.repo.logger, width, height).get_graph()
+            return header + lines
+        return [RT(self._t("Selecione uma tarefa ou missão.", "Select a task or quest."))]
+
+    def _skill_lines(self, width: int) -> list[RT]:
+        # GuiSkillsBar owns the formatting and bar rules. Reuse its public
+        # builders while Textual owns borders, sizing and scrolling.
+        from tko.game.xp_resume import XPResume
+
+        quests = {key: quest for key, quest in self.repo.game.quests.items() if quest.basic.source_name == self._selected_source()}
+        resume = XPResume(quests)
+        skills = resume.get_skills_resume()
+        if not skills:
+            return [RT(self._t("Nenhuma trilha disponível para a seleção.", "No skills available for this selection."))]
+        target = max((value.target100 for value in skills.values()), default=1) * self.skills.target_cut_factor
+        lines = [self.skills.get_entry_xp(skills, skill, target, width) for skill in skills]
+        total = resume.sum_xp(skills, self.skills.overload)
+        grade = total.obtained / total.target100 * 10 if total.target100 else 0
+        lines.append(RT(f" Nota: {grade:.1f}"))
+        return lines
+
+    def _hide_search(self) -> None:
+        search = self.query_one("#search", Input)
+        search.remove_class("visible")
+        search.value = ""
+        self.query_one(TaskTreeView).focus()
+
+    def action_search(self) -> None:
+        if not self.search.search_mode:
+            self.search.toggle_search()
+        search = self.query_one("#search", Input)
+        search.add_class("visible")
+        search.focus()
+
+    def action_cancel_search(self) -> None:
+        if self.search.search_mode:
+            self.search.cancel_search()
+            self._hide_search()
+            self.refresh_view()
+
+    def action_escape(self) -> None:
+        if self.search.search_mode:
+            self.action_cancel_search()
+            return
+        self.action_quit()
+
+    def action_show_pinned(self) -> None:
+        if not self.model.has_pinned_tasks():
+            self.notify("Nenhuma tarefa fixada.", severity="warning")
+            return
+        self.repo.flags.task_view_mode.set_view_pinned()
+        self.refresh_view()
+
+    def action_show_all(self) -> None:
+        self.repo.flags.task_view_mode.set_view_all()
+        self.refresh_view()
+
+    def _set_panel(self, value: str) -> None:
+        self.repo.flags.panel.set_value(value)
+        self.refresh_view()
+
+    def action_show_graph(self) -> None:
+        self._set_panel(PanelMode.GRAPH)
+
+    def action_show_logs(self) -> None:
+        self._set_panel(PanelMode.LOGS)
+
+    def action_show_skills(self) -> None:
+        self._set_panel(PanelMode.SKILLS)
+
+    def action_toggle_pin(self) -> None:
+        item = self._selected_item()
+        if not isinstance(item, Task):
+            self.notify("Selecione uma tarefa para fixá-la.", severity="warning")
+            return
+        if item.basic.full_key in self.model.state.pinned:
+            self.model.state.pinned.remove(item.basic.full_key)
+            self.notify("Tarefa desafixada.")
+        else:
+            self.model.state.pinned.add(item.basic.full_key)
+            self.notify("Tarefa fixada.")
+        self.model.save_state()
+        self.refresh_view()
+
+    def action_expand_all(self) -> None:
+        self.model.expand_all()
+        self.refresh_tree()
+
+    def action_collapse_all(self) -> None:
+        self.model.collapse_all()
+        self.refresh_tree()
+
+    def action_reload(self) -> None:
+        from tko.cmds.drafts_finder_cached import DraftsFinderCached
+        from tko.repository.game_coordinator import GameCoordinator
+
+        DraftsFinderCached.reset_cache()
+        try:
+            GameCoordinator(self.repo).load_game()
+        except FileNotFoundError as error:
+            self.notify(str(error), severity="error", timeout=8)
+            return
+        self.model.recalculate_layout()
+        self.refresh_view()
+        self.notify("Repositório recarregado.")
+
+    def action_help(self) -> None:
+        self.push_screen(HelpScreen(self.settings.app.ui_language == "pt-BR"))
+
+    def action_choose_language(self) -> None:
+        from tko.repository.repository_config import RepositoryLoader
+        from tko.ui_textual.dialogs import ChoiceDialog
+
+        languages = sorted(self.settings.get_languages_settings().get_languages_with_drafts())
+        if not languages:
+            self.notify("Nenhuma linguagem com rascunho configurada.", severity="warning")
+            return
+
+        def save(language: str | None) -> None:
+            if language is None:
+                return
+            self.repo.data.lang = language
+            RepositoryLoader(self.repo).save()
+            self.notify(f"Linguagem alterada para {language}.")
+            self.refresh_view()
+
+        self.push_screen(
+            ChoiceDialog(
+                self._t("Linguagem padrão dos rascunhos", "Default draft language"),
+                [(language, language) for language in languages],
+                self.repo.data.lang,
+                self._t("↑/↓ ou clique para escolher • Enter seleciona • Esc cancela", "↑/↓ or click to choose • Enter selects • Esc cancels"),
+            ),
+            save,
+        )
+
+    def _apply_panel_size(self) -> None:
+        panel_percent = self.settings.app.panel_size_percent
+        self.query_one("#task-tree", TaskTreeView).styles.width = f"{panel_percent}%"
+        self.query_one("#side-panel", ScrollableContainer).styles.width = f"{100 - panel_percent}%"
+
+    def action_palette(self) -> None:
+        from tko.ui_textual.dialogs import CommandPalette
+
+        commands = [
+            ("download", self._t("Baixar tarefa selecionada  [b]", "Download selected task  [b]")),
+            ("evaluate", self._t("Avaliar tarefa  [a]", "Evaluate task  [a]")),
+            ("delete", self._t("Excluir tarefa local  [Del]", "Delete local task  [Del]")),
+            ("draft", self._t("Criar rascunho  [r]", "Create draft  [r]")),
+            ("language", self._t("Mudar linguagem de programação dos rascunhos  [L]", "Change draft programming language  [L]")),
+            ("ui-language", self._t("Alternar idioma da interface  [I]", "Toggle interface language  [I]")),
+            ("reload", self._t("Recarregar repositório  [R]", "Reload repository  [R]")),
+            ("images", self._t("Alternar imagens após testes", "Toggle images after tests")),
+            ("duration", self._t("Alternar tempo nas tarefas  [T]", "Toggle task time  [T]")),
+            ("versions", self._t("Abrir versões da tarefa  [V]", "Open task versions  [V]")),
+            ("panel-larger", self._t("Aumentar painel de tarefas  [>]", "Grow task panel  [>]")),
+            ("panel-smaller", self._t("Diminuir painel de tarefas  [<]", "Shrink task panel  [<]")),
+        ]
+        self.push_screen(
+            CommandPalette(
+                commands,
+                self._t("Ações e configurações", "Actions and settings"),
+                self._t("↑/↓ ou clique para escolher • Enter executa • Esc fecha", "↑/↓ or click to choose • Enter runs • Esc closes"),
+            ),
+            self._run_palette_command,
+        )
+
+    def _run_palette_command(self, command: str | None) -> None:
+        if command is None:
+            return
+        if command == "download":
+            task = self._selected_item()
+            if isinstance(task, Task):
+                self._download_task(task)
+            else:
+                self.notify("Selecione uma tarefa para baixar.", severity="warning")
+        elif command == "evaluate":
+            self._ask_self_evaluation()
+        elif command == "delete":
+            self._ask_delete_task()
+        elif command == "draft":
+            self._ask_draft_title()
+        elif command == "language":
+            self.action_choose_language()
+        elif command == "ui-language":
+            self.action_toggle_ui_language()
+        elif command == "reload":
+            self.action_reload()
+        elif command == "images":
+            self.settings.app.toggle(ToggleOption.IMAGES)
+            self.settings.save_settings()
+            self.notify("Imagens ativadas." if self.settings.app.use_images else "Imagens desativadas.")
+        elif command == "duration":
+            self.action_toggle_time()
+        elif command == "versions":
+            self._open_versions()
+        elif command.startswith("panel-"):
+            if command == "panel-larger":
+                self.action_panel_larger()
+            else:
+                self.action_panel_smaller()
+
+    def action_toggle_ui_language(self) -> None:
+        from tko.i18n import set_language
+
+        language = "en" if self.settings.app.ui_language == "pt-BR" else "pt-BR"
+        self.settings.app.ui_language = language
+        set_language(language)
+        self.settings.save_settings()
+        self._refresh_language()
+        self.notify("Idioma alterado." if language == "pt-BR" else "Interface language changed.")
+
+    def action_toggle_time(self) -> None:
+        self.repo.flags.show_time.toggle()
+        self.model.save_state()
+        self.refresh_view()
+
+    def action_delete_task(self) -> None:
+        self._ask_delete_task()
+
+    def _resize_panel(self, amount: int) -> None:
+        previous = self.settings.app.panel_size_percent
+        self.settings.app.panel_size_percent = max(30, min(70, previous + amount))
+        if self.settings.app.panel_size_percent == previous:
+            self.notify("O painel já está no limite de tamanho.")
+            return
+        self.settings.save_settings()
+        self._apply_panel_size()
+        self.refresh_view()
+
+    def action_panel_larger(self) -> None:
+        self._resize_panel(10)
+
+    def action_panel_smaller(self) -> None:
+        self._resize_panel(-10)
+
+    def _ask_self_evaluation(self) -> None:
+        from tko.game.feedback import Feedback
+        from tko.ui_textual.dialogs import GradeDialog
+
+        task = self._selected_item()
+        if not isinstance(task, Task) or not task.config.supports_self_evaluation:
+            self.notify("A tarefa selecionada não permite autoavaliação.", severity="warning")
+            return
+        feedback = Feedback(self.repo, task)
+        self.push_screen(
+            GradeDialog(task, feedback, self.settings.app.ui_language == "pt-BR"),
+            lambda result: self._save_self_evaluation(task, feedback, result),
+        )
+
+    def action_self_evaluate(self) -> None:
+        self._ask_self_evaluation()
+
+    def _save_self_evaluation(self, task: Task, feedback: object, result: object) -> None:
+        if result is None:
+            return
+        from tko.game.feedback import Feedback
+        from tko.ui_textual.dialogs import GradeResult
+
+        if not isinstance(feedback, Feedback) or not isinstance(result, GradeResult):
+            return
+        from tko.logger.log_item_self import LogItemSelf
+
+        try:
+            feedback.save_fields(result.fields)
+        except (OSError, ValueError) as error:
+            self.notify(str(error), severity="error", timeout=8)
+            return
+        if not task.config.is_automated:
+            task.info.rate = result.rate
+        task.info.study = result.study
+        task.info.boss = result.boss
+        task.info.feedback = True
+        self.repo.logger.store(LogItemSelf().set_task(task))
+        self.refresh_view()
+        self.notify(self._t("Autoavaliação registrada.", "Self evaluation saved."))
+
+    def _ask_delete_task(self) -> None:
+        from tko.ui_textual.dialogs import TextInputDialog
+
+        task = self._selected_item()
+        folder = self.repo.task_resolver.target_folder(task) if isinstance(task, Task) else None
+        if folder is None or not folder.exists():
+            self.notify("A tarefa selecionada não possui pasta local.", severity="warning")
+            return
+        self.push_screen(
+            TextInputDialog(
+                self._t("Excluir tarefa", "Delete task"),
+                self._t(f"Digite {task.basic.key} para confirmar:", f"Type {task.basic.key} to confirm:"),
+                confirm_label=self._t("Confirmar", "Confirm"),
+                cancel_label=self._t("Cancelar", "Cancel"),
+            ),
+            lambda value: self._delete_task(task, folder, value),
+        )
+
+    def _delete_task(self, task: Task, folder: object, value: str | None) -> None:
+        if value != task.basic.key:
+            self.notify("A confirmação não corresponde à chave da tarefa.", severity="error")
+            return
+        from pathlib import Path
+        import shutil
+
+        target = Path(folder)  # folder was resolved before the confirmation dialog.
+        try:
+            shutil.rmtree(target)
+        except OSError as error:
+            self.notify(str(error), severity="error", timeout=8)
+            return
+        from tko.cmds.drafts_finder_cached import DraftsFinderCached
+
+        DraftsFinderCached.reset_cache()
+        self.refresh_view()
+        self.notify(self._t("Pasta da tarefa removida.", "Task folder removed."))
+
+    def _ask_draft_title(self) -> None:
+        from tko.ui_textual.dialogs import TextInputDialog
+
+        self.push_screen(
+            TextInputDialog(
+                self._t("Criar rascunho", "Create draft"),
+                self._t("Título da tarefa (use @chave para definir a chave):", "Task title (use @key to set its key):"),
+                confirm_label=self._t("Confirmar", "Confirm"),
+                cancel_label=self._t("Cancelar", "Cancel"),
+            ),
+            self._create_draft,
+        )
+
+    def _create_draft(self, title: str | None) -> None:
+        if not title:
+            return
+        from tko.config.sandbox_drafts import SandboxDrafts
+        from tko.feno.indexer import fix_readme
+
+        source = self.repo.data.get_authoring_source()
+        if source is None:
+            self.notify("Não há uma fonte de autoria configurada.", severity="error")
+            return
+        index, _ = self.repo.source_resolver.resolve_index_file(source, load_git=False)
+        folder = self.repo.source_resolver.source_activity_dir(source)
+        folder.mkdir(parents=True, exist_ok=True)
+        words = title.split()
+        key = next((word[1:] for word in words if word.startswith("@")), "")
+        display_title = " ".join(word for word in words if not word.startswith("@")) or "Nova tarefa"
+        if not key:
+            existing = [entry.name for entry in folder.iterdir()] + [task.basic.key for task in self.repo.game.tasks.values()]
+            key = SandboxDrafts.format_draft_key(SandboxDrafts.find_max_numbered_key(existing) + 1)
+        destination = folder / key
+        if destination.exists():
+            self.notify(f"A pasta {destination} já existe.", severity="error")
+            return
+        destination.mkdir()
+        SandboxDrafts.create_sandbox_draft(destination, display_title)
+        index.parent.mkdir(parents=True, exist_ok=True)
+        if not index.exists():
+            index.write_text(f"# {source.name}\n\n", encoding="utf-8")
+        fix_readme(index=index, base_dirs=[folder], verbose=False, load_titles=True, yes=True)
+        self.action_reload()
+        self.notify(f"Rascunho criado em {destination}.")
+
+    def _open_versions(self) -> None:
+        task = self._selected_item()
+        if not isinstance(task, Task):
+            self.notify("Selecione uma tarefa para abrir suas versões.", severity="warning")
+            return
+        track = self.repo.paths.get_track_task_folder(task.basic.full_key)
+        if not track.exists():
+            track = self.repo.paths.get_legacy_track_task_folder(task.basic.full_key)
+        files = [path for path in track.rglob("*") if path.is_file() and path.suffix in (".json", ".jsonl")] if track.exists() else []
+        if not files:
+            self.notify("Não há versões registradas para esta tarefa.", severity="warning")
+            return
+        from tko.cli.audit_preview import run_audit_preview
+
+        self._run_after_exit(lambda: run_audit_preview(files))
+
+    def action_activate(self) -> None:
+        item = self._selected_item()
+        if isinstance(item, Quest):
+            if item.basic.full_key in self.model.state.expanded:
+                self.model.state.expanded.remove(item.basic.full_key)
+            else:
+                self.model.state.expanded.add(item.basic.full_key)
+            self.refresh_tree()
+            return
+        if not isinstance(item, Task):
+            return
+        action = self._task_action(item)
+        if action == TaskAction.BAIXAR:
+            self._download_task(item)
+        elif action == TaskAction.VISITAR:
+            self._run_after_exit(lambda: self._open_task_link(item))
+        else:
+            self._run_after_exit(lambda: self._run_task(item))
+
+    def _task_action(self, task: Task) -> object:
+        if task.location.is_non_evaluated and not task.location.is_external:
+            return TaskAction.VISITAR
+        if task.location.is_non_evaluated and not self.task_formatter.is_downloaded(task):
+            return TaskAction.BAIXAR
+        if not task.location.is_external:
+            return TaskAction.EXECUTAR
+        if not self.task_formatter.is_downloaded_for_lang(task):
+            return TaskAction.BAIXAR
+        return TaskAction.EXECUTAR
+
+    def _download_task(self, task: Task) -> None:
+        from tko.cmds.cmd_down import CmdDown
+        from tko.logger.log_item_move import LogItemMove, LogItemMoveMode
+
+        report: list[str] = []
+
+        def capture(message: str | RT) -> None:
+            text = message.plain() if isinstance(message, RT) else message
+            if text:
+                report.append(text)
+
+        try:
+            downloaded = CmdDown(self.repo, task.basic.full_key, self.settings).set_fnprint(capture).execute()
+        except (OSError, ValueError) as error:
+            self.notify(str(error), severity="error", timeout=8)
+            return
+
+        if not downloaded:
+            self.notify(self._t("Não foi possível baixar a tarefa.", "The task could not be downloaded."), severity="error")
+            return
+
+        self.repo.logger.store(LogItemMove().set_key(task.basic.full_key).set_mode(LogItemMoveMode.DOWN))
+        self.refresh_view()
+        self.notify(
+            "\n".join(report) or self._t("Tarefa baixada com sucesso.", "Task downloaded successfully."),
+            title=self._t("Download da tarefa", "Task download"),
+            timeout=12,
+            markup=False,
+        )
+
+    def _open_task_link(self, task: Task) -> None:
+        import webbrowser
+
+        if task.location.is_http_link:
+            webbrowser.open(task.location.raw_link)
+            return
+        origin = self.repo.task_resolver.origin_file(task, load_git=True)
+        if origin is None or not origin.exists():
+            self.notify("Arquivo da tarefa não encontrado.", severity="warning")
+            return
+        from tko.play.opener import Opener
+
+        Opener(self.settings).add_files_to_open([origin]).open_files()
+
+    def _run_task(self, task: Task) -> None:
+        from tko.cmds.cmd_down import CmdDown
+        from tko.cmds.cmd_run import Run
+        from tko.cmds.default_draft_creator import DefaultDraftCreator
+        from tko.cmds.drafts_finder_cached import DraftsFinderCached
+        from tko.play.opener import Opener
+        from tko.util.param import Param
+
+        folder = self.repo.task_resolver.target_folder(task)
+        if folder is None:
+            return
+        run = Run(self.settings, [folder], Param.Basic(), self.repo.data.lang, self.repo, self.watcher)
+        opener = Opener(self.settings).set_language(self.repo.data.lang).add_task_folder_to_open(folder)
+        run.set_opener(opener).set_run_without_ask(False).set_tui(True).set_task(self.repo, task)
+        run.load()
+        if run.context.wdir.solver:
+            run.execute()
+            return
+        if task.location.is_external:
+            CmdDown(self.repo, task.basic.full_key, self.settings).execute()
+        else:
+            _, drafts_folder = DraftsFinderCached(folder, self.repo.data.lang).search_for_solvers()
+            DefaultDraftCreator(self.settings).create(drafts_folder, self.repo.data.lang)
+
+    def _run_after_exit(self, callback: Callable[[], None]) -> None:
+        self.model.save_state()
+        self.settings.save_settings()
+        self.exit(result=callback)
+
+    def action_quit(self) -> None:
+        self.model.save_state()
+        self.settings.save_settings()
+        self.exit()

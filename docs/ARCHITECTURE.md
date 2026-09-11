@@ -90,7 +90,7 @@ Responsabilidades:
 1. Preparar ambiente de execução (solver, testes, working dir).
 2. Decidir modo de execução:
    - raw terminal
-   - TUI curses
+   - TUI Textual
 3. Executar testes, coletar resultados e calcular taxa de acerto.
 4. Persistir logs e estado de execução.
 

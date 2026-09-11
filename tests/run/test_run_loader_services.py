@@ -33,8 +33,8 @@ class _FakeWdir:
         self.calls: list[tuple[str, Any]] = []
         self._solver = _FakeSolver([Path("solver.py")])
 
-    def set_curses(self, value: bool):
-        self.calls.append(("set_curses", value))
+    def set_tui(self, value: bool):
+        self.calls.append(("set_tui", value))
         return self
 
     def set_lang(self, lang: str):
@@ -119,7 +119,7 @@ def test_wdir_bootstrap_service_builds_chain_with_lang_from_repo():
         wdir_builded=False,
         target_list=[a_path, a_path],
         param=SimpleNamespace(filter=False, index=None),
-        config=SimpleNamespace(curses_mode=True, no_run=False, abord_on_exec_error=False, timeout=7, show_track_info=False),
+        config=SimpleNamespace(tui_mode=True, no_run=False, abord_on_exec_error=False, timeout=7, show_track_info=False),
         lang="",
         repo=SimpleNamespace(data=SimpleNamespace(lang="py")),
         settings=SimpleNamespace(),
@@ -134,7 +134,7 @@ def test_wdir_bootstrap_service_builds_chain_with_lang_from_repo():
     assert built is ctx.wdir
     assert ctx.wdir_builded is True
     assert ctx.target_list == [a_path]
-    # Não é mais possível garantir chamadas a set_curses/set_lang, pois o código apenas seta atributos diretamente
+    # O bootstrap aplica os valores diretamente ao diretório de trabalho.
 
 
 def test_wdir_bootstrap_service_sets_compile_error_on_build_failure():
@@ -148,7 +148,7 @@ def test_wdir_bootstrap_service_sets_compile_error_on_build_failure():
         wdir_builded=False,
         target_list=[a_path],
         param=SimpleNamespace(filter=False, index=None),
-        config=SimpleNamespace(curses_mode=False, no_run=False, abord_on_exec_error=False, timeout=7, show_track_info=False),
+        config=SimpleNamespace(tui_mode=False, no_run=False, abord_on_exec_error=False, timeout=7, show_track_info=False),
         lang="",
         repo=None,
         settings=SimpleNamespace(),

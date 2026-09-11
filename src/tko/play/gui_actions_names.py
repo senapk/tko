@@ -21,7 +21,6 @@ class GuiActionsNames:
     time_limit = Msg.text(pt="Limite de tempo", en="Time limit")
     evaluate_tester = Msg.text(pt="Testar", en="Test")
     execute_tester = Msg.text(pt="Executar", en="Run")
-    calibrate = Msg.text(pt="Calibrar teclas", en="Calibrate keys")
     draft = Msg.text(pt="Rascunho", en="Draft")
     all = Msg.text(pt="Todos", en="All")
     pin = Msg.text(pt="Fixar", en="Pin")
