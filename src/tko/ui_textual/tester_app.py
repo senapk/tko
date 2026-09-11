@@ -5,7 +5,7 @@ from collections.abc import Callable
 from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Vertical
+from textual.containers import Vertical, VerticalScroll
 from textual.widgets import Footer, Static
 
 from tko.config.app_settings import ToggleOption
@@ -39,7 +39,8 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
     Screen { layout: vertical; background: #080808; }
     #tester-header { height: 5; border: round $primary; padding: 0 1; background: #080808; }
     #tester-status { height: 1; padding: 0 1; color: $text-muted; background: #080808; }
-    #tester-output { height: 1fr; border: round $secondary; padding: 0 1; overflow: auto; text-wrap: nowrap; background: #080808; }
+    #tester-output { height: 1fr; border: round $secondary; padding: 0 1; background: #080808; }
+    #tester-output-content { text-wrap: nowrap; }
     Footer { background: #080808; }
     """
     BINDINGS = [
@@ -51,13 +52,13 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
         Binding("down", "scroll_down", "Descer"),
         Binding("enter,t", "run_tests", "Testar"),
         Binding("e,backspace", "run_free", "Executar"),
-        Binding("u", "toggle_lock", "Travar"),
+        Binding("f", "toggle_lock", "Fixar"),
         Binding("tab", "change_main", "Solução"),
         Binding("d", "toggle_diff", "Diff"),
         Binding("l", "change_limit", "Limite"),
         Binding("a", "self_evaluate", "Avaliar"),
         Binding("I", "toggle_images", "Imagens"),
-        Binding("v", "open_editor", "Editar"),
+        Binding("v", "open_editor", "Ver Arquivos"),
     ]
 
     def __init__(
@@ -94,7 +95,8 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
         with Vertical():
             yield Static(id="tester-header")
             yield Static(id="tester-status")
-            yield Static(id="tester-output")
+            with VerticalScroll(id="tester-output"):
+                yield Static(id="tester-output-content")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -170,9 +172,10 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
             return
         self.query_one("#tester-header", Static).update(to_rich_text(self._header()))
         self.query_one("#tester-status", Static).update(self._status())
-        output = self.query_one("#tester-output", Static)
+        output = self.query_one("#tester-output", VerticalScroll)
         width = max(20, output.size.width - 2)
-        output.update(Text("\n").join(to_rich_text(line) for line in self._output_lines(width)))
+        content = output.query_one("#tester-output-content", Static)
+        content.update(Text("\n").join(to_rich_text(line) for line in self._output_lines(width)))
 
     def action_previous(self) -> None:
         self.navigator.go_left(self.state)
@@ -183,12 +186,10 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
         self.refresh_view()
 
     def action_scroll_up(self) -> None:
-        self.navigator.go_up(self.state)
-        self.refresh_view()
+        self.query_one("#tester-output", VerticalScroll).scroll_up()
 
     def action_scroll_down(self) -> None:
-        self.navigator.go_down(self.state)
-        self.refresh_view()
+        self.query_one("#tester-output", VerticalScroll).scroll_down()
 
     def action_run_tests(self) -> None:
         self.executor.run_test_mode(self.state)
