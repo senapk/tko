@@ -1,5 +1,6 @@
 from tko.game.quest import Quest
 from tko.game.task import Task
+from tko.game.tree_item import IsTreeItem
 from tko.play.quest_visibility_service import QuestVisibilityService
 from tko.play_tree.task_tree import TaskTree
 
@@ -15,7 +16,7 @@ class SearchService:
         _, first = self.filter_policy.filter_by_search(self.game, self.tree.state.search)
         self.tree.state.selected = first if first is not None else ""
 
-    def get_selected_safe(self):
+    def get_selected_safe(self) -> IsTreeItem | None:
         try:
             return self.tree.get_selected_throw()
         except IndexError:
@@ -38,16 +39,20 @@ class SearchService:
             else:
                 self.repo.flags.task_view_mode.set_view_inbox()
 
-        self.tree.update()
+        # Restore the selected item into a visible branch before rebuilding
+        # the unfiltered tree. Otherwise ``update`` sees the task under a
+        # collapsed quest and falls back to the first index entry.
         self.tree.state.selected = selected_key
         self.tree.state.expanded = set()
+        if isinstance(item, Task):
+            self.tree.state.expanded = {item.basic.source_name, item.quest_key}
+        elif isinstance(item, Quest):
+            self.tree.state.expanded = {item.basic.full_key, item.basic.source_name}
 
-        unit = self.get_selected_safe()
-        if unit is None:
-            return True
-
-        if isinstance(unit, Task):
-            self.tree.state.expanded = {unit.basic.source_name, unit.quest_key}
-        elif isinstance(unit, Quest):
-            self.tree.state.expanded = {unit.basic.full_key, unit.basic.source_name}
+        self.tree.update()
+        if self.tree.state.selected != selected_key:
+            return False
+        # ``TreeState.ensure_valid_selection`` preserves a stale numeric
+        # cursor. Recalculate it against the rebuilt unfiltered item list.
+        self.tree.state.selected_index = self.tree.get_selected_index()
         return True

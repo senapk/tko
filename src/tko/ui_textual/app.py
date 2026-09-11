@@ -353,10 +353,30 @@ class TkoApp(App[Callable[[], None] | None]):
             self.action_activate()
 
     def on_input_changed(self, event: Input.Changed) -> None:
-        if event.input.id != "search":
+        # Clearing the widget while hiding it emits Input.Changed. Once the
+        # search session has finished, that empty value must not select the
+        # first unfiltered entry again.
+        if event.input.id != "search" or not self.search.search_mode:
             return
         self.model.state.search = event.value.lower()
         self.search.update_index()
+        self.refresh_tree()
+
+    def on_key(self, event: events.Key) -> None:
+        """Navigate search results while the search input owns keyboard focus."""
+        search_input = self.query_one("#search", Input)
+        if (
+            not self.search.search_mode
+            or self.focused is not search_input
+            or event.key not in {"up", "down"}
+        ):
+            return
+
+        event.stop()
+        if event.key == "up":
+            self.model.move_up()
+        else:
+            self.model.move_down()
         self.refresh_tree()
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
