@@ -200,17 +200,16 @@ class Elements:
                 continue
             if line.target_file is None:
                 continue
-            if line.target_file.exists():
-                title = IndexerMd.load_title_from_markdown_file(line.target_file)
-                if title is not None:
-                    folder_title = title
-            if folder_title == line.tm.title or not folder_title:
+            if not line.target_file.exists():
                 continue
-            if self.verbose:
+            folder_title = IndexerMd.load_title_from_markdown_file(line.target_file) or ""
+            if folder_title == line.tm.title:
+                continue
+            if self.verbose and folder_title:
                 Console.print(RT.parse(str(_INDEXER_MISMATCH_TITLE).format(readme=line.target_file, line_title=line.tm.title, folder_title=folder_title)))
             if save_titles:
                 IndexerMd.replace_title_in_readme(line.target_file, line.tm.title, self.verbose)
-            if load_titles:
+            if load_titles and folder_title:
                 line.tm.title = folder_title
 
 

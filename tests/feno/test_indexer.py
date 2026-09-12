@@ -444,3 +444,64 @@ def test_fix_titles_checks_tasks_after_non_task_lines(tmp_path: Path) -> None:
     elements.fix_titles(load_titles=True)
 
     assert line.tm.title == "Título do arquivo"
+
+
+def test_save_title_creates_heading_without_front_matter(tmp_path: Path) -> None:
+    from tko.feno.indexer import fix_readme
+
+    index_path = tmp_path / "index.md"
+    task_dir = tmp_path / "task"
+    task_dir.mkdir()
+    readme = task_dir / "README.md"
+    readme.write_text("Descricao sem titulo\n", encoding="utf-8")
+    index_path.write_text(
+        "- [ ] `@task eval=none` [Titulo do indice](task/README.md)\n",
+        encoding="utf-8",
+    )
+
+    fix_readme(index_path, tmp_path, verbose=False, save_titles=True)
+
+    assert readme.read_text(encoding="utf-8") == "# Titulo do indice\nDescricao sem titulo\n"
+
+
+def test_save_title_inserts_heading_after_yaml_front_matter(tmp_path: Path) -> None:
+    from tko.feno.indexer import fix_readme
+
+    index_path = tmp_path / "index.md"
+    task_dir = tmp_path / "task"
+    task_dir.mkdir()
+    readme = task_dir / "README.md"
+    readme.write_text("---\ntitle: Metadata\n---\nDescricao\n", encoding="utf-8")
+    index_path.write_text(
+        "- [ ] `@task eval=none` [Titulo do indice](task/README.md)\n",
+        encoding="utf-8",
+    )
+
+    fix_readme(index_path, tmp_path, verbose=False, save_titles=True)
+
+    assert readme.read_text(encoding="utf-8") == (
+        "---\ntitle: Metadata\n---\n# Titulo do indice\nDescricao\n"
+    )
+
+
+def test_save_title_ignores_yaml_comments(tmp_path: Path) -> None:
+    from tko.feno.indexer import fix_readme
+
+    index_path = tmp_path / "index.md"
+    task_dir = tmp_path / "task"
+    task_dir.mkdir()
+    readme = task_dir / "README.md"
+    readme.write_text(
+        "---\ntitle: Metadata\n# comentario yaml\n---\nDescricao\n",
+        encoding="utf-8",
+    )
+    index_path.write_text(
+        "- [ ] `@task eval=none` [Titulo do indice](task/README.md)\n",
+        encoding="utf-8",
+    )
+
+    fix_readme(index_path, tmp_path, verbose=False, save_titles=True)
+
+    assert readme.read_text(encoding="utf-8") == (
+        "---\ntitle: Metadata\n# comentario yaml\n---\n# Titulo do indice\nDescricao\n"
+    )
