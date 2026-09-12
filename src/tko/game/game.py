@@ -56,7 +56,7 @@ class Game:
         self.language = language
         return self
     
-    def build(self, source_resolver: SourceResolver):
+    def build(self, source_resolver: SourceResolver) -> "Game":
         self.ordered_quests = []
         self.quests = {}
         self.tasks = {}
@@ -68,8 +68,8 @@ class Game:
             gb = GameBuilder(index_file, source.name, external_source=not source.is_editable)
             try:
                 gb.build_from(self.language)
-            except ValueError:
-                logger.exception(str(_GAME_BUILD_FAILED_FOR_SOURCE).format(name=source.name))
+            except ValueError as exc:
+                logger.exception("{}: {}", str(_GAME_BUILD_FAILED_FOR_SOURCE).format(name=source.name), exc)
                 continue
             for quest_key in gb.ordered_quests:
                 self.ordered_quests.append(source.name + "@" + quest_key)

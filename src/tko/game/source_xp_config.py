@@ -32,6 +32,23 @@ class SourceXpConfig:
     @classmethod
     def from_markdown(cls, content: str, source_name: str, index_path: Path) -> SourceXpConfig:
         """Read the optional leading YAML front matter of an index README."""
+        try:
+            return cls._parse_front_matter(content, source_name, index_path)
+        except XpExpressionError as exc:
+            raise XpExpressionError(
+                f"{exc}\n"
+                "Define tags in YAML front matter at the start of the README, "
+                "using ':' instead of '='. Example:\n"
+                "---\n"
+                "args: [g, l, s]\n"
+                'expr: "g * l * s"\n'
+                "---\n"
+                "Use the same variable names in the task tags. Example:\n"
+                "- [ ] `g=2 l=3 s=1 eval=diff` [Task](labs/task/README.md)"
+            ) from exc
+
+    @classmethod
+    def _parse_front_matter(cls, content: str, source_name: str, index_path: Path) -> SourceXpConfig:
         if not content.startswith("---\n") and not content.startswith("---\r\n"):
             return cls(source_name=source_name, index_path=index_path)
 
