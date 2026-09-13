@@ -8,7 +8,7 @@ from rich.text import Text
 from textual import events, on
 from textual.app import App, ComposeResult
 from textual.binding import Binding, BindingsMap
-from textual.containers import Horizontal, ScrollableContainer, Vertical
+from textual.containers import Horizontal, ItemGrid, ScrollableContainer, Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Button, Footer, Input, Label, Static, Tree
 from textual.widgets._tree import NodeID, TreeNode
@@ -219,14 +219,17 @@ class TkoApp(App[Callable[[], None] | None]):
     ENABLE_COMMAND_PALETTE = False
     CSS = """
     Screen { layout: vertical; background: #080808; }
-    #topbar { height: 1; padding: 0 1; background: $primary-darken-2; color: $text; }
-    #topbar .top-action { width: auto; min-width: 0; height: 1; padding: 0 1; border: none; background: transparent; color: $text; }
-    #topbar .top-action:hover { background: $primary; }
-    #topbar .top-action.active { background: $accent; color: $text; text-style: bold; }
-    #top-context { width: 1fr; height: 1; padding: 0 1; content-align: right middle; }
+    .panel-header .top-action { width: 1fr; min-width: 0; height: 1; padding: 0 1; border: none; background: #0088ff; color: $text; }
+    .panel-header .top-action:hover { background: $primary; }
+    .panel-header .top-action.active { background: $accent; color: $text; text-style: bold; }
     #body { height: 1fr; background: #080808; }
-    #task-tree { width: 45%; height: 100%; min-width: 28; border: round $primary; background: #080808; }
-    #side-panel { width: 55%; height: 100%; min-width: 30; border: round $secondary; padding: 0 1; background: #080808; }
+    .play-frame { height: 100%; border: round #404040; background: #080808; }
+    .play-frame:focus-within { border: round #0088ff; }
+    #task-frame { width: 45%; min-width: 28; }
+    #info-frame { width: 55%; min-width: 30; }
+    .panel-header { height: auto; grid-rows: 1; background: #080808; }
+    #task-tree { width: 100%; height: 1fr; border: none; background: #080808; }
+    #side-panel { width: 100%; height: 1fr; border: none; padding: 0 1; background: #080808; }
     #side-content { width: auto; min-width: 100%; height: auto; text-wrap: nowrap; background: #080808; }
     #side-content.preview { width: 100%; text-wrap: wrap; }
     Footer { background: #080808; }
@@ -240,8 +243,8 @@ class TkoApp(App[Callable[[], None] | None]):
         Binding("escape", "escape", "Sair"),
         Binding("slash", "search", "Buscar"),
         Binding("tab,shift+tab", "toggle_panel_focus", "Alternar painel", show=False, priority=True),
-        Binding(GuiKeys.inbox, "show_pinned", "Fixadas", show=False),
         Binding(GuiKeys.all_tasks, "show_all", "Todas", show=False),
+        Binding(GuiKeys.inbox, "show_pinned", "Fixadas", show=False),
         Binding(GuiKeys.panel_preview, "show_preview", "Prévia", show=False),
         Binding(GuiKeys.panel_graph, "show_graph", "Gráfico", show=False),
         Binding(GuiKeys.panel_logs, "show_logs", "Logs", show=False),
@@ -289,8 +292,8 @@ class TkoApp(App[Callable[[], None] | None]):
             Binding("escape", "escape", self._t("Sair", "Quit")),
             Binding("slash", "search", self._t("Buscar", "Search")),
             Binding("tab,shift+tab", "toggle_panel_focus", self._t("Alternar painel", "Switch panel"), show=False, priority=True),
-            Binding(GuiKeys.inbox, "show_pinned", self._t("Fixadas", "Pinned"), show=False),
             Binding(GuiKeys.all_tasks, "show_all", self._t("Todas", "All"), show=False),
+            Binding(GuiKeys.inbox, "show_pinned", self._t("Fixadas", "Pinned"), show=False),
             Binding(GuiKeys.panel_preview, "show_preview", self._t("Prévia", "Preview"), show=False),
             Binding(GuiKeys.panel_graph, "show_graph", self._t("Gráfico", "Graph"), show=False),
             Binding(GuiKeys.panel_logs, "show_logs", "Logs", show=False),
@@ -324,19 +327,21 @@ class TkoApp(App[Callable[[], None] | None]):
         self.refresh_view()
 
     def compose(self) -> ComposeResult:
-        with Horizontal(id="topbar"):
-            yield Button(id="top-pinned", classes="top-action")
-            yield Button(id="top-all", classes="top-action")
-            yield Button(id="top-preview", classes="top-action")
-            yield Button(id="top-graph", classes="top-action")
-            yield Button(id="top-logs", classes="top-action")
-            yield Button(id="top-skills", classes="top-action")
-            yield Static(id="top-context")
         yield Input(placeholder=self._t("Buscar tarefas…", "Search tasks…"), id="search")
         with Horizontal(id="body"):
-            yield TaskTreeView(self.model)
-            with ScrollableContainer(id="side-panel"):
-                yield Static(id="side-content")
+            with Vertical(id="task-frame", classes="play-frame"):
+                with ItemGrid(id="task-header", classes="panel-header", min_column_width=14, regular=True):
+                    yield Button(id="top-all", classes="top-action")
+                    yield Button(id="top-pinned", classes="top-action")
+                yield TaskTreeView(self.model)
+            with Vertical(id="info-frame", classes="play-frame"):
+                with ItemGrid(id="info-header", classes="panel-header", min_column_width=14, regular=True):
+                    yield Button(id="top-preview", classes="top-action")
+                    yield Button(id="top-graph", classes="top-action")
+                    yield Button(id="top-logs", classes="top-action")
+                    yield Button(id="top-skills", classes="top-action")
+                with ScrollableContainer(id="side-panel"):
+                    yield Static(id="side-content")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -353,7 +358,7 @@ class TkoApp(App[Callable[[], None] | None]):
     def action_toggle_panel_focus(self) -> None:
         tree: TaskTreeView = self.query_one(TaskTreeView)
         panel: ScrollableContainer = self.query_one("#side-panel", ScrollableContainer)
-        if self.focused is tree:
+        if self.focused is not None and self.query_one("#task-frame", Vertical) in self.focused.ancestors:
             panel.focus()
         else:
             tree.focus()
@@ -415,9 +420,9 @@ class TkoApp(App[Callable[[], None] | None]):
             self.refresh_view()
 
     def _tree_content_width(self) -> int:
-        """Width available to a rendered tree row, excluding its border."""
+        """Width available to a rendered tree row inside its enclosing frame."""
         tree = self.query_one("#task-tree", TaskTreeView)
-        return max(30, tree.size.width - 2)
+        return max(30, tree.size.width)
 
     def _selected_source(self) -> str:
         try:
@@ -431,14 +436,10 @@ class TkoApp(App[Callable[[], None] | None]):
         except IndexError:
             return None
 
-    def _top_text(self) -> Text:
-        suffix = "  •  Atualização disponível" if self.need_update else ""
-        return Text(f"{self.repo.paths.root_dir.name.upper()}{suffix}")
-
-    def _refresh_topbar(self) -> None:
+    def _refresh_panel_headers(self) -> None:
         actions = [
-            ("top-pinned", "1", self._t("Fixadas", "Pinned"), self.repo.flags.task_view_mode.is_pinned()),
-            ("top-all", "2", self._t("Todas", "All"), not self.repo.flags.task_view_mode.is_pinned()),
+            ("top-all", GuiKeys.all_tasks, self._t("Todas", "All"), not self.repo.flags.task_view_mode.is_pinned()),
+            ("top-pinned", GuiKeys.inbox, self._t("Fixadas", "Pinned"), self.repo.flags.task_view_mode.is_pinned()),
             ("top-preview", GuiKeys.panel_preview, self._t("Prévia", "Preview"), self.repo.flags.panel.is_preview()),
             ("top-graph", GuiKeys.panel_graph, self._t("Gráfico", "Graph"), self.repo.flags.panel.is_graph()),
             ("top-logs", GuiKeys.panel_logs, "Logs", self.repo.flags.panel.is_logs()),
@@ -446,22 +447,21 @@ class TkoApp(App[Callable[[], None] | None]):
         ]
         for identifier, key, label, active in actions:
             button = self.query_one(f"#{identifier}", Button)
-            button.label = f"{key} {label}"
+            button.label = Text(f"{label} [{key}]")
             button.set_class(active, "active")
-        self.query_one("#top-context", Static).update(self._top_text())
 
     def refresh_tree(self) -> None:
         self.query_one(TaskTreeView).rebuild()
         self.refresh_panel()
 
     def refresh_view(self) -> None:
-        self._refresh_topbar()
+        self._refresh_panel_headers()
         self.refresh_tree()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         actions = {
-            "top-pinned": self.action_show_pinned,
             "top-all": self.action_show_all,
+            "top-pinned": self.action_show_pinned,
             "top-preview": self.action_show_preview,
             "top-graph": self.action_show_graph,
             "top-logs": self.action_show_logs,
@@ -672,8 +672,8 @@ class TkoApp(App[Callable[[], None] | None]):
 
     def _apply_panel_size(self) -> None:
         panel_percent = self.settings.app.panel_size_percent
-        self.query_one("#task-tree", TaskTreeView).styles.width = f"{panel_percent}%"
-        self.query_one("#side-panel", ScrollableContainer).styles.width = f"{100 - panel_percent}%"
+        self.query_one("#task-frame", Vertical).styles.width = f"{panel_percent}%"
+        self.query_one("#info-frame", Vertical).styles.width = f"{100 - panel_percent}%"
 
     def action_palette(self) -> None:
         from tko.ui_textual.dialogs import CommandPalette

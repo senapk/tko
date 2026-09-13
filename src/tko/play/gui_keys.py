@@ -2,8 +2,8 @@
 
 class GuiKeys:
 
-    inbox = "1"
-    all_tasks = "2"
+    all_tasks: str = "1"
+    inbox: str = "2"
     pin = "f"
     
     panel_preview: str = "3"
