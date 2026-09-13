@@ -6,9 +6,10 @@ class GuiKeys:
     all_tasks = "2"
     pin = "f"
     
-    panel_graph = "3"
-    panel_logs = "4"
-    panel_skills = "5"
+    panel_preview: str = "3"
+    panel_graph: str = "4"
+    panel_logs: str = "5"
+    panel_skills: str = "6"
     ask_help = "?"
     panel_toggle = " "
 

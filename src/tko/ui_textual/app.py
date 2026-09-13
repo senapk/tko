@@ -21,6 +21,7 @@ from tko.game.task import Task
 from tko.game.tree_item import IsTreeItem
 from tko.play.daily_graph import DailyGraph
 from tko.play.gui_keys import GuiKeys
+from tko.play.preview_service import PreviewService
 from tko.play.search import Search
 from tko.play.task_action import TaskAction
 from tko.play_gui.gui_graph_panel import GuiGraphPanel
@@ -29,6 +30,7 @@ from tko.play_tree.task_formatter import TaskFormatter
 from tko.play_tree.task_tree import TaskTree
 from tko.repository.repository import Repository
 from tko.repository.repository_watcher import RepositoryWatcher
+from tko.ui_textual.preview_markdown import render_preview_markdown
 from tko.ui_textual.rt_adapter import to_rich_text
 from tko.util.rt import RT
 
@@ -80,13 +82,13 @@ class HelpScreen(ModalScreen[None]):
         title = "Atalhos do TKO" if self.portuguese else "TKO shortcuts"
         content = (
             "↑/↓ navegar  •  ←/→ expandir/contrair  •  Enter abrir/executar\n"
-            "/ buscar  •  f fixar  •  b baixar  •  1/2 tarefas  •  3/4/5 painel\n"
-            "[/] expandir/compactar tudo  •  R recarregar  •  q sair\n\n"
+            "/ buscar  •  f fixar  •  b baixar  •  1/2 tarefas  •  3/4/5/6 painel\n"
+            "Tab alternar painel  •  [/] expandir/compactar tudo  •  R recarregar  •  q sair\n\n"
             "Pressione Esc para fechar."
             if self.portuguese
             else "↑/↓ navigate  •  ←/→ expand/collapse  •  Enter open/run\n"
-            "/ search  •  f pin  •  b download  •  1/2 tasks  •  3/4/5 panel\n"
-            "[/] expand/collapse all  •  R reload  •  q quit\n\n"
+            "/ search  •  f pin  •  b download  •  1/2 tasks  •  3/4/5/6 panel\n"
+            "Tab switch panel  •  [/] expand/collapse all  •  R reload  •  q quit\n\n"
             "Press Esc to close."
         )
         yield Vertical(
@@ -226,6 +228,7 @@ class TkoApp(App[Callable[[], None] | None]):
     #task-tree { width: 45%; height: 100%; min-width: 28; border: round $primary; background: #080808; }
     #side-panel { width: 55%; height: 100%; min-width: 30; border: round $secondary; padding: 0 1; background: #080808; }
     #side-content { width: auto; min-width: 100%; height: auto; text-wrap: nowrap; background: #080808; }
+    #side-content.preview { width: 100%; text-wrap: wrap; }
     Footer { background: #080808; }
     #search { display: none; margin: 0 1; }
     #search.visible { display: block; }
@@ -236,8 +239,10 @@ class TkoApp(App[Callable[[], None] | None]):
         Binding("q", "quit", "Sair", show=False),
         Binding("escape", "escape", "Sair"),
         Binding("slash", "search", "Buscar"),
+        Binding("tab,shift+tab", "toggle_panel_focus", "Alternar painel", show=False, priority=True),
         Binding(GuiKeys.inbox, "show_pinned", "Fixadas", show=False),
         Binding(GuiKeys.all_tasks, "show_all", "Todas", show=False),
+        Binding(GuiKeys.panel_preview, "show_preview", "Prévia", show=False),
         Binding(GuiKeys.panel_graph, "show_graph", "Gráfico", show=False),
         Binding(GuiKeys.panel_logs, "show_logs", "Logs", show=False),
         Binding(GuiKeys.panel_skills, "show_skills", "Trilhas", show=False),
@@ -245,6 +250,7 @@ class TkoApp(App[Callable[[], None] | None]):
         Binding(GuiKeys.down_task, "download", "Baixar"),
         Binding(GuiKeys.pin, "toggle_pin", "Fixar"),
         Binding("delete", "delete_task", "Excluir"),
+        Binding("shift+delete", "delete_task_without_confirmation", "Excluir sem confirmação", show=False),
         Binding(GuiKeys.expand_all, "expand_all", "Expandir", show=False),
         Binding(GuiKeys.collapse_all, "collapse_all", "Compactar", show=False),
         Binding(GuiKeys.reload_game, "reload", "Recarregar"),
@@ -253,8 +259,8 @@ class TkoApp(App[Callable[[], None] | None]):
         Binding(GuiKeys.palette, "palette", "Ações"),
         Binding("less_than_sign", "panel_smaller", "\u00a0", key_display="<", tooltip="Diminuir painel"),
         Binding("greater_than_sign", "panel_larger", "\u00a0", key_display=">", tooltip="Aumentar painel"),
-        Binding("pageup", "scroll_logs_up", "Logs acima", show=False),
-        Binding("pagedown", "scroll_logs_down", "Logs abaixo", show=False),
+        Binding("pageup", "scroll_logs_up", "Logs acima", show=False, priority=True),
+        Binding("pagedown", "scroll_logs_down", "Logs abaixo", show=False, priority=True),
         Binding("question_mark", "help", "Ajuda"),
     ]
 
@@ -271,6 +277,8 @@ class TkoApp(App[Callable[[], None] | None]):
         # the widget has a layout size.
         self.model.layout.get_tree_size_fn = self._tree_content_width
         self.task_formatter = TaskFormatter(settings, repo)
+        self.preview: PreviewService = PreviewService(repo.task_resolver)
+        self._panel_context: tuple[str, str | None] | None = None
         self.search = Search(self.model)
         self.graph = GuiGraphPanel(settings, repo, repo.flags)
         self.skills = GuiSkillsBar(repo.game, settings.colors, repo.flags, lambda: self._selected_source())
@@ -280,8 +288,10 @@ class TkoApp(App[Callable[[], None] | None]):
             Binding("q", "quit", self._t("Sair", "Quit"), show=False),
             Binding("escape", "escape", self._t("Sair", "Quit")),
             Binding("slash", "search", self._t("Buscar", "Search")),
+            Binding("tab,shift+tab", "toggle_panel_focus", self._t("Alternar painel", "Switch panel"), show=False, priority=True),
             Binding(GuiKeys.inbox, "show_pinned", self._t("Fixadas", "Pinned"), show=False),
             Binding(GuiKeys.all_tasks, "show_all", self._t("Todas", "All"), show=False),
+            Binding(GuiKeys.panel_preview, "show_preview", self._t("Prévia", "Preview"), show=False),
             Binding(GuiKeys.panel_graph, "show_graph", self._t("Gráfico", "Graph"), show=False),
             Binding(GuiKeys.panel_logs, "show_logs", "Logs", show=False),
             Binding(GuiKeys.panel_skills, "show_skills", self._t("Trilhas", "Skills"), show=False),
@@ -289,6 +299,7 @@ class TkoApp(App[Callable[[], None] | None]):
             Binding(GuiKeys.down_task, "download", self._t("Baixar", "Download")),
             Binding(GuiKeys.pin, "toggle_pin", self._t("Fixar", "Pin")),
             Binding("delete", "delete_task", self._t("Excluir", "Delete")),
+            Binding("shift+delete", "delete_task_without_confirmation", self._t("Excluir sem confirmação", "Delete without confirmation"), show=False),
             Binding(GuiKeys.expand_all, "expand_all", self._t("Expandir", "Expand"), show=False),
             Binding(GuiKeys.collapse_all, "collapse_all", self._t("Compactar", "Collapse"), show=False),
             Binding("I", "toggle_ui_language", self._t("Idiomas", "Interface")),
@@ -298,8 +309,8 @@ class TkoApp(App[Callable[[], None] | None]):
             Binding(GuiKeys.show_duration, "toggle_time", self._t("Tempo", "Time")),
             Binding("less_than_sign", "panel_smaller", "\u00a0", key_display="<", tooltip=self._t("Diminuir painel", "Shrink panel")),
             Binding("greater_than_sign", "panel_larger", "\u00a0", key_display=">", tooltip=self._t("Aumentar painel", "Grow panel")),
-            Binding("pageup", "scroll_logs_up", self._t("Logs acima", "Logs up"), show=False),
-            Binding("pagedown", "scroll_logs_down", self._t("Logs abaixo", "Logs down"), show=False),
+            Binding("pageup", "scroll_logs_up", self._t("Rolar painel acima", "Scroll panel up"), show=False, priority=True),
+            Binding("pagedown", "scroll_logs_down", self._t("Rolar painel abaixo", "Scroll panel down"), show=False, priority=True),
             Binding("question_mark", "help", self._t("Ajuda", "Help")),
         ]
 
@@ -316,6 +327,7 @@ class TkoApp(App[Callable[[], None] | None]):
         with Horizontal(id="topbar"):
             yield Button(id="top-pinned", classes="top-action")
             yield Button(id="top-all", classes="top-action")
+            yield Button(id="top-preview", classes="top-action")
             yield Button(id="top-graph", classes="top-action")
             yield Button(id="top-logs", classes="top-action")
             yield Button(id="top-skills", classes="top-action")
@@ -332,6 +344,19 @@ class TkoApp(App[Callable[[], None] | None]):
         self.refresh_view()
         self.call_after_refresh(self.refresh_view)
         self.query_one(TaskTreeView).focus()
+
+    def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
+        if action == "toggle_panel_focus":
+            return not isinstance(self.screen, ModalScreen)
+        return super().check_action(action, parameters)
+
+    def action_toggle_panel_focus(self) -> None:
+        tree: TaskTreeView = self.query_one(TaskTreeView)
+        panel: ScrollableContainer = self.query_one("#side-panel", ScrollableContainer)
+        if self.focused is tree:
+            panel.focus()
+        else:
+            tree.focus()
 
     def on_tree_node_highlighted(self, event: Tree.NodeHighlighted[IsTreeItem]) -> None:
         if event.node.data is not None:
@@ -414,9 +439,10 @@ class TkoApp(App[Callable[[], None] | None]):
         actions = [
             ("top-pinned", "1", self._t("Fixadas", "Pinned"), self.repo.flags.task_view_mode.is_pinned()),
             ("top-all", "2", self._t("Todas", "All"), not self.repo.flags.task_view_mode.is_pinned()),
-            ("top-graph", "3", self._t("Gráfico", "Graph"), self.repo.flags.panel.is_graph()),
-            ("top-logs", "4", "Logs", self.repo.flags.panel.is_logs()),
-            ("top-skills", "5", self._t("Trilhas", "Skills"), self.repo.flags.panel.is_skills()),
+            ("top-preview", GuiKeys.panel_preview, self._t("Prévia", "Preview"), self.repo.flags.panel.is_preview()),
+            ("top-graph", GuiKeys.panel_graph, self._t("Gráfico", "Graph"), self.repo.flags.panel.is_graph()),
+            ("top-logs", GuiKeys.panel_logs, "Logs", self.repo.flags.panel.is_logs()),
+            ("top-skills", GuiKeys.panel_skills, self._t("Trilhas", "Skills"), self.repo.flags.panel.is_skills()),
         ]
         for identifier, key, label, active in actions:
             button = self.query_one(f"#{identifier}", Button)
@@ -436,6 +462,7 @@ class TkoApp(App[Callable[[], None] | None]):
         actions = {
             "top-pinned": self.action_show_pinned,
             "top-all": self.action_show_all,
+            "top-preview": self.action_show_preview,
             "top-graph": self.action_show_graph,
             "top-logs": self.action_show_logs,
             "top-skills": self.action_show_skills,
@@ -449,6 +476,27 @@ class TkoApp(App[Callable[[], None] | None]):
         panel = self.query_one("#side-panel", ScrollableContainer)
         width = max(12, panel.size.width - 2)
         item = self._selected_item()
+        context: tuple[str, str | None] = (
+            self.repo.flags.panel.get_value(), item.basic.full_key if item is not None else None
+        )
+        if context != self._panel_context:
+            panel.scroll_home(animate=False)
+            self._panel_context = context
+        content: Static = self.query_one("#side-content", Static)
+        content.set_class(self.repo.flags.panel.is_preview(), "preview")
+        if self.repo.flags.panel.is_preview():
+            result = self.preview.load(item if isinstance(item, Task) else None)
+            if result.status == "ready":
+                content.update(render_preview_markdown(result.markdown))
+            else:
+                messages: dict[str, tuple[str, str]] = {
+                    "select": ("Selecione uma tarefa para visualizar seu README.", "Select a task to preview its README."),
+                    "unavailable": ("README indisponível na fonte local.", "README unavailable in the local source."),
+                    "unreadable": ("Não foi possível ler o README da fonte.", "Unable to read the source README."),
+                    "empty": ("O README da fonte está vazio.", "The source README is empty."),
+                }
+                content.update(Text(self._t(*messages[result.status])))
+            return
         lines: list[RT]
         if self.repo.flags.panel.is_skills():
             lines = self._skill_lines(width)
@@ -460,11 +508,11 @@ class TkoApp(App[Callable[[], None] | None]):
         self.query_one("#side-content", Static).update(Text("\n").join(to_rich_text(line) for line in lines))
 
     def action_scroll_logs_up(self) -> None:
-        if self.repo.flags.panel.is_logs():
+        if self.repo.flags.panel.is_logs() or self.repo.flags.panel.is_preview():
             self.query_one("#side-panel", ScrollableContainer).scroll_page_up()
 
     def action_scroll_logs_down(self) -> None:
-        if self.repo.flags.panel.is_logs():
+        if self.repo.flags.panel.is_logs() or self.repo.flags.panel.is_preview():
             self.query_one("#side-panel", ScrollableContainer).scroll_page_down()
 
     def _graph_lines(self, item: IsTreeItem | None, width: int, height: int) -> list[RT]:
@@ -541,6 +589,9 @@ class TkoApp(App[Callable[[], None] | None]):
 
     def action_show_skills(self) -> None:
         self._set_panel(PanelMode.SKILLS)
+
+    def action_show_preview(self) -> None:
+        self._set_panel(PanelMode.PREVIEW)
 
     def action_toggle_pin(self) -> None:
         item = self._selected_item()
@@ -699,6 +750,9 @@ class TkoApp(App[Callable[[], None] | None]):
     def action_delete_task(self) -> None:
         self._ask_delete_task()
 
+    def action_delete_task_without_confirmation(self) -> None:
+        self._ask_delete_task(confirm=False)
+
     def _resize_panel(self, amount: int) -> None:
         previous = self.settings.app.panel_size_percent
         self.settings.app.panel_size_percent = max(30, min(70, previous + amount))
@@ -756,7 +810,7 @@ class TkoApp(App[Callable[[], None] | None]):
         self.refresh_view()
         self.notify(self._t("Autoavaliação registrada.", "Self evaluation saved."))
 
-    def _ask_delete_task(self) -> None:
+    def _ask_delete_task(self, confirm: bool = True) -> None:
         from tko.ui_textual.dialogs import TextInputDialog
 
         task = self._selected_item()
@@ -766,6 +820,9 @@ class TkoApp(App[Callable[[], None] | None]):
         folder = self.repo.task_resolver.target_folder(task)
         if folder is None or not folder.exists():
             self.notify("A tarefa selecionada não possui pasta local.", severity="warning")
+            return
+        if not confirm:
+            self._delete_task(task, folder, task.basic.key)
             return
         self.push_screen(
             TextInputDialog(

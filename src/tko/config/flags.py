@@ -94,6 +94,7 @@ class PanelMode(Flag):
     GRAPH = "graph"
     LOGS = "logs"
     SKILLS = "skills"
+    PREVIEW: str = "preview"
 
     def __init__(self, id: str, default_value: str):
         super().__init__(
@@ -103,6 +104,7 @@ class PanelMode(Flag):
                 PanelMode.GRAPH: "Gráfico de tarefas",
                 PanelMode.LOGS: "Mostrar logs",
                 PanelMode.SKILLS: "Mostrar trilhas",
+                PanelMode.PREVIEW: "Mostrar prévia",
             },
             description="Mostra o Painel de Informações",
             keycode="",
@@ -116,6 +118,12 @@ class PanelMode(Flag):
 
     def is_skills(self):
         return self.get_value() == PanelMode.SKILLS
+
+    def is_preview(self) -> bool:
+        return self.get_value() == PanelMode.PREVIEW
+
+    def set_preview(self) -> None:
+        self._value = PanelMode.PREVIEW
 
     def set_graph(self):
         self._value = PanelMode.GRAPH
