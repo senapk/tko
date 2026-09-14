@@ -1,4 +1,6 @@
 from loguru import logger
+from dataclasses import replace
+from urllib.parse import urljoin
 import re
 from tko.game.game_builder import GameBuilder
 from tko.game.game_validator import GameValidator
@@ -7,6 +9,7 @@ from tko.game.task import Task
 from tko.repository.remote import Source
 from tko.i18n import Msg
 from tko.repository.remote_resolver import SourceResolver
+from tko.util.git_hub_url import GitHubUrl
 
 
 _GAME_TASK_NOT_FOUND_IN_COURSE = Msg.text(
@@ -71,6 +74,15 @@ class Game:
             except ValueError as exc:
                 logger.exception("{}: {}", str(_GAME_BUILD_FAILED_FOR_SOURCE).format(name=source.name), exc)
                 continue
+            if source.is_git_source:
+                # The index snapshot lives in the workspace, but relative task
+                # links still name files in the original remote repository.
+                for task in gb.collect_tasks().values():
+                    if task.location.git_hub_url is None:
+                        origin_url: str = urljoin(source.path_or_url, task.location.raw_link)
+                        task.location = replace(
+                            task.location, git_hub_url=GitHubUrl.parse(origin_url)
+                        )
             for quest_key in gb.ordered_quests:
                 self.ordered_quests.append(source.name + "@" + quest_key)
             gb_quests = gb.collect_quests()
