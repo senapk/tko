@@ -7,6 +7,8 @@ from _pytest.monkeypatch import MonkeyPatch
 import tko.repository.repository_config as repository_loader_module
 from tko.repository.repository import Repository
 from tko.repository.repository_config import ConfigMergeConflictError, RepositoryLoader
+from tko.repository.task_data_format import FORMAT_BYTES, FORMAT_FILE
+from tko.repository.task_data_format import MigrationRequiredError
 
 
 class FakePaths:
@@ -99,6 +101,14 @@ def test_load_config_uses_main_file_and_sets_source_globals(tmp_path: Path):
     assert source.globals_args is None
 
 
+def test_loader_rejects_yaml_instead_of_converting_it(tmp_path: Path) -> None:
+    loader, repo = make_loader(tmp_path)
+    write_text(repo.paths.legacy_config_file, "version: '0.2'\n")
+    with pytest.raises(MigrationRequiredError, match="tko tool migrate"):
+        loader.load()
+    assert not repo.paths.config_file.exists()
+
+
 def test_load_config_falls_back_to_backup_when_main_file_is_empty(tmp_path: Path):
     loader, repo = make_loader(tmp_path)
     write_text(repo.paths.config_file, "")
@@ -182,23 +192,13 @@ def test_save_config_skips_write_when_payload_is_unchanged(monkeypatch: MonkeyPa
 
 def test_save_config_skips_write_when_only_selected_fields_change(monkeypatch: MonkeyPatch, tmp_path: Path):
     loader, repo = make_loader(tmp_path)
-    repo.data.saved_payload = {
-        "sources": [{"name": "sandbox"}],
-        "lang": "py",
-        "selected": "repo@q1@t1",
-        "selected_index": 3,
-    }
+    repo.data.saved_payload = {"state": {"selected": "repo@q1@t1", "selected_index": 3}}
     write_text(
         repo.paths.config_file,
-        '[[sources]]\nname = "sandbox"\nlang = "py"\nselected = "repo@q1@t1"\nselected_index = 3\n',
+        '[state]\nselected = "repo@q1@t1"\nselected_index = 3\n',
     )
     loader.load()
-    repo.data.saved_payload = {
-        "sources": [{"name": "sandbox"}],
-        "lang": "py",
-        "selected": "repo@q1@t2",
-        "selected_index": 4,
-    }
+    repo.data.saved_payload = {"state": {"selected": "repo@q1@t2", "selected_index": 4}}
 
     calls = {"count": 0}
 
@@ -215,23 +215,14 @@ def test_save_config_skips_write_when_only_selected_fields_change(monkeypatch: M
 
 def test_save_config_writes_when_only_selected_fields_change_and_force_is_true(monkeypatch: MonkeyPatch, tmp_path: Path):
     loader, repo = make_loader(tmp_path)
-    repo.data.saved_payload = {
-        "sources": [{"name": "sandbox"}],
-        "lang": "py",
-        "selected": "repo@q1@t1",
-        "selected_index": 3,
-    }
+    repo.data.saved_payload = {"state": {"selected": "repo@q1@t1", "selected_index": 3}}
     write_text(
         repo.paths.config_file,
-        '[[sources]]\nname = "sandbox"\nlang = "py"\nselected = "repo@q1@t1"\nselected_index = 3\n',
+        '[state]\nselected = "repo@q1@t1"\nselected_index = 3\n',
     )
+    (repo.paths.config_file.parent / FORMAT_FILE).write_bytes(FORMAT_BYTES)
     loader.load()
-    repo.data.saved_payload = {
-        "sources": [{"name": "sandbox"}],
-        "lang": "py",
-        "selected": "repo@q1@t2",
-        "selected_index": 4,
-    }
+    repo.data.saved_payload = {"state": {"selected": "repo@q1@t2", "selected_index": 4}}
 
     calls = {"count": 0}
 

@@ -4,8 +4,11 @@ import datetime
 import os
 import argparse
 import csv
+import io
+import json
 from collections.abc import Callable
 from pathlib import Path
+from typing import cast
 from tko.logger.patch_history import PatchHistory, PatchInfo
 from tko.logger.versions_writer import InvalidHistoryError, VersionsWriter
 from tko.i18n import Msg
@@ -29,8 +32,8 @@ _TRACKER_INVALID_HISTORY = Msg.text(
 )
 
 class Track:
-    def __init__(self):
-        self.timestamp = ""
+    def __init__(self) -> None:
+        self.timestamp: str = ""
         self.file_stamp_list: list[str] = []
         self.result: str = ""
 
@@ -57,9 +60,76 @@ class Track:
         self.file_stamp_list = columns[2].split(";") if columns[2] else []
         return self
 
+    def identity(self) -> tuple[str, str, tuple[str, ...]]:
+        return self.timestamp, self.result, tuple(self.file_stamp_list)
+
+    def to_json_line(self) -> str:
+        return json.dumps(
+            {"timestamp": self.timestamp, "result": self.result, "files": self.file_stamp_list},
+            ensure_ascii=False, separators=(",", ":"),
+        ) + "\n"
+
+    @classmethod
+    def from_json_line(cls, line: str) -> Track:
+        payload: object = json.loads(line)
+        if not isinstance(payload, dict):
+            raise ValueError("Expected a JSON object")
+        record: dict[object, object] = cast(dict[object, object], payload)
+        if set(record) != {"timestamp", "result", "files"}:
+            raise ValueError("Expected timestamp, result and files")
+        timestamp: object = record["timestamp"]
+        result: object = record["result"]
+        files: object = record["files"]
+        if not isinstance(timestamp, str) or not isinstance(result, str) or not isinstance(files, list):
+            raise ValueError("Invalid track record field types")
+        file_list: list[object] = cast(list[object], files)
+        if not all(isinstance(file, str) for file in file_list):
+            raise ValueError("Invalid track file list")
+        _ = Tracker.get_timestamp_from_string(timestamp)
+        return cls().set_timestamp(timestamp).set_result(result).set_file_stamp_list(
+            [file for file in file_list if isinstance(file, str)]
+        )
+
+
+def load_track_jsonl(content: bytes, path: Path) -> list[Track]:
+    tracks: list[Track] = []
+    try:
+        lines: list[str] = content.decode("utf-8").splitlines()
+    except UnicodeError as exc:
+        raise ValueError(f"{path}:1: Invalid track JSONL encoding: {exc}") from exc
+    for number, line in enumerate(lines, 1):
+        try:
+            tracks.append(Track.from_json_line(line))
+        except (ValueError, UnicodeError) as exc:
+            raise ValueError(f"{path}:{number}: Invalid track JSONL: {exc}") from exc
+    return tracks
+
+
+def load_track_csv(content: bytes, path: Path) -> list[Track]:
+    tracks: list[Track] = []
+    try:
+        source: str = content.decode("utf-8")
+    except UnicodeError as exc:
+        raise ValueError(f"{path}:1: Invalid track CSV encoding: {exc}") from exc
+    reader = csv.reader(io.StringIO(source, newline=""), strict=True)
+    try:
+        for row in reader:
+            number: int = reader.line_num
+            if len(row) != 3:
+                raise ValueError(f"{path}:{number}: Expected three track CSV columns")
+            track: Track = Track().column_to_track(row)
+            try:
+                _ = Tracker.get_timestamp_from_string(track.timestamp)
+            except ValueError as exc:
+                raise ValueError(f"{path}:{number}: {exc}") from exc
+            tracks.append(track)
+    except csv.Error as exc:
+        raise ValueError(f"{path}:{reader.line_num}: Invalid track CSV: {exc}") from exc
+    return tracks
+
 
 class Tracker:
-    log_file = "track.csv"
+    log_file = "track.jsonl"
     extension = ".jsonl"
 
     def __init__(self, on_warning: Callable[[str], None] | None = None) -> None:
@@ -214,8 +284,7 @@ class Tracker:
         log_file = self.get_log_full_path()
         track = Track().set_timestamp(timestamp).set_file_stamp_list(files_in_this_version).set_result(self._result)
         with open(log_file, encoding="utf-8", mode="a", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow(track.track_to_column())
+            _ = f.write(track.to_json_line())
         return any_changes, total_size
     
     @staticmethod
@@ -223,15 +292,7 @@ class Tracker:
         if not os.path.exists(log_file):
             return []
         
-        tracks: list[Track] = []
-        with open(log_file, encoding="utf-8") as f:
-            reader = csv.reader(f)
-            for row in reader:
-                if len(row) < 3:
-                    continue
-                track = Track().column_to_track(row)
-                tracks.append(track)
-        return tracks
+        return load_track_jsonl(Path(log_file).read_bytes(), Path(log_file))
 
     @staticmethod
     def main() -> None:

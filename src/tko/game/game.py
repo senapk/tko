@@ -46,13 +46,7 @@ class Game:
         raise Warning(str(_GAME_TASK_NOT_FOUND_IN_COURSE).format(task_key=key))
 
     def get_task(self, key: str) -> Task | None:
-        if key in self.tasks:
-            return self.tasks[key]
-        if "@" in key:
-            source, path = key.split("@", 1)
-            legacy_path = path.removeprefix("labs/") if path.startswith("labs/") else f"labs/{path}"
-            return self.tasks.get(f"{source}@{legacy_path}")
-        return None
+        return self.tasks.get(key)
         
     def set_sources(self, sources: dict[str, Source], language: str):
         self.sources = sources

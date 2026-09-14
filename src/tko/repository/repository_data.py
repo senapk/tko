@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from loguru import logger
 from tko.i18n import Msg
-from tko.repository.remote import Source, SourceKeys, SourceType
+from tko.repository.remote import Source
 from tko.repository.remote_resolver import SourceResolver
 from tko.repository.git_cache import GitCache
 from typing import cast
@@ -214,43 +214,6 @@ class RepositoryData:
             if isinstance(uri, str):
                 self.set_source(Source.from_uri(label, uri))
 
-    def _load_sources_list(self, sources_data: list[ConfigDict]) -> None:
-        self.__sources.clear()
-        for item in sources_data:
-            source = Source.from_dict(item)
-            self.set_source(source)
-
-    def _load_source_list(self, data: ConfigDict, key: str) -> list[ConfigDict] | None:
-        value = data.get(key)
-        if not isinstance(value, list):
-            return None
-        sources: list[ConfigDict] = []
-        for item in value:
-            if isinstance(item, dict):
-                sources.append(item)
-        return sources
-
-    @staticmethod
-    def _legacy_authoring_source(sources: list[ConfigDict]) -> str | None:
-        """Return the unambiguous editable local source from a 0.2 config.
-
-        The YAML format had no ``authoring_source`` field.  Its writable local
-        source was the sandbox, so preserve that identity when converting it to
-        the profile-based format.
-        """
-        candidates: list[str] = []
-        for source in sources:
-            name = source.get(SourceKeys.NAME)
-            source_type = source.get(SourceKeys.TYPE)
-            writeable = source.get(SourceKeys.WRITEABLE)
-            if (
-                isinstance(name, str)
-                and source_type == SourceType.LOCAL_FILE.value
-                and writeable is True
-            ):
-                candidates.append(name)
-        return candidates[0] if len(candidates) == 1 else None
-
     def _load_profile_from_dict(self, profile: ConfigDict) -> None:
         self.profile_name = self._load_str(profile, "name", "")
         authoring_source = self._load_str(profile, "authoring_source", self.authoring_source)
@@ -303,12 +266,6 @@ class RepositoryData:
                 if not self.profile_language:
                     self.lang = self._load_str(preferences, "lang", self.lang)
                 self.flags = {key: value for key, value in preferences.items() if key != "lang"}
-            else:
-                flags = self._load_dict(data, "flags")
-                if flags is not None:
-                    self.flags = flags
-                if not self.profile_language:
-                    self.lang = self._load_str(data, "lang", self.lang)
 
             state = self._load_dict(data, "state")
             if state is not None:
@@ -316,46 +273,6 @@ class RepositoryData:
                 self.pinned = self._load_list(state, "pinned", self.pinned)
                 self.selected = self._load_str(state, "selected", self.selected)
                 self.selected_index = self._load_int(state, "selected_index", self.selected_index)
-            else:
-                self.expanded = self._load_list(data, "expanded", self.expanded)
-                self.pinned = self._load_list(data, "pinned", self.pinned)
-                self.selected = self._load_str(data, "selected", self.selected)
-                self.selected_index = self._load_int(data, "selected_index", self.selected_index)
-
-            sandbox_name = data.get("sandbox_name")
-            sandbox_index = data.get("sandbox_index")
-            if sandbox_name is not None:
-                if profile is None:
-                    self.__sources.clear()
-                if isinstance(sandbox_name, str):
-                    self.authoring_source = sandbox_name
-                if isinstance(sandbox_name, str) and isinstance(sandbox_index, str):
-                    self.set_source(Source.from_uri(sandbox_name, sandbox_index, is_editable=True))
-
-            audit_data = self._load_dict(data, "audit")
-            if audit_data is not None:
-                _ = self.audit.from_dict(audit_data)
-
-            # Load the 'source' field with specific validation
-            source_data = self._load_source_list(data, "sources")
-            if source_data is not None:
-                # repository.yaml (0.2) did not name its authoring source.
-                # Infer it only when its writable local sandbox is unambiguous.
-                legacy_authoring = (
-                    self._legacy_authoring_source(source_data)
-                    if profile is None and sandbox_name is None
-                    else None
-                )
-                existing_authoring = (
-                    None if legacy_authoring is not None else self.get_source(self.authoring_source)
-                )
-                self._load_sources_list(source_data)
-                if legacy_authoring is not None:
-                    self.authoring_source = legacy_authoring
-                elif existing_authoring is not None:
-                    self.set_source(existing_authoring)
-            elif "sources" in data:
-                raise TypeError("The 'sources' field must be a list.")
             self.validate_authoring_source()
 
         except (KeyError, TypeError):

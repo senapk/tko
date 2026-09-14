@@ -13,29 +13,7 @@ class TaskResolver:
         self.remote_root_dir = repo_root_dir
 
     def __source_work_dir(self, task: Task) -> Path:
-        key_path = Path(task.basic.key)
-        if key_path.parts and key_path.parts[0] == task.basic.source_name:
-            source_root = self.remote_root_dir
-            relative_key = Path(*key_path.parts[1:])
-        else:
-            source_root = self.remote_root_dir / task.basic.source_name
-            relative_key = key_path
-
-        if len(relative_key.parts) == 1:
-            canonical = source_root / "labs" / relative_key
-            legacy = source_root / relative_key
-        elif relative_key.parts[0] == "labs":
-            canonical = source_root / relative_key
-            legacy = source_root / Path(*relative_key.parts[1:])
-        else:
-            canonical = source_root / relative_key
-            legacy = None
-
-        if canonical.exists():
-            return canonical
-        if legacy is not None and legacy.exists():
-            return legacy
-        return canonical
+        return self.remote_root_dir / task.basic.source_name / task.basic.key
 
     def target_folder(self, task: Task) -> Path | None:
         file = self.target_file(task)

@@ -44,7 +44,7 @@ class TrackerLoader: # deprecated
     @staticmethod
     def load_file_versions(task_track_folder: str) -> dict[str, dict[str, PatchInfo]]:
         root = Path(task_track_folder)
-        files = [f for f in root.rglob("*") if f.is_file() and f.suffix in {".json", ".jsonl"}]
+        files = [f for f in root.rglob("*") if f.is_file() and f.name != Tracker.log_file and f.suffix in {".json", ".jsonl"}]
         file_versions: dict[str, dict[str, PatchInfo]] = {}
         for file_path in files:
             f = file_path.relative_to(root).as_posix()
@@ -70,17 +70,17 @@ class TrackerLoader: # deprecated
         return file_versions
 
     @staticmethod
-    def load_track_csv(task_track_folder: str) -> list[Track]:
-        csv_file = os.path.join(task_track_folder, "track.csv")
-        if not os.path.exists(csv_file):
-            ic(f"CSV file {csv_file} does not exist.")
+    def load_track(task_track_folder: str) -> list[Track]:
+        track_file: str = os.path.join(task_track_folder, Tracker.log_file)
+        if not os.path.exists(track_file):
+            ic(f"Track file {track_file} does not exist.")
             return []
-        return Tracker.load_from_log(csv_file)
+        return Tracker.load_from_log(track_file)
 
     @staticmethod
     def load_from_task_track(task_track_folder: str, task_key: str | None = None) -> dict[dt.datetime, LogItemExec]:
         task = task_key or os.path.basename(task_track_folder)
-        tracks: list[Track] = TrackerLoader.load_track_csv(task_track_folder)
+        tracks: list[Track] = TrackerLoader.load_track(task_track_folder)
         file_versions: dict[str, dict[str, PatchInfo]] = TrackerLoader.load_file_versions(task_track_folder)
         output: dict[dt.datetime, LogItemExec] = {}
         for track in tracks:
@@ -142,8 +142,8 @@ class OldLogLoader:
         track_folder = self.paths.track_folder
         if not os.path.exists(track_folder):
             return output
-        for csv_file in Path(track_folder).rglob("track.csv"):
-            folder_path = csv_file.parent
+        for track_file in Path(track_folder).rglob(Tracker.log_file):
+            folder_path = track_file.parent
             relative = folder_path.relative_to(track_folder)
             if len(relative.parts) < 2:
                 task_key = relative.parts[-1] if relative.parts else folder_path.name

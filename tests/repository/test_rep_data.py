@@ -38,25 +38,17 @@ def test_get_sources_uses_labs_authoring_source_by_default(tmp_path: Path) -> No
     assert [source.name for source in sources.values() if source.name != "labs"] == ["source1", "source2"]
 
 
-def test_load_from_dict_loads_simple_fields_and_sources(tmp_path: Path) -> None:
+def test_load_from_dict_loads_current_profile_and_state(tmp_path: Path) -> None:
     data = RepositoryData(tmp_path)
     payload: dict[str, Any] = {
         "version": "0.2",
-        "expanded": ["q1", "q2"],
-        "flags": {"show_time": "true"},
-        "audit": {"enabled": True, "interval_seconds": 120},
-        "lang": "py",
-        "selected": "repo@task",
-        "selected_index": 4,
-        "sources": [
-            {
-                "name": "disc",
-                "target": "material",
-                "type": "local",
-                "writeable": False,
-                "index": "README.md",
-            }
-        ],
+        "profile": {
+            "authoring_source": "labs",
+            "sources": {"labs": {"uri": "README.md"}, "disc": {"uri": "material/README.md"}},
+            "audit": {"enabled": True, "interval_seconds": 120},
+        },
+        "preferences": {"show_time": "true", "lang": "py"},
+        "state": {"expanded": ["q1", "q2"], "selected": "repo@task", "selected_index": 4},
     }
 
     data.load_from_dict(payload)

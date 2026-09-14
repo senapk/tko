@@ -119,7 +119,8 @@ Exemplo de linha:
 
 Semântica resumida:
 
-- `@chave` identifica a tarefa;
+- o caminho do README identifica a tarefa, por exemplo `labs/tres`; `@chave` é
+  metadado legado usado pela [migração dos dados](TASK_DATA_MIGRATION.md);
 - `[x]` marca a tarefa como referência para a meta da quest; `[ ]` marca uma alternativa;
 - `eval` é obrigatório e pode ser `none`, `self` ou `diff`;
 - os pares `nome=valor` são variáveis transitórias declaradas por `var`;

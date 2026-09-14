@@ -1,11 +1,16 @@
 from datetime import datetime
 from pathlib import Path
-from types import SimpleNamespace
 from typing import Any, cast
 
 from _pytest.monkeypatch import MonkeyPatch
 import tko.repository.repository_watcher as watcher_module
 from tko.repository.repository_watcher import RepositoryWatcher
+from tko.repository.repository import Repository
+from tko.repository.remote import Source
+from tko.config.run_settings import RunSettings
+from tko.game.task import Task
+from tko.game.task_location import TaskLocation
+from tko.game.task_enums import EvalMode
 
 
 class _FakeMonitor:
@@ -42,24 +47,16 @@ class _FakeAuditTracker:
         return True, 1
 
 
-def _make_repo(tmp_path: Path) -> Any:
-    def _store(_item: Any) -> None:
-        return None
-
-    remote = SimpleNamespace(
-        name="disc",
-    )
-    source_resolver = SimpleNamespace(source_work_dir=lambda _source: tmp_path / "disc") # type: ignore[arg-type]
-    return SimpleNamespace(
-        root_dir=tmp_path,
-        sources={"disc": remote},
-        source_resolver=source_resolver,
-        ignore_patterns=[],
-        paths=SimpleNamespace(config_folder=tmp_path / ".tko"),
-        logger=SimpleNamespace(store=_store),
-        audit=SimpleNamespace(enabled=False, interval_seconds=None),
-        data=SimpleNamespace(audit_enabled=False, audit_interval_seconds=None),
-    )
+def _make_repo(tmp_path: Path) -> Repository:
+    repo: Repository = Repository(tmp_path, RunSettings(), None, recursive_search=False)
+    index: Path = tmp_path / "disc/README.md"
+    repo.data.set_source(Source.from_local_file("disc", index))
+    task: Task = Task()
+    task.basic.source_name = "disc"
+    task.basic.key = "task01"
+    task.location = TaskLocation(index_path=index, raw_link="task01/README.md", eval=EvalMode.DIFF)
+    repo.game.tasks[task.basic.full_key] = task
+    return repo
 
 
 def test_start_watching_uses_default_interval_when_audit_disabled(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:

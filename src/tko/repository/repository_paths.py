@@ -91,9 +91,3 @@ class RepositoryPaths:
     def _task_history_folder(self, history_name: str, label: str) -> Path:
         source, task_key = label.split("@", 1)
         return self.root_dir / RepositoryPaths.CONFIG_FOLDER / history_name / source / task_key
-
-    def get_legacy_track_task_folder(self, label: str) -> Path:
-        return self.root_dir / RepositoryPaths.CONFIG_FOLDER / RepositoryPaths.TRACK_FOLDER / label
-
-    def get_legacy_audit_task_folder(self, label: str) -> Path:
-        return self.root_dir / RepositoryPaths.CONFIG_FOLDER / RepositoryPaths.AUDIT_FOLDER / label

@@ -13,6 +13,7 @@ from tko.logger.tracker import Tracker
 from tko.logger.versions_writer import VersionsWriter
 from tko.repository.remote import Source
 from tko.repository.repository import Repository
+from tko.repository.task_data_format import initialize_task_data
 from tko.run.run_config import RunConfig
 from tko.run.run_context import RunContext
 from tko.run.run_executor import RunExecutor
@@ -52,6 +53,7 @@ def _context(tmp_path: Path) -> RunContext:
     ctx.wdir.source_list = [cases]
     ctx.wdir.build_unit_list()
     ctx.wdir_builded = True
+    initialize_task_data(tmp_path)
     return ctx
 
 

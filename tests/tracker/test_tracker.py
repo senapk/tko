@@ -1,6 +1,10 @@
+import json
 from pathlib import Path
 
-from tko.logger.tracker import Tracker
+import pytest
+
+from tko.logger.tracker import Track, Tracker
+from tko.logger.old_log_loader import TrackerLoader
 from tko.logger.versions_writer import VersionsWriter
 from tko.util.console import Console
 
@@ -20,6 +24,10 @@ def test_tracker_stores_versions_as_jsonl(tmp_path: Path) -> None:
     assert history_file.exists()
     assert not (track_folder / "solver.py.json").exists()
     assert (track_folder / Tracker.log_file).exists()
+    tracks: list[Track] = Tracker.load_from_log(str(track_folder / Tracker.log_file))
+    record: object = json.loads((track_folder / Tracker.log_file).read_text(encoding="utf-8"))
+    assert record == {"timestamp": tracks[0].timestamp, "result": "100", "files": tracks[0].file_stamp_list}
+    assert "track" not in TrackerLoader.load_file_versions(str(track_folder))
 
     history = VersionsWriter().load_history(history_file)
     assert history.count == 1
@@ -80,3 +88,10 @@ def test_tracker_warns_on_terminal_when_all_histories_are_invalid(tmp_path: Path
         assert tracker.store() == (False, 0)
     assert str(history) in captured.getvalue()
     assert "solver.py:" not in (tmp_path / Tracker.log_file).read_text(encoding="utf-8")
+
+
+def test_tracker_rejects_invalid_jsonl_with_file_and_line(tmp_path: Path) -> None:
+    path: Path = tmp_path / Tracker.log_file
+    path.write_text('{"timestamp":"2026-09-14_10-00-00","result":"100","files":[]}\n{"timestamp":\n', encoding="utf-8")
+    with pytest.raises(ValueError, match=r"track.jsonl:2:"):
+        Tracker.load_from_log(str(path))

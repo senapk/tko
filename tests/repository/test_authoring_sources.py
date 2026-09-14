@@ -14,6 +14,7 @@ from tko.repository.repository import Repository
 from tko.repository.repository_config import RepositoryLoader
 from tko.repository.repository_data import RepositoryData
 from tko.repository.repository_starter import RepositoryStarter
+from tko.repository.task_migration import TaskDataMigration
 from tko.i18n import set_language
 
 
@@ -162,10 +163,13 @@ def test_migrates_legacy_sandbox_fields_and_preserves_old_names(tmp_path: Path) 
         encoding="utf-8",
     )
 
+    # Identity and configuration conversion happen in one offline migration.
+    backup = TaskDataMigration(tmp_path, {"sandbox@old": "sandbox@old"}).inspect().apply()
     RepositoryLoader(repo).load()
 
     assert not legacy.exists()
-    assert Path(str(legacy) + ".backup").exists()
+    assert backup is not None
+    assert (backup / "before/.tko/repository.yaml").is_file()
     data = read_toml(repo.paths.config_file)
     assert data["profile"]["authoring_source"] == "sandbox"
     assert data["profile"]["sources"]["sandbox"]["uri"] == "sandbox.md"
@@ -211,6 +215,7 @@ def test_migrates_legacy_source_list_with_writable_sandbox(tmp_path: Path) -> No
         encoding="utf-8",
     )
 
+    backup = TaskDataMigration(tmp_path, {"fup@mat": "fup@mat", "fup@tetris": "fup@tetris"}).inspect().apply()
     RepositoryLoader(repo).load()
 
     data = read_toml(repo.paths.config_file)
@@ -233,10 +238,11 @@ def test_migrates_legacy_source_list_with_writable_sandbox(tmp_path: Path) -> No
         "selected": "fup@tetris",
         "selected_index": 23,
     }
-    assert Path(str(legacy) + ".backup").exists()
+    assert backup is not None
+    assert (backup / "before/.tko/repository.yaml").is_file()
 
 
-def test_toml_takes_precedence_when_yaml_also_exists(tmp_path: Path) -> None:
+def test_migration_keeps_toml_when_yaml_also_exists(tmp_path: Path) -> None:
     repo = make_repo(tmp_path)
     repo.paths.config_file.parent.mkdir(parents=True, exist_ok=True)
     repo.paths.config_file.write_text(
@@ -253,10 +259,11 @@ def test_toml_takes_precedence_when_yaml_also_exists(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
+    TaskDataMigration(tmp_path).inspect().apply()
     RepositoryLoader(repo).load()
 
     assert repo.data.authoring_source == "labs"
-    assert repo.paths.legacy_config_file.exists()
+    assert not repo.paths.legacy_config_file.exists()
 
 
 def test_profile_update_preserves_preferences_and_state(tmp_path: Path) -> None:

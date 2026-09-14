@@ -22,20 +22,8 @@ class GuiGraphPanel:
 
     def get_history(self, quest: Quest | None = None) -> tuple[bool, list[RT], list[RT]]:
         remote_paths = {source.name: source.path_or_url for source in self.repo.sources.values()}
-        history: list[TaskCollected] = self.repo.logger.tasks.mount_task_history(self.repo.game, remote_paths)
-        if quest is not None:
-            # TaskCollected strips the source prefix from log keys. Match the
-            # same normalized task keys while retaining compatibility with
-            # logs written before the ``labs/`` key migration.
-            quest_task_keys: set[str] = set()
-            for task in quest.get_tasks():
-                key = task.basic.key
-                quest_task_keys.add(key)
-                if key.startswith("labs/"):
-                    quest_task_keys.add(key.removeprefix("labs/"))
-                else:
-                    quest_task_keys.add(f"labs/{key}")
-            history = [item for item in history if item.key in quest_task_keys]
+        task_keys: set[str] | None = None if quest is None else {task.basic.full_key for task in quest.get_tasks()}
+        history: list[TaskCollected] = self.repo.logger.tasks.mount_task_history(self.repo.game, remote_paths, task_keys)
         task_pad = max((len(item.key) for item in history), default=0) + 2
         quest_pad = max((len(item.quest) for item in history), default=0) + 2
         rows: list[RT] = []

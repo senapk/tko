@@ -6,11 +6,11 @@ import time
 import tomllib
 from pathlib import Path
 from typing import cast
-from yaml import YAMLError, safe_load # type: ignore
 from tko.util.decoder import Decoder
 from tko.i18n import Msg
 from tko.repository.repository import Repository
 from tko.repository.repository_data import ConfigDict, ConfigValue
+from tko.repository.task_data_format import MigrationRequiredError, initialize_task_data
 
 
 _REPOSITORY_LOADER_GIT_CONFLICT = Msg.text(
@@ -20,10 +20,6 @@ _REPOSITORY_LOADER_GIT_CONFLICT = Msg.text(
 _REPOSITORY_LOADER_EMPTY_CONFIG_FILE = Msg.text(
     pt="Arquivo de configuração vazio: {file}",
     en="Empty config file: {file}",
-)
-_REPOSITORY_LOADER_YAML_CORRUPTED = Msg.parse(
-    pt="O arquivo de configuração do repositório [y]{file}[] contém erros de YAML e está [r]corrompido[].\nErro: {error}\nAbra e corrija o conteúdo ou crie um novo.",
-    en="The repository configuration file [y]{file}[] contains YAML errors and is [r]corrupted[].\nError: {error}\nOpen and fix the content or create a new one.",
 )
 _REPOSITORY_LOADER_CONFIG_EMPTY = Msg.parse(
     pt="O arquivo de configuração do repositório [y]{file}[] está [r]vazio[].\nAbra e corrija o conteúdo ou crie um novo.",
@@ -188,22 +184,19 @@ class RepositoryLoader:
     def load(self) -> RepositoryLoader:
         path = self.repo.paths.config_file
         legacy_path = self.repo.paths.legacy_config_file
-        is_migration = not path.exists() and legacy_path.exists()
-        if not path.exists() and not legacy_path.exists():
+        if legacy_path.exists():
+            raise MigrationRequiredError(f"Configuração antiga precisa de migração. Execute: tko tool migrate \"{path.parent.parent}\"")
+        if not path.exists():
             _ = self.save(force=True)
             self._cached_output = self.repo.data.to_dict()
             return self
-        load_path = legacy_path if is_migration else path
-        content = Decoder.load(load_path)
+        content = Decoder.load(path)
         self._check_for_merge_conflicts(content)
 
         local_data: ConfigDict
         try:
             parsed_data: object
-            if is_migration:
-                parsed_data = cast(object, safe_load(content))
-            else:
-                parsed_data = tomllib.loads(content)
+            parsed_data = tomllib.loads(content)
 
             parsed_config = _config_dict(parsed_data)
             if parsed_config is not None and self._length(parsed_config) > 0:
@@ -212,18 +205,16 @@ class RepositoryLoader:
                 backup_content = Decoder.load(self.repo.paths.config_backup_file)
                 self._check_for_merge_conflicts(backup_content)
                 parsed_backup: object = tomllib.loads(backup_content)
-                local_data = self._load_config_dict(parsed_backup, load_path)
+                local_data = self._load_config_dict(parsed_backup, path)
 
         except ConfigMergeConflictError:
             raise
-        except YAMLError as e:
-            raise Warning(_REPOSITORY_LOADER_YAML_CORRUPTED.t().format(file=load_path, error=e))
         except tomllib.TOMLDecodeError as e:
-            raise Warning(_REPOSITORY_LOADER_CONFIG_CORRUPTED_UNEXPECTED.t().format(file=load_path, error=e))
+            raise Warning(_REPOSITORY_LOADER_CONFIG_CORRUPTED_UNEXPECTED.t().format(file=path, error=e))
         except FileNotFoundError:
-            raise Warning(_REPOSITORY_LOADER_CONFIG_EMPTY.t().format(file=load_path))
+            raise Warning(_REPOSITORY_LOADER_CONFIG_EMPTY.t().format(file=path))
         except Exception as e:
-            raise Warning(_REPOSITORY_LOADER_CONFIG_CORRUPTED_UNEXPECTED.t().format(file=load_path, error=e))
+            raise Warning(_REPOSITORY_LOADER_CONFIG_CORRUPTED_UNEXPECTED.t().format(file=path, error=e))
 
         self.repo.data.load_from_dict(local_data)
         if getattr(self.repo.data, "is_linked", False):
@@ -232,11 +223,6 @@ class RepositoryLoader:
             if LinkedProfileService(self.repo).refresh_if_due(force=False):
                 atomic_write_toml(path, self.repo.data.to_dict())
         self.repo.flags.from_dict(_string_dict(self.repo.data.flags))
-        if is_migration:
-            _ = self.save(force=True)
-            backup_path = Path(str(legacy_path) + ".backup")
-            os.replace(legacy_path, backup_path)
-
         # Cache the output after loading
         self._cached_output = self.repo.data.to_dict()
         return self
@@ -244,8 +230,6 @@ class RepositoryLoader:
     @staticmethod
     def _without_volatile_fields(data: ConfigDict) -> ConfigDict:
         normalized = data.copy()
-        _ = normalized.pop("selected", None)
-        _ = normalized.pop("selected_index", None)
         state = normalized.get("state")
         state_dict = _config_dict(state)
         if state_dict is not None:
@@ -275,6 +259,7 @@ class RepositoryLoader:
                 return self
 
         path.parent.mkdir(parents=True, exist_ok=True)
+        initialize_task_data(path.parent.parent)
         atomic_write_toml(path, payload)
 
         # Update the cached output after saving

@@ -5,13 +5,14 @@ from pathlib import Path
 
 from filelock import FileLock, Timeout
 from loguru import logger
-from tko.repository.repository import Repository
+from typing import Protocol
 from tko.util.decoder import Decoder
 from hashlib import blake2s
 import json
 from tko.util.console import Console
 from tko.util.rt import RT
 from tko.logger.versions_writer import VersionsWriter
+from tko.repository.task_data_format import initialize_task_data
     
 class LastElement:
     def __init__(self, timestamp: datetime, hash_value: str) -> None:
@@ -24,15 +25,29 @@ class LastElement:
             "hash": self.hash_value
         })
 
+class AuditPaths(Protocol):
+    @property
+    def root_dir(self) -> Path: ...
+
+    def get_audit_task_folder(self, label: str) -> Path: ...
+
+
+class AuditRepository(Protocol):
+    @property
+    def paths(self) -> AuditPaths: ...
+
+    def get_task_folder_for_label(self, label: str) -> Path: ...
+
+
 class AuditTracker:
     def __init__(
         self,
-        repo: Repository,
+        repo: AuditRepository,
         verbose: bool,
         interval_seconds: int,
         versions_writer: VersionsWriter | None = None,
     ) -> None:
-        self.repo: Repository = repo
+        self.repo: AuditRepository = repo
         self.max_file_size_bytes: int = 1024 * 1024
         self.verbose: bool = verbose
         self.interval_seconds: int = interval_seconds
@@ -92,6 +107,7 @@ class AuditTracker:
         return False
 
     def store(self, task_key: str, file_ts_list: list[tuple[Path, datetime | None]]) -> tuple[bool, int]:
+        initialize_task_data(self.repo.paths.root_dir)
         audit_task_folder = self.repo.paths.get_audit_task_folder(task_key)
         task_root = self.repo.get_task_folder_for_label(task_key)
         any_changes = False

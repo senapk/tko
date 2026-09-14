@@ -131,7 +131,12 @@ Exemplos:
 tko tool rebase-links @fup
 tko tool filter
 tko tool mdpp
+tko tool migrate /caminho/do/workspace
 ```
+
+A migração começa em modo de simulação; use `--apply` após revisar os resultados.
+Consulte [Migração dos dados de tarefas](TASK_DATA_MIGRATION.md) para mapas explícitos,
+backups e recuperação.
 
 ## Diagnóstico rápido
 

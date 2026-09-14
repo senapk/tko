@@ -12,6 +12,7 @@ import datetime as dt
 from tko.util.decoder import Decoder
 from typing import Callable
 from pathlib import Path
+from tko.repository.task_data_format import initialize_task_data, require_current_task_data
 import sys # type: ignore
 
 
@@ -22,7 +23,8 @@ _LOGGER_LOG_FOLDER_NOT_DIR = Msg.text(
 
 class LogHistory:
 
-    def __init__(self, rep_folder: Path, rs: RunSettings, paths: RepositoryPaths, listeners: list[Callable[[LogItemBase, bool], None]] | None = None):
+    def __init__(self, rep_folder: Path, rs: RunSettings, paths: RepositoryPaths, listeners: list[Callable[[LogItemBase, bool], None]] | None = None) -> None:
+        require_current_task_data(rep_folder)
         if listeners is None:
             listeners = []
         self.paths = paths
@@ -57,6 +59,7 @@ class LogHistory:
         return folder / f"{date_str}.log"
 
     def append_new_action(self, item_base: LogItemBase) -> LogItemBase:
+        initialize_task_data(self.paths.root_dir)
         now_str, now_dt = Delta.now()
         if item_base.get_datetime() == dt.datetime.fromordinal(1):
             item_base.set_timestamp(now_str, now_dt)

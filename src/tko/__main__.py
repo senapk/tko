@@ -49,6 +49,7 @@ app.add_typer(source_app, name="source")
 app.add_typer(collect_app, name="collect")
 app.add_typer(class_app, name="class")
 app.add_typer(util_app, name="util")
+app.add_typer(util_app, name="tool")
 
 register_main_commands(app)
 
@@ -100,9 +101,14 @@ def main_callback(
     ctx.obj = sett
 
 
-def main():
+def main() -> None:
+    from tko.repository.task_data_format import MigrationRequiredError
+
     try:
         app()
+    except MigrationRequiredError as exc:
+        Console.print(str(exc))
+        sys.exit(1)
     except KeyboardInterrupt:
         Console.print(f"\n\n{_APP_KEYBOARD_INTERRUPT}")
         sys.exit(1)

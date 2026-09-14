@@ -1,6 +1,7 @@
 from tko.run.run_context import RunContext
 from tko.logger.tracker import Tracker
 from tko.logger.log_item_exec import LogItemExec
+from tko.repository.task_data_format import initialize_task_data
 
 class RunTracker:
     def __init__(self, ctx: RunContext):
@@ -9,6 +10,8 @@ class RunTracker:
 
     def store_exec_diff(self, rate: str) -> tuple[bool, int]:
         if self.ctx.track_folder is not None:
+            if self.ctx.repo is not None:
+                initialize_task_data(self.ctx.repo.root_dir)
             self.tracker.set_folder(self.ctx.track_folder)
             if self.ctx.repo is not None and self.ctx.task is not None:
                 task_root = self.ctx.repo.task_resolver.target_folder(self.ctx.task)

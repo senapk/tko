@@ -36,6 +36,9 @@ class Repository:
             recursive_folder = RepositoryPaths.rec_search_for_repo_parents(folder)
             if recursive_folder is not None:
                 rep_folder = recursive_folder
+        from tko.repository.task_data_format import require_current_task_data
+
+        require_current_task_data(rep_folder)
         self.data: RepositoryData = RepositoryData(rep_folder)
         self.paths = RepositoryPaths(rep_folder, rs, lambda: self.data)
         self.game = Game()
@@ -83,13 +86,17 @@ class Repository:
 
     def get_task_from_task_folder(self, folder: Path) -> Task | None:
         folder = folder.resolve()
-        for t in self.game.tasks.values():
-            work_dir = self.task_resolver.target_folder(t)
+        selected: Task | None = None
+        depth: int = -1
+        for task in self.game.tasks.values():
+            work_dir: Path | None = self.task_resolver.target_folder(task)
             if work_dir is None:
                 continue
-            if folder.is_relative_to(work_dir):
-                return t
-        return None
+            work_dir = work_dir.resolve()
+            if folder.is_relative_to(work_dir) and len(work_dir.parts) > depth:
+                selected = task
+                depth = len(work_dir.parts)
+        return selected
 
     def is_task_folder(self, folder: Path) -> bool:
         label = folder.name
@@ -97,28 +104,19 @@ class Repository:
         return task_folder == folder
     
     def get_task_folder_for_label(self, label: str) -> Path:
+        task: Task | None = self.game.get_task(label)
+        if task is not None:
+            folder: Path | None = self.task_resolver.target_folder(task)
+            if folder is not None:
+                return folder
         parts: list[str] = label.split("@", 1)
         source = ""
         if len(parts) > 1:
             source = parts[0]
             label = parts[1]
         root = self.paths.root_dir / source
-        if "/" not in label:
-            canonical = root / "labs" / label
-            if canonical.exists():
-                return canonical
-            legacy = root / label
-            if legacy.exists():
-                return legacy
-            return legacy
-        if label.startswith("labs/"):
-            canonical = root / label
-            if canonical.exists():
-                return canonical
-            legacy = root / label.removeprefix("labs/")
-            if legacy.exists():
-                return legacy
         return root / label
+
 
     def __str__(self) -> str:
         return f"data: {self.data}\n"

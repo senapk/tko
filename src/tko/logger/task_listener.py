@@ -3,9 +3,14 @@ from tko.logger.log_item_base import LogItemBase
 from tko.logger.log_sort import LogSort
 from tko.logger.delta import DeltaMode, DeltaAction
 from tko.logger.delta_list import DeltaList
-from tko.game.game import Game
+from tko.game.task import Task
+from typing import Protocol
 import datetime as dt
 import sys # type: ignore
+
+class TaskLookup(Protocol):
+    def get_task(self, key: str) -> Task | None: ...
+
 
 class TaskListener:
     def __init__(self):
@@ -16,15 +21,8 @@ class TaskListener:
         self.last_key: str = ""
 
     def get_task_log(self, task_key: str) -> LogSort | None:
-        """Find history written before/after the path-based task key migration."""
-        log = self.task_dict.get(task_key)
-        if log is not None:
-            return log
-        if "@" not in task_key:
-            return None
-        source, path = task_key.split("@", 1)
-        legacy_path = path.removeprefix("labs/") if path.startswith("labs/") else f"labs/{path}"
-        return self.task_dict.get(f"{source}@{legacy_path}")
+        """Histories use the exact persisted identity after explicit migration."""
+        return self.task_dict.get(task_key)
 
     def handle_log_entry(self, item: LogItemBase, new_entry: bool = False):
         _ = new_entry
@@ -45,12 +43,14 @@ class TaskListener:
             log_sort.add_item(mode, item)
             self.task_history.append(log_sort)
 
-    def mount_task_history(self, game: Game, remote_paths: dict[str, str]) -> list[TaskCollected]:
+    def mount_task_history(
+        self, game: TaskLookup, remote_paths: dict[str, str], task_keys: set[str] | None = None,
+    ) -> list[TaskCollected]:
         history_log_sort: list[LogSort] = self.task_history
         history_data: list[TaskCollected] = []
         for log_sort in history_log_sort:
             key = log_sort.key
-            if key is None:
+            if key is None or (task_keys is not None and key not in task_keys):
                 continue
             taskuserdata = TaskCollected().setup(log_sort, game.get_task(key), remote_paths)
             if taskuserdata.resume.duration > dt.timedelta(seconds=60):
