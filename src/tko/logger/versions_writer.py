@@ -10,9 +10,21 @@ import base64
 import difflib
 import gzip
 import json
+import re
+import tempfile
 
 
 from typing import Any
+
+
+class InvalidHistoryError(ValueError):
+    """A history cannot be safely extended until its invalid entry is repaired."""
+
+    def __init__(self, path: Path, line_number: int, reason: str) -> None:
+        self.path: Path = path
+        self.line_number: int = line_number
+        self.reason: str = reason
+        super().__init__(f"{path}:{line_number}: {reason}")
 
 
 @dataclass(slots=True)
@@ -208,6 +220,21 @@ class VersionsWriter:
 
         return "".join(result)
 
+    @staticmethod
+    def _replace_history(audit_file: Path, lines: list[bytes]) -> None:
+        temporary_path: Path | None = None
+        try:
+            with tempfile.NamedTemporaryFile(
+                dir=audit_file.parent, prefix=f".{audit_file.name}.", delete=False,
+            ) as temporary_file:
+                temporary_path = Path(temporary_file.name)
+                temporary_file.writelines(lines)
+            temporary_path.chmod(audit_file.stat().st_mode)
+            temporary_path.replace(audit_file)
+        finally:
+            if temporary_path is not None:
+                temporary_path.unlink(missing_ok=True)
+
     def _load_history(
         self,
         audit_file: Path,
@@ -217,10 +244,19 @@ class VersionsWriter:
         last_full_index = 0
 
         if audit_file.exists():
-            for line in audit_file.read_text(
-                encoding="utf-8"
-            ).splitlines():
-                entry = AuditElement.from_jsonl_line(line)
+            retained_lines: list[bytes] = []
+            removed_markers: bool = False
+            for line_number, line in enumerate(
+                audit_file.read_bytes().splitlines(keepends=True), start=1
+            ):
+                if re.fullmatch(rb"(?:<{7,}|>{7,}|\|{7,})(?: .*)?|={7,}", line.rstrip(b"\r\n")):
+                    removed_markers = True
+                    continue
+                try:
+                    entry = AuditElement.from_jsonl_line(line.decode("utf-8"))
+                except (ValueError, KeyError, TypeError, AttributeError, OverflowError) as error:
+                    raise InvalidHistoryError(audit_file, line_number, str(error)) from error
+                retained_lines.append(line)
 
                 if entry.mode == "full":
                     full_content = entry.content or ""
@@ -245,6 +281,11 @@ class VersionsWriter:
                         content=current,
                     )
                 )
+
+            if removed_markers:
+                # Accept both sides in file order, without deduplication or reserialization.
+                # Only replace the file after every retained entry has loaded successfully.
+                self._replace_history(audit_file, retained_lines)
 
         return VersionHistory(
             snapshots=snapshots,

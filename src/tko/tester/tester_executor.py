@@ -20,13 +20,14 @@ class TesterExecutor:
         wdir: Wdir,
         task: Task,
         top_bar: TesterTopBar,
+        on_warning: Callable[[str], None] | None = None,
     ) -> None:
         self.settings = settings
         self.rep = rep
         self.wdir = wdir
         self.task = task
         self.top_bar = top_bar
-        self.tracker = Tracker()
+        self.tracker: Tracker = Tracker(on_warning=on_warning)
         self.execution_service = TesterExecutionService(
             settings=settings,
             rep=rep,

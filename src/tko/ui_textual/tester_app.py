@@ -85,7 +85,9 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
         edit_mode = lambda: watcher is not None and watcher.edit_logger is not None
         audit_mode = lambda: watcher is not None and watcher.audit_logger is not None
         self.top_bar = TesterTopBar(repo, wdir, task, settings.app, edit_fn=edit_mode, audit_fn=audit_mode)
-        self.executor = TesterExecutor(settings, repo, wdir, task, self.top_bar)
+        self.executor: TesterExecutor = TesterExecutor(
+            settings, repo, wdir, task, self.top_bar, on_warning=self._notify
+        )
         self.navigator = TesterNavigator(settings, repo, wdir, task, self.executor, self._notify)
 
     def _notify(self, message: str) -> None:

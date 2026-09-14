@@ -4,13 +4,15 @@ import datetime
 import os
 import argparse
 import csv
+from collections.abc import Callable
 from pathlib import Path
 from tko.logger.patch_history import PatchHistory, PatchInfo
-from tko.logger.versions_writer import VersionsWriter
+from tko.logger.versions_writer import InvalidHistoryError, VersionsWriter
 from tko.i18n import Msg
 from tko.util.decoder import Decoder
 import tempfile
 from tko.logger.log_sort import LogSort
+from tko.util.console import Console
 
 
 _TRACKER_NOT_ENOUGH_COLUMNS = Msg.text(
@@ -20,6 +22,10 @@ _TRACKER_NOT_ENOUGH_COLUMNS = Msg.text(
 _TRACKER_INVALID_TIMESTAMP_FORMAT = Msg.text(
     pt="Formato de timestamp inválido: {timestamp}. O formato esperado é YYYY-MM-DD_HH-MM-SS.",
     en="Invalid timestamp format: {timestamp}. Expected format is YYYY-MM-DD_HH-MM-SS.",
+)
+_TRACKER_INVALID_HISTORY = Msg.text(
+    pt="Aviso: versão não salva. Histórico inválido em {error}. Corrija o histórico (resolva eventuais conflitos Git) para voltar a salvar versões. O arquivo foi preservado.",
+    en="Warning: version not saved. Invalid history at {error}. Repair the history (resolve any Git conflicts) to resume saving versions. The file was preserved.",
 )
 
 class Track:
@@ -48,7 +54,7 @@ class Track:
             raise ValueError(_TRACKER_NOT_ENOUGH_COLUMNS.t())
         self.timestamp = columns[0]
         self.result = columns[1]
-        self.file_stamp_list = columns[2].split(";")
+        self.file_stamp_list = columns[2].split(";") if columns[2] else []
         return self
 
 
@@ -56,12 +62,17 @@ class Tracker:
     log_file = "track.csv"
     extension = ".jsonl"
 
-    def __init__(self):
+    def __init__(self, on_warning: Callable[[str], None] | None = None) -> None:
         self._result: str = "None"
         self._files: list[Path] = []
         self._folder: Path = Path()
         self._task_root: Path | None = None
         self._versions_writer: VersionsWriter = VersionsWriter()
+        self._on_warning: Callable[[str], None] = on_warning or self._print_warning
+
+    @staticmethod
+    def _print_warning(message: str) -> None:
+        Console.error(message)
 
     def unfold_files(self, log_sort: LogSort) -> tuple[str, str]:
         output = "\n"
@@ -189,7 +200,11 @@ class Tracker:
         any_changes = False
         total_size = 0
         for file in self._files:
-            stored, changed, size = self.save_file_with_timestamp_prefix(timestamp, file)
+            try:
+                stored, changed, size = self.save_file_with_timestamp_prefix(timestamp, file)
+            except InvalidHistoryError as error:
+                self._on_warning(_TRACKER_INVALID_HISTORY.t().format(error=error).plain())
+                continue
             total_size += size
             filename = self._relative_file(file).as_posix()
             files_in_this_version.append(filename + ":" + stored)
