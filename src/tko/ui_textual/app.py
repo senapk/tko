@@ -511,8 +511,14 @@ class TkoApp(App[Callable[[], None] | None]):
         if self.repo.flags.panel.is_skills():
             lines = self._skill_lines(width)
         elif self.repo.flags.panel.is_logs():
-            _, header, lines = self.graph.get_history()
-            lines = header + lines
+            if isinstance(item, Task):
+                _, header, task_lines = self.graph.get_task_graph(item.basic.full_key, width, max(3, panel.size.height - 1))
+                lines = header + task_lines
+            elif isinstance(item, Quest):
+                _, header, history_lines = self.graph.get_history(item)
+                lines = header + history_lines
+            else:
+                lines = [RT(self._t("Selecione uma tarefa ou missão.", "Select a task or quest."))]
         else:
             lines = self._graph_lines(item, width, max(3, panel.size.height - 1))
         self.query_one("#side-content", Static).update(Text("\n").join(to_rich_text(line) for line in lines))
