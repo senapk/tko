@@ -2,7 +2,7 @@
 
 Este repositório é uma coleção de exercícios e projetos relacionados à Programação Orientada a Objetos (POO). Ele é organizado em diferentes seções, cada uma focada em um aspecto específico da POO, como classes, objetos, herança, polimorfismo, entre outros. Descrição do marcadores[LINK](https://github.com/senapk/tko/blob/master/wiki/Marcadores-e-Tipos.md)
 
-## Configuração de ambiente factor=1 <!-- @env deps=none xpgoal=0 active=1 -->
+## Configuração de ambiente factor=1 <!-- @env xpgoal=0 active=1 -->
 
 - [ ] `@+git            📖 👤 type=read xp=1                           ` [Introdução ao git](https://github.com/qxcodepoo/arcade/blob/main/wiki/git/README.md)
 - [ ] `@+relacionamento 📖 👤 type=read xp=0                           ` [Relacionamentos](https://github.com/qxcodepoo/arcade/blob/main/wiki/relacionamento/README.md)
@@ -10,7 +10,7 @@ Este repositório é uma coleção de exercícios e projetos relacionados à Pro
 - [ ] `@+relatorio      📖 👤 type=read xp=0                           ` [Como fazer os códigos e relatórios](https://github.com/qxcodepoo/arcade/blob/main/wiki/relatorio/README.md)
 - [ ] `@+main           📖 👤 type=read xp=0                           ` [Criando a Main](https://github.com/qxcodepoo/arcade/blob/main/wiki/main/README.md)
 
-## Primeiras Classes factor=1 <!-- @intro deps=none xpgoal=0 active=1 -->
+## Primeiras Classes factor=1 <!-- @intro xpgoal=0 active=1 -->
 
 - [ ] `@toalha          🛠️ 👤 type=make xp=1 tier=1 eval=self          ` [Toalha, o item mais útil do universo](https://github.com/qxcodepoo/arcade/blob/main/base/toalha/README.md)
 - [ ] `@animal          🛠️ 🤖 type=make xp=1 tier=1 eval=test          ` [Animal que nasce, cresce, morre](https://github.com/qxcodepoo/arcade/blob/main/base/animal/README.md)
@@ -18,14 +18,14 @@ Este repositório é uma coleção de exercícios e projetos relacionados à Pro
 - [ ] `@enxugar         🛠️ 🤖 type=make xp=1 tier=1 eval=test          ` [Toalha com testes](https://github.com/qxcodepoo/arcade/blob/main/base/enxugar/README.md)
 - [ ] `@calculadora     🛠️ 🤖 type=make xp=1 tier=1 eval=test          ` [Uma calculadora com bateria](https://github.com/qxcodepoo/arcade/blob/main/base/calculadora/README.md)
 
-## Modificadores de Acesso factor=1 <!-- @access deps=@intro xpgoal=0 active=1 -->
+## Modificadores de Acesso factor=1 <!-- @access xpgoal=0 active=1 -->
 
 - [ ] `@chinela         🛠️ 👤 type=make xp=1 tier=1 eval=self          ` [Comprando uma chinela 40/41](https://github.com/qxcodepoo/arcade/blob/main/base/chinela/README.md)
 - [ ] `@camisa          🛠️ 👤 type=make xp=1 tier=1 eval=self          ` [Comprando uma camisa XG](https://github.com/qxcodepoo/arcade/blob/main/base/camisa/README.md)
 - [ ] `@roupa           🛠️ 🤖 type=make xp=1 tier=1 eval=test          ` [Roupa com testes](https://github.com/qxcodepoo/arcade/blob/main/base/roupa/README.md)
 - [ ] `@relogio         🛠️ 🤖 type=make xp=1 tier=1 eval=test          ` [Garante uma hora válida no relógio](https://github.com/qxcodepoo/arcade/blob/main/base/relogio/README.md)
 
-## Agregação Simples factor=1 <!-- @agreg deps=@access xpgoal=0 active=1 -->
+## Agregação Simples factor=1 <!-- @agreg xpgoal=0 active=1 -->
 
 - [ ] `@motoca          🛠️ 🤖 type=make xp=1 tier=1 eval=test          ` [Crianças andando de motoca](https://github.com/qxcodepoo/arcade/blob/main/base/motoca/README.md)
 - [ ] `@grafite         🛠️ 🤖 type=make xp=1 tier=1 eval=test          ` [Porta minas de um grafite só](https://github.com/qxcodepoo/arcade/blob/main/base/grafite/README.md)
@@ -34,7 +34,7 @@ Este repositório é uma coleção de exercícios e projetos relacionados à Pro
 - [ ] `@charger         🛠️ 🤖 type=make xp=1 tier=1 eval=test          ` [Notebook com TESTES](https://github.com/qxcodepoo/arcade/blob/main/base/charger/README.md)
 - [ ] `@tamagotchi      🛠️ 🤖 type=make xp=1 tier=1 eval=test          ` [Alimente, brinque e mate](https://github.com/qxcodepoo/arcade/blob/main/base/tamagotchi/README.md)
 
-## Listas e Arrays factor=1 <!-- @arrays deps=@agreg xpgoal=0 active=1 -->
+## Listas e Arrays factor=1 <!-- @arrays xpgoal=0 active=1 -->
 
 - [ ] `@array           🛠️ 👤 type=make xp=3 tier=1 eval=self          ` [Manipulações em Arrays](https://github.com/qxcodepoo/arcade/blob/main/base/array/README.md)
 - [ ] `@budega          🛠️ 🤖 type=make xp=2 tier=1 eval=test          ` [Gerencie a fila de espera e atendimento](https://github.com/qxcodepoo/arcade/blob/main/base/budega/README.md)
@@ -44,7 +44,7 @@ Este repositório é uma coleção de exercícios e projetos relacionados à Pro
 - [ ] `@tabuleiro       🛠️ 🤖 type=make xp=1 tier=1 eval=test          ` [Jogo de tabuleiro e armadilhas](https://github.com/qxcodepoo/arcade/blob/main/base/tabuleiro/README.md)
 - [ ] `@junkfood        🛠️ 🤖 type=make xp=1 tier=1 eval=test          ` [Comprando comida cara e duvidosa](https://github.com/qxcodepoo/arcade/blob/main/base/junkfood/README.md)
 
-## CRUD com mapas e enumerações factor=1 <!-- @crud deps=@arrays xpgoal=0 active=1 -->
+## CRUD com mapas e enumerações factor=1 <!-- @crud xpgoal=0 active=1 -->
 
 - [ ] `@contato         🛠️ 🤖 type=make xp=1 tier=1 eval=test          ` [Gerenciando telefones de um único contato](https://github.com/qxcodepoo/arcade/blob/main/base/contato/README.md)
 - [ ] `@agenda          🛠️ 🤖 type=make xp=1 tier=1 eval=test          ` [Gerencie os vários contatos de uma agenda](https://github.com/qxcodepoo/arcade/blob/main/base/agenda/README.md)
@@ -52,7 +52,7 @@ Este repositório é uma coleção de exercícios e projetos relacionados à Pro
 - [ ] `@petshop         🛠️ 🤖 type=make xp=1 tier=1 eval=test          ` [Meu Petshop](https://github.com/qxcodepoo/arcade/blob/main/base/petshop/README.md)
 - [ ] `@porquinho       🛠️ 🤖 type=make xp=1 tier=1 eval=test          ` [Guardando moedas e itens em um cofrinho](https://github.com/qxcodepoo/arcade/blob/main/base/porquinho/README.md)
 
-## Herança I factor=1 <!-- @polimorfismo deps=@crud xpgoal=0 active=1 -->
+## Herança I factor=1 <!-- @polimorfismo xpgoal=0 active=1 -->
 
 - [ ] `@zoo             🛠️ 👤 type=make xp=1 tier=1 eval=self          ` [Sistema de Animais no Zoológico](https://github.com/qxcodepoo/arcade/blob/main/base/zoo/README.md)
 - [ ] `@pagamento       🛠️ 👤 type=make xp=1 tier=1 eval=self          ` [Sistema de Pagamentos de um Marketplace](https://github.com/qxcodepoo/arcade/blob/main/base/pagamento/README.md)
@@ -61,12 +61,12 @@ Este repositório é uma coleção de exercícios e projetos relacionados à Pro
 - [ ] `@cofre           🛠️ 🤖 type=make xp=3 tier=1 eval=test          ` [Seu porquinho cresceu](https://github.com/qxcodepoo/arcade/blob/main/base/cofre/README.md)
 - [ ] `@cadastro        🛠️ 🤖 type=make xp=3 tier=1 eval=test          ` [Crie as contas poupança e corrente](https://github.com/qxcodepoo/arcade/blob/main/base/cadastro/README.md)
 
-## CPP factor=1 <!-- @cpp_intro deps=none xpgoal=0 lang=c lang=cpp active=1 -->
+## CPP factor=1 <!-- @cpp_intro xpgoal=0 lang=c lang=cpp active=1 -->
 
 - [ ] `@cpp             📖 👤 type=read xp=1                           ` [Pesquisa sobre C++](https://github.com/qxcodepoo/arcade/blob/main/wiki/cpp/README.md)
 - [ ] `@memoria         🛠️ 👤 type=make xp=1 tier=1 eval=self          ` [Pesquisa sobre alocação de memória](https://github.com/qxcodepoo/arcade/blob/main/base/memoria/README.md)
 
-## TODO factor=1 <!-- @todo deps=none xpgoal=0 lang=X active=1 -->
+## TODO factor=1 <!-- @todo xpgoal=0 lang=X active=1 -->
 
 - [ ] `@twitter         🛠️ 🤖 type=make xp=1 tier=1 eval=test          ` [Twitter antes de ser bloqueado](https://github.com/qxcodepoo/arcade/blob/main/base/twitter/README.md)
 - [ ] `@salario         🛠️ 🤖 type=make xp=1 tier=1 eval=test          ` [@salario](https://github.com/qxcodepoo/arcade/blob/main/base/salario/README.md)
@@ -85,4 +85,4 @@ Este repositório é uma coleção de exercícios e projetos relacionados à Pro
 - [ ] `@+ts_install     📖 👤 type=read xp=1                           ` [Instalação TS](https://github.com/qxcodepoo/arcade/blob/main/wiki/ts_install/README.md)
 - [ ] `@tarifas         🛠️ 🤖 type=make xp=1 tier=1 eval=test          ` [Operações de saque, depósito, extrato](https://github.com/qxcodepoo/arcade/blob/main/base/tarifas/README.md)
 
-## sandbox factor=1 <!-- @sandbox deps=none xpgoal=0 lang=X active=1 -->
+## sandbox factor=1 <!-- @sandbox xpgoal=0 lang=X active=1 -->

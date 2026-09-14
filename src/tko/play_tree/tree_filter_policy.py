@@ -50,7 +50,6 @@ class TreeFilterPolicy:
         return matches
 
     def get_enabled_by_mode(self, game: Game, state: TreeState, tree_filter: TreeFilter) -> set[str]:
-        game.update_reachable_and_available()
         if tree_filter.is_searching:
             enabled, first_match = self.filter_by_search(game, tree_filter.search_text)
             if first_match and state.selected == "":

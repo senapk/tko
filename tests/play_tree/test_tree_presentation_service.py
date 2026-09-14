@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 from typing import Any, cast
 
-import pytest
-
 from tko.play_tree.tree_presentation_service import TreePresentationService
 from tko.play_tree.tree_state import TreeState
 
@@ -15,13 +13,6 @@ class Basic:
 class Ui:
     def __init__(self):
         self.visible = False
-        self.is_requirement_color = ""
-        self.ligature = ""
-
-
-class Requirement:
-    def __init__(self, key: str):
-        self.basic = Basic(full_key=key)
 
 
 class Task:
@@ -47,11 +38,7 @@ class Game:
         self.quests = quests
 
 
-def _always_reachable(_quest: Any) -> bool:
-    return True
-
-
-def test_build_items_respects_visibility_and_collapsed_quest(monkeypatch: pytest.MonkeyPatch):
+def test_build_items_respects_visibility_and_collapsed_quest():
     task1 = Task("repo@q1@t1", visible=True)
     task2 = Task("repo@q1@t2", visible=False)
     quest = Quest("repo@q1", [task1, task2], visible=True)
@@ -60,14 +47,12 @@ def test_build_items_respects_visibility_and_collapsed_quest(monkeypatch: pytest
     state.selected = ""
     state.expanded = set()
 
-    monkeypatch.setattr("tko.play_tree.tree_presentation_service.QuestVisibilityService.is_reachable", _always_reachable)
-
     items = TreePresentationService().build_items(cast(Any, game), state)
 
     assert [item.basic.full_key for item in items] == ["repo@q1"]
 
 
-def test_build_items_adds_visible_tasks_when_expanded(monkeypatch: pytest.MonkeyPatch):
+def test_build_items_adds_visible_tasks_when_expanded():
     task1 = Task("repo@q1@t1", visible=True)
     task2 = Task("repo@q1@t2", visible=True)
     quest = Quest("repo@q1", [task1, task2], visible=True)
@@ -75,8 +60,6 @@ def test_build_items_adds_visible_tasks_when_expanded(monkeypatch: pytest.Monkey
     state = TreeState()
     state.selected = ""
     state.expanded = {"repo@q1"}
-
-    monkeypatch.setattr("tko.play_tree.tree_presentation_service.QuestVisibilityService.is_reachable", _always_reachable)
 
     items = TreePresentationService().build_items(cast(Any, game), state)
 

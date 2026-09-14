@@ -3,8 +3,6 @@ from types import SimpleNamespace
 
 import pytest
 
-from loguru import logger
-
 from tko.game.game import Game
 from tko.game.game_builder import GameBuilder
 from tko.repository.remote import Source
@@ -82,25 +80,16 @@ def test_duplicate_quest_heading_does_not_change_current_quest(tmp_path: Path) -
     assert quest_tasks(builder, "second") == ["two", "three"]
 
 
-def test_requirements_are_ignored_for_gameplay(tmp_path: Path) -> None:
-    messages: list[str] = []
-    sink_id = logger.add(messages.append, level="WARNING", format="{message}")
-    try:
-        builder = build_game(
-            tmp_path,
-            "# Course\n\n"
-            "## Base <!-- @base -->\n"
-            "- [ ] `@blocked eval=none` [This key blocks a quest](blocked/README.md)\n"
-            "## Rejected <!-- @blocked -->\n"
-            "## Dependent <!-- @dependent deps=@blocked,@base -->\n"
-            "- [ ] `@work eval=none` [Work](work/README.md)\n",
-        )
-    finally:
-        logger.remove(sink_id)
+def test_quest_title_does_not_include_removed_dependency_metadata(tmp_path: Path) -> None:
+    builder = build_game(
+        tmp_path,
+        "# Course\n\n"
+        "## Base <!-- @base -->\n"
+        "## Dependent <!-- @dependent -->\n"
+        "- [ ] `@work eval=none` [Work](work/README.md)\n",
+    )
 
-    quests = builder.collect_quests()
-    dependent = quests["base@dependent"]
-    assert not any("carregando sem esse requisito" in message for message in messages)
+    assert builder.collect_quests()["base@dependent"].basic.title == "Dependent"
 
 
 def test_first_occurrence_is_reserved_before_language_filtering(tmp_path: Path) -> None:

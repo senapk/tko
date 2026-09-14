@@ -1,14 +1,12 @@
 from tko.game.game import Game
 from tko.config.flags import Flags
 from tko.play_tree.task_formatter import TaskFormatter
-from tko.play_tree.quest_formatter import QuestFormatter
 from typing import Callable
 
 
 class TreeLayout:
-    def __init__(self, task_formatter: TaskFormatter, quest_formatter: QuestFormatter, game: Game, flags: Flags):
+    def __init__(self, task_formatter: TaskFormatter, game: Game, flags: Flags):
         self.task_formatter = task_formatter
-        self.quest_formatter = quest_formatter
         self.game = game
         self.flags = flags
         self.get_tree_size_fn: Callable[[], int] | None = None

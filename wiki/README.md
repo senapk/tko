@@ -9,8 +9,7 @@
   workspace, materialização e identidade das tarefas.
 - [Ciclo de vida de tarefas](../docs/TASK_LIFECYCLE.md): criação, publicação,
   sincronização e consumo.
-- [Gamificação e progressão](Gamificacao-e-Progressao.md): quests, XP,
-  desbloqueio e inbox.
+- [Gamificação e progressão](Gamificacao-e-Progressao.md): quests, XP e filtros.
 
 ## Usar como aluno
 

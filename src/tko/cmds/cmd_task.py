@@ -44,7 +44,6 @@ class CmdTask:
             f" | XP: {task.xp:g}"
             f" | Earned XP: {task.xp * grader.ratio:g}"
         )
-        Console.print(f"Reachable: {'yes' if task.game.is_reachable else 'no'}")
         Console.print(f"Reference: {'yes' if task.is_reference else 'no'}")
 
         Console.print("Files:")

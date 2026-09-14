@@ -99,18 +99,16 @@ class TreeRenderer:
         # quest label to its metadata and name so the order is predictable.
         body = RBuffer()
 
-        color = q.ui.is_requirement_color
-
         title = self.quest_formatter.get_quest_full_title(
             q,
             self.flags.panel.is_skills(),
-        ).add_style(color)
+        )
         output = body.add(title).to_rt()
         
         if len(output) > self.layout.sentence_cut_size:
             output = output.slice(0, self.layout.sentence_cut_size - 1) + "…"
         else:
-            output = output.ljust(self.layout.sentence_cut_size, RT(" ", color))
+            output = output.ljust(self.layout.sentence_cut_size, RT(" "))
         completed, total = q.progress.get_completion()
         status = RBuffer().add(f"{completed:02}/{total:02}")
         if self.flags.show_time.is_true():

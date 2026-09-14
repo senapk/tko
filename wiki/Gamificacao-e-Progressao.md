@@ -1,6 +1,6 @@
 # Gamificação e Progressão
 
-Este guia centraliza como o TKO calcula progresso, XP, quests e desbloqueio de tarefas.
+Este guia centraliza como o TKO calcula progresso, XP e quests.
 
 ## Modelo mental
 
@@ -20,7 +20,6 @@ Uma quest e lida por cabecalho e pode incluir metadados no proprio titulo:
 
 - `key=@chave`: chave da quest.
 - `tag=skill`: skill aplicada as tarefas da quest.
-- `deps=@outra_quest`: dependencia para desbloqueio.
 - `lang=linguagem`: filtro por linguagem.
 - `xpgoal=N`: XP alvo para 100% de completude.
 - `min=N%`: percentual minimo para considerar a quest completa.
@@ -29,10 +28,10 @@ Uma quest e lida por cabecalho e pode incluir metadados no proprio titulo:
 Exemplo:
 
 ```md
-## Selecao 1 key=@if1 tag=if_else deps=@base min=50%
+## Selecao 1 key=@if1 tag=if_else min=50%
 ```
 
-O parser ainda aceita sintaxes legadas como `@if1`, `!@base`, `=python` e `%50`, mas a documentacao deve preferir os campos chave-valor.
+O parser ainda aceita a sintaxe legada `@if1` para a chave e `=python` para linguagem.
 
 Comportamento no codigo:
 
@@ -49,7 +48,7 @@ Comportamento no codigo:
 
 - Parser de task: [src/tko/game/task_parser.py](../src/tko/game/task_parser.py)
 - Config de task: [src/tko/game/task_config.py](../src/tko/game/task_config.py)
-- Estado de jogo da task (xp/reachable): [src/tko/game/task_game.py](../src/tko/game/task_game.py)
+- Estado de jogo da task (xp): [src/tko/game/task_game.py](../src/tko/game/task_game.py)
 
 O XP base é calculado no parsing pela expressão `expr` do YAML de cada fonte. Depois
 disso, a gamificação trabalha somente com o valor final de XP, sem reter variáveis.
@@ -107,26 +106,15 @@ Comportamento no codigo:
 - Funcoes de agregacao: [src/tko/game/quest_grader.py](../src/tko/game/quest_grader.py)
 - Resume global de XP/skills: [src/tko/game/xp_resume.py](../src/tko/game/xp_resume.py)
 
-## Desbloqueio de quests e inbox
+## Filtros da árvore de tarefas
 
-Desbloqueio de quest:
-
-- Uma quest so fica alcancavel se todas as `requires` estiverem completas e alcancaveis.
-
-Comportamento no codigo:
-
-- Atualizacao de alcance: [src/tko/game/game.py](../src/tko/game/game.py)
-
-Inbox (visao reduzida de tarefas):
-
-- Mostra quests alcancaveis e ainda nao finalizadas.
-- Limita quantidade de tarefas por quest (maximo 10 no fluxo atual).
-- Prioriza tarefas nao concluidas e tarefas ja baixadas.
+O modo de tarefas fixadas mostra apenas as tarefas que o aluno marcou. A busca
+temporária mostra as quests e tarefas que correspondem ao texto pesquisado.
 
 Comportamento no codigo:
 
-- Filtro de inbox e montagem da arvore: [src/tko/play_tree/tree_builder.py](../src/tko/play_tree/tree_builder.py)
-- Estado do filtro de inbox: [src/tko/play_tree/tree_state.py](../src/tko/play_tree/tree_state.py)
+- Filtros e montagem da árvore: [src/tko/play_tree/tree_builder.py](../src/tko/play_tree/tree_builder.py)
+- Estado dos filtros: [src/tko/play_tree/tree_state.py](../src/tko/play_tree/tree_state.py)
 
 ## Papel do `tko index build` no banco de tarefas
 

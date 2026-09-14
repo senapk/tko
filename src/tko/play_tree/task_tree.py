@@ -26,11 +26,11 @@ class TaskTree:
         self.state = TreeState()
         self.task_formatter = TaskFormatter(settings, repo)
         self.time_formatter = TimeFormatter(repo)
-        self.quest_formatter = QuestFormatter(settings, self.time_formatter)
+        self.quest_formatter = QuestFormatter()
         self.filter_policy = TreeFilterPolicy(self.task_formatter)
         self.visibility_service = TreeVisibilityService()
         self.presentation_service = TreePresentationService()
-        self.layout = TreeLayout(self.task_formatter, self.quest_formatter, self.game, repo.flags)
+        self.layout = TreeLayout(self.task_formatter, self.game, repo.flags)
         self.builder = TreeBuilder(self.filter_policy, self.visibility_service, self.presentation_service)
         self.renderer = TreeRenderer(
             self.task_formatter,

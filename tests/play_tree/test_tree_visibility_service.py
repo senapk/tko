@@ -12,7 +12,6 @@ class Basic:
 class Ui:
     def __init__(self):
         self.visible = False
-        self.is_requirement_color = "x"
 
 
 class Task:
@@ -36,16 +35,14 @@ class Game:
         self.quests = quests
 
 
-def test_apply_marks_visibility_and_resets_requirement_color():
+def test_apply_marks_visibility():
     task1 = Task("repo@q1@t1")
     task2 = Task("repo@q1@t2")
     quest = Quest("repo@q1", [task1, task2])
-    quest.ui.is_requirement_color = "r"
     game = Game({"repo@q1": quest})
 
     TreeVisibilityService().apply(cast(Any, game), {"repo@q1", "repo@q1@t2"})
 
     assert quest.ui.visible is True
-    assert quest.ui.is_requirement_color == ""
     assert task1.ui.visible is False
     assert task2.ui.visible is True

@@ -1,7 +1,6 @@
+from tko.game.tree_item import IsTreeItem
 from tko.game.quest import Quest
 from tko.game.task import Task
-from tko.game.tree_item import IsTreeItem
-from tko.play.quest_visibility_service import QuestVisibilityService
 from tko.play_tree.task_tree import TaskTree
 
 
@@ -29,15 +28,7 @@ class SearchService:
 
         if inbox_in_beginning:
             self.tree.update(force_view_all=False)
-            reachable = True
-            if isinstance(item, Task):
-                reachable = QuestVisibilityService.is_task_reachable(self.game, item)
-            elif isinstance(item, Quest):
-                reachable = QuestVisibilityService.is_reachable(item)
-            if not reachable:
-                self.repo.flags.task_view_mode.set_view_all()
-            else:
-                self.repo.flags.task_view_mode.set_view_inbox()
+            self.repo.flags.task_view_mode.set_view_inbox()
 
         # Restore the selected item into a visible branch before rebuilding
         # the unfiltered tree. Otherwise ``update`` sees the task under a

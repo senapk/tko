@@ -1,19 +1,14 @@
 from __future__ import annotations
-from tko.util.rt import RT
 from typing import Protocol
 
 
 class TreeUi:
     def __init__(self):
-        self.ligature: RT = RT(" ")
         self.visible: bool = False
-        self.is_requirement_color: str = ""
 
     def clone(self) -> TreeUi:
         new_ui = TreeUi()
-        new_ui.ligature = self.ligature
         new_ui.visible = self.visible
-        new_ui.is_requirement_color = self.is_requirement_color
         return new_ui
 
 class TreeBasic:

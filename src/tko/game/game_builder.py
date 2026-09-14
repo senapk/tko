@@ -21,10 +21,6 @@ _GAME_BUILDER_SOURCE_NOT_FOUND_CREATING = Msg.text(
     pt="Aviso: fonte {filename} não encontrada no source {name}, criando arquivo",
     en="Warning: source {filename} not found in source {name}, creating file",
 )
-_GAME_BUILDER_QUEST_REQUIRES_MISSING = Msg.text(
-    pt="Quest\n{filename}:{line}\n{quest}\nrequer {required}, que não existe; carregando sem esse requisito",
-    en="Quest\n{filename}:{line}\n{quest}\nrequires {required}, which does not exist; loading without this requirement",
-)
 _GAME_BUILDER_DUPLICATE_QUEST = Msg.text(
     pt="Ignorando quest com chave repetida: {key}, arquivo={filename}, linha={line_number}, conteúdo={line}",
     en="Ignoring quest with duplicate key: {key}, file={filename}, line={line_number}, content={line}",

@@ -93,11 +93,6 @@ class Game:
         return self
     
 
-    def update_reachable_and_available(self):
-        for q in self.quests.values():
-            q.state.is_reachable = True
-            q.update_tasks_reachable()
-
     # @override
     def __str__(self):
         output: list[str] = []

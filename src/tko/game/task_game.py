@@ -9,13 +9,11 @@ class TaskGame:
         self.default_min_value: int = 5 # default min grade to complete task
         self.xp: float = 0.0
         self.skill: str | None = None
-        self.is_reachable: bool = False
 
     def clone(self) -> TaskGame:
         new_task = TaskGame()
         new_task.skill = self.skill
         new_task.xp = self.xp
-        new_task.is_reachable = self.is_reachable
         return new_task
 
     def get_rate_color(self, value: int, min_value: None | int = None) -> str:

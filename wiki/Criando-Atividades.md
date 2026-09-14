@@ -72,14 +72,13 @@ Cada quest e declarada em um titulo Markdown com metadados em pares
 chave-valor.
 
 ```md
-## Vetores key=@vetores tag=array deps=@basic xpgoal=10 min=70% lang=c lang=python
+## Vetores key=@vetores tag=array xpgoal=10 min=70% lang=c lang=python
 ```
 
 Campos mais usados:
 
 - `key=@chave`: identificador unico da quest.
 - `tag=nome`: habilidade ou topico trabalhado.
-- `deps=@outra`: quest que precisa vir antes.
 - `xpgoal=valor`: meta de ganho pedagogico para completar a quest.
 - `min=valor%`: percentual minimo para considerar a quest completa.
 - `lang=nome`: linguagem associada a quest.
@@ -89,7 +88,7 @@ Regras praticas:
 
 - `key` e o campo essencial.
 - Se `tag` nao for informado, o TKO usa a propria chave como tag.
-- `deps`, `lang` e `active` sao opcionais.
+- `lang` e `active` sao opcionais.
 - Prefira chaves curtas, estaveis e sem espacos, como `@vetores`.
 
 ## Criando tasks

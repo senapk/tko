@@ -32,9 +32,6 @@ class FakeGame:
         self.quests = quests
         self.updated = False
 
-    def update_reachable_and_available(self):
-        self.updated = True
-
 
 class FakeTaskFormatter:
     def get_task_full_title(self, task: FakeTask, key_pad: int | None) -> tuple[str, str, str]:
@@ -79,7 +76,7 @@ def test_get_enabled_by_mode_uses_search_and_sets_first_selected_when_empty():
 
     enabled = policy.get_enabled_by_mode(cast(Any, game), state, TreeFilter(inbox_mode=False, search_text="alpha"))
 
-    assert game.updated is True
+    assert game.updated is False
     assert enabled == {"repo@q1", "repo@q1@t1"}
     assert state.selected == "repo@q1@t1"
 
@@ -97,5 +94,5 @@ def test_get_enabled_by_mode_uses_inbox_policy_when_requested(monkeypatch: pytes
 
     enabled = policy.get_enabled_by_mode(cast(Any, game), state, TreeFilter(inbox_mode=True, search_text=""))
 
-    assert game.updated is True
+    assert game.updated is False
     assert enabled == {"repo@q2"}

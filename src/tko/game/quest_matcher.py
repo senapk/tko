@@ -64,10 +64,10 @@ class QuestMatcher:
         # Remove campos já processados para título
         def is_field(w: str) -> bool:
             return (
-                w.startswith(QuestMatcher.KEY) or w.startswith(QuestMatcher.TAG) or w.startswith("deps=") or
+                w.startswith(QuestMatcher.KEY) or w.startswith(QuestMatcher.TAG) or
                 w.startswith("xpgoal=") or w.startswith("min=") or
                 w.startswith(QuestMatcher.ACTIVE) or w.startswith(QuestMatcher.LANG) or
-                w.startswith("factor=") or (w[0] in ["@", "%", "=", "+", "!"])
+                w.startswith("factor=") or (w[0] in ["@", "%", "=", "+"])
             )
         words_title = [w for w in words if not is_field(w)]
         return " ".join(words_title)

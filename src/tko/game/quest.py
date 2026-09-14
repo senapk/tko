@@ -3,7 +3,6 @@ from tko.game.tree_item import TreeItem
 from tko.game.task import Task
 from tko.game.quest_source import QuestSource
 from tko.game.quest_config import QuestGame
-from tko.game.quest_state import QuestState
 from tko.game.quest_progress import QuestProgress
 
 # from typing import override
@@ -13,7 +12,6 @@ class Quest(TreeItem):
         super().__init__()
         self.source = QuestSource()
         self.game = QuestGame()
-        self.state = QuestState()
 
         self.basic.key = key
         self.basic.title = title
@@ -21,11 +19,6 @@ class Quest(TreeItem):
         self.__tasks: list[Task] = []
         self.progress = QuestProgress(lambda: self.__tasks, lambda: self.game.goal_xp)
     
-    def update_tasks_reachable(self):
-        for task in self.__tasks:
-            task.game.is_reachable = True
-        return
-
     # @override
     def __str__(self):
         line = str(self.source.line_number).rjust(3)
