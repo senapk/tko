@@ -8,7 +8,7 @@ from rich.text import Text
 from textual import events, on
 from textual.app import App, ComposeResult
 from textual.binding import Binding, BindingsMap
-from textual.containers import Horizontal, ItemGrid, ScrollableContainer, Vertical
+from textual.containers import Grid, Horizontal, ItemGrid, ScrollableContainer, Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Button, Footer, Input, Label, Static, Tree
 from textual.widgets._tree import NodeID, TreeNode
@@ -83,11 +83,13 @@ class HelpScreen(ModalScreen[None]):
         content = (
             "↑/↓ navegar  •  ←/→ expandir/contrair  •  Enter abrir/executar\n"
             "/ buscar  •  f fixar  •  b baixar  •  1/2 tarefas  •  3/4/5/6 painel\n"
+            "Gráfico: 4 alterna eixo X • PgUp execuções • PgDn tempo (min)\n"
             "Tab alternar painel  •  [/] expandir/compactar tudo  •  R recarregar  •  q sair\n\n"
             "Pressione Esc para fechar."
             if self.portuguese
             else "↑/↓ navigate  •  ←/→ expand/collapse  •  Enter open/run\n"
             "/ search  •  f pin  •  b download  •  1/2 tasks  •  3/4/5/6 panel\n"
+            "Graph: 4 switches X axis • PgUp executions • PgDn time (min)\n"
             "Tab switch panel  •  [/] expand/collapse all  •  R reload  •  q quit\n\n"
             "Press Esc to close."
         )
@@ -228,6 +230,8 @@ class TkoApp(App[Callable[[], None] | None]):
     #task-frame { width: 45%; min-width: 28; }
     #info-frame { width: 55%; min-width: 30; }
     .panel-header { height: auto; grid-rows: 1; background: #080808; }
+    #graph-footer { grid-size: 2; grid-columns: 1fr 1fr; display: none; }
+    #graph-footer .top-action { padding: 0; }
     #task-tree { width: 100%; height: 1fr; border: none; background: #080808; }
     #side-panel { width: 100%; height: 1fr; border: none; padding: 0 1; background: #080808; }
     #side-content { width: auto; min-width: 100%; height: auto; text-wrap: nowrap; background: #080808; }
@@ -342,6 +346,9 @@ class TkoApp(App[Callable[[], None] | None]):
                     yield Button(id="top-skills", classes="top-action")
                 with ScrollableContainer(id="side-panel"):
                     yield Static(id="side-content")
+                with Grid(id="graph-footer", classes="panel-header"):
+                    yield Button(id="graph-executions", classes="top-action")
+                    yield Button(id="graph-time", classes="top-action")
         yield Footer()
 
     def on_mount(self) -> None:
@@ -466,6 +473,8 @@ class TkoApp(App[Callable[[], None] | None]):
             "top-graph": self.action_show_graph,
             "top-logs": self.action_show_logs,
             "top-skills": self.action_show_skills,
+            "graph-time": self.action_graph_time,
+            "graph-executions": self.action_graph_executions,
         }
         button_id = event.button.id
         action = actions.get(button_id) if button_id is not None else None
@@ -476,6 +485,7 @@ class TkoApp(App[Callable[[], None] | None]):
         panel = self.query_one("#side-panel", ScrollableContainer)
         width = max(12, panel.size.width - 2)
         item = self._selected_item()
+        self._refresh_graph_footer(item)
         context: tuple[str, str | None] = (
             self.repo.flags.panel.get_value(), item.basic.full_key if item is not None else None
         )
@@ -504,24 +514,54 @@ class TkoApp(App[Callable[[], None] | None]):
             _, header, lines = self.graph.get_history()
             lines = header + lines
         else:
-            lines = self._graph_lines(item, width, max(3, panel.size.height - 2))
+            lines = self._graph_lines(item, width, max(3, panel.size.height - 1))
         self.query_one("#side-content", Static).update(Text("\n").join(to_rich_text(line) for line in lines))
 
+    def _refresh_graph_footer(self, item: IsTreeItem | None) -> None:
+        footer: Grid = self.query_one("#graph-footer", Grid)
+        visible: bool = self.repo.flags.panel.is_graph()
+        if footer.display != visible:
+            footer.display = visible
+            self.call_after_refresh(self.refresh_panel)
+        time_view: bool = self.repo.flags.task_graph_mode.is_time_view()
+        options: list[tuple[str, str, bool]] = [
+            ("graph-executions", self._t("Gráfico Execução [PgUp]", "Execution Graph [PgUp]"), not time_view),
+            ("graph-time", self._t("Gráfico Tempo [PgDown]", "Time Graph [PgDown]"), time_view),
+        ]
+        for identifier, label, active in options:
+            button: Button = self.query_one(f"#{identifier}", Button)
+            button.label = Text(label)
+            button.disabled = not isinstance(item, Task)
+            button.set_class(active, "active")
+
+    def action_graph_time(self) -> None:
+        self.repo.flags.task_graph_mode.set_time_view()
+        self.refresh_panel()
+
+    def action_graph_executions(self) -> None:
+        self.repo.flags.task_graph_mode.set_exec_view()
+        self.refresh_panel()
+
     def action_scroll_logs_up(self) -> None:
+        if self.repo.flags.panel.is_graph():
+            self.action_graph_executions()
         if self.repo.flags.panel.is_logs() or self.repo.flags.panel.is_preview():
             self.query_one("#side-panel", ScrollableContainer).scroll_page_up()
 
     def action_scroll_logs_down(self) -> None:
+        if self.repo.flags.panel.is_graph():
+            self.action_graph_time()
         if self.repo.flags.panel.is_logs() or self.repo.flags.panel.is_preview():
             self.query_one("#side-panel", ScrollableContainer).scroll_page_down()
 
     def _graph_lines(self, item: IsTreeItem | None, width: int, height: int) -> list[RT]:
         if isinstance(item, Task):
-            _, header, lines = self.graph.get_task_graph(item.basic.full_key, width, height)
-            return header + lines
+            # TaskGraph reserves one row for its header; DailyGraph does not.
+            _, header, lines = self.graph.get_task_graph(item.basic.full_key, width, height + 1)
+            return lines + [info.center(width) for info in header]
         if isinstance(item, Quest):
             header, lines = DailyGraph(self.repo.logger, width, height).get_graph()
-            return header + lines
+            return lines + [info.center(width) for info in header]
         return [RT(self._t("Selecione uma tarefa ou missão.", "Select a task or quest."))]
 
     def _skill_lines(self, width: int) -> list[RT]:
@@ -582,6 +622,8 @@ class TkoApp(App[Callable[[], None] | None]):
         self.refresh_view()
 
     def action_show_graph(self) -> None:
+        if self.repo.flags.panel.is_graph():
+            self.repo.flags.task_graph_mode.toggle()
         self._set_panel(PanelMode.GRAPH)
 
     def action_show_logs(self) -> None:

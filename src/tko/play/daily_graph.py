@@ -1,9 +1,16 @@
 from tko.logger.logger import Logger
 from tko.util.rt import RT
-from tko.logger.delta import Delta
 from tko.widget.terminal_chart import Series, TerminalChart
 
 class DailyGraph:
+    @staticmethod
+    def _format_time(hours: float) -> str:
+        total_minutes: int = int(max(0.0, hours) * 60)
+        whole_hours: int
+        minutes: int
+        whole_hours, minutes = divmod(total_minutes, 60)
+        return f"{whole_hours:02d}h{minutes:02d}"
+
     def __init__(self, logger: Logger, width: int, height: int):
         self.logger = logger
         self.width = width
@@ -81,10 +88,10 @@ class DailyGraph:
         
         header = [
             RT(" Máximo diário: ", "c")
-            + RT(f"{Delta.format_h_min(max_daily)} ", "c")
+            + RT(f"{self._format_time(max_daily)} ", "c")
             + " "
             + RT(" Acumulado: ", "m")
-            + RT(f"{Delta.format_h_min(max_accumulates)} ", "m")
+            + RT(f"{self._format_time(max_accumulates)} ", "m")
         ]
         
 
