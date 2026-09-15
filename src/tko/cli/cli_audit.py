@@ -9,6 +9,7 @@ from tko.cli.audit_preview import render_audit_preview, run_audit_preview, unpac
 from loguru import logger
 from tko.i18n import Msg
 from tko.util.console import Console
+from tko.repository.audit_coordinator import AuditAlreadyRunning
 
 app = typer.Typer(help="Audit repository activity", no_args_is_help=True)
 
@@ -32,7 +33,17 @@ def audit_start(
         interval = repo.audit.interval_seconds
         
     watcher = RepositoryWatcher(repo)
-    watcher.start_watching(log_edits=False, log_audit=True, audit_verbose=True, audit_interval_seconds=interval)
+    try:
+        watcher.start_watching(
+            log_edits=False,
+            log_audit=True,
+            audit_verbose=True,
+            audit_interval_seconds=interval,
+            strict_audit=True,
+        )
+    except AuditAlreadyRunning as error:
+        Console.print(str(error))
+        raise typer.Exit(1) from error
     logger.info(f"{AUDIT_STARTING}")
     OPEN_TKO = Msg.parse(pt='Abra o tko em outro terminal para fazer as tarefas', en='Open tko in another terminal to perform tasks')
     Console.print(f"{OPEN_TKO}")

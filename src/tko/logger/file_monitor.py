@@ -40,7 +40,7 @@ class _EventManipulator(PatternMatchingEventHandler):
 
 class FileMonitor:
     ignore_patterns = [
-        "*.tmp", "*.log", "*.bak", "*.swp", "*~", "watcher.lock", 
+        "*.tmp", "*.log", "*.bak", "*.swp", "*~", "watcher.lock", "audit-runtime.lock", "audit-runtime.json",
         "*.last", "*.auditlog", "*.editlog", "*.json", "*.jsonl", 
         "*.jpg", "*.jpeg", "*.png", "*.gif", "*.bmp", "*.pdf", "*.docx", 
         "*.xlsx", "*.pptx", "Readme.md", "extra.md", 

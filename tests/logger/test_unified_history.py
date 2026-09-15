@@ -29,3 +29,12 @@ def test_history_events_are_append_safe(tmp_path: Path) -> None:
     assert len(lines) == 2
     assert '"type":"audit"' in lines[0]
     assert '"type":"execution"' in lines[1]
+
+
+def test_duplicate_events_are_not_appended(tmp_path: Path) -> None:
+    path: Path = tmp_path / "events.jsonl"
+    event = HistoryEvent("2026-09-15_10-00-00", "audit", ("solver.py",))
+    append_event(path, event)
+    append_event(path, event)
+
+    assert path.read_text(encoding="utf-8").count("solver.py") == 1

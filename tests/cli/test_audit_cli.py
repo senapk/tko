@@ -63,11 +63,13 @@ def test_audit_starts_watcher_with_verbose_and_interval(monkeypatch: MonkeyPatch
             log_audit: bool = False,
             audit_verbose: bool = False,
             audit_interval_seconds: int | None = None,
+            strict_audit: bool = False,
         ) -> "DummyWatcher":
             captured["log_edits"] = log_edits
             captured["log_audit"] = log_audit
             captured["audit_verbose"] = audit_verbose
             captured["audit_interval_seconds"] = audit_interval_seconds
+            captured["strict_audit"] = strict_audit
             return self
 
         def stop_watching(self) -> "DummyWatcher":
@@ -91,6 +93,7 @@ def test_audit_starts_watcher_with_verbose_and_interval(monkeypatch: MonkeyPatch
     assert captured["log_audit"] is True
     assert captured["audit_verbose"] is True
     assert captured["audit_interval_seconds"] == 15
+    assert captured["strict_audit"] is True
     assert captured["stopped"] is True
     assert "Abra o tko em outro terminal para fazer as tarefas" in combined_output
 

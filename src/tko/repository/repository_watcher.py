@@ -8,6 +8,7 @@ from tko.repository.edit_logger import EditLogger
 from tko.repository.repository import Repository
 from loguru import logger
 from tko.logger.versions_writer import VersionsWriter
+from tko.repository.audit_coordinator import AuditAlreadyRunning, AuditCoordinator
 
 
 class RepositoryWatcher:
@@ -21,6 +22,8 @@ class RepositoryWatcher:
         self.audit_logger: AuditLogger | None = None
         self.audit_tracker: AuditTracker | None = None
         self.versions_writer: VersionsWriter = VersionsWriter()
+        self.audit_coordinator = AuditCoordinator(repo.root_dir)
+        self.audit_lock_acquired: bool = False
 
     def set_audit_notification_callback(self, callback: Callable[[str], None] | None) -> None:
         if self.audit_tracker is not None:
@@ -32,6 +35,7 @@ class RepositoryWatcher:
         log_audit: bool = False,
         audit_verbose: bool = False,
         audit_interval_seconds: int | None = None,
+        strict_audit: bool = False,
     ) -> RepositoryWatcher:
         if self.monitor is not None:
             return self
@@ -45,6 +49,16 @@ class RepositoryWatcher:
             self.monitor.add_observer(interval_seconds=second_interval, on_flush_events=self.edit_logger.on_flush_events)
         
         if log_audit:
+            try:
+                self.audit_coordinator.acquire()
+                self.audit_lock_acquired = True
+            except AuditAlreadyRunning:
+                if strict_audit:
+                    raise
+                logger.info(self.audit_coordinator.description())
+                log_audit = False
+
+        if log_audit:
             if audit_interval_seconds is None:
                 audit_interval_seconds = self.default_audit_interval_seconds
             logger.debug("Starting audit logger with interval of {} seconds".format(audit_interval_seconds))
@@ -57,13 +71,21 @@ class RepositoryWatcher:
             self.audit_logger = AuditLogger(task_lookup=self.repo, audit_tracker=self.audit_tracker)
             self.monitor.add_observer(interval_seconds=audit_interval_seconds, on_flush_events=self.audit_logger.on_flush_events)
 
-        self.monitor.init()
+        try:
+            self.monitor.init()
+        except Exception:
+            self.audit_coordinator.release()
+            self.audit_lock_acquired = False
+            self.monitor = None
+            raise
         return self
     
     def stop_watching(self) -> RepositoryWatcher:
         if self.monitor is not None:
             self.monitor.stop()
             self.monitor = None
+        self.audit_coordinator.release()
+        self.audit_lock_acquired = False
         self.edit_logger = None
         self.audit_logger = None
         self.audit_tracker = None

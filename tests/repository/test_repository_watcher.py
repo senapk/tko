@@ -180,6 +180,35 @@ def test_start_watching_is_idempotent_when_already_running(monkeypatch: MonkeyPa
     assert calls["ctor"] == 1
 
 
+def test_audit_is_owned_by_one_watcher_per_workspace(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    monitors: list[_FakeMonitor] = []
+
+    def fake_monitor_ctor(**kwargs: Any) -> _FakeMonitor:
+        monitor = _FakeMonitor(**kwargs)
+        monitors.append(monitor)
+        return monitor
+
+    monkeypatch.setattr(watcher_module, "FileMonitor", fake_monitor_ctor)
+    monkeypatch.setattr(watcher_module, "AuditTracker", _FakeAuditTracker)
+    repo = _make_repo(tmp_path)
+
+    first = RepositoryWatcher(repo)
+    second = RepositoryWatcher(repo)
+    first.start_watching(log_audit=True)
+    second.start_watching(log_audit=True)
+
+    assert first.audit_lock_acquired is True
+    assert second.audit_lock_acquired is False
+    assert first.audit_tracker is not None
+    assert second.audit_tracker is None
+
+    first.stop_watching()
+    second.stop_watching()
+    second.start_watching(log_audit=True)
+    assert second.audit_lock_acquired is True
+    second.stop_watching()
+
+
 def test_stop_watching_resets_state(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
     holder: dict[str, _FakeMonitor] = {}
 

@@ -4,6 +4,7 @@ import typer
 
 from tko.config.settings import Settings
 from tko.i18n import Msg
+from tko.repository.audit_coordinator import AuditCoordinator
 from tko.util.console import Console
 
 app = typer.Typer(help="Manage repository audit configuration", no_args_is_help=True)
@@ -56,4 +57,7 @@ def audit_status(ctx: typer.Context) -> None:
     status = Msg.parse(pt="Auditoria persistente: {status}", en="Persistent audit: {status}").t().format(status=enabled)
     if interval is not None:
         status += f" ({interval}s)"
+    active = AuditCoordinator(repo.root_dir).is_active()
+    process = (Msg.parse(pt="coletor ativo", en="collector active") if active else Msg.parse(pt="nenhum coletor ativo", en="no collector active")).t()
+    status += f" — {process}"
     Console.print(status)

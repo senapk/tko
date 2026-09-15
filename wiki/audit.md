@@ -8,7 +8,9 @@ Hoje o comportamento e:
 - Os snapshots sao gerados periodicamente pelo watcher do repositorio.
 - Apenas arquivos dentro de `src/lang/...` da tarefa entram na auditoria.
 - O historico de cada arquivo auditado e salvo em um arquivo `.jsonl`.
-- Os arquivos ficam em `.tko/audit/<source@task>/`.
+- Os snapshots ficam em `.tko/history/<source>/<task>/files/`, com os eventos em `events.jsonl`.
+- Apenas um coletor pode estar ativo por workspace. Outras instâncias continuam
+  funcionando, mas não iniciam um segundo watcher para escrever os mesmos arquivos.
 
 ## Configurando o tempo entre snapshots
 

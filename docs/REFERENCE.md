@@ -145,7 +145,9 @@ tko audit unpack ARQUIVO.jsonl
 ```
 
 `config audit on/off` configura a auditoria persistente. `audit init` executa um
-monitor em primeiro plano até Ctrl+C.
+monitor em primeiro plano até Ctrl+C. Apenas um coletor pode estar ativo por
+workspace; uma segunda abertura não inicia outro watcher e uma segunda chamada
+a `audit init` informa que a auditoria já está ativa.
 
 ## Ferramentas
 
