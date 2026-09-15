@@ -65,6 +65,7 @@ class TesterExecutionService:
             index = len(state.results)
             state.unit_list = state.unit_list[1:]
             state.results.append((ExecutionResult.COMPILATION_ERROR, index))
+        state.reconcile_focus(len(self.wdir.unit_list))
 
     def _run_locked_or_without_tests(self, state: TesterState) -> None:
         state.mode = SeqMode.finished
@@ -73,6 +74,8 @@ class TesterExecutionService:
         if solver is None:
             return
         unit.result = UnitRunner.run_unit(solver, unit, self.settings.app.timeout)
+        if self.wdir.has_tests:
+            state.results = [(unit.result, state.focused_index)]
         rate = 100 if unit.result == ExecutionResult.SUCCESS else 0
         changes, total_lines = self.store_version(str(rate))
         if self.rep:
@@ -94,29 +97,23 @@ class TesterExecutionService:
         unit.result = UnitRunner.run_unit(solver, unit, self.settings.app.timeout)
         state.results.append((unit.result, index))
         state.focused_index = index
+        state.reconcile_focus(len(self.wdir.unit_list))
 
         if unit.result == ExecutionResult.EXECUTION_ERROR:
             state.mode = SeqMode.finished
             while state.unit_list:
                 index = len(state.results)
                 state.unit_list = state.unit_list[1:]
-                state.results.append((ExecutionResult.EXECUTION_ERROR, index))
+                state.results.append((ExecutionResult.UNTESTED, index))
 
     def _finish_and_store(self, state: TesterState) -> None:
         state.mode = SeqMode.finished
-        state.focused_index = 0
-
-        done_list: list[tuple[ExecutionResult, int]] = []
-        fail_list: list[tuple[ExecutionResult, int]] = []
-        for data in state.results:
-            unit_result, _ = data
-            if unit_result != ExecutionResult.SUCCESS:
-                fail_list.append(data)
-            else:
-                done_list.append(data)
-
-        state.results = fail_list + done_list
-        percent = (100 * len(done_list)) // len(state.results)
+        successes = sum(result == ExecutionResult.SUCCESS for result, _ in state.results)
+        state.focused_index = next(
+            (index for result, index in state.results
+             if result not in (ExecutionResult.SUCCESS, ExecutionResult.UNTESTED)), 0
+        )
+        percent = (100 * successes) // len(state.results)
         self.task.info.rate = percent
 
         mode = LogItemExec.Mode.LOCK if state.locked_index else LogItemExec.Mode.FULL

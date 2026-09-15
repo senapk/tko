@@ -1,7 +1,6 @@
 from collections.abc import Callable
 
 from tko.config.settings import Settings
-from tko.enums.execution_result import ExecutionResult
 from tko.game.task import Task
 from tko.logger.log_item_exec import LogItemExec
 from tko.repository.repository import Repository
@@ -42,9 +41,8 @@ class TesterRunModeService:
         self.wdir.get_solver().set_main(solver_selected).reset()
 
         if state.locked_index:
-            for i in range(len(state.results)):
-                _, idx = state.results[i]
-                state.results[i] = (ExecutionResult.UNTESTED, idx)
+            state.focused_index = max(0, min(state.focused_index, len(self.wdir.unit_list) - 1))
+            state.results = []
         else:
             state.focused_index = 0
             state.results = []

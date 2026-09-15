@@ -54,6 +54,7 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
         Binding("e,backspace", "run_free", "Executar"),
         Binding(GuiKeys.pin, "toggle_lock", "Fixar"),
         Binding("tab", "change_main", "Solução"),
+        Binding("F", "toggle_errors", "Apenas erros"),
         Binding("d", "toggle_diff", "Diff"),
         Binding("l", "change_limit", "Limite"),
         Binding("a", "self_evaluate", "Avaliar"),
@@ -135,19 +136,24 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
         done = len(self.state.results)
         total = len(self.wdir.unit_list)
         lock = "travado" if self.state.locked_index else "todos os casos"
-        return f"{done}/{total} testes concluídos • {lock} • limite: {self.settings.app.timeout or 'sem limite'}"
+        filter_label = "apenas erros" if self.state.errors_only else "sem filtro"
+        return f"{done}/{total} testes concluídos • {lock} • {filter_label} • limite: {self.settings.app.timeout or 'sem limite'}"
 
     def _output_lines(self, width: int) -> list[RT]:
-        if self.state.mode == SeqMode.intro:
+        if self.state.mode == SeqMode.intro and not self.state.errors_only:
             return [RT("Pressione Enter para testar ou e para executar a solução.", "y")]
-        if self.state.is_all_right():
-            return self._success_lines(width)
         solver = self.wdir.get_solver()
         if solver.has_compile_error():
             executable, _ = solver.get_executable()
             return [RT(line, "r") for line in executable.get_error_msg().plain().splitlines()]
         if not self.wdir.has_tests:
             return [RT("Nenhum teste cadastrado para esta atividade.", "y")]
+        if self.state.errors_only and not self.state.visible_indices(len(self.wdir.unit_list)):
+            return [RT("Nenhum teste com erro.", "y")]
+        if self.state.is_all_right():
+            return self._success_lines(width)
+        if self.state.errors_only and self.state.focused_index not in self.state.visible_indices(len(self.wdir.unit_list)):
+            return [RT("Caso fixado fora do filtro de erros.", "y")]
         unit = self.state.get_focused_unit(self.wdir)
         if self.settings.app.diff_mode == DiffMode.DOWN:
             return DiffBuilderDown(width, unit).build_diff()
@@ -209,6 +215,10 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
 
     def action_change_main(self) -> None:
         self.navigator.change_main(self.state)
+        self.refresh_view()
+
+    def action_toggle_errors(self) -> None:
+        self.navigator.toggle_errors(self.state)
         self.refresh_view()
 
     def action_toggle_diff(self) -> None:

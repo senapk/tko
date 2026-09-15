@@ -1,0 +1,180 @@
+from __future__ import annotations
+
+import asyncio
+from pathlib import Path
+
+from pytest import MonkeyPatch
+
+from tko.config.settings import Settings
+from tko.enums.execution_result import ExecutionResult as Result
+from tko.game.task import Task
+from tko.run.unit import Unit
+from tko.run.unit_runner import UnitRunner
+from tko.run.solver_builder import SolverBuilder
+from tko.run.wdir import Wdir
+from tko.tester.tester_state import SeqMode
+from tko.ui_textual.tester_app import TkoTesterApp
+
+
+def make_app(tmp_path: Path) -> TkoTesterApp:
+    settings = Settings(tmp_path)
+    wdir = Wdir(settings)
+    wdir.setup_solver([tmp_path / "main.py"])
+    wdir.unit_list = [Unit(case=f"case-{index}", input_data=str(index)) for index in range(4)]
+    for index, unit in enumerate(wdir.unit_list):
+        unit.index = index
+    return TkoTesterApp(settings, None, wdir, Task(), None)
+
+
+def mixed_results(app: TkoTesterApp) -> None:
+    app.state.results = [(Result.SUCCESS, 0), (Result.WRONG_OUTPUT, 1),
+                         (Result.SUCCESS, 2), (Result.EXECUTION_ERROR, 3)]
+    app.state.mode = SeqMode.finished
+
+
+def test_finish_preserves_order_and_selects_first_error(tmp_path: Path) -> None:
+    app = make_app(tmp_path)
+    mixed_results(app)
+    original = list(app.state.results)
+    app.executor.execution_service._finish_and_store(app.state)
+    assert app.state.results == original
+    assert app.state.focused_index == 1
+    assert app.state.get_focused_unit(app.wdir).case == "case-1"
+    assert app.current_task.info.rate == 50
+    app.navigator.go_right(app.state)
+    assert app.state.get_focused_unit(app.wdir).case == "case-2"
+
+
+def test_filter_navigation_and_original_numbers(tmp_path: Path) -> None:
+    app = make_app(tmp_path)
+    mixed_results(app)
+    app.navigator.toggle_errors(app.state)
+    assert app.state.focused_index == 1
+    assert app.state.visible_indices(4) == [1, 3]
+    tokens = app.top_bar.build_unit_list(app.state, 80).plain()
+    assert "01" in tokens and "03" in tokens
+    assert "00" not in tokens and "02" not in tokens
+    app.navigator.go_left(app.state)
+    assert app.state.focused_index == 1
+    app.navigator.go_right(app.state)
+    app.navigator.go_right(app.state)
+    assert app.state.focused_index == 3
+    app.navigator.toggle_errors(app.state)
+    assert app.state.focused_index == 3
+
+
+def test_empty_filter_and_all_passed(tmp_path: Path) -> None:
+    app = make_app(tmp_path)
+    app.state.results = [(Result.SUCCESS, index) for index in range(4)]
+    app.executor.execution_service._finish_and_store(app.state)
+    assert app.state.focused_index == 0
+    assert app.state.is_all_right()
+    app.navigator.toggle_errors(app.state)
+    assert app.state.visible_indices(4) == []
+    assert app.top_bar.build_unit_list(app.state, 80).plain().strip() == ""
+    assert "Nenhum teste com erro" in app._output_lines(80)[0].plain()
+    app.navigator.go_right(app.state)
+    assert app.state.focused_index == 0
+    assert app.state.errors_only
+
+
+def test_locked_result_updates_without_changing_target(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    app = make_app(tmp_path)
+    mixed_results(app)
+    app.state.focused_index = 2
+    app.navigator.lock_unit(app.state)
+    app.navigator.toggle_errors(app.state)
+    assert app.state.focused_index == 2
+
+    def run_unit(solver: SolverBuilder, unit: Unit, timeout: float) -> Result:
+        assert unit is app.wdir.unit_list[2]
+        return Result.WRONG_OUTPUT
+
+    monkeypatch.setattr(UnitRunner, "run_unit", run_unit)
+    app.state.mode = SeqMode.running
+    app.executor.process_one(app.state)
+    assert app.state.results == [(Result.WRONG_OUTPUT, 2)]
+    assert app.state.visible_indices(4) == [2]
+
+
+def test_filter_remains_active_on_rerun(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    app = make_app(tmp_path)
+    mixed_results(app)
+    app.navigator.toggle_errors(app.state)
+
+    def build_units(wdir: Wdir) -> Wdir:
+        return wdir
+
+    monkeypatch.setattr(Wdir, "build_unit_list", build_units)
+    app.executor.run_test_mode(app.state)
+    assert app.state.errors_only
+    assert app.state.results == []
+    assert app.state.unit_list == app.wdir.unit_list
+    assert app.state.visible_indices(4) == []
+
+
+def test_compilation_errors_are_visible_but_untested_are_not(tmp_path: Path) -> None:
+    app = make_app(tmp_path)
+    app.state.errors_only = True
+    app.state.results = [(Result.COMPILATION_ERROR, 0), (Result.UNTESTED, 1)]
+    assert app.state.visible_indices(4) == [0]
+
+
+def test_uppercase_filter_and_lowercase_lock(tmp_path: Path) -> None:
+    async def exercise() -> None:
+        app = make_app(tmp_path)
+        mixed_results(app)
+        async with app.run_test() as pilot:
+            await pilot.press("F")
+            assert app.state.errors_only
+            assert not app.state.locked_index
+            assert app.state.focused_index == 1
+            await pilot.press("f")
+            assert app.state.locked_index
+            await pilot.press("F")
+            assert not app.state.errors_only
+            assert app.state.locked_index
+            assert app.state.focused_index == 1
+
+    asyncio.run(exercise())
+
+
+def test_partial_results_allow_navigation_to_unexecuted_case(tmp_path: Path) -> None:
+    app = make_app(tmp_path)
+    app.state.mode = SeqMode.running
+    app.state.results = [(Result.SUCCESS, 0)]
+    app.navigator.go_right(app.state)
+    assert app.state.get_focused_unit(app.wdir).case == "case-1"
+
+
+def test_filtered_run_stays_on_error_when_next_case_passes(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    app = make_app(tmp_path)
+    app.state.errors_only = True
+    app.state.mode = SeqMode.running
+    results = iter([Result.SUCCESS, Result.WRONG_OUTPUT, Result.SUCCESS, Result.SUCCESS])
+
+    def run_unit(solver: SolverBuilder, unit: Unit, timeout: float) -> Result:
+        return next(results)
+
+    monkeypatch.setattr(UnitRunner, "run_unit", run_unit)
+    for _ in range(4):
+        app.executor.process_one(app.state)
+    assert app.state.mode == SeqMode.finished
+    assert app.state.focused_index == 1
+    assert [index for _, index in app.state.results] == [0, 1, 2, 3]
+    assert app.state.visible_indices(4) == [1]
+
+
+def test_execution_error_does_not_filter_in_cases_that_never_ran(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    app = make_app(tmp_path)
+    app.state.errors_only = True
+    app.state.mode = SeqMode.running
+
+    def run_unit(solver: SolverBuilder, unit: Unit, timeout: float) -> Result:
+        return Result.EXECUTION_ERROR
+
+    monkeypatch.setattr(UnitRunner, "run_unit", run_unit)
+    app.executor.process_one(app.state)
+    assert app.state.mode == SeqMode.finished
+    assert app.state.visible_indices(4) == [0]
+    assert app.state.results[1:] == [(Result.UNTESTED, index) for index in range(1, 4)]

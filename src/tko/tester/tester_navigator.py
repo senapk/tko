@@ -34,29 +34,35 @@ class TesterNavigator:
     def _locked(self, arrow: str) -> None:
         self.notify(f"{arrow}\nAtividade travada\nAperte {GuiKeys.pin} para destravar")
 
-    def go_left(self, state: TesterState) -> None:
+    def toggle_errors(self, state: TesterState) -> None:
+        state.errors_only = not state.errors_only
+        state.reconcile_focus(len(self.wdir.unit_list))
+        state.diff_first_line = 1000
+
+    def _move(self, state: TesterState, direction: int) -> None:
+        was_intro = state.mode == SeqMode.intro
         if state.mode in (SeqMode.intro, SeqMode.finished):
             state.mode = SeqMode.select
         if state.locked_index:
-            self._locked("←")
+            self._locked("←" if direction < 0 else "→")
             return
-        if not self.wdir.get_solver().has_compile_error():
-            state.focused_index = max(0, state.focused_index - 1)
-            state.diff_first_line = 1000
+        if self.wdir.get_solver().has_compile_error():
+            return
+        indices = state.visible_indices(len(self.wdir.unit_list))
+        if not indices:
+            return
+        if was_intro or state.focused_index not in indices:
+            state.focused_index = indices[0]
+        else:
+            position = indices.index(state.focused_index)
+            state.focused_index = indices[max(0, min(len(indices) - 1, position + direction))]
+        state.diff_first_line = 1000
+
+    def go_left(self, state: TesterState) -> None:
+        self._move(state, -1)
 
     def go_right(self, state: TesterState) -> None:
-        if state.mode == SeqMode.intro:
-            state.mode = SeqMode.select
-            state.focused_index = 0
-            return
-        if state.mode == SeqMode.finished:
-            state.mode = SeqMode.select
-        if state.locked_index:
-            self._locked("→")
-            return
-        if not self.wdir.get_solver().has_compile_error():
-            state.focused_index = min(len(self.wdir.unit_list) - 1, state.focused_index + 1)
-            state.diff_first_line = 1000
+        self._move(state, 1)
 
     def go_down(self, state: TesterState) -> None:
         if state.mode == SeqMode.intro:
@@ -79,10 +85,7 @@ class TesterNavigator:
         state.locked_index = not state.locked_index
         if state.mode == SeqMode.intro:
             state.mode = SeqMode.select
-        if state.locked_index:
-            from tko.enums.execution_result import ExecutionResult
-
-            state.results = [(ExecutionResult.UNTESTED, index) for _, index in state.results]
+        state.reconcile_focus(len(self.wdir.unit_list))
 
     def change_limit(self, state: TesterState) -> None:
         value = self.settings.app.timeout
