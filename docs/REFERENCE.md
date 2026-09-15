@@ -65,6 +65,9 @@ como chave. Cancelar a seleção é uma saída normal.
 `download` recebe uma chave como `course@labs/fila` e oferece apenas atividades
 externas ainda não baixadas. Sem chave, abre seleção numérica; aceita `--fzf/-f`.
 O download prepara arquivos e rascunhos para execução.
+Ao atualizar uma tarefa já materializada, substitui os Markdown, testes (`.toml` e
+`.tio`) da raiz e a pasta `assets`; soluções e outras subpastas do aluno são
+preservadas.
 
 `task open --filter/-F` filtra solvers temporariamente. `run` e `task open`
 herdam o modo de diff da configuração, salvo quando `--diff-mode` é informado.

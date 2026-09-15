@@ -1,5 +1,6 @@
 from pathlib import Path
 from types import SimpleNamespace
+from typing import cast
 
 from tko.cmds.cmd_down import CmdDown
 from tko.config.settings import Settings
@@ -7,6 +8,7 @@ from tko.game.task import Task
 from tko.game.task_config import TaskConfig
 from tko.game.task_enums import EvalMode
 from tko.game.task_location import TaskLocation
+from tko.repository.repository import Repository
 
 
 def test_external_read_materializes_markdown_and_assets_without_tests_or_drafts(tmp_path: Path) -> None:
@@ -38,7 +40,7 @@ def test_external_read_materializes_markdown_and_assets_without_tests_or_drafts(
     )
     settings = Settings(None)
 
-    assert CmdDown(repo, "@reading", settings).execute() is True
+    assert CmdDown(cast(Repository, repo), "@reading", settings).execute() is True
     assert (destination / "README.md").exists()
     assert (destination / "notes.md").exists()
     assert (destination / "assets" / "cover.png").exists()
@@ -78,7 +80,51 @@ def test_download_overwrites_description_and_tests_but_preserves_existing_starte
         data=SimpleNamespace(lang="py"),
     )
 
-    assert CmdDown(repo, "@activity", Settings(None)).execute() is True
+    assert CmdDown(cast(Repository, repo), "@activity", Settings(None)).execute() is True
     assert (destination / "README.md").read_text(encoding="utf-8") == "# Updated description\n"
     assert "label = 'new'" in (destination / "tests.toml").read_text(encoding="utf-8")
     assert starter.read_text(encoding="utf-8") == "# learner solution\n"
+
+
+def test_download_removes_stale_activity_files_but_preserves_student_files(tmp_path: Path) -> None:
+    origin = tmp_path / "origin"
+    destination = tmp_path / "workspace" / "source" / "activity"
+    origin.mkdir()
+    (origin / "README.md").write_text("# Current description\n", encoding="utf-8")
+
+    (destination / "assets").mkdir(parents=True)
+    (destination / "assets" / "old.png").write_bytes(b"old")
+    (destination / "README.md").write_text("# Old description\n", encoding="utf-8")
+    (destination / "old.md").write_text("# Old notes\n", encoding="utf-8")
+    (destination / "tests.toml").write_text("old = true\n", encoding="utf-8")
+    (destination / "old.tio").write_text("old test\n", encoding="utf-8")
+    student_file = destination / "src" / "py" / "main.py"
+    student_file.parent.mkdir(parents=True)
+    student_file.write_text("# learner solution\n", encoding="utf-8")
+
+    task = Task()
+    task.basic.key = "activity"
+    task.basic.source_name = "source"
+    task.config = TaskConfig(eval=EvalMode.NONE)
+    task.location = TaskLocation(
+        index_path=origin / "index.md",
+        raw_link="README.md",
+        eval=EvalMode.NONE,
+        external_source=True,
+    )
+    repo = SimpleNamespace(
+        game=SimpleNamespace(get_task_throw=lambda _key: task),
+        task_resolver=SimpleNamespace(
+            origin_file=lambda _task, load_git: origin / "README.md",
+            target_folder=lambda _task: destination,
+        ),
+        data=SimpleNamespace(lang="py"),
+    )
+
+    assert CmdDown(cast(Repository, repo), "@activity", Settings(None)).execute() is True
+    assert (destination / "README.md").read_text(encoding="utf-8") == "# Current description\n"
+    assert not (destination / "old.md").exists()
+    assert not (destination / "tests.toml").exists()
+    assert not (destination / "old.tio").exists()
+    assert not (destination / "assets").exists()
+    assert student_file.read_text(encoding="utf-8") == "# learner solution\n"

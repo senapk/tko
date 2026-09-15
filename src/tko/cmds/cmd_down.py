@@ -147,7 +147,9 @@ class CmdDown:
 
     def download_from_external_remote(self) -> None:
         self.actions.fnprint(_DOWN_OPENING.t().format(key=self.task_key, folder=self.destiny_folder))
+        self.validate_download_sources()
         self.destiny_folder.mkdir(exist_ok=True, parents=True)
+        self.clear_controlled_files()
         self.copy_markdown_files()
         self.copy_assets()
         eval_spec = self.task.config.eval_spec
@@ -157,6 +159,38 @@ class CmdDown:
             self.copy_tests()
         self.actions.fnprint("")
         self.actions.fnprint(_DOWN_ACTIVITY_DOWNLOADED_SUCCESS.t())
+
+    def validate_download_sources(self) -> None:
+        """Read all controlled source files before modifying the destination."""
+        for origin_file in self.origin_folder.iterdir():
+            if not origin_file.is_file():
+                continue
+            if origin_file.suffix.lower() == ".md":
+                _ = Decoder.load(origin_file)
+            elif origin_file.suffix in {".toml", ".tio"}:
+                if origin_file.suffix == ".toml":
+                    _ = TomlParser.load_and_expand_from_path(origin_file)
+                else:
+                    _ = Decoder.load(origin_file)
+        origin_assets = self.origin_folder / "assets"
+        if origin_assets.exists() and not origin_assets.is_dir():
+            raise NotADirectoryError(origin_assets)
+        if origin_assets.is_dir():
+            for asset in origin_assets.iterdir():
+                if asset.is_file():
+                    _ = asset.stat()
+
+    def clear_controlled_files(self) -> None:
+        """Remove only activity-owned root files and assets."""
+        for path in self.destiny_folder.iterdir():
+            if path.is_file() and path.suffix.lower() in {".md", ".toml", ".tio"}:
+                path.unlink()
+        assets = self.destiny_folder / "assets"
+        if assets.exists():
+            if assets.is_dir():
+                shutil.rmtree(assets)
+            else:
+                assets.unlink()
 
     def copy_drafts(self):
         finder = DraftsFinderCached(self.destiny_folder, self.language)
