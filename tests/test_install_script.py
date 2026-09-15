@@ -2,6 +2,11 @@ import os
 from pathlib import Path
 import subprocess
 
+import pytest
+
+
+pytestmark = pytest.mark.skipif(os.name == "nt", reason="install.sh supports Unix shells only")
+
 
 def _fake_python(path: Path) -> None:
     path.write_text(

@@ -380,7 +380,7 @@ class TaskDataMigration:
             elif relative.startswith((".tko/track/", ".tko/audit/")):
                 destination = self._history_destination(relative)
                 if relative.startswith(".tko/track/") and path.name in {"track.csv", "track.jsonl"}:
-                    destination = str(Path(destination).with_name("track.jsonl"))
+                    destination = Path(destination).with_name("track.jsonl").as_posix()
                     try:
                         records: list[Track] = (
                             load_track_csv(content, path) if path.name == "track.csv"

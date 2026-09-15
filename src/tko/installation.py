@@ -25,12 +25,17 @@ class ManagedInstallation:
 
     @property
     def python(self) -> Path:
-        return self.venv / "bin" / "python"
+        return self.venv / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python")
+
+    @property
+    def executable(self) -> Path:
+        return self.venv / ("Scripts/tko.exe" if sys.platform == "win32" else "bin/tko")
 
     @classmethod
     def from_executable(cls, executable: Path) -> ManagedInstallation | None:
         resolved: Path = executable.resolve()
-        if resolved.parent.name != "bin" or resolved.parent.parent.name != "venv":
+        venv_parent: Path = resolved.parent
+        if venv_parent.name not in {"bin", "Scripts"} or venv_parent.parent.name != "venv":
             return None
         root: Path = resolved.parent.parent.parent
         metadata: Path = root / "install.toml"
@@ -73,7 +78,7 @@ def remove_managed_installation(installation: ManagedInstallation) -> None:
     ):
         raise ValueError("Invalid managed TKO installation")
     if installation.launcher.exists():
-        expected_target: str = str(installation.venv / "bin" / "tko")
+        expected_target: str = str(installation.executable)
         if expected_target not in installation.launcher.read_text(encoding="utf-8"):
             raise ValueError("Managed TKO launcher does not match its virtual environment")
     installation.launcher.unlink(missing_ok=True)

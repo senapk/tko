@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 
 import pytest
 
@@ -12,12 +13,15 @@ from tko.installation import (
 
 
 def _managed_installation(root: Path) -> ManagedInstallation:
-    python: Path = root / "venv" / "bin" / "python"
+    executable_name: str = "python.exe" if os.name == "nt" else "python"
+    bin_dir: str = "Scripts" if os.name == "nt" else "bin"
+    python: Path = root / "venv" / bin_dir / executable_name
     python.parent.mkdir(parents=True)
     python.touch()
     launcher: Path = root.parent.parent / "bin" / "tko"
     launcher.parent.mkdir(parents=True)
-    launcher.write_text(f'#!/bin/sh\nexec "{root / "venv" / "bin" / "tko"}" "$@"\n', encoding="utf-8")
+    executable: Path = root / "venv" / bin_dir / ("tko.exe" if os.name == "nt" else "tko")
+    launcher.write_text(f'#!/bin/sh\nexec "{executable}" "$@"\n', encoding="utf-8")
     (root / "install.toml").write_text(
         f'method = "managed"\nlauncher = "{launcher}"\n', encoding="utf-8"
     )

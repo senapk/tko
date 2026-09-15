@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import os
 from pathlib import Path
 import tomllib
 
@@ -185,8 +186,8 @@ def test_track_csv_migrates_to_jsonl_without_writing_during_dry_run(tmp_path: Pa
     destination: Path = tmp_path / ".tko/track/course/plan/task/track.jsonl"
     preview = CliRunner().invoke(app, ["migrate", str(tmp_path), "--dry-run"])
     assert preview.exit_code == 0
-    assert "create: .tko/track/course/plan/task/track.jsonl" in preview.output
-    assert "delete: .tko/track/course@old/track.csv" in preview.output
+    assert "create: .tko/track/course/plan/task/track.jsonl".replace("/", os.sep) in preview.output
+    assert "delete: .tko/track/course@old/track.csv".replace("/", os.sep) in preview.output
     assert _snapshot(tmp_path) == before
     assert any(change.relative == destination.relative_to(tmp_path).as_posix() and change.after is not None for change in plan.changes)
     assert any(change.relative == legacy.relative_to(tmp_path).as_posix() and change.after is None for change in plan.changes)
@@ -690,7 +691,6 @@ def _workspace_with_activity(root: Path, *, remote: bool = False) -> Path:
 
 @pytest.mark.parametrize("remote", [False, True])
 def test_activity_tree_moves_with_logs_and_versions(tmp_path: Path, remote: bool) -> None:
-    import os
     import stat
 
     old: Path = _workspace_with_activity(tmp_path, remote=remote)
@@ -714,7 +714,8 @@ def test_activity_tree_moves_with_logs_and_versions(tmp_path: Path, remote: bool
     assert (destination / "README.md").read_bytes() == before["course/animal/README.md"]
     assert (destination / "empty").is_dir()
     assert (destination / ".vscode/settings.json").read_text() == "{}"
-    assert stat.S_IMODE((destination / "src/run.sh").stat().st_mode) == 0o751
+    if os.name != "nt":
+        assert stat.S_IMODE((destination / "src/run.sh").stat().st_mode) == 0o751
     assert (destination / "src/run.sh").stat().st_mtime_ns == 1234567890000000000
     assert (backup / "before/course/animal/src/run.sh").read_bytes() == before["course/animal/src/run.sh"]
     assert (tmp_path / ".tko/track/course/labs/animal/draft.py.json").read_bytes() == b"track snapshot"
@@ -749,7 +750,6 @@ def test_activity_destination_collision_never_overwrites_work(tmp_path: Path, id
 def test_recovery_restores_moved_activity_and_metadata(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, existing_destination: bool,
 ) -> None:
-    import os
     import stat
 
     old: Path = _workspace_with_activity(tmp_path)
@@ -779,7 +779,8 @@ def test_recovery_restores_moved_activity_and_metadata(
     assert restored == before
     dirs_after: set[str] = {p.relative_to(tmp_path).as_posix() for p in tmp_path.rglob("*") if p.is_dir() and not p.is_relative_to(tmp_path / ".tko/migrations")}
     assert dirs_after == dirs_before
-    assert stat.S_IMODE(script.stat().st_mode) == 0o755
+    if os.name != "nt":
+        assert stat.S_IMODE(script.stat().st_mode) == 0o755
     assert script.stat().st_mtime_ns == 1234567890000000000
     TaskDataMigration(tmp_path).inspect().apply()
     assert not old.exists()
