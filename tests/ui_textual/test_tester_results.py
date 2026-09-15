@@ -178,3 +178,36 @@ def test_execution_error_does_not_filter_in_cases_that_never_ran(tmp_path: Path,
     assert app.state.mode == SeqMode.finished
     assert app.state.visible_indices(4) == [0]
     assert app.state.results[1:] == [(Result.UNTESTED, index) for index in range(1, 4)]
+
+
+def test_compact_layout_resizes_with_scrollable_output(tmp_path: Path) -> None:
+    from textual.containers import VerticalScroll
+    from textual.widgets import Static
+
+    async def exercise() -> None:
+        app = make_app(tmp_path)
+        mixed_results(app)
+        app.state.focused_index = 1
+        app.wdir.unit_list[1].set_received("line\n" * 100)
+        async with app.run_test(size=(80, 24)) as pilot:
+            await pilot.pause()
+            header = app.query_one("#tester-header", Static)
+            output = app.query_one("#tester-output", VerticalScroll)
+            assert header.size.height == 1
+            assert not app.query("#tester-status")
+            assert output.region.y == header.region.bottom
+            assert output.styles.border.top[0] in ("", "none")
+            assert output.styles.padding.left == 0
+            assert "WATCH" not in app._header().plain()
+            assert "AUDIT" not in app._header().plain()
+            assert "case-1" not in app._header().plain()
+            for width in (40, 120):
+                await pilot.resize_terminal(width, 24)
+                await pilot.pause()
+                assert len(app._header()) <= width
+                assert "01" in app._header().plain()
+                assert header.size.height == 1
+            await pilot.press("F")
+            assert app.active_bindings["F"].binding.description == "Apenas erros: ON"
+
+    asyncio.run(exercise())

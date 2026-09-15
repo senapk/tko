@@ -37,9 +37,8 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
     ENABLE_COMMAND_PALETTE = False
     CSS = """
     Screen { layout: vertical; background: #080808; }
-    #tester-header { height: 5; border: round $primary; padding: 0 1; background: #080808; }
-    #tester-status { height: 1; padding: 0 1; color: $text-muted; background: #080808; }
-    #tester-output { height: 1fr; border: round $secondary; padding: 0 1; background: #080808; }
+    #tester-header { height: 1; border: none; padding: 0; background: #080808; }
+    #tester-output { height: 1fr; border: none; padding: 0; background: #080808; }
     #tester-output-content { text-wrap: nowrap; }
     Footer { background: #080808; }
     """
@@ -83,9 +82,7 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
         self.opener = opener
         self.state = TesterState(list(wdir.unit_list))
         self._autorun = autorun
-        edit_mode = lambda: watcher is not None and watcher.edit_logger is not None
-        audit_mode = lambda: watcher is not None and watcher.audit_logger is not None
-        self.top_bar = TesterTopBar(repo, wdir, task, settings.app, edit_fn=edit_mode, audit_fn=audit_mode)
+        self.top_bar = TesterTopBar(repo, wdir, task)
         self.executor: TesterExecutor = TesterExecutor(
             settings, repo, wdir, task, self.top_bar, on_warning=self._notify
         )
@@ -97,7 +94,6 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
     def compose(self) -> ComposeResult:
         with Vertical():
             yield Static(id="tester-header")
-            yield Static(id="tester-status")
             with VerticalScroll(id="tester-output"):
                 yield Static(id="tester-output-content")
         yield Footer()
@@ -107,6 +103,9 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
             self.action_run_tests()
         self.set_interval(0.05, self._process_running_state)
         self.refresh_view()
+
+    def on_resize(self) -> None:
+        self.call_after_refresh(self.refresh_view)
 
     def _process_running_state(self) -> None:
         if self.state.mode != SeqMode.running:
@@ -122,22 +121,8 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
         self.refresh_view()
 
     def _header(self) -> RT:
-        width = max(20, self.query_one("#tester-header", Static).size.width - 2)
-        return RT.join(
-            [
-                self.top_bar.build_top_line_header(self.state, width, timed=False),
-                self.top_bar.build_focused_case(self.state, width),
-                self.top_bar.build_unit_list(self.state, width),
-            ],
-            "\n",
-        )
-
-    def _status(self) -> str:
-        done = len(self.state.results)
-        total = len(self.wdir.unit_list)
-        lock = "travado" if self.state.locked_index else "todos os casos"
-        filter_label = "apenas erros" if self.state.errors_only else "sem filtro"
-        return f"{done}/{total} testes concluídos • {lock} • {filter_label} • limite: {self.settings.app.timeout or 'sem limite'}"
+        width: int = self.query_one("#tester-header", Static).content_size.width
+        return self.top_bar.build_top_line_header(self.state, width)
 
     def _output_lines(self, width: int) -> list[RT]:
         if self.state.mode == SeqMode.intro and not self.state.errors_only:
@@ -179,9 +164,8 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
         if not self.is_mounted:
             return
         self.query_one("#tester-header", Static).update(to_rich_text(self._header()))
-        self.query_one("#tester-status", Static).update(self._status())
         output = self.query_one("#tester-output", VerticalScroll)
-        width = max(20, output.size.width - 2)
+        width = max(1, output.scrollable_content_region.width)
         content = output.query_one("#tester-output-content", Static)
         content.update(Text("\n").join(to_rich_text(line) for line in self._output_lines(width)))
 
@@ -219,6 +203,10 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
 
     def action_toggle_errors(self) -> None:
         self.navigator.toggle_errors(self.state)
+        self._bindings.key_to_bindings["F"] = [
+            Binding("F", "toggle_errors", "Apenas erros: ON" if self.state.errors_only else "Apenas erros")
+        ]
+        self.screen.refresh_bindings()
         self.refresh_view()
 
     def action_toggle_diff(self) -> None:
