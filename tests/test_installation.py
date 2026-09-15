@@ -1,5 +1,7 @@
 from pathlib import Path
 import os
+from pathlib import PureWindowsPath
+import tomllib
 
 import pytest
 
@@ -23,7 +25,7 @@ def _managed_installation(root: Path) -> ManagedInstallation:
     executable: Path = root / "venv" / bin_dir / ("tko.exe" if os.name == "nt" else "tko")
     launcher.write_text(f'#!/bin/sh\nexec "{executable}" "$@"\n', encoding="utf-8")
     (root / "install.toml").write_text(
-        f'method = "managed"\nlauncher = "{launcher}"\n', encoding="utf-8"
+        f'method = "managed"\nlauncher = "{launcher.as_posix()}"\n', encoding="utf-8"
     )
     installation = ManagedInstallation.from_executable(python)
     assert installation is not None
@@ -45,6 +47,13 @@ def test_pipx_executable_is_detected_without_metadata(tmp_path: Path) -> None:
     executable.touch()
 
     assert installation_method(executable) == InstallationMethod.PIPX
+
+
+def test_toml_metadata_uses_posix_path_for_windows_launcher() -> None:
+    launcher = PureWindowsPath("C:/Users/student/.local/bin/tko")
+    metadata = f'method = "managed"\nlauncher = "{launcher.as_posix()}"\n'
+
+    assert tomllib.loads(metadata)["launcher"] == "C:/Users/student/.local/bin/tko"
 
 
 def test_removing_managed_installation_keeps_other_files(tmp_path: Path) -> None:

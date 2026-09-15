@@ -186,8 +186,8 @@ def test_track_csv_migrates_to_jsonl_without_writing_during_dry_run(tmp_path: Pa
     destination: Path = tmp_path / ".tko/track/course/plan/task/track.jsonl"
     preview = CliRunner().invoke(app, ["migrate", str(tmp_path), "--dry-run"])
     assert preview.exit_code == 0
-    assert "create: .tko/track/course/plan/task/track.jsonl".replace("/", os.sep) in preview.output
-    assert "delete: .tko/track/course@old/track.csv".replace("/", os.sep) in preview.output
+    assert "create: .tko/track/course/plan/task/track.jsonl" in preview.output
+    assert "delete: .tko/track/course@old/track.csv" in preview.output
     assert _snapshot(tmp_path) == before
     assert any(change.relative == destination.relative_to(tmp_path).as_posix() and change.after is not None for change in plan.changes)
     assert any(change.relative == legacy.relative_to(tmp_path).as_posix() and change.after is None for change in plan.changes)
