@@ -7,6 +7,7 @@ from typing import Literal
 from tko.enums.diff_mode import DiffMode
 from tko.cli.cli_profile import app as profile_app
 from tko.cli.cli_source import app as source_app
+from tko.cli.cli_config_audit import app as audit_config_app
 
 from tko.config.settings import Settings
 from tko.util.console import Console
@@ -15,6 +16,7 @@ from tko.util.rt import RT
 app = typer.Typer(help="Manage installation, global preferences and repository configuration", no_args_is_help=True)
 app.add_typer(profile_app, name="profile")
 app.add_typer(source_app, name="source")
+app.add_typer(audit_config_app, name="audit")
 
 @app.command("set", help="Set default configuration values")
 def config_set(

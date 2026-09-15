@@ -12,60 +12,7 @@ from tko.util.console import Console
 
 app = typer.Typer(help="Audit repository activity", no_args_is_help=True)
 
-_AUDIT_PERSISTENT_ENABLED = Msg.parse(
-    pt="Auditoria persistente habilitada",
-    en="Persistent audit enabled",
-)
-_AUDIT_PERSISTENT_DISABLED = Msg.parse(
-    pt="Auditoria persistente desabilitada",
-    en="Persistent audit disabled",
-)
-_AUDIT_PERSISTENT_STATUS = Msg.parse(
-    pt="Auditoria persistente: {status}",
-    en="Persistent audit: {status}",
-)
-
-
-
-
-@app.command("on", help="Enable persistent audit in the repository")
-def audit_on(
-    ctx: typer.Context,
-    interval: int | None = typer.Option(None, "--interval", "-i", help="Persistent audit interval in seconds"),
-) -> None:
-    from tko.cli.common import load_repo
-    from tko.repository.repository_config import RepositoryLoader
-
-    settings: Settings = ctx.obj
-    repo, _ = load_repo(settings.rs, show_warnings=True, auto_load=True)
-    if repo is None:
-        return
-
-
-    repo.audit.enabled = True
-    if interval is not None:
-        repo.audit.interval_seconds = interval
-    RepositoryLoader(repo).save()
-    Console.print(_AUDIT_PERSISTENT_ENABLED.t())
-
-@app.command("off", help="Disable persistent audit in the repository")
-def audit_off(
-    ctx: typer.Context,
-) -> None:
-    from tko.cli.common import load_repo
-    from tko.repository.repository_config import RepositoryLoader
-    settings: Settings = ctx.obj
-    repo, _ = load_repo(settings.rs, show_warnings=True, auto_load=True)
-    if repo is None:
-        return
-    repo.audit.enabled = False
-    repo.audit.interval_seconds = None
-    RepositoryLoader(repo).save()
-    Console.print(_AUDIT_PERSISTENT_DISABLED.t())
-
-
-
-@app.command("start", help="Start standalone audit watcher")
+@app.command("init", help="Start standalone audit watcher")
 def audit_start(
     ctx: typer.Context,
     interval: int | None = typer.Option(None, "--interval", "-i", help="Snapshot interval in seconds"),

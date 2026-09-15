@@ -28,7 +28,6 @@ tko init --skip-sources
 tko init --profile URL_DO_PERFIL
 tko config source add course URL_DO_INDICE
 tko open
-tko open --audit
 tko run [ARQUIVOS_OU_DIRETORIOS...] --language py --diff-mode side --failures first
 ```
 
@@ -137,15 +136,16 @@ O gráfico de uma atividade está em `task show --graph-only`.
 ## Auditoria
 
 ```bash
-tko audit on --interval 30
-tko audit off
-tko audit start --interval 30
+tko config audit on --interval 30
+tko config audit off
+tko config audit status
+tko audit init --interval 30
 tko audit preview [PATHS...]
 tko audit unpack ARQUIVO.jsonl
 ```
 
-`on/off` configuram auditoria persistente. `start` executa um monitor em primeiro
-plano até Ctrl+C. `open --audit` ativa auditoria para aquela sessão.
+`config audit on/off` configura a auditoria persistente. `audit init` executa um
+monitor em primeiro plano até Ctrl+C.
 
 ## Ferramentas
 

@@ -8,6 +8,7 @@ from typer.testing import CliRunner
 
 import tko.cli.audit_preview as audit_preview
 from tko.cli.cli_audit import app
+from tko.cli.cli_config import app as config_app
 from tko.config.run_settings import RunSettings
 from tko.config.settings import Settings
 from tko.logger.patch_history import PatchHistory
@@ -81,7 +82,7 @@ def test_audit_starts_watcher_with_verbose_and_interval(monkeypatch: MonkeyPatch
     monkeypatch.setattr("time.sleep", fake_sleep)
 
     with Console.capture() as out:
-        result = runner.invoke(app, ["start", "--interval", "15"], obj=ctx)
+        result = runner.invoke(app, ["init", "--interval", "15"], obj=ctx)
     combined_output = result.output + out.getvalue()
 
     assert result.exit_code == 0
@@ -176,7 +177,7 @@ def test_audit_set_on_persists_flag(monkeypatch: MonkeyPatch, tmp_path: Path) ->
     monkeypatch.setattr("tko.repository.repository_config.RepositoryLoader.save", fake_save)
 
     with Console.capture() as out:
-        result = runner.invoke(app, ["on"], obj=ctx)
+        result = runner.invoke(config_app, ["audit", "on"], obj=ctx)
     combined_output = result.output + out.getvalue()
 
     assert result.exit_code == 0
@@ -203,7 +204,7 @@ def test_audit_set_off_persists_flag(monkeypatch: MonkeyPatch, tmp_path: Path) -
     monkeypatch.setattr("tko.repository.repository_config.RepositoryLoader.save", fake_save)
 
     with Console.capture() as out:
-        result = runner.invoke(app, ["off"], obj=ctx)
+        result = runner.invoke(config_app, ["audit", "off"], obj=ctx)
     combined_output = result.output + out.getvalue()
 
     assert result.exit_code == 0

@@ -4,7 +4,7 @@ O modo de auditoria registra snapshots periodicos dos arquivos que o aluno edita
 
 Hoje o comportamento e:
 
-- A auditoria funciona enquanto houver um watcher ativo, seja pelo `tko open --audit`, pela auditoria persistente ligada com `tko audit on`, ou pelo monitor em foreground iniciado com `tko audit start`.
+- A auditoria funciona enquanto houver um watcher ativo, seja pela auditoria persistente ligada com `tko config audit on`, ou pelo monitor em foreground iniciado com `tko audit init`.
 - Os snapshots sao gerados periodicamente pelo watcher do repositorio.
 - Apenas arquivos dentro de `src/lang/...` da tarefa entram na auditoria.
 - O historico de cada arquivo auditado e salvo em um arquivo `.jsonl`.
@@ -15,7 +15,7 @@ Hoje o comportamento e:
 No modo explícito de auditoria, use `--interval` no comando:
 
 ```bash
-tko audit start --interval 60
+tko audit init --interval 60
 ```
 
 Se o parâmetro não for informado, o TKO usa o intervalo configurado no repositorio ou o valor padrão da ferramenta.
@@ -29,24 +29,24 @@ Observacoes:
 A auditoria depende do watcher iniciado no comando:
 
 ```bash
-tko open --audit
+tko config audit on
 ```
 
 Tambem e possivel habilitar a auditoria persistente no repositorio e depois abrir o TKO normalmente:
 
 ```bash
-tko audit on --interval 20
+tko config audit on --interval 20
 tko open
 ```
 
-Se quiser iniciar auditoria explícita em foreground (com logs de snapshots no terminal), use `tko audit start`.
+Se quiser iniciar auditoria explícita em foreground (com logs de snapshots no terminal), use `tko audit init`.
 
-## Modo manual em foreground (`tko audit start`)
+## Modo manual em foreground (`tko audit init`)
 
 Quando quiser transparência total no terminal, use:
 
 ```bash
-tko audit start
+tko audit init
 ```
 
 Esse comando inicia o watcher com auditoria ligada e fica em foreground mostrando os snapshots salvos, por exemplo:
@@ -60,7 +60,7 @@ Para encerrar, use `Ctrl+C`.
 Tambem e possivel ajustar o intervalo apenas para a sessao manual:
 
 ```bash
-tko audit start --interval 60
+tko audit init --interval 60
 ```
 
 ## Protecao contra multiplos watchers (lock)
@@ -71,7 +71,7 @@ Agora o sistema usa lock por repositorio em:
 .tko/watcher.lock
 ```
 
-Com isso, se ja houver um `tko open`/`tko audit start` ativo no mesmo repositorio, uma segunda tentativa de iniciar watcher falha com aviso, evitando snapshots duplicados e redundancia de copia.
+Com isso, se ja houver um `tko open`/`tko audit init` ativo no mesmo repositorio, uma segunda tentativa de iniciar watcher falha com aviso, evitando snapshots duplicados e redundancia de copia.
 
 Se o aluno fechar o `tko open`, o watcher para e nenhum novo snapshot sera criado.
 
@@ -146,7 +146,7 @@ Se nenhum parametro for informado, o comando procura a auditoria do repositorio 
 Para o aluno:
 
 1. Entrar no repositorio da disciplina.
-2. Garantir que a auditoria esteja ativa, com `tko audit on` ou `tko open --audit`.
+2. Garantir que a auditoria esteja ativa, com `tko config audit on` ou `tko audit init`.
 3. Executar `tko open`, se a auditoria persistente estiver habilitada.
 4. Resolver a atividade com o `tko open` ainda aberto.
 
@@ -163,7 +163,7 @@ Use o modo de auditoria quando quiser evidencias temporais do processo de constr
 
 Os pontos principais sao:
 
-- iniciar auditoria explicitamente com `tko audit start` (ou `tko audit start --interval ...`);
-- habilitar auditoria persistente com `tko audit on`;
+- iniciar auditoria explicitamente com `tko audit init` (ou `tko audit init --interval ...`);
+- habilitar auditoria persistente com `tko config audit on`;
 - manter o processo de auditoria ativo durante a resolucao;
 - analisar os snapshots gerados com `tko audit preview`.
