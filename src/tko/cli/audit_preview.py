@@ -74,6 +74,8 @@ def _collect_preview_files(source_paths: list[Path], output_dir: Path) -> list[P
             for path in sorted(source_path.rglob("*")):
                 if not path.is_file():
                     continue
+                if path.name == "events.jsonl":
+                    continue
                 display_name = path.relative_to(source_path).with_suffix("").as_posix()
                 if path.suffix == ".jsonl":
                     index, files = _materialize_audit_history(index, path, output_dir, display_name)

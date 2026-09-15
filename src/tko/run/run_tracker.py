@@ -12,7 +12,11 @@ class RunTracker:
         if self.ctx.track_folder is not None:
             if self.ctx.repo is not None:
                 initialize_task_data(self.ctx.repo.root_dir)
-            self.tracker.set_folder(self.ctx.track_folder)
+            history_folder = self.ctx.repo.paths.get_history_task_folder(self.ctx.task.basic.full_key) if self.ctx.repo is not None and self.ctx.task is not None and hasattr(self.ctx.repo.paths, "get_history_task_folder") else self.ctx.track_folder
+            self.tracker.set_folder(history_folder / "files" if history_folder is not None else self.ctx.track_folder)
+            if history_folder is not None:
+                self.tracker.set_event_folder(history_folder)
+                self.tracker.set_event_type("execution")
             if self.ctx.repo is not None and self.ctx.task is not None:
                 task_root = self.ctx.repo.task_resolver.target_folder(self.ctx.task)
                 if task_root is not None:

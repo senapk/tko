@@ -44,7 +44,7 @@ tko --help
 Saída esperada:
 
 - O comando `tko --version` deve mostrar a versão instalada.
-- O comando `tko --help` deve listar os comandos principais (`task`, `build`, `class`, `source`, ...).
+- O comando `tko --help` deve listar os comandos principais (`task`, `index`, `collect`, `config`, ...).
 
 Se `tko` não for encontrado, adicione `~/.local/bin` ao PATH e abra um novo terminal:
 
@@ -63,6 +63,49 @@ pipx install tko
 Use o guia recomendado para setup com VS Code, WSL e Ubuntu:
 
 - [Windows com WSL e Ubuntu](wiki/Windows-WSL.md)
+
+## Comandos principais
+
+```text
+tko
+├── init, open, run
+├── task     build, show, open, list, tests, download
+├── index    build, download, update
+├── config
+│   ├── set, list, reset, self-update, uninstall, clear-cache
+│   ├── profile  link, status, update, unlink
+│   └── source   list, add, remove, set
+├── collect  repo, tasks, skills
+├── audit    on, off, start, preview, unpack
+└── tool     mdpp, convert-tests, older, diff, rebase, filter, html, migrate, pull
+```
+
+```bash
+# No repositório do aluno
+tko task download course@labs/fila
+tko task show course/labs/fila
+tko task open course/labs/fila
+
+# Dentro da pasta da atividade, o caminho é implícito
+tko task tests
+tko run --language py --diff-mode side --failures first
+
+# Escolher outra atividade explicitamente
+tko task open --fzf
+
+# Diretório efetivo para qualquer comando
+tko -C caminho/do/repositorio tool migrate --dry-run
+tko -C caminho/do/repositorio tool migrate
+```
+
+`task show`, `task open` e `task tests` aceitam caminhos existentes. Sem caminho,
+usam a atividade da pasta atual ou abrem um seletor quando não há atividade atual.
+`task download` recebe uma chave, pois a atividade ainda não foi baixada.
+`--fzf/-f` abre o seletor; `--filter/-F` filtra código antes da execução.
+O idioma da interface usa `--ui-language pt|en` antes do comando; a linguagem de
+programação usa `--language/-l` em `init`, `run` e `collect skills`.
+
+Veja a [referência da CLI](docs/REFERENCE.md) para parâmetros e exemplos completos.
 
 ## Casos de Uso
 
@@ -153,7 +196,7 @@ Repositórios de referência:
 Para a instalação recomendada, use:
 
 ```bash
-tko self-update
+tko config self-update
 ```
 
 Para instalações existentes via `pipx`, use:

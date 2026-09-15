@@ -12,7 +12,7 @@ O TKO pode ser utilizado por comandos individuais:
 
 ```bash
 tko task list
-tko task down poo@carro
+tko task download poo@carro
 tko run
 ```
 

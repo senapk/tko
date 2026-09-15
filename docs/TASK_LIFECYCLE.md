@@ -56,7 +56,7 @@ Primeira configuração no ambiente local:
 
 2. Adicionar remoto da disciplina:
 
-   tko source add <label> <url_git_do_professor>
+   tko config source add <label> <url_git_do_professor>
 
 3. Abrir interface de tarefas:
 

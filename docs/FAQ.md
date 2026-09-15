@@ -17,7 +17,7 @@ Depois abra um novo terminal. Em instalações via `pipx`, use `pipx ensurepath`
 ## 2) Como atualizo o TKO?
 
 ```bash
-tko self-update
+tko config self-update
 ```
 
 Instalações via `pipx` continuam usando:
@@ -33,7 +33,7 @@ tko --version
 tko --help
 ```
 
-Se `--help` listar comandos como `task`, `build`, `class`, `source`, a instalação está ok.
+Se `--help` listar comandos como `task`, `index`, `config` e `tool`, a instalação está ok.
 
 ## 4) Como rodar os testes do projeto TKO?
 
@@ -78,9 +78,9 @@ Conversões e exemplos:
 Exemplos:
 
 ```bash
-tko build tests t.vpl tests.toml
-tko build tests t.tio README.md extra.tio
-tko build tests pasta tests.toml
+tko tool convert-tests t.vpl -o tests.toml
+tko tool convert-tests README.md extra.tio -o t.tio
+tko tool convert-tests pasta -o tests.toml
 ```
 
 Para padrões de nome personalizados, use `-p`.

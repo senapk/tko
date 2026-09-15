@@ -8,6 +8,7 @@ class TrackPaths(Protocol):
     def get_track_task_folder(self, label: str) -> Path: ...
 
 
+
 class TaskRepository(Protocol):
     @property
     def paths(self) -> TrackPaths: ...

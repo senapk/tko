@@ -23,8 +23,8 @@ _DOWN_OPENING = Msg.parse(
     en="# [y]{key}[]\nDownloading in folder [y]{folder}[]",
 )
 _DOWN_INVALID_REPO_ARG = Msg.parse(
-    pt="O parâmetro para o comando tko down deve a pasta onde você iniciou o repositório.",
-    en="The argument for tko down must be the folder where you initialized the repository.",
+    pt="O parâmetro para o comando tko task download deve a pasta onde você iniciou o repositório.",
+    en="The argument for tko task download must be the folder where you initialized the repository.",
 )
 _DOWN_INVALID_REPO_ARG_ACTION = Msg.parse(
     pt="Navegue ou passe o caminho até a pasta do repositório e tente novamente.",

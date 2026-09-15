@@ -29,7 +29,7 @@ def test_source_list_invokes_source_actions(monkeypatch: MonkeyPatch, tmp_path: 
         def __init__(self, settings: object, repo_arg: object) -> None:
             assert repo_arg is repo
 
-        def list_sources(self):
+        def list_sources(self) -> None:
             calls.append("list")
 
     monkeypatch.setattr(cli_source, "SourceActions", FakeSourceActions)
@@ -51,8 +51,9 @@ def test_source_add_accepts_label_uri_and_authoring(monkeypatch: MonkeyPatch, tm
         def __init__(self, settings: object, repo_arg: object) -> None:
             pass
 
-        def add_source(self, label: str, uri: str, authoring: bool = False):
+        def add_source(self, label: str, uri: str, authoring: bool = False) -> bool:
             captured.update(label=label, uri=uri, authoring=authoring)
+            return True
 
     monkeypatch.setattr(cli_source, "SourceActions", FakeSourceActions)
 
@@ -73,12 +74,14 @@ def test_source_set_authoring_invokes_action(monkeypatch: MonkeyPatch, tmp_path:
         def __init__(self, settings: object, repo_arg: object) -> None:
             pass
 
-        def set_authoring_source(self, label: str):
+        def update_source(self, label: str, uri: str | None = None, authoring: bool = False) -> bool:
+            assert uri is None and authoring
             captured["label"] = label
+            return True
 
     monkeypatch.setattr(cli_source, "SourceActions", FakeSourceActions)
 
-    result = CliRunner().invoke(cli_source.app, ["set-authoring", "labs"], obj=make_settings(tmp_path))
+    result = CliRunner().invoke(cli_source.app, ["set", "labs", "--authoring"], obj=make_settings(tmp_path))
 
     assert result.exit_code == 0
     assert captured == {"label": "labs"}
@@ -95,8 +98,9 @@ def test_source_set_uses_uri_option(monkeypatch: MonkeyPatch, tmp_path: Path) ->
         def __init__(self, settings: object, repo_arg: object) -> None:
             pass
 
-        def update_source(self, label: str, uri: str | None = None):
+        def update_source(self, label: str, uri: str | None = None, authoring: bool = False) -> bool:
             captured.update(label=label, uri=uri)
+            return True
 
     monkeypatch.setattr(cli_source, "SourceActions", FakeSourceActions)
 
@@ -117,12 +121,13 @@ def test_source_rm_invokes_action(monkeypatch: MonkeyPatch, tmp_path: Path) -> N
         def __init__(self, settings: object, repo_arg: object) -> None:
             pass
 
-        def remove_source(self, label: str):
+        def remove_source(self, label: str) -> bool:
             captured["label"] = label
+            return True
 
     monkeypatch.setattr(cli_source, "SourceActions", FakeSourceActions)
 
-    result = CliRunner().invoke(cli_source.app, ["rm", "labs"], obj=make_settings(tmp_path))
+    result = CliRunner().invoke(cli_source.app, ["remove", "labs"], obj=make_settings(tmp_path))
 
     assert result.exit_code == 0
     assert captured == {"label": "labs"}
@@ -139,14 +144,14 @@ def test_source_help_does_not_announce_remote_group() -> None:
     assert "remote task source" not in result.output.lower()
 
 
-def test_root_help_announces_source_not_remote() -> None:
+def test_config_help_announces_source_not_remote() -> None:
     from tko.__main__ import app
 
-    result = CliRunner().invoke(app, ["--help"])
+    result = CliRunner().invoke(app, ["config", "--help"])
 
     assert result.exit_code == 0
     assert "source" in result.output
-    assert "remote" not in result.output
+    assert "Manage remote task sources" not in result.output
 
 
 def test_config_help_does_not_announce_sandbox_command() -> None:

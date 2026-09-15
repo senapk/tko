@@ -1,6 +1,7 @@
 import typer
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Literal
+from tko.enums.diff_mode import DiffMode
 from tko.config.settings import Settings
 from tko.i18n import Msg
 from tko.util.console import Console
@@ -38,12 +39,22 @@ _CLI_TOOL_HTML_OUTPUT_HTML_REQUIRED = Msg.parse(
 
 app = typer.Typer(help="Utility tools for one-off operations")
 
+
+@app.command("pull", help="Perform git pull in many repositories using threads")
+def tool_pull(
+    path: list[Path] = typer.Argument(..., help="Paths to repositories"),
+    threads: int = typer.Option(10, "--threads", "-t", min=1, help="Number of parallel workers"),
+) -> None:
+    from tko.collect.pull import Pull
+
+    Pull.pull_all_parallel(path, threads)
+
 @app.command("mdpp", help="Preprocessor for markdown files")
 def tool_mdpp(
     targets: Optional[list[str]] = typer.Argument(None, help="Readme files or None to default task behavior"),
     quiet: bool = typer.Option(False, "--quiet", "-q", help="quiet mode"),
     clean: bool = typer.Option(False, "--clean", "-c", help="clean mode")
-):
+) -> None:
     from tko.feno.mdpp import Action, Mdpp
 
     target_paths = [Path(x) for x in targets] if targets else [Path("README.md")]
@@ -55,8 +66,8 @@ def tool_mdpp(
         Mdpp.update_file(target, action, quiet)
 
 
-@app.command("tests", help="Convert test cases between supported formats")
-def tool_tests(
+@app.command("convert-tests", help="Convert test cases between supported formats")
+def tool_convert_tests(
     ctx: typer.Context,
     origins: list[str] = typer.Argument(..., help="Input test targets"),
     output: str | None = typer.Option(None, "--output", "-o", help="Output file or directory; defaults to TOML on stdout"),
@@ -65,7 +76,7 @@ def tool_tests(
     unlabel: bool = typer.Option(False, "--unlabel", "-u", help="Remove all labels"),
     number: bool = typer.Option(False, "--number", "-n", help="Number labels"),
     sort: bool = typer.Option(False, "--sort", "-s", help="Sort test cases by input size"),
-):
+) -> None:
     from tko.cmds.cmd_build import CmdBuild
     from tko.util.param import Param
 
@@ -83,7 +94,7 @@ def tool_tests(
 @app.command("older", help="Check if the source is newer than the target")
 def tool_older(
     targets: list[str] = typer.Argument(..., help="Target files or directories")
-):
+) -> None:
     from tko.feno.older import Older
     Console.print(Older.find_older([Path(x) for x in targets]))
 
@@ -92,22 +103,23 @@ def tool_older(
 def tool_diff(
     target_a: str = typer.Argument(..., help="First target to be compared"),
     target_b: str = typer.Argument(..., help="Second target to be compared"),
-    path: bool = typer.Option(False, "--path", "-f", help="Targets are paths"),
-    text: bool = typer.Option(False, "--text", "-t", help="Compare two texts"),
-    side: bool = typer.Option(False, "--side", "-s", help="Diff mode side-by-side"),
-    down: bool = typer.Option(False, "--down", "-d", help="Diff mode up-to-down")
-):
+    input_type: Literal["text", "file"] = typer.Option("text", "--input-type", help="Interpret targets as text or file paths"),
+    diff_mode: DiffMode = typer.Option(DiffMode.DOWN, "--diff-mode", help="Diff layout"),
+) -> None:
     from tko.cmds.cmd_diff import cmd_diff
-    cmd_diff(target_a, target_b, side, path)
+    try:
+        cmd_diff(target_a, target_b, diff_mode, input_type == "file")
+    except OSError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(1) from exc
 
 
 @app.command("rebase", help="Rebase markdown links to work from a new path")
 def tool_rebase_links(
     ctx: typer.Context,
     target: str = typer.Argument(..., help="URL or local path to the source markdown"),
-    output: str = typer.Option(..., "--output", "-o", help="Output markdown file path (default: current directory with source filename)"),
-    relative: str | None = typer.Option(None, "--relative", "-s", help="If None, the rebase will be done relative to target"),
-):
+    output: str = typer.Option(..., "--output", "-o", help="Required output Markdown file path"),
+) -> None:
     import os
     import tempfile
     from tko.util.decoder import Decoder
@@ -123,7 +135,7 @@ def tool_rebase_links(
         file_url: str | None = settings.get_alias_git(alias)
         if file_url is None:
             Console.print(_CLI_TOOL_REBASE_ALIAS_README_FAILED.t().format(alias=alias, error="Alias not found"))
-            return
+            raise typer.Exit(1)
         target = file_url
 
     if target.startswith("https://"):
@@ -157,7 +169,7 @@ def tool_filter(
     force: bool = typer.Option(False, "--force", "-f", help="force mode"),
     quiet: bool = typer.Option(False, "--quiet", "-q", help="quiet mode"),
     indent: int = typer.Option(0, "--indent", "-i", help="indent using spaces")
-):
+) -> None:
     from tko.feno.filter import CodeFilter
 
     is_recursive = recursive or cheat
@@ -174,7 +186,7 @@ def tool_html(
     input_file: str = typer.Argument(..., help="Input markdown file"),
     output_file: str = typer.Argument(..., help="Output HTML file"),
     title: str = typer.Option("Problema", "--title", help="Title of the HTML file")
-):
+) -> None:
     from tko.feno.title import FenoTitle
     from tko.feno.html import convert_markdown_to_html
 
@@ -192,7 +204,6 @@ def tool_html(
 @app.command("migrate", help="Migrate persisted task identities offline")
 def tool_migrate(
     workspace: Path = typer.Argument(Path("."), help="Workspace containing .tko (defaults to the current directory)"),
-    apply: bool = typer.Option(True, "--apply", help="Apply after validation, with a backup (default)"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Show the migration plan without changing files"),
     mapping: Path | None = typer.Option(None, "--map", help="JSON map of old keys to canonical keys"),
     recover: bool = typer.Option(False, "--recover", help="Roll back an interrupted migration"),

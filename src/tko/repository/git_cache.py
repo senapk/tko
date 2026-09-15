@@ -40,8 +40,8 @@ _GIT_CACHE_UPDATING = Msg.text(
 )
 
 _GIT_CACHE_UPDATE_FAILED_UPDATE = Msg.text(
-    pt="Falha ao atualizar cache para {url}. Use 'tko reset cache' se estiver com problemas.",
-    en="Failed to update cache for {url}. Use 'tko reset cache' if you are having issues.",
+    pt="Falha ao atualizar cache para {url}. Use 'tko config clear-cache' se estiver com problemas.",
+    en="Failed to update cache for {url}. Use 'tko config clear-cache' if you are having issues.",
 )
 
 

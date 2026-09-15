@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from typing import Protocol
 from loguru import logger
 
-from tko.config.settings import Settings
 from tko.i18n import Msg
 from tko.repository.remote import Source, SourceType
 from tko.repository.repository import Repository
@@ -74,10 +74,15 @@ _SOURCE_LINKED_PROFILE_CONTROLLED = Msg.text(
 )
 
 
+class SourceSettings(Protocol):
+    def has_alias_git(self, alias: str) -> bool: ...
+    def get_alias_git(self, alias: str) -> str | None: ...
+
+
 class SourceActions:
-    def __init__(self, settings: Settings, repo: Repository):
-        self.settings = settings
-        self.repo = repo
+    def __init__(self, settings: SourceSettings, repo: Repository) -> None:
+        self.settings: SourceSettings = settings
+        self.repo: Repository = repo
 
     def list_sources(self) -> None:
         sources = self.repo.sources
@@ -123,28 +128,28 @@ class SourceActions:
         logger.warning(str(_SOURCE_NOT_FOUND).format(label=label))
         return False
 
-    def update_source(self, label: str, uri: str | None = None) -> bool:
+    def update_source(self, label: str, uri: str | None = None, authoring: bool = False) -> bool:
+        if uri is None and not authoring:
+            raise ValueError("Specify --uri or --authoring")
         if self._sources_are_profile_controlled():
             return False
-        source = self.repo.data.get_source(label)
+        source: Source | None = self.repo.data.get_source(label)
         if source is None:
             logger.warning(_SOURCE_NOT_FOUND.t().format(label=label))
             return False
-        if uri is None:
-            self.show_source(source)
-            return True
-
-        updated = self._source_from_uri(label, uri)
-        previous = source
+        updated: Source = self._source_from_uri(label, uri) if uri is not None else source
+        previous_authoring: str = self.repo.data.authoring_source
         self.repo.data.set_source(updated)
         try:
-            if label == self.repo.data.authoring_source:
+            if authoring:
+                self.repo.data.set_authoring_source(label)
+            elif label == previous_authoring:
                 self.repo.data.validate_authoring_source()
         except ValueError as error:
-            self.repo.data.set_source(previous)
+            self.repo.data.set_source(source)
+            self.repo.data.authoring_source = previous_authoring
             logger.warning(str(error))
             return False
-
         RepositoryLoader(self.repo).save()
         logger.info(str(_SOURCE_UPDATED_SUCCESS).format(label=label))
         return True

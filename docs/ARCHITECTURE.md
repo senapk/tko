@@ -26,13 +26,10 @@ Responsabilidades:
 
 Subapps principais:
 
-- build
 - task
+- index
 - config
-- reset
-- source
 - collect
-- class
 - tool
 
 ## Contexto e configuração

@@ -7,6 +7,7 @@ import io
 import json
 from pathlib import Path
 import re
+import tempfile
 from collections.abc import Mapping
 
 from tko.feno.task_source import activity_path_from_local_link
@@ -14,6 +15,29 @@ from tko.game.quest_parser import QuestParser
 from tko.game.task_matcher import TaskMatcher
 from tko.logger.log_history import LogHistory
 from tko.logger.tracker import Track, load_track_csv, load_track_jsonl
+from tko.logger.history import HistoryEvent
+from tko.logger.versions_writer import VersionsWriter
+
+
+def _merge_history_bytes(first: bytes, second: bytes) -> bytes:
+    """Merge two independent snapshot histories into one valid diff chain."""
+    with tempfile.TemporaryDirectory(prefix="tko-history-merge-") as folder:
+        root: Path = Path(folder)
+        first_path: Path = root / "first.jsonl"
+        second_path: Path = root / "second.jsonl"
+        output_path: Path = root / "merged.jsonl"
+        first_path.write_bytes(first)
+        second_path.write_bytes(second)
+        snapshots = VersionsWriter().load_history(first_path).snapshots + VersionsWriter().load_history(second_path).snapshots
+        writer: VersionsWriter = VersionsWriter()
+        seen: set[tuple[object, str]] = set()
+        for snapshot in sorted(snapshots, key=lambda item: item.timestamp):
+            identity = (snapshot.timestamp, snapshot.hash_value)
+            if identity in seen:
+                continue
+            seen.add(identity)
+            writer.write(output_path, snapshot.content, snapshot.timestamp)
+        return output_path.read_bytes()
 from tko.repository.remote import Source
 from tko.repository.repository_config_migration import canonical_repository_config
 from tko.repository.task_data_format import (
@@ -362,12 +386,14 @@ class TaskDataMigration:
 
         original: dict[str, bytes] = {}
         desired: dict[str, bytes] = {}
-        track_records: dict[str, list[Track]] = {}
+        history_events: dict[str, list[HistoryEvent]] = {}
+        unified_history_present: bool = (self.root / ".tko" / "history").is_dir()
         for relative in sorted(self.plan.inventory):
             path = safe_path(self.root, relative)
             content: bytes = self._read(path)
             original[relative] = content
             destination: str = relative
+            destination_path: Path = Path(destination)
             if relative.startswith(".tko/log/"):
                 if path.suffix != ".log" or path.parent != self.root / ".tko" / "log":
                     self.plan.errors.append(f"Unsupported log file: {relative}")
@@ -378,18 +404,53 @@ class TaskDataMigration:
                         self.plan.errors.append(f"Invalid daily log filename: {relative}")
                     content = self._log(path, content)
             elif relative.startswith((".tko/track/", ".tko/audit/")):
-                destination = self._history_destination(relative)
-                if relative.startswith(".tko/track/") and path.name in {"track.csv", "track.jsonl"}:
-                    destination = Path(destination).with_name("track.jsonl").as_posix()
+                if unified_history_present:
+                    desired[relative] = content
+                    continue
+                legacy_destination: str = self._history_destination(relative)
+                family: str = Path(legacy_destination).parts[1]
+                destination_path: Path = Path(".tko") / "history" / Path(*Path(legacy_destination).parts[2:])
+                if family == "track" and path.name in {"track.csv", "track.jsonl"}:
+                    event_destination: str = destination_path.with_name("events.jsonl").as_posix()
                     try:
                         records: list[Track] = (
                             load_track_csv(content, path) if path.name == "track.csv"
                             else load_track_jsonl(content, path)
                         )
-                        track_records.setdefault(destination, []).extend(records)
+                        history_events.setdefault(event_destination, []).extend(
+                            HistoryEvent(
+                                record.timestamp,
+                                "execution",
+                                tuple(item.split(":", 1)[0] for item in record.file_stamp_list),
+                                record.result,
+                            )
+                            for record in records
+                        )
                     except ValueError as exc:
                         self.plan.errors.append(str(exc))
                     continue
+                if family == "audit":
+                    remainder: Path = Path(*destination_path.parts[3:])
+                    source_prefix: str = destination_path.parts[2]
+                    candidates: list[tuple[int, str, Path]] = []
+                    for identity in self.candidates:
+                        source, separator, task_path = identity.partition("@")
+                        if separator and source == source_prefix:
+                            prefix = Path(task_path)
+                            if remainder.as_posix().startswith(prefix.as_posix() + "/"):
+                                candidates.append((len(prefix.parts), identity, prefix))
+                    if candidates:
+                        _, _, task_path = max(candidates, key=lambda item: item[0])
+                        task_relative: str = remainder.relative_to(task_path).as_posix()
+                        event_destination = (Path(".tko") / "history" / source_prefix / task_path / "events.jsonl").as_posix()
+                        try:
+                            snapshots = VersionsWriter().load_history(path).snapshots
+                            history_events.setdefault(event_destination, []).extend(
+                                HistoryEvent(snapshot.timestamp.strftime("%Y-%m-%d_%H-%M-%S"), "audit", (task_relative,))
+                                for snapshot in snapshots
+                            )
+                        except (OSError, ValueError):
+                            pass
             elif path in configurations:
                 if path == config_paths[0]:
                     config: DataDict = configurations[path]
@@ -404,19 +465,28 @@ class TaskDataMigration:
             elif path.suffix == ".csv":
                 content = self._csv(path, content)
             elif path.name == FORMAT_FILE:
-                if task_format_version(content) not in {1, 2, 3, 4}:
+                if task_format_version(content) not in {1, 2, 3, 4, 5}:
                     self.plan.errors.append(f"Unsupported task format: {relative}")
             _ = safe_path(self.root, destination)
-            if destination in desired and desired[destination] != content:
+            if relative.startswith((".tko/track/", ".tko/audit/")):
+                destination = destination_path.as_posix()
+            if destination in desired and desired[destination] != content and destination.startswith(".tko/history/") and destination.endswith((".json", ".jsonl")):
+                # Track and audit used independent history files. Merge their entries
+                # into the unified file, rebuilding a valid diff chain.
+                try:
+                    desired[destination] = _merge_history_bytes(desired[destination], content)
+                except (OSError, ValueError):
+                    self.plan.errors.append(f"Invalid histories at {destination}; no files will be overwritten")
+            elif destination in desired and desired[destination] != content:
                 self.plan.errors.append(f"Conflicting histories at {destination}; no files will be overwritten")
             else:
                 desired[destination] = content
-        for destination, records in track_records.items():
-            unique: dict[tuple[str, str, tuple[str, ...]], Track] = {}
-            for record in records:
-                unique.setdefault(record.identity(), record)
+        for destination, events in history_events.items():
+            unique: dict[tuple[str, str, tuple[str, ...], str | None], HistoryEvent] = {
+                (event.timestamp, event.kind, event.files, event.result): event for event in events
+            }
             desired[destination] = "".join(
-                record.to_json_line() for record in sorted(unique.values(), key=lambda item: item.timestamp)
+                event.to_json_line() for event in sorted(unique.values(), key=lambda item: item.timestamp)
             ).encode("utf-8")
         desired[f".tko/{FORMAT_FILE}"] = FORMAT_BYTES
         for relative in sorted(original.keys() | desired.keys()):

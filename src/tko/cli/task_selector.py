@@ -15,9 +15,9 @@ SelectionMode = Literal["materialized", "downloadable"]
 class TaskSelector:
     """Resolve an explicit task, the current task folder, or an interactive choice."""
 
-    def __init__(self, repo: Repository, settings: Settings | None = None):
-        self.repo = repo
-        self.settings = settings
+    def __init__(self, repo: Repository, settings: Settings | None = None) -> None:
+        self.repo: Repository = repo
+        self.settings: Settings | None = settings
 
     def select(
         self,
@@ -31,7 +31,7 @@ class TaskSelector:
             if len(exact) == 1:
                 return exact[0]
 
-        if pattern is None:
+        if pattern is None and not use_fzf:
             current = self._current_task(tasks)
             if current is not None:
                 return current
@@ -67,10 +67,33 @@ class TaskSelector:
             return [task for task in tasks if task.location.is_external and not self.is_materialized(task)]
         return [task for task in tasks if self.is_materialized(task)]
 
+    def select_path(self, path: Path | None = None, use_fzf: bool = False) -> Task | None:
+        """Resolve existing paths; only an omitted path can open a selector."""
+        if path is None:
+            return self.select(use_fzf=use_fzf)
+        if use_fzf:
+            raise ValueError("Paths cannot be combined with --fzf")
+        if not path.exists():
+            raise ValueError(f"Path not found: {path}")
+        task: Task | None = self._task_at(path, self._eligible_tasks("materialized"))
+        if task is None:
+            raise ValueError(f"No materialized task contains: {path}")
+        return task
+
+    def _task_at(self, path: Path, tasks: list[Task]) -> Task | None:
+        current: Path = path.resolve()
+        matches: list[Task] = [task for task in tasks if current.is_relative_to(self.task_folder(task))]
+        if not matches:
+            return None
+        # A nested activity owns its own files instead of its parent's files.
+        depth: int = max(len(self.task_folder(task).parts) for task in matches)
+        closest: list[Task] = [task for task in matches if len(self.task_folder(task).parts) == depth]
+        if len(closest) != 1:
+            raise ValueError(f"More than one task contains: {path}")
+        return closest[0]
+
     def _current_task(self, tasks: list[Task]) -> Task | None:
-        current = Path.cwd().resolve()
-        matches = [task for task in tasks if current.is_relative_to(self.task_folder(task))]
-        return matches[0] if len(matches) == 1 else None
+        return self._task_at(Path.cwd(), tasks)
 
     def _rendered_tasks(self, tasks: list[Task]) -> dict[str, str]:
         fallback = {task.basic.full_key: f"{task.basic.full_key}  {task.basic.title}" for task in tasks}

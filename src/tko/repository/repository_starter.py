@@ -124,7 +124,7 @@ class RepositoryStarter:
         Console.print(_REPO_ASK_DEFAULT_SOURCES, end="")
         answer = input().lower()
         if answer == "n":
-            Console.print(_REPO_NONE_ADDED.t().format(cmd="tko source add LABEL URI"))
+            Console.print(_REPO_NONE_ADDED.t().format(cmd="tko config source add LABEL URI"))
             return
         Console.print(_REPO_ASK_DEFAULT_SOURCES_FUP.t())
         Console.print(_REPO_ASK_DEFAULT_SOURCES_POO.t())

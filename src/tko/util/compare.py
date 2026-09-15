@@ -23,7 +23,7 @@ class Compare:
         return expected, received
     
     @staticmethod
-    def text(capsys: pytest.CaptureFixture[str], file: str, cmd: str):
+    def text(capsys: pytest.CaptureFixture[str], file: str, cmd: str) -> None:
         Compare.list(capsys, file, cmd.split(" "))
 
     @staticmethod
@@ -31,7 +31,7 @@ class Compare:
         runner = CliRunner()
         if isinstance(cmd_list, str):
             cmd_list = cmd_list.split(" ")
-        full_cmd = cmd_list if "--lang" in cmd_list else ["--lang", "pt", *cmd_list]
+        full_cmd = cmd_list if "--ui-language" in cmd_list else ["--ui-language", "pt", *cmd_list]
         with Console.capture() as captured:
             result = runner.invoke(app, full_cmd)
         if result.exception:
@@ -47,8 +47,8 @@ class Compare:
 
 
     @staticmethod
-    def list(capsys: pytest.CaptureFixture[str], file: str, cmd_list: Sequence[str]):
-        full_cmd = cmd_list if "--lang" in cmd_list else ["--lang", "pt", *cmd_list]
+    def list(capsys: pytest.CaptureFixture[str], file: str, cmd_list: Sequence[str]) -> None:
+        full_cmd = cmd_list if "--ui-language" in cmd_list else ["--ui-language", "pt", *cmd_list]
         received = Compare.run(full_cmd)
         expected, received = Compare.load_and_save(file, received)
         if expected != received:

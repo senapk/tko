@@ -64,33 +64,33 @@ O destino pode ser omitido. Nesse caso, o resultado é escrito como TOML na
 saída padrão:
 
 ```bash
-tko util tests tests.toml > normalized.toml
+tko tool convert-tests tests.toml > normalized.toml
 ```
 
 Gerar `t.vpl` a partir de `tests.toml`:
 
 ```bash
-tko util tests tests.toml -o t.vpl
+tko tool convert-tests tests.toml -o t.vpl
 ```
 
 Gerar `t.tio` a partir de `README.md` e `extra.tio`:
 
 ```bash
-tko util tests README.md extra.tio -o t.tio
+tko tool convert-tests README.md extra.tio -o t.tio
 ```
 
 Extrair testes para uma pasta:
 
 ```bash
 mkdir pasta
-tko util tests tests.toml -o pasta
+tko tool convert-tests tests.toml -o pasta
 ```
 
 Extrair de `cases.tio`:
 
 ```bash
 mkdir pasta
-tko util tests cases.tio -o pasta
+tko tool convert-tests cases.tio -o pasta
 ```
 
 ## Testes em pasta
@@ -117,7 +117,7 @@ Use `--write-pattern` para escolher os nomes dos arquivos gerados. O caractere `
 como marcador da numeracao.
 
 ```bash
-tko util tests cases.tio -o pasta/ --write-pattern "in.@ out.@"
+tko tool convert-tests cases.tio -o pasta/ --write-pattern "in.@ out.@"
 ```
 
 Padroes comuns:

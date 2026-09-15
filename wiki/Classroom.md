@@ -37,13 +37,13 @@ O aluno:
 Exemplo de configuração de fonte:
 
 ```bash
-tko source add fup @fup
+tko config source add fup @fup
 ```
 
 Para apontar para um repositório personalizado:
 
 ```bash
-tko source add disciplina https://github.com/<usuario-ou-org>/<repositorio>
+tko config source add disciplina https://github.com/<usuario-ou-org>/<repositorio>
 ```
 
 ## Opção 2: professor cria em lote
@@ -92,9 +92,9 @@ Fluxo comum:
 Exemplos:
 
 ```bash
-tko class pull aluno1 aluno2 aluno3
-tko class tasks aluno1 aluno2 aluno3
-tko class skills aluno1 aluno2 aluno3
+tko tool pull aluno1 aluno2 aluno3
+tko collect tasks aluno1 aluno2 aluno3 --csv tasks.csv
+tko collect skills aluno1 aluno2 aluno3 --csv skills.csv --source course --language py
 ```
 
 Os argumentos são caminhos para os repositórios locais dos alunos. Eles podem ser informados um a um ou expandidos pelo shell, conforme a organização da pasta.

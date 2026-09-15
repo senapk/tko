@@ -9,10 +9,11 @@ Workspaces com logs, versões ou estado de seleção sem a versão desse formato
 precisam passar pela ferramenta antes de serem abertos. Workspaces novos recebem
 o marcador automaticamente na primeira gravação. O marcador `.tko/task-format.json`
 é independente da versão da configuração e do campo `v` dos eventos.
-O formato atual é a versão 4, que inclui a localização das pastas de atividades,
-o histórico de execuções em `track.jsonl` e a configuração atual em
-`repository.toml`. Quem já executou uma migração anterior deve executar o comando
-novamente.
+O formato atual é a versão 5. Ele usa um histórico unificado em
+`.tko/history/<fonte>/<atividade>/`, com snapshots em `files/` e eventos em
+`events.jsonl`. Eventos `execution` podem conter o resultado dos testes; eventos
+`audit` registram apenas alterações observadas. Quem já executou uma migração
+anterior deve executar o comando novamente.
 
 ## Aplicar ou simular
 
@@ -25,9 +26,8 @@ tko tool migrate /caminho/do/workspace
 
 Sem opções, o comando aplica a migração após validá-la e cria um backup. Para
 revisar correspondências, arquivos afetados e erros sem escrever no workspace,
-use `--dry-run`. `--apply` continua aceito por compatibilidade, mas já é o
-comportamento padrão. `tko util migrate` é o mesmo comando no grupo de
-utilitários já existente.
+use `--dry-run`. Sem path, o comando valida e usa o diretório atual.
+Também é possível selecionar o diretório com `tko -C /caminho/do/workspace tool migrate`.
 
 ```sh
 tko tool migrate /caminho/do/workspace --dry-run
@@ -71,9 +71,9 @@ renomeações. Logs muito antigos sem fonte podem receber a chave completa pelo 
 ## O que é preservado
 
 A ferramenta atualiza as chaves nos logs diários e no `history.csv`, as referências
-de seleção/fixação/expansão na configuração YAML ou TOML e as pastas de `track` e
-`audit`. Reconhece tanto `track/fonte@rotulo` quanto `track/fonte/rotulo`, com a mesma
-regra para `audit`. Campos desconhecidos dos logs diários, versões dos eventos,
+de seleção/fixação/expansão na configuração YAML ou TOML e combina as pastas antigas
+de `track` e `audit` no histórico unificado. Reconhece tanto `track/fonte@rotulo`
+quanto `track/fonte/rotulo`, com a mesma regra para `audit`. Campos desconhecidos dos logs diários, versões dos eventos,
 timestamps e bytes dos snapshots são preservados. Configurações alteradas podem
 ser reformatadas, preservando seus campos.
 
@@ -86,8 +86,8 @@ Campos desconhecidos são preservados quando representáveis em TOML; valores
 `null` desconhecidos bloqueiam a conversão, pois TOML não possui esse valor.
 O carregamento normal não converte mais configurações antigas.
 
-O histórico de execuções `track.csv` é convertido para `track.jsonl`, com um objeto
-por linha contendo `timestamp`, `result` e `files`. Se houver históricos antigos e
+O histórico de execuções `track.csv` é convertido para `events.jsonl`, com um objeto
+por linha contendo `timestamp`, `type: "execution"`, `result` e `files`. Se houver históricos antigos e
 atuais da mesma atividade, os registros são reunidos e ordenados por horário.
 Somente registros inteiramente iguais são reduzidos a uma cópia; execuções
 distintas no mesmo segundo permanecem separadas. Arquivos CSV são removidos pela

@@ -1,161 +1,187 @@
 # Referência rápida da CLI
 
-Esta página resume os comandos mais usados do TKO para consulta rápida.
+Use `tko --help` e `tko <grupo> <comando> --help` para consultar opções.
 
-> Dica: para detalhes completos, use `tko --help` e `tko <comando> --help`.
+## Opções globais
 
-## Fluxo mínimo do aluno (disciplina)
+As opções globais vêm antes do comando:
 
-Primeira configuração:
+- `-C, --changedir PATH`: diretório efetivo para procurar repositórios e resolver caminhos relativos de qualquer comando.
+- `-S, --settings PATH`: pasta de configurações, relativa ao diretório de invocação, antes de aplicar `-C`.
+- `--ui-language pt|en`: idioma da interface, salvo na configuração global.
+- `-w, --width N`: largura do terminal.
+- `-m, --mono`: saída sem cores.
+- `-D, --debug`: diagnóstico detalhado.
+- `-U, --update`: força atualização das fontes remotas.
+- `-O, --offline`: desativa tentativas de atualização.
+- `-v, --version`: mostra a versão.
 
 ```bash
-tko init
-tko source add <label> <url_git_do_professor>
+tko --ui-language pt -C meu-repositorio task list
+```
+
+## Inicialização e execução
+
+```bash
+tko init --language py
+tko init --skip-sources
+tko init --profile URL_DO_PERFIL
+tko config source add course URL_DO_INDICE
 tko open
+tko open --audit
+tko run [ARQUIVOS_OU_DIRETORIOS...] --language py --diff-mode side --failures first
 ```
 
-Resumo do comportamento remoto:
+`open` abre a interface do repositório; `run` executa testes no terminal e também
+funciona com arquivos independentes, sem um repositório TKO.
+`--failures first|all|none` controla as falhas exibidas; o padrão é `first`.
+`run --filter/-F` filtra os solvers temporariamente. `--index/-i` escolhe um teste.
 
-- O TKO clona o repositório remoto na primeira vez.
-- Mantém cache por 1 hora.
-- Após esse período, tenta atualizar ao abrir novamente.
-- Novas atividades publicadas pelo professor passam a aparecer para os alunos.
-
-## Comandos globais
+## Atividades: task
 
 ```bash
-tko --help
-tko --version
+tko task list --all
+tko task list --downloaded
+tko task show [PATH] --width 100 --height 12
+tko task show [PATH] --graph-only
+tko task open [PATHS...] --diff-mode side
+tko task tests [PATHS...]
+tko task download [CHAVE]
+tko task build [DIRETORIOS...]
 ```
 
-Opções globais úteis:
+`show`, `open` e `tests` recebem caminhos existentes. Um path pode apontar para
+um arquivo ou diretório. `show` identifica a atividade que contém esse caminho;
+`open` e `tests` também aceitam vários arquivos ou diretórios.
+Sem path, os comandos usam a atividade que contém a pasta atual, inclusive suas
+subpastas. Fora de uma atividade, oferecem seleção numérica. `--fzf/-f` solicita
+explicitamente seleção por fzf, mesmo dentro de uma atividade.
+Não combine paths explícitos com `--fzf`.
 
-- `-C, --changedir`: define diretório do repositório
-- `-S, --settings`: define pasta de configurações
-- `-w, --width`: largura de terminal
-- `-m, --mono`: desativa cores
-- `-D, --debug`: ativa debug
-- `-L, --local-cache`: usa cache local para fontes remotas
-- `-U, --update`: força atualização de fontes remotas
-- `-O, --offline`: desativa tentativas de atualização
+`show` exige uma atividade materializada reconhecida no repositório; `open`
+exige um repositório. `tests` com caminhos explícitos também funciona com
+arquivos independentes. Um path inválido retorna erro, sem ser interpretado
+como chave. Cancelar a seleção é uma saída normal.
 
-## task
+`download` recebe uma chave como `course@labs/fila` e oferece apenas atividades
+externas ainda não baixadas. Sem chave, abre seleção numérica; aceita `--fzf/-f`.
+O download prepara arquivos e rascunhos para execução.
 
-Fluxo do aluno para listar/abrir/rodar tarefas.
+`task open --filter/-F` filtra solvers temporariamente. `run` e `task open`
+herdam o modo de diff da configuração, salvo quando `--diff-mode` é informado.
+
+## Índices: index
 
 ```bash
-tko task --help
+tko index build README.md --from labs
+tko index download README.md [CAMINHOS_DE_ATIVIDADES...]
+tko index update README.md [CAMINHOS_DE_ATIVIDADES...]
 ```
 
-Exemplos:
+`build` valida e atualiza o índice. `download` copia atividades externas para
+fontes locais e reescreve os links do índice. `update` substitui os diretórios
+materializados pelo conteúdo da origem, removendo seu conteúdo anterior.
+
+## Configuração e instalação: config
+
+`config` reúne preferências globais, configuração de fontes e perfis do
+repositório, manutenção da instalação e limpeza de cache. `-C` seleciona o
+repositório para `config source/profile`; `-S` seleciona a pasta de configuração
+global para `config set/list/reset`.
+
+### Fontes e perfis
 
 ```bash
-tko task list
-tko task show [chave_da_tarefa]
-tko task open [diretorio] [-f|--fzf]
-tko task tests [README_ou_diretorio] [-f|--fzf]
-tko task down [chave_da_tarefa] [-f|--fzf]
+tko config source list
+tko config source add python python/README.md --authoring
+tko config source set python --uri novo/README.md --authoring
+tko config source set python --authoring
+tko config source remove python
+tko config profile link URL_DO_PERFIL
+tko config profile status
+tko config profile update
+tko config profile unlink
 ```
 
-Sem argumento, `show`, `open` e `tests` usam a tarefa da pasta atual quando
-possível; caso contrário, oferecem seleção numérica ou FZF. Em `open`, o filtro
-de solver usa `--filter` ou `-F`.
+`config source set` exige `--uri`, `--authoring` ou ambos. As alterações são validadas
+juntas antes de salvar. Fontes controladas por um perfil vinculado não podem
+ser alteradas localmente. `config profile unlink` mantém o perfil atual localmente.
 
-## build
-
-Ferramentas de construção e conversão de artefatos.
+### Preferências globais e cache
 
 ```bash
-tko build --help
+tko config list
+tko config set --diff-mode side --editor code --timeout 5
+tko config reset
+tko config clear-cache
 ```
 
-Exemplos comuns:
+`config reset` restaura a configuração global. `config clear-cache` remove o cache
+Git global das fontes remotas. Não apaga os repositórios de trabalho.
+
+## Relatórios e turmas
 
 ```bash
-tko build tests pasta cases.tio
-tko build tests t.vpl testes.tio
-tko build tests t.tio README.md extra.tio
+tko collect repo --resume
+tko collect repo --history --game --json
+tko collect repo --daily --width 100 --height 10
+tko collect tasks aluno1 aluno2 --csv tasks.csv
+tko collect skills aluno1 aluno2 --csv skills.csv --source course --language py
+tko tool pull aluno1 aluno2 --threads 10
 ```
 
-## class
+`collect repo` trabalha no repositório atual; `tasks` e `skills` produzem
+relatórios CSV de vários repositórios. `tool pull` atualiza repositórios via Git em paralelo.
+O gráfico de uma atividade está em `task show --graph-only`.
 
-Fluxos de turma/disciplina.
+## Auditoria
 
 ```bash
-tko class --help
+tko audit on --interval 30
+tko audit off
+tko audit start --interval 30
+tko audit preview [PATHS...]
+tko audit unpack ARQUIVO.jsonl
 ```
 
-## source
+`on/off` configuram auditoria persistente. `start` executa um monitor em primeiro
+plano até Ctrl+C. `open --audit` ativa auditoria para aquela sessão.
 
-Gerência de fontes remotas/repositórios.
+## Ferramentas
 
 ```bash
-tko source --help
+tko tool mdpp README.md
+tko tool convert-tests README.md extra.tio -o tests.toml
+tko tool convert-tests pasta -o tests.toml --read-pattern "in.@ out.@"
+tko tool convert-tests tests.toml -o pasta/ --write-pattern "@.in @.sol"
+tko tool diff "texto A" "texto B" --diff-mode side
+tko tool diff esperado.txt recebido.txt --input-type file --diff-mode down
+tko tool rebase README.md -o docs/README.md
+tko tool filter solver.cpp
+tko tool html README.md pagina.html
+tko tool older arquivo-ou-diretorio
 ```
 
-## config
+`convert-tests` escreve TOML na saída padrão quando `--output/-o` é omitido.
+`diff` interpreta os alvos como texto por padrão; use `--input-type file` para
+arquivos. Seu modo de diff padrão é `down`. Arquivos inexistentes geram erro.
+`rebase` exige destino explícito com `--output/-o`.
 
-Configuração do ambiente do TKO.
-
-```bash
-tko config --help
-```
-
-## reset
-
-Operações de reset de estado/cache quando necessário.
+## Migração e instalação
 
 ```bash
-tko reset --help
-```
-
-## collect
-
-Fluxos de coleta de atividades/resultados.
-
-```bash
-tko collect --help
-```
-
-## tool
-
-Ferramentas auxiliares de conteúdo e automação.
-
-```bash
-tko tool --help
-```
-
-Exemplos:
-
-```bash
-tko tool rebase-links @fup
-tko tool filter
-tko tool mdpp
+tko tool migrate --dry-run
+tko tool migrate
 tko tool migrate /caminho/do/workspace
+tko tool migrate --recover
+tko config self-update
+tko config uninstall
 ```
 
-A migração é aplicada por padrão; use `--dry-run` para revisar os resultados sem
-alterar arquivos. `--apply` continua aceito por compatibilidade.
-Consulte [Migração dos dados de tarefas](TASK_DATA_MIGRATION.md) para mapas explícitos,
-backups e recuperação.
+Sem path, `migrate` valida e usa o diretório atual, incluindo o definido por
+`-C`. A migração é aplicada por padrão, com backup. `--dry-run` apenas inspeciona;
+`--map ARQUIVO.json` fornece correspondências explícitas; `--recover` reverte
+uma migração interrompida e não pode ser combinado com `--dry-run` ou `--map`.
+Consulte [Migração dos dados de tarefas](TASK_DATA_MIGRATION.md).
 
-## Diagnóstico rápido
-
-Quando algo não funcionar:
-
-1. Confirme versão e help:
-
-```bash
-tko --version
-tko --help
-```
-
-2. Rode testes do projeto local:
-
-```bash
-uv run pytest -q
-```
-
-3. Consulte FAQ:
-
-- `docs/FAQ.md`
+Os nomes e opções substituídos foram removidos, sem aliases de compatibilidade.

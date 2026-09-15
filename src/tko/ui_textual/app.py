@@ -983,8 +983,9 @@ class TkoApp(App[Callable[[], None] | None]):
         if not isinstance(task, Task):
             self.notify("Selecione uma tarefa para abrir suas versões.", severity="warning")
             return
-        track = self.repo.paths.get_track_task_folder(task.basic.full_key)
-        files = [path for path in track.rglob("*") if path.is_file() and path.suffix in (".json", ".jsonl")] if track.exists() else []
+        history = self.repo.paths.get_history_task_folder(task.basic.full_key)
+        files_root = history / "files"
+        files = [path for path in files_root.rglob("*") if path.is_file() and path.suffix in (".json", ".jsonl")] if files_root.exists() else []
         if not files:
             self.notify("Não há versões registradas para esta tarefa.", severity="warning")
             return

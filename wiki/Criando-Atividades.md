@@ -237,13 +237,13 @@ Fluxo tipico:
 2. Valide o indice e as tarefas localmente.
 3. Faca commit e push para o GitHub.
 4. Informe aos alunos a URL do repositorio.
-5. Oriente os alunos a registrar a fonte com `tko source add`.
+5. Oriente os alunos a registrar a fonte com `tko config source add`.
 
 Exemplo para o aluno:
 
 ```bash
 tko init
-tko source add disciplina https://github.com/<usuario>/<repositorio>
+tko config source add disciplina https://github.com/<usuario>/<repositorio>
 tko open
 ```
 

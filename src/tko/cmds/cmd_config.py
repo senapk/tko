@@ -29,21 +29,20 @@ _CONFIG_TIMEOUT_CHANGED = Msg.parse(
 )
 
 class ConfigParams:
-    def __init__(self):
-        self.side: bool = False
-        self.down: bool = False
+    def __init__(self) -> None:
+        self.diff_mode: DiffMode | None = None
         self.images: str | None = None
         self.editor: str | None = None
         self.timeout: int | None = None
 
     # @override
     def __str__(self) -> str: 
-        return f"side: {self.side}, down: {self.down}, timeout: {self.timeout}, editor: {self.editor}, images: {self.images}"
+        return f"diff_mode: {self.diff_mode}, timeout: {self.timeout}, editor: {self.editor}, images: {self.images}"
 
 class CmdConfig:
         
     @staticmethod
-    def execute(settings: Settings, param: ConfigParams):
+    def execute(settings: Settings, param: ConfigParams) -> None:
         action = False
 
         if param.images is not None:
@@ -52,11 +51,11 @@ class CmdConfig:
             status = "True" if param.images == "1" else "False"
             Console.print(_CONFIG_IMAGES_STATUS.t().format(status=status))
             
-        if param.side:
+        if param.diff_mode == DiffMode.SIDE:
             action = True
             settings.app.diff_mode = DiffMode.SIDE
             Console.print(_CONFIG_DIFF_MODE_SIDE)
-        if param.down:
+        if param.diff_mode == DiffMode.DOWN:
             action = True
             settings.app.diff_mode = DiffMode.DOWN
             Console.print(_CONFIG_DIFF_MODE_DOWN)

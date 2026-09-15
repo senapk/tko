@@ -17,13 +17,13 @@ Uso recomendado:
 
 - distribuição compacta de testes
 - versionamento simples
-- conversão para outros formatos via `tko build`
+- conversão para outros formatos via `tko tool convert-tests`
 
 Operações comuns:
 
 ```bash
-tko build tests pasta tests.toml
-tko build tests t.vpl tests.toml
+tko tool convert-tests pasta -o tests.toml
+tko tool convert-tests t.vpl -o tests.toml
 ```
 
 Observação:
@@ -42,13 +42,13 @@ Estrutura esperada:
 Conversão a partir de `tests.toml`:
 
 ```bash
-tko build tests pasta tests.toml
+tko tool convert-tests pasta -o tests.toml
 ```
 
 Personalização de nomes com `-p`:
 
 ```bash
-tko build tests pasta tests.toml -p "in.@ out.@"
+tko tool convert-tests pasta -o tests.toml --read-pattern "in.@ out.@"
 ```
 
 Exemplos de padrão:

@@ -13,8 +13,8 @@ from yaml import YAMLError, safe_load
 
 FORMAT_FILE = "task-format.json"
 PENDING_FILE = "migration-pending.json"
-FORMAT_VERSION = 4
-FORMAT_BYTES = b'{"version": 4}\n'
+FORMAT_VERSION = 5
+FORMAT_BYTES = b'{"version": 5}\n'
 STATE_FIELDS = frozenset({"selected", "pinned", "expanded"})
 
 type DataValue = str | int | float | bool | None | list[DataValue] | dict[str, DataValue]
@@ -94,7 +94,7 @@ def require_current_task_data(root: Path) -> None:
         if not is_current_format(marker.read_bytes()):
             raise MigrationRequiredError(f"Formato de tarefas não suportado: {marker}")
         return
-    for name in ("log", "track", "audit"):
+    for name in ("log", "track", "audit", "history"):
         directory: Path = folder / name
         if directory.exists() and (not directory.is_dir() or any(p.is_file() for p in directory.rglob("*"))):
             raise MigrationRequiredError(f"Dados de tarefas precisam de migração. Execute: {command}")

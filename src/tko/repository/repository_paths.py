@@ -10,6 +10,7 @@ class RepositoryPaths:
     TASK_LOG_FILE = "task_log.csv"
     TRACK_FOLDER = "track"
     AUDIT_FOLDER = "audit"
+    HISTORY_FOLDER = "history"
     LOG_FOLDER = "log"
     CONFIG_FOLDER = ".tko"
 
@@ -61,6 +62,10 @@ class RepositoryPaths:
     def audit_folder(self) -> Path:
         return self.root_dir / RepositoryPaths.CONFIG_FOLDER / RepositoryPaths.AUDIT_FOLDER
 
+    @property
+    def history_folder(self) -> Path:
+        return self.root_dir / RepositoryPaths.CONFIG_FOLDER / RepositoryPaths.HISTORY_FOLDER
+
         
     @property
     def config_folder(self) -> Path:
@@ -87,6 +92,9 @@ class RepositoryPaths:
 
     def get_audit_task_folder(self, label: str) -> Path:
         return self._task_history_folder(RepositoryPaths.AUDIT_FOLDER, label)
+
+    def get_history_task_folder(self, label: str) -> Path:
+        return self._task_history_folder(RepositoryPaths.HISTORY_FOLDER, label)
 
     def _task_history_folder(self, history_name: str, label: str) -> Path:
         source, task_key = label.split("@", 1)

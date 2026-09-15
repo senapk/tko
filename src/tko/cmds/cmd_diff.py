@@ -1,5 +1,5 @@
 from __future__ import annotations
-import os
+from pathlib import Path
 from tko.run.diff_builder_down import DiffBuilderDown
 from tko.run.diff_builder_side import DiffBuilderSide
 from tko.enums.diff_mode import DiffMode
@@ -8,17 +8,10 @@ from tko.run.unit import Unit
 from tko.util.console import Console
 
 
-def cmd_diff(target_a: str, target_b: str, side: bool, is_path: bool) -> None:
-    diff_mode = DiffMode.SIDE if side else DiffMode.DOWN
+def cmd_diff(target_a: str, target_b: str, diff_mode: DiffMode, is_path: bool) -> None:
     if is_path:
-        if os.path.isfile(target_a):
-            content_a = open(target_a, 'r', encoding='utf-8').read()
-        else:
-            content_a = "File not found: " + target_a
-        if os.path.isfile(target_b):
-            content_b = open(target_b, 'r', encoding='utf-8').read()
-        else:
-            content_b = "File not found: " + target_b
+        content_a: str = Path(target_a).read_text(encoding="utf-8")
+        content_b: str = Path(target_b).read_text(encoding="utf-8")
     else:
         content_a = target_a.replace('\\n', '\n')
         content_b = target_b.replace('\\n', '\n')

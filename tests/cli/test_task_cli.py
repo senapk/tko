@@ -40,19 +40,18 @@ def test_task_build_passes_explicit_moodle_url(monkeypatch: MonkeyPatch, tmp_pat
 
 
 
-def test_task_down_requires_full_key(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+def test_task_download_requires_repository(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
     runner = CliRunner()
     ctx = _make_app_context(tmp_path)
 
     def fake_load_repo(*_args: object, **_kwargs: object) -> tuple[None, None]:
         return None, None
 
-    monkeypatch.setattr("tko.cli.common.load_repo", fake_load_repo)
+    monkeypatch.setattr("tko.cli.cli_task.load_repo", fake_load_repo)
 
-    result = runner.invoke(app, ["down"], obj=ctx)
+    result = runner.invoke(app, ["download"], obj=ctx)
 
-    # When repo is not found, the command returns silently with exit code 0
-    assert result.exit_code == 0
+    assert result.exit_code == 1
 
 
 def test_task_list_prints_each_duplicate_key_only_once(tmp_path: Path) -> None:

@@ -1,4 +1,5 @@
 import asyncio
+import json
 from pathlib import Path
 
 import pytest
@@ -8,7 +9,6 @@ from tko.enums.execution_result import ExecutionResult
 from tko.game.task import Task
 from tko.game.task_enums import EvalMode
 from tko.game.task_location import TaskLocation
-from tko.logger.tracker import Tracker
 from tko.logger.versions_writer import VersionsWriter
 from tko.repository.remote import Source
 from tko.repository.repository import Repository
@@ -97,7 +97,9 @@ def test_raw_and_tui_execute_with_shared_history(tmp_path: Path, history_state: 
     ctx: RunContext = _context(tmp_path)
     TaskResolutionService().setup_task(ctx)
     assert ctx.track_folder is not None
-    history: Path = ctx.track_folder / "src/py/draft.py.jsonl"
+    assert ctx.repo is not None
+    assert ctx.task is not None
+    history: Path = ctx.repo.paths.get_history_task_folder(ctx.task.basic.full_key) / "files/src/py/draft.py.jsonl"
     original: bytes = b""
     if history_state != "valid":
         VersionsWriter().write(history, "print(0)\n")
@@ -129,14 +131,14 @@ def test_raw_and_tui_execute_with_shared_history(tmp_path: Path, history_state: 
             assert any(str(history) in message for message in notifications) is (history_state == "invalid")
 
     asyncio.run(exercise())
-    tracks = Tracker.load_from_log(str(ctx.track_folder / Tracker.log_file))
-    assert len(tracks) == 2
-    assert all(track.result == "100" for track in tracks)
+    events_path = ctx.repo.paths.get_history_task_folder(ctx.task.basic.full_key) / "events.jsonl"
+    events = [json.loads(line) for line in events_path.read_text(encoding="utf-8").splitlines()]
+    assert len(events) == 2
+    assert all(event["type"] == "execution" and event["result"] == "100" for event in events)
     if history_state == "invalid":
         assert history.read_bytes() == original
-        assert all(track.file_stamp_list == [] for track in tracks)
-        assert "draft.py:" not in (ctx.track_folder / Tracker.log_file).read_text(encoding="utf-8")
+        assert all(event["files"] == [] for event in events)
     else:
         assert VersionsWriter().load_history(history).count == (3 if history_state == "conflict" else 1)
         assert VersionsWriter().load_history(history).current == "print(42)\n"
-        assert all(track.file_stamp_list[0].startswith("src/py/draft.py:") for track in tracks)
+        assert all(event["files"] == ["src/py/draft.py"] for event in events)

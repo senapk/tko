@@ -8,7 +8,7 @@ import io
 import json
 from collections.abc import Callable
 from pathlib import Path
-from typing import cast
+from typing import Literal, cast
 from tko.logger.patch_history import PatchHistory, PatchInfo
 from tko.logger.versions_writer import InvalidHistoryError, VersionsWriter
 from tko.i18n import Msg
@@ -16,6 +16,7 @@ from tko.util.decoder import Decoder
 import tempfile
 from tko.logger.log_sort import LogSort
 from tko.util.console import Console
+from tko.logger.history import HistoryEvent, append_event
 
 
 _TRACKER_NOT_ENOUGH_COLUMNS = Msg.text(
@@ -139,6 +140,8 @@ class Tracker:
         self._task_root: Path | None = None
         self._versions_writer: VersionsWriter = VersionsWriter()
         self._on_warning: Callable[[str], None] = on_warning or self._print_warning
+        self._event_folder: Path | None = None
+        self._event_type: Literal["audit", "execution"] = "execution"
 
     @staticmethod
     def _print_warning(message: str) -> None:
@@ -215,6 +218,14 @@ class Tracker:
         self._folder = folder
         return self
 
+    def set_event_folder(self, folder: Path) -> Tracker:
+        self._event_folder = folder
+        return self
+
+    def set_event_type(self, event_type: Literal["audit", "execution"]) -> Tracker:
+        self._event_type = event_type
+        return self
+
     def set_task_root(self, task_root: Path) -> Tracker:
         self._task_root = task_root
         return self
@@ -281,10 +292,17 @@ class Tracker:
             if changed:
                 any_changes = True
 
-        log_file = self.get_log_full_path()
         track = Track().set_timestamp(timestamp).set_file_stamp_list(files_in_this_version).set_result(self._result)
-        with open(log_file, encoding="utf-8", mode="a", newline="") as f:
-            _ = f.write(track.to_json_line())
+        if self._event_folder is not None:
+            event_files = tuple(item.split(":", 1)[0] for item in files_in_this_version)
+            append_event(
+                self._event_folder / "events.jsonl",
+                HistoryEvent(timestamp, self._event_type, event_files, self._result if self._event_type == "execution" else None),
+            )
+        else:
+            log_file = self.get_log_full_path()
+            with open(log_file, encoding="utf-8", mode="a", newline="") as f:
+                _ = f.write(track.to_json_line())
         return any_changes, total_size
     
     @staticmethod

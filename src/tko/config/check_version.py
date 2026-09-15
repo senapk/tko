@@ -16,7 +16,7 @@ class CheckVersion:
     def update_command() -> str:
         method: InstallationMethod = installation_method()
         if method == InstallationMethod.MANAGED:
-            return "tko self-update"
+            return "tko config self-update"
         if method == InstallationMethod.PIPX:
             return "pipx upgrade tko"
         return "python3 -m pip install --upgrade tko"

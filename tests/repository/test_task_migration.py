@@ -399,9 +399,11 @@ def test_cli_applies_by_default_and_supports_dry_run(tmp_path: Path) -> None:
     applied = runner.invoke(app, ["migrate", str(tmp_path)])
     assert applied.exit_code == 0, applied.output
     assert "Backup" in applied.output
-    compatible = runner.invoke(app, ["migrate", str(tmp_path), "--apply"])
-    assert compatible.exit_code == 0, compatible.output
-    assert "Dados já migrados." in compatible.output
+    repeated: Result = runner.invoke(app, ["migrate", str(tmp_path)])
+    assert repeated.exit_code == 0, repeated.output
+    assert "Dados já migrados." in repeated.output
+    removed: Result = runner.invoke(app, ["migrate", str(tmp_path), "--apply"])
+    assert removed.exit_code == 2
 
 
 @pytest.mark.parametrize("mapping", [
@@ -548,7 +550,7 @@ def test_nested_task_histories_use_longest_known_root(tmp_path: Path) -> None:
 def test_invalid_yaml_cli_reports_error_without_mutation(tmp_path: Path) -> None:
     _write(tmp_path, ".tko/repository.yaml", "sources: [\n")
     before: dict[str, bytes] = _snapshot(tmp_path)
-    result = CliRunner().invoke(app, ["migrate", str(tmp_path), "--apply"])
+    result: Result = CliRunner().invoke(app, ["migrate", str(tmp_path)])
     assert result.exit_code == 1
     assert "Migração falhou: Invalid repository configuration" in result.output
     assert "Invalid repository configuration" in result.output

@@ -5,7 +5,7 @@ from collections.abc import Callable
 
 from filelock import FileLock, Timeout
 from loguru import logger
-from typing import Protocol
+from typing import Callable, Protocol, cast
 from tko.util.decoder import Decoder
 from hashlib import blake2s
 import json
@@ -13,6 +13,7 @@ from tko.util.console import Console
 from tko.util.rt import RT
 from tko.logger.versions_writer import VersionsWriter
 from tko.repository.task_data_format import initialize_task_data
+from tko.logger.history import HistoryEvent, append_event, event_timestamp
     
 class LastElement:
     def __init__(self, timestamp: datetime, hash_value: str) -> None:
@@ -30,6 +31,7 @@ class AuditPaths(Protocol):
     def root_dir(self) -> Path: ...
 
     def get_audit_task_folder(self, label: str) -> Path: ...
+
 
 
 class AuditRepository(Protocol):
@@ -112,12 +114,16 @@ class AuditTracker:
 
     def store(self, task_key: str, file_ts_list: list[tuple[Path, datetime | None]]) -> tuple[bool, int]:
         initialize_task_data(self.repo.paths.root_dir)
-        audit_task_folder = self.repo.paths.get_audit_task_folder(task_key)
+        history_method = getattr(self.repo.paths, "get_history_task_folder", None)
+        history_folder: Path = cast(Callable[[str], Path], history_method)(task_key) if callable(history_method) else self.repo.paths.get_audit_task_folder(task_key)
+        unified: bool = callable(history_method)
+        audit_task_folder = history_folder / "files" if unified else history_folder
         task_root = self.repo.get_task_folder_for_label(task_key)
         any_changes = False
         total_lines = 0
 
         resolved_files = [(file.resolve(), ts) for file, ts in file_ts_list]
+        event_files: list[str] = []
         try:
             for file, ts in resolved_files:
                 if not self._is_auditable(file, task_root):
@@ -132,6 +138,15 @@ class AuditTracker:
                 if changed:
                     any_changes = any_changes or changed
                     total_lines += line_count
+                    try:
+                        event_files.append(file.relative_to(task_root).as_posix())
+                    except ValueError:
+                        event_files.append(file.name)
+            if event_files and unified:
+                append_event(
+                    history_folder / "events.jsonl",
+                    HistoryEvent(event_timestamp(datetime.now()), "audit", tuple(event_files)),
+                )
         except Timeout:
             logger.warning(f"[audit] Could not acquire lock for task {task_key}, skipping this cycle.")
             return False, 0

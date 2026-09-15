@@ -47,8 +47,10 @@ class TesterExecutor:
     def store_version(self, result: str) -> tuple[bool, int]:
         if self.rep is None:
             return False, 0
-        track_folder = self.rep.paths.get_track_task_folder(self.task.basic.full_key)
-        self.tracker.set_folder(track_folder)
+        history_folder = self.rep.paths.get_history_task_folder(self.task.basic.full_key)
+        self.tracker.set_folder(history_folder / "files")
+        self.tracker.set_event_folder(history_folder)
+        self.tracker.set_event_type("execution")
         task_root = self.rep.task_resolver.target_folder(self.task)
         if task_root is not None:
             self.tracker.set_task_root(task_root)
