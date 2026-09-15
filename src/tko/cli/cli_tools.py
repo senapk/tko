@@ -191,7 +191,7 @@ def tool_html(
 
 @app.command("migrate", help="Migrate persisted task identities offline")
 def tool_migrate(
-    workspace: Path = typer.Argument(..., help="Workspace containing .tko"),
+    workspace: Path = typer.Argument(Path("."), help="Workspace containing .tko (defaults to the current directory)"),
     apply: bool = typer.Option(True, "--apply", help="Apply after validation, with a backup (default)"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Show the migration plan without changing files"),
     mapping: Path | None = typer.Option(None, "--map", help="JSON map of old keys to canonical keys"),

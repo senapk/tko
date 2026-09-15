@@ -74,10 +74,15 @@ def atomic_bytes(path: Path, content: bytes) -> None:
             temporary.unlink(missing_ok=True)
 
 
+def migration_command(root: Path) -> str:
+    """Omit the workspace argument when migration can use the current directory."""
+    return "tko tool migrate" if root.resolve() == Path.cwd().resolve() else f'tko tool migrate "{root}"'
+
+
 def require_current_task_data(root: Path) -> None:
     """Run before loading logs; an unversioned empty workspace is still usable."""
     folder: Path = root / ".tko"
-    command: str = f'tko tool migrate "{root}"'
+    command: str = migration_command(root)
     if (folder / PENDING_FILE).exists():
         raise MigrationRequiredError(f"Migração interrompida. Execute: {command} --recover")
     marker: Path = folder / FORMAT_FILE

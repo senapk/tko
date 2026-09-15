@@ -8,6 +8,7 @@ import tomllib
 
 import pytest
 from typer.testing import CliRunner
+from click.testing import Result
 
 from tko.cli.cli_tools import app
 from tko.config.run_settings import RunSettings
@@ -916,3 +917,44 @@ def test_activity_move_skips_directory_containing_an_existing_index(tmp_path: Pa
     assert "course/old" not in plan.moves
     plan.apply()
     assert index.read_text() == "# Nested index\n"
+
+
+def test_cli_migrates_current_repository(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _workspace(tmp_path)
+    _write(tmp_path, ".tko/log/2026-09-14.log", _event("course@old", 0))
+    monkeypatch.chdir(tmp_path)
+    before: dict[str, bytes] = _snapshot(tmp_path)
+    preview: Result = CliRunner().invoke(app, ["migrate", "--dry-run"])
+    assert preview.exit_code == 0, preview.output
+    assert "course@old -> course@plan/task" in preview.output
+    assert _snapshot(tmp_path) == before
+    applied: Result = CliRunner().invoke(app, ["migrate"])
+    assert applied.exit_code == 0, applied.output
+    assert (tmp_path / ".tko" / FORMAT_FILE).read_bytes() == FORMAT_BYTES
+
+
+def test_cli_rejects_current_directory_without_repository(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    result: Result = CliRunner().invoke(app, ["migrate"])
+    assert result.exit_code == 1
+    assert "No TKO configuration found" in result.output
+    assert not (tmp_path / ".tko").exists()
+
+
+@pytest.mark.parametrize("pending", [False, True])
+def test_migration_hint_omits_current_repository_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, pending: bool,
+) -> None:
+    _workspace(tmp_path)
+    _write(tmp_path, ".tko/log/2026-09-14.log", _event("course@old", 0))
+    if pending:
+        _write(tmp_path, f".tko/{PENDING_FILE}", "{}")
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(MigrationRequiredError) as error:
+        require_current_task_data(tmp_path)
+    command: str = "tko tool migrate --recover" if pending else "tko tool migrate"
+    assert str(error.value).endswith(f"Execute: {command}")
+    monkeypatch.chdir(tmp_path.parent)
+    with pytest.raises(MigrationRequiredError) as external_error:
+        require_current_task_data(tmp_path)
+    assert f'tko tool migrate "{tmp_path}"' in str(external_error.value)

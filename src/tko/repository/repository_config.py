@@ -10,7 +10,7 @@ from tko.util.decoder import Decoder
 from tko.i18n import Msg
 from tko.repository.repository import Repository
 from tko.repository.repository_data import ConfigDict, ConfigValue
-from tko.repository.task_data_format import MigrationRequiredError, initialize_task_data
+from tko.repository.task_data_format import MigrationRequiredError, initialize_task_data, migration_command
 
 
 _REPOSITORY_LOADER_GIT_CONFLICT = Msg.text(
@@ -185,7 +185,7 @@ class RepositoryLoader:
         path = self.repo.paths.config_file
         legacy_path = self.repo.paths.legacy_config_file
         if legacy_path.exists():
-            raise MigrationRequiredError(f"Configuração antiga precisa de migração. Execute: tko tool migrate \"{path.parent.parent}\"")
+            raise MigrationRequiredError(f"Configuração antiga precisa de migração. Execute: {migration_command(path.parent.parent)}")
         if not path.exists():
             _ = self.save(force=True)
             self._cached_output = self.repo.data.to_dict()
