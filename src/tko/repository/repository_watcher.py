@@ -1,4 +1,6 @@
 from __future__ import annotations
+from collections.abc import Callable
+
 from tko.logger.file_monitor import FileMonitor
 from tko.logger.audit_tracker import AuditTracker
 from tko.repository.audit_logger import AuditLogger
@@ -17,7 +19,12 @@ class RepositoryWatcher:
         self.monitor: FileMonitor | None = None
         self.edit_logger: EditLogger | None = None
         self.audit_logger: AuditLogger | None = None
+        self.audit_tracker: AuditTracker | None = None
         self.versions_writer: VersionsWriter = VersionsWriter()
+
+    def set_audit_notification_callback(self, callback: Callable[[str], None] | None) -> None:
+        if self.audit_tracker is not None:
+            self.audit_tracker.set_notification_callback(callback)
 
     def start_watching(
         self,
@@ -59,4 +66,5 @@ class RepositoryWatcher:
             self.monitor = None
         self.edit_logger = None
         self.audit_logger = None
+        self.audit_tracker = None
         return self

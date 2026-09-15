@@ -1,7 +1,7 @@
 from __future__ import annotations
-from pathlib import Path
 from datetime import datetime
 from pathlib import Path
+from collections.abc import Callable
 
 from filelock import FileLock, Timeout
 from loguru import logger
@@ -52,6 +52,10 @@ class AuditTracker:
         self.verbose: bool = verbose
         self.interval_seconds: int = interval_seconds
         self.versions_writer: VersionsWriter = versions_writer or VersionsWriter()
+        self.notification_callback: Callable[[str], None] | None = None
+
+    def set_notification_callback(self, callback: Callable[[str], None] | None) -> None:
+        self.notification_callback = callback
 
 
     def _is_auditable(self, path: Path, task_root: Path) -> bool:
@@ -176,6 +180,10 @@ class AuditTracker:
 
         if self.verbose:
             hh_mm_ss = timestamp.strftime("%H:%M:%S")
-            Console.print(RT.parse(f"[y][[audit]][] {hh_mm_ss} {task_key}"), flush=True)
+            message: str = f"[audit] {hh_mm_ss} {task_key}"
+            if self.notification_callback is not None:
+                self.notification_callback(message)
+            else:
+                Console.print(RT(message, "y"), flush=True)
 
         return True, line_count

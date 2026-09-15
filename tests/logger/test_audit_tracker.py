@@ -47,6 +47,22 @@ def test_audit_tracker_stores_snapshots(tmp_path: Path) -> None:
     assert len(lines) == 1
 
 
+def test_audit_tracker_sends_verbose_event_to_notification_callback(tmp_path: Path) -> None:
+    repo = _FakeRepo(tmp_path)
+    task_folder = tmp_path / "disc" / "task04"
+    task_folder.mkdir(parents=True)
+    source: Path = task_folder / "solver.py"
+    source.write_text("print('ok')\n", encoding="utf-8")
+    messages: list[str] = []
+    tracker = AuditTracker(repo, verbose=True, interval_seconds=0)  # type: ignore[arg-type]
+    tracker.set_notification_callback(messages.append)
+
+    changed, _ = tracker.store("disc@task04", [(source, datetime(2026, 6, 9, 10, 11, 12))])
+
+    assert changed is True
+    assert messages == ["[audit] 10:11:12 disc@task04"]
+
+
 
 def test_audit_tracker_accepts_files_outside_task_folder(tmp_path: Path) -> None:
     repo = _FakeRepo(tmp_path)

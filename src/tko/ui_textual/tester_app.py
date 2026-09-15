@@ -105,10 +105,19 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
         yield Footer()
 
     def on_mount(self) -> None:
+        if self.watcher is not None:
+            self.watcher.set_audit_notification_callback(self._notify_audit)
         if self._autorun:
             self.action_run_tests()
         self.set_interval(0.05, self._process_running_state)
         self.refresh_view()
+
+    def on_unmount(self) -> None:
+        if self.watcher is not None:
+            self.watcher.set_audit_notification_callback(None)
+
+    def _notify_audit(self, message: str) -> None:
+        self.call_from_thread(self.notify, message, severity="information")
 
     def on_resize(self) -> None:
         self.call_after_refresh(self.refresh_view)
