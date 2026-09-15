@@ -1,4 +1,4 @@
-# Ubuntu / WSL: Git, Python, pipx e TKO
+# Ubuntu / WSL: Git, Python e TKO
 
 Este guia vale para Ubuntu nativo, Ubuntu dentro do WSL e ambientes Linux equivalentes usados em aula.
 
@@ -12,24 +12,16 @@ Ao final, o terminal deve ter:
 - Nome e e-mail configurados no Git.
 - Autenticação com GitHub funcionando.
 - Python 3 instalado.
-- `pipx` instalado e disponível no PATH.
-- TKO instalado via `pipx`.
+- TKO instalado em ambiente virtual próprio.
 - `tko --version` e `tko --help` funcionando.
 
 ## Ferramentas básicas
 
 ```bash
 sudo apt update
-sudo apt install -y build-essential git curl ca-certificates python3 python3-pip python3-venv pipx
+sudo apt install -y build-essential git curl ca-certificates python3 python3-venv
 ```
 
-Garanta que o `pipx` esteja no PATH:
-
-```bash
-python3 -m pipx ensurepath
-```
-
-Feche e abra novamente o terminal.
 
 ## Configurar Git
 
@@ -82,10 +74,10 @@ Se a autenticação falhar, consulte a documentação atual do GitHub sobre SSH 
 
 ## Instalar TKO
 
-Instale pelo `pipx`:
+Instale pelo script oficial:
 
 ```bash
-pipx install tko
+curl -fsSL https://raw.githubusercontent.com/senapk/tko/main/install.sh | bash
 ```
 
 Verifique:
@@ -95,19 +87,21 @@ tko --version
 tko --help
 ```
 
-Se o comando `tko` não for encontrado:
+Se o comando `tko` não for encontrado, adicione `~/.local/bin` ao PATH e abra outro terminal:
 
 ```bash
-python3 -m pipx ensurepath
+export PATH="$HOME/.local/bin:$PATH"
 ```
 
-Depois feche e abra novamente o terminal.
+Instalações via `pipx` continuam suportadas como alternativa: `pipx install tko`.
 
 ## Atualizar TKO
 
 ```bash
-pipx upgrade tko
+tko self-update
 ```
+
+Para uma instalação via `pipx`, use `pipx upgrade tko`.
 
 ## Checklist de verificação
 
@@ -116,7 +110,6 @@ Antes de começar as atividades, confira:
 ```bash
 git --version
 python3 --version
-pipx --version
 tko --version
 tko --help
 ```

@@ -1,6 +1,8 @@
 from urllib.request import urlopen
 from datetime import datetime as dt
+
 from tko.config.settings import Settings
+from tko.installation import InstallationMethod, installation_method
 from tko import __version__
 
 class CheckVersion:
@@ -9,6 +11,15 @@ class CheckVersion:
     def __init__(self, settings: Settings):
         self.settings: Settings = settings
         self.user_version: str = __version__
+
+    @staticmethod
+    def update_command() -> str:
+        method: InstallationMethod = installation_method()
+        if method == InstallationMethod.MANAGED:
+            return "tko self-update"
+        if method == InstallationMethod.PIPX:
+            return "pipx upgrade tko"
+        return "python3 -m pip install --upgrade tko"
         
     def is_updated(self):
         latest_version = self.get_latest_version()

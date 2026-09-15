@@ -6,15 +6,27 @@ Sintoma:
 
 - `command not found: tko`
 
-Solução:
+Para a instalação gerenciada pelo TKO, adicione `~/.local/bin` ao PATH:
 
 ```bash
-pipx ensurepath
+export PATH="$HOME/.local/bin:$PATH"
 ```
 
-Feche e abra o terminal novamente.
+Depois abra um novo terminal. Em instalações via `pipx`, use `pipx ensurepath`.
 
-## 2) Qual comando uso para validar instalação?
+## 2) Como atualizo o TKO?
+
+```bash
+tko self-update
+```
+
+Instalações via `pipx` continuam usando:
+
+```bash
+pipx upgrade tko
+```
+
+## 3) Qual comando uso para validar instalação?
 
 ```bash
 tko --version
@@ -23,13 +35,13 @@ tko --help
 
 Se `--help` listar comandos como `task`, `build`, `class`, `source`, a instalação está ok.
 
-## 3) Como rodar os testes do projeto TKO?
+## 4) Como rodar os testes do projeto TKO?
 
 ```bash
 uv run pytest -q
 ```
 
-## 4) Sou aluno fora de disciplina. Como começo?
+## 5) Sou aluno fora de disciplina. Como começo?
 
 Use o guia:
 
@@ -37,7 +49,7 @@ Use o guia:
 
 E escolha um repositório oficial listado no README.
 
-## 5) Sou professor. Como distribuo e coleto atividades?
+## 6) Sou professor. Como distribuo e coleto atividades?
 
 Fluxo recomendado:
 
@@ -52,7 +64,7 @@ Guias:
 - [Guia para criar repositórios de tarefas](../wiki/Criando-Atividades.md)
 - [Criando testes e conversões](../wiki/Criando-Tarefas-e-Testes.md)
 
-## 6) Qual a diferença entre `cases.tio` e testes em pasta?
+## 7) Qual a diferença entre `cases.tio` e testes em pasta?
 
 - `tests.toml`: formato compacto, comum no fluxo do TKO.
 - Pasta: arquivos separados (`.in` e `.sol`) úteis para edição manual.
@@ -61,7 +73,7 @@ Conversões e exemplos:
 
 - [Criando testes e conversões](../wiki/Criando-Tarefas-e-Testes.md)
 
-## 7) Como converter formatos de testes?
+## 8) Como converter formatos de testes?
 
 Exemplos:
 
@@ -73,7 +85,7 @@ tko build tests pasta tests.toml
 
 Para padrões de nome personalizados, use `-p`.
 
-## 8) Como adicionar suporte a linguagem no fluxo atual?
+## 9) Como adicionar suporte a linguagem no fluxo atual?
 
 Use `programming-languages.toml` quando o fluxo é build/run padrão.
 

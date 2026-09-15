@@ -1,6 +1,6 @@
 # Linguagens de programação
 
-Instale primeiro o ambiente base do TKO em [Ubuntu / WSL: Git, Python, pipx e TKO](ubuntu_git_python_tko.md). Depois instale apenas as linguagens exigidas pela disciplina.
+Instale primeiro o ambiente base do TKO em [Ubuntu / WSL: Git, Python e TKO](ubuntu_git_python_tko.md). Depois instale apenas as linguagens exigidas pela disciplina.
 
 Este guia define metas e comandos comuns para Ubuntu/WSL. Se algum comando falhar por versão da distribuição, política da máquina ou mudança no instalador da linguagem, consulte a documentação atual da linguagem e volte ao checklist.
 

@@ -365,6 +365,18 @@ class TkoApp(App[Callable[[], None] | None]):
         self.refresh_view()
         self.call_after_refresh(self.refresh_view)
         self.query_one(TaskTreeView).focus()
+        if self.need_update:
+            from tko.config.check_version import CheckVersion
+
+            command: str = CheckVersion.update_command()
+            self.notify(
+                self._t(
+                    f"Nova versão do TKO disponível. Atualize com: {command}",
+                    f"A new TKO version is available. Update with: {command}",
+                ),
+                severity="information",
+                timeout=10,
+            )
 
     def on_unmount(self) -> None:
         if self.watcher is not None:

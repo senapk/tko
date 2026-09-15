@@ -16,7 +16,7 @@ Ao final, a máquina deve ter:
 - Integração `code .` funcionando a partir do Ubuntu.
 - Ferramentas básicas de desenvolvimento instaladas no Ubuntu.
 
-Depois disso, siga o guia [Ubuntu / WSL: Git, Python, pipx e TKO](ubuntu_git_python_tko.md).
+Depois disso, siga o guia [Ubuntu / WSL: Git, Python e TKO](ubuntu_git_python_tko.md).
 
 Se algum passo falhar por versão do Windows, política da máquina, permissão ou diferença de instalação, procure a documentação atual da ferramenta específica (WSL, Ubuntu, VS Code ou GitHub) e volte para a lista de verificação deste guia.
 

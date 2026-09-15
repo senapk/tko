@@ -36,7 +36,7 @@ Fluxo rápido:
 ### Ubuntu / WSL / Codespaces
 
 ```bash
-pipx install tko
+curl -fsSL https://raw.githubusercontent.com/senapk/tko/main/install.sh | bash
 tko --version
 tko --help
 ```
@@ -46,13 +46,17 @@ Saída esperada:
 - O comando `tko --version` deve mostrar a versão instalada.
 - O comando `tko --help` deve listar os comandos principais (`task`, `build`, `class`, `source`, ...).
 
-Se `tko` não for encontrado após instalar com `pipx`, rode:
+Se `tko` não for encontrado, adicione `~/.local/bin` ao PATH e abra um novo terminal:
 
 ```bash
-pipx ensurepath
+export PATH="$HOME/.local/bin:$PATH"
 ```
 
-Depois reabra o terminal.
+Instalações existentes via `pipx` continuam suportadas:
+
+```bash
+pipx install tko
+```
 
 ### Windows
 
@@ -94,7 +98,7 @@ Repositórios de referência:
 ## Instalação
 
 - [Guia recomendado: Windows com WSL e Ubuntu](wiki/Windows-WSL.md)
-- [Ubuntu / WSL: Git, Python, pipx e TKO](wiki/ubuntu_git_python_tko.md)
+- [Ubuntu / WSL: Git, Python e TKO](wiki/ubuntu_git_python_tko.md)
 - [GitHub Codespaces](wiki/Codespaces.md)
 - [VS Code no Ubuntu / WSL](wiki/ubuntu_vscode.md)
 - [Linguagens - Java, C, C++, Python, TypeScript, Go](wiki/Linguagens.md)
@@ -146,10 +150,16 @@ Repositórios de referência:
 
 ## Atualizando o TKO
 
-Para atualizar o TKO para a versão mais recente, basta executar o comando:
+Para a instalação recomendada, use:
 
 ```bash
-pipx upgrade tko          # windows, codespace, arch, ubuntu e wsl
+tko self-update
+```
+
+Para instalações existentes via `pipx`, use:
+
+```bash
+pipx upgrade tko
 ```
 
 ## Contribuição

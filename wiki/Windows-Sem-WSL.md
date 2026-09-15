@@ -8,7 +8,7 @@ Use apenas se a máquina não puder usar WSL, Ubuntu nativo ou GitHub Codespaces
 
 1. [Windows com WSL e Ubuntu](Windows-WSL.md)
 2. [GitHub Codespaces](Codespaces.md)
-3. [Ubuntu / WSL: Git, Python, pipx e TKO](ubuntu_git_python_tko.md)
+3. [Ubuntu / WSL: Git, Python e TKO](ubuntu_git_python_tko.md)
 
 ## Meta mínima
 
@@ -37,6 +37,9 @@ Depois de instalar Python e pipx, o TKO normalmente pode ser instalado com:
 ```powershell
 pipx install tko
 ```
+
+O instalador Bash do TKO é destinado a Linux, WSL, Codespaces e macOS; não o
+execute no PowerShell.
 
 Verifique:
 

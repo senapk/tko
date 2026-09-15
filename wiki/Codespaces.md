@@ -18,7 +18,6 @@ Ao final, o Codespace deve ter:
 - Repositório da disciplina aberto.
 - Git autenticado pela conta GitHub.
 - Python 3 disponível.
-- `pipx` disponível, quando necessário.
 - TKO instalado ou configurado pelo template da disciplina.
 - Linguagem da disciplina instalada.
 - `tko --version`, `tko --help` e `tko open` funcionando.
@@ -66,14 +65,13 @@ tko --version
 tko --help
 ```
 
-Se `tko` não estiver instalado e o ambiente permitir instalação por `pipx`, use o script de setup do starter. Como alternativa, instale manualmente:
+Se `tko` não estiver instalado, use o script de setup do starter. Como alternativa, instale manualmente:
 
 ```bash
-python3 -m pipx ensurepath
-pipx install tko
+curl -fsSL https://raw.githubusercontent.com/senapk/tko/main/install.sh | bash
 ```
 
-Feche e abra o terminal se o PATH for atualizado.
+Instalações existentes via `pipx` continuam suportadas com `pipx install tko`.
 
 ## Abrir TKO
 

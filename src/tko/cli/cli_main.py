@@ -1,6 +1,8 @@
 import typer
 from typing import Optional
 from pathlib import Path
+import subprocess
+import sys
 
 from tko.config.settings import Settings
 
@@ -8,6 +10,41 @@ from tko.config.settings import Settings
 # but will be added directly to the main Typer app.
 
 def register_main_commands(app: typer.Typer):
+    @app.command("self-update", help="Update a script-managed TKO installation")
+    def self_update_cmd() -> None:
+        from tko.installation import InstallationMethod, ManagedInstallation, installation_method, run_self_update
+
+        installation = ManagedInstallation.from_executable(Path(sys.executable))
+        if installation is None:
+            if installation_method() == InstallationMethod.PIPX:
+                typer.echo("Esta instalação usa pipx. Execute: pipx upgrade tko")
+            else:
+                typer.echo("Esta instalação não é gerenciada pelo instalador do TKO.", err=True)
+            raise typer.Exit(1)
+        try:
+            run_self_update(installation)
+        except subprocess.CalledProcessError as error:
+            typer.echo(f"Não foi possível atualizar o TKO: {error}", err=True)
+            raise typer.Exit(1) from error
+        typer.echo("TKO atualizado.")
+
+    @app.command("uninstall", help="Remove a script-managed TKO installation")
+    def uninstall_cmd(yes: bool = typer.Option(False, "--yes", "-y", help="Remove without confirmation")) -> None:
+        from tko.installation import InstallationMethod, ManagedInstallation, installation_method, remove_managed_installation
+
+        installation = ManagedInstallation.from_executable(Path(sys.executable))
+        if installation is None:
+            if installation_method() == InstallationMethod.PIPX:
+                typer.echo("Esta instalação usa pipx e não será removida. Execute: pipx uninstall tko")
+            else:
+                typer.echo("Esta instalação não é gerenciada pelo instalador do TKO.", err=True)
+            raise typer.Exit(1)
+        if not yes and not typer.confirm("Remover a instalação gerenciada do TKO?"):
+            typer.echo("Remoção cancelada.")
+            return
+        remove_managed_installation(installation)
+        typer.echo("TKO removido.")
+
     @app.command("run", help="Runs a task in raw terminal")
     def run_cmd( # type: ignore
         ctx: typer.Context,
