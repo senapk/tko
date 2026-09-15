@@ -1,4 +1,5 @@
 from typer.testing import CliRunner
+import re
 
 from tko.cli.cli_tools import app
 
@@ -61,8 +62,9 @@ def test_util_tests_allows_stdout_output(monkeypatch):
 
 def test_util_tests_does_not_expose_width_option():
     result = CliRunner().invoke(app, ["tests", "--help"])
+    plain_help = re.sub(r"\s+", "", re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", result.stdout))
 
     assert result.exit_code == 0
-    assert "--width" not in result.stdout
-    assert "--read-pattern" in result.stdout
-    assert "--write-pattern" in result.stdout
+    assert "--width" not in plain_help
+    assert "--read-pattern" in plain_help
+    assert "--write-pattern" in plain_help

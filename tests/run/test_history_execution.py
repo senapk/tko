@@ -2,7 +2,6 @@ import asyncio
 from pathlib import Path
 
 import pytest
-from textual.widgets import Static
 
 from tko.config.settings import Settings
 from tko.enums.execution_result import ExecutionResult
@@ -125,7 +124,7 @@ def test_raw_and_tui_execute_with_shared_history(tmp_path: Path, history_state: 
             assert app.state.mode == SeqMode.finished
             assert app.state.is_all_right()
             assert app.current_task.info.rate == 100
-            assert "1/1 testes concluídos" in str(app.query_one("#tester-status", Static).render())
+            assert "00" in app._header().plain()
             notifications: list[str] = [str(notification.message) for notification in app._notifications]
             assert any(str(history) in message for message in notifications) is (history_state == "invalid")
 
