@@ -67,7 +67,7 @@ def test_preview_is_read_only_and_apply_preserves_mixed_history(tmp_path: Path) 
     lines: str = _event("course@plan/task", 4) + _event("course@old", 0, "MOVE", ", mode:PICK") + _event("course@old", 2, "SELF", ", rate:50") + _event("course@plan/task", 4)
     log: Path = _write(tmp_path, ".tko/log/2026-09-14.log", lines)
     legacy: Path = _write(tmp_path, ".tko/track/course@old/src/main.py.jsonl", b'{"history":"untouched"}\n')
-    _write(tmp_path, ".tko/audit/course/old/src/main.py.jsonl", b"snapshot bytes\n")
+    _write(tmp_path, ".tko/audit/course/old/src/audit.py.jsonl", b"snapshot bytes\n")
     solution: Path = _write(tmp_path, "course/old/src/main.py", b"print(42)\n")
     before: dict[str, bytes] = _snapshot(tmp_path)
     plan: MigrationPlan = TaskDataMigration(tmp_path).inspect()
@@ -81,8 +81,8 @@ def test_preview_is_read_only_and_apply_preserves_mixed_history(tmp_path: Path) 
     assert backup is not None
     assert (backup / "before/.tko/log/2026-09-14.log").read_text() == lines
     assert not legacy.exists()
-    assert (tmp_path / ".tko/track/course/plan/task/src/main.py.jsonl").read_bytes() == b'{"history":"untouched"}\n'
-    assert (tmp_path / ".tko/audit/course/plan/task/src/main.py.jsonl").read_bytes() == b"snapshot bytes\n"
+    assert (tmp_path / ".tko/history/course/plan/task/src/main.py.jsonl").read_bytes() == b'{"history":"untouched"}\n'
+    assert (tmp_path / ".tko/history/course/plan/task/src/audit.py.jsonl").read_bytes() == b"snapshot bytes\n"
     assert not solution.exists()
     assert (tmp_path / "plan/task/src/main.py").read_bytes() == before[solution.relative_to(tmp_path).as_posix()]
     assert index.read_bytes() == before["README.md"]
@@ -142,7 +142,7 @@ def test_missing_alias_moves_activity_and_history_to_labs(tmp_path: Path) -> Non
     plan.apply()
     assert "course@labs/old" in log.read_text()
     assert not history.exists()
-    assert (tmp_path / ".tko/track/course/labs/old/draft.py.json").read_bytes() == b"snapshot"
+    assert (tmp_path / ".tko/history/course/labs/old/draft.py.json").read_bytes() == b"snapshot"
     assert not activity.exists()
     assert (tmp_path / "course/labs/old/main.py").read_bytes() == b"print(42)\n"
 
@@ -167,11 +167,11 @@ def test_history_collisions_only_merge_identical_files(tmp_path: Path, same: boo
     if same:
         assert plan.errors == []
         plan.apply()
-        assert target.read_bytes() == b"original"
-        assert (target.parent / "extra.jsonl").read_bytes() == b"extra"
+        assert (tmp_path / ".tko/history/course/plan/task/main.jsonl").read_bytes() == b"original"
+        assert (tmp_path / ".tko/history/course/plan/task/extra.jsonl").read_bytes() == b"extra"
     else:
         before: dict[str, bytes] = _snapshot(tmp_path)
-        assert any("Conflicting" in error for error in plan.errors)
+        assert any("Invalid histories" in error for error in plan.errors)
         with pytest.raises(ValueError):
             plan.apply()
         assert _snapshot(tmp_path) == before
@@ -184,19 +184,18 @@ def test_track_csv_migrates_to_jsonl_without_writing_during_dry_run(tmp_path: Pa
     plan: MigrationPlan = TaskDataMigration(tmp_path).inspect()
     assert plan.errors == []
     assert _snapshot(tmp_path) == before
-    destination: Path = tmp_path / ".tko/track/course/plan/task/track.jsonl"
+    destination: Path = tmp_path / ".tko/history/course/plan/task/events.jsonl"
     preview = CliRunner().invoke(app, ["migrate", str(tmp_path), "--dry-run"])
     assert preview.exit_code == 0
-    assert "create: .tko/track/course/plan/task/track.jsonl" in preview.output
+    assert "create: .tko/history/course/plan/task/events.jsonl" in preview.output
     assert "delete: .tko/track/course@old/track.csv" in preview.output
     assert _snapshot(tmp_path) == before
     assert any(change.relative == destination.relative_to(tmp_path).as_posix() and change.after is not None for change in plan.changes)
     assert any(change.relative == legacy.relative_to(tmp_path).as_posix() and change.after is None for change in plan.changes)
     plan.apply()
     assert not legacy.exists()
-    assert [track.identity() for track in Tracker.load_from_log(str(destination))] == [
-        ("2026-09-14_10-00-00", "100%", ("main.py:2026-09-14_10-00-00",))
-    ]
+    events = [json.loads(line) for line in destination.read_text(encoding="utf-8").splitlines()]
+    assert events == [{"timestamp": "2026-09-14_10-00-00", "type": "execution", "files": ["main.py"], "result": "100%"}]
     after: dict[str, bytes] = _snapshot(tmp_path)
     assert TaskDataMigration(tmp_path).inspect().apply() is None
     assert _snapshot(tmp_path) == after
@@ -213,17 +212,18 @@ def test_track_histories_merge_sort_and_remove_only_exact_duplicates(tmp_path: P
     plan.apply()
     assert not old.exists()
     assert not canonical_csv.exists()
-    records: list[Track] = Tracker.load_from_log(str(canonical_jsonl))
-    assert [(item.timestamp, item.result) for item in records[:3]] == [
+    events_path = tmp_path / ".tko/history/course/plan/task/events.jsonl"
+    events = [json.loads(line) for line in events_path.read_text(encoding="utf-8").splitlines()]
+    assert [(item["timestamp"], item["result"]) for item in events[:3]] == [
         ("2026-09-14_09-59-00", "10%"),
         ("2026-09-14_10-00-00", "50%"),
         ("2026-09-14_10-01-00", "70%"),
     ]
-    assert {(item.timestamp, item.result) for item in records[3:]} == {
+    assert {(item["timestamp"], item["result"]) for item in events[3:]} == {
         ("2026-09-14_10-02-00", "80%"),
         ("2026-09-14_10-02-00", "90%"),
     }
-    assert next(item for item in records if item.result == "80%").file_stamp_list == ["main.py:2026-09-14_10-02-00"]
+    assert next(item for item in events if item["result"] == "80%")["files"] == ["main.py"]
 
 
 @pytest.mark.parametrize(("filename", "content"), [
@@ -465,7 +465,7 @@ def test_watchers_use_current_identity_for_migrated_physical_folder(tmp_path: Pa
     assert audits.keys == ["course@labs/task"]
 
 
-@pytest.mark.parametrize("marker", [b'{"version": 5}', b'{"version": true}', b'broken'])
+@pytest.mark.parametrize("marker", [b'{"version": true}', b'broken'])
 def test_unknown_or_corrupt_format_never_gets_overwritten(tmp_path: Path, marker: bytes) -> None:
     _workspace(tmp_path)
     path: Path = _write(tmp_path, f".tko/{FORMAT_FILE}", marker)
@@ -543,8 +543,8 @@ def test_nested_task_histories_use_longest_known_root(tmp_path: Path) -> None:
     _write(tmp_path, ".tko/track/course/parent/main.jsonl", b"parent")
     _write(tmp_path, ".tko/track/course/parent/child/main.jsonl", b"child")
     TaskDataMigration(tmp_path).inspect().apply()
-    assert (tmp_path / ".tko/track/course/plan/task/main.jsonl").read_bytes() == b"parent"
-    assert (tmp_path / ".tko/track/course/plan/task/nested/main.jsonl").read_bytes() == b"child"
+    assert (tmp_path / ".tko/history/course/plan/task/main.jsonl").read_bytes() == b"parent"
+    assert (tmp_path / ".tko/history/course/plan/task/nested/main.jsonl").read_bytes() == b"child"
 
 
 def test_invalid_yaml_cli_reports_error_without_mutation(tmp_path: Path) -> None:
@@ -585,7 +585,7 @@ def test_history_directory_discovers_labs_entry_without_legacy_metadata(
     assert _snapshot(tmp_path) == before
     plan.apply()
     assert not old.exists()
-    assert (tmp_path / f".tko/{family}/course/labs/animal/draft.py.json").read_bytes() == b"original snapshot"
+    assert (tmp_path / ".tko/history/course/labs/animal/draft.py.json").read_bytes() == b"original snapshot"
     assert log.read_text() == _event("course@labs/animal", 0)
     assert '"course@labs/animal"' in config.read_text()
     assert TaskDataMigration(tmp_path).inspect().changes == []
@@ -642,7 +642,7 @@ def test_explicit_map_overrides_discovered_labs_convention(tmp_path: Path) -> No
     assert plan.errors == []
     assert plan.mapping["course@animal"] == "course@labs/other"
     plan.apply()
-    assert (tmp_path / ".tko/track/course/labs/other/draft.py.json").read_bytes() == b"snapshot"
+    assert (tmp_path / ".tko/history/course/labs/other/draft.py.json").read_bytes() == b"snapshot"
 
 
 @pytest.mark.parametrize("kind", ["EXEC", "SELF", "MOVE"])
@@ -670,7 +670,7 @@ def test_exact_index_key_takes_precedence_over_labs_fallback(tmp_path: Path) -> 
     assert plan.mapping["course@animal"] == "course@animal"
     plan.apply()
     assert log.read_text() == lines
-    assert (tmp_path / ".tko/track/course/animal/draft.py.json").read_bytes() == b"snapshot"
+    assert (tmp_path / ".tko/history/course/animal/draft.py.json").read_bytes() == b"snapshot"
 
 
 def test_csv_and_state_use_labs_fallback_without_history_directories(tmp_path: Path) -> None:
@@ -721,8 +721,8 @@ def test_activity_tree_moves_with_logs_and_versions(tmp_path: Path, remote: bool
         assert stat.S_IMODE((destination / "src/run.sh").stat().st_mode) == 0o751
     assert (destination / "src/run.sh").stat().st_mtime_ns == 1234567890000000000
     assert (backup / "before/course/animal/src/run.sh").read_bytes() == before["course/animal/src/run.sh"]
-    assert (tmp_path / ".tko/track/course/labs/animal/draft.py.json").read_bytes() == b"track snapshot"
-    assert (tmp_path / ".tko/audit/course/labs/animal/draft.py.jsonl").read_bytes() == b"audit snapshot"
+    assert (tmp_path / ".tko/history/course/labs/animal/draft.py.json").read_bytes() == b"track snapshot"
+    assert (tmp_path / ".tko/history/course/labs/animal/draft.py.jsonl").read_bytes() == b"audit snapshot"
     assert "course@labs/animal" in log.read_text()
     assert TaskDataMigration(tmp_path).inspect().apply() is None
 
@@ -812,7 +812,7 @@ def test_prior_track_format_requires_jsonl_upgrade(tmp_path: Path) -> None:
     assert plan.errors == []
     plan.apply()
     assert marker.read_bytes() == FORMAT_BYTES
-    assert (tmp_path / ".tko/track/course/plan/task/track.jsonl").is_file()
+    assert (tmp_path / ".tko/history/course/plan/task/events.jsonl").is_file()
     require_current_task_data(tmp_path)
 
 
