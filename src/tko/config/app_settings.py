@@ -13,6 +13,7 @@ class ToggleOption(enum.Enum):
 @dataclass
 class AppSettings:
     _ui_language: str = "pt-BR"
+    theme: str = "tko-dark"
     diff_mode: DiffMode = DiffMode.SIDE
     use_images: bool = True
     editor: str = "code"
@@ -33,6 +34,9 @@ class AppSettings:
             self._ui_language = "pt-BR"
         else:
             self._ui_language = value
+
+    def set_theme(self, value: str) -> None:
+        self.theme = value if value in {"tko-dark", "tko-light"} else "tko-dark"
             
     # -------- toggles --------
     def toggle(self, attr: ToggleOption) -> None:
@@ -55,6 +59,8 @@ class AppSettings:
         for key, value in data.items():
             if key == "ui_language":
                 obj.ui_language = value
+            elif key == "theme" and isinstance(value, str):
+                obj.set_theme(value)
             elif key == "diff_mode":
                 obj.diff_mode = DiffMode(value)
             elif hasattr(obj, key):
@@ -67,6 +73,7 @@ class AppSettings:
         output = [
             str(RT("Configurações globais:", "g")),
             f"- Language    : {self.ui_language}",
+            f"- Theme       : {self.theme}",
             f"- Diff        : {self.diff_mode.value}",
             f"- Editor      : {self.editor}",
             f"- Images      : {self.use_images}",

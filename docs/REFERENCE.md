@@ -134,7 +134,8 @@ tko tool mdpp
 tko tool migrate /caminho/do/workspace
 ```
 
-A migração começa em modo de simulação; use `--apply` após revisar os resultados.
+A migração é aplicada por padrão; use `--dry-run` para revisar os resultados sem
+alterar arquivos. `--apply` continua aceito por compatibilidade.
 Consulte [Migração dos dados de tarefas](TASK_DATA_MIGRATION.md) para mapas explícitos,
 backups e recuperação.
 

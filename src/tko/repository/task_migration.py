@@ -175,6 +175,18 @@ class TaskDataMigration:
             if old not in self.canonical:
                 self.candidates.setdefault(old, set()).add(destination)
 
+    def _labs_destination(self, key: str) -> str | None:
+        source, separator, path = key.partition("@")
+        if not separator or not source or not path:
+            return None
+        destination: str = key if path.startswith("labs/") else f"{source}@labs/{path}"
+        try:
+            validate_full_key(destination)
+        except ValueError:
+            return None
+        self.candidates.setdefault(key, set()).add(destination)
+        return destination
+
     def _resolve(self, key: str, *, state: bool = False) -> str:
         if key == "":
             return key
@@ -186,15 +198,23 @@ class TaskDataMigration:
             return key
         else:
             choices: set[str] = self.candidates.get(key, set())
-            if len(choices) != 1:
+            if not choices:
+                fallback: str | None = self._labs_destination(key)
+                if fallback is None:
+                    message = f"Unresolved key: {key}; supply --map"
+                    if message not in self.plan.errors:
+                        self.plan.errors.append(message)
+                    return key
+                destination = fallback
+            elif len(choices) != 1:
                 message: str = (
                     f"Ambiguous key: {key} -> {', '.join(sorted(choices))}"
-                    if choices else f"Unresolved key: {key}; supply --map"
                 )
                 if message not in self.plan.errors:
                     self.plan.errors.append(message)
                 return key
-            destination = next(iter(choices))
+            else:
+                destination = next(iter(choices))
         self.plan.mapping[key] = destination
         return destination
 
@@ -289,6 +309,13 @@ class TaskDataMigration:
                 roots.setdefault(prefix, set()).add(key)
         matches: list[str] = [prefix for prefix in roots if remainder.as_posix().startswith(prefix + "/")]
         if not matches:
+            compact_key: str = remainder.parts[0]
+            if "@" in compact_key:
+                key = self._resolve(compact_key)
+                if "@" in key:
+                    source, path = key.split("@", 1)
+                    tail = Path(*remainder.parts[1:])
+                    return (Path(".tko") / family / source / path / tail).as_posix()
             self.plan.errors.append(f"Unresolved history directory: {relative}; supply --map")
             return relative
         prefix: str = max(matches, key=lambda value: len(Path(value).parts))

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from tko.ui_textual.palette import DARK, LIGHT, THEMES, make_theme
+
 from collections.abc import Callable
 
 from rich.text import Text
@@ -36,11 +38,11 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
     TITLE = "TKO Tester"
     ENABLE_COMMAND_PALETTE = False
     CSS = """
-    Screen { layout: vertical; background: #080808; }
-    #tester-header { height: 1; border: none; padding: 0; background: #080808; }
-    #tester-output { height: 1fr; border: none; padding: 0; background: #080808; }
+    Screen { layout: vertical; background: $background; }
+    #tester-header { height: 1; border: none; padding: 0; background: $background; }
+    #tester-output { height: 1fr; border: none; padding: 0; background: $background; }
     #tester-output-content { text-wrap: nowrap; }
-    Footer { background: #080808; }
+    Footer { background: $background; }
     """
     BINDINGS = [
         Binding("escape", "quit", "Voltar"),
@@ -59,6 +61,7 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
         Binding("a", "self_evaluate", "Avaliar"),
         Binding("I", "toggle_images", "Imagens"),
         Binding("v", "open_editor", "Ver Arquivos"),
+        Binding(GuiKeys.colors, "toggle_theme", "Cores"),
     ]
 
     def __init__(
@@ -72,7 +75,10 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
         autorun: bool = False,
     ) -> None:
         super().__init__()
+        self.register_theme(make_theme(DARK))
+        self.register_theme(make_theme(LIGHT))
         self.settings = settings
+        self.theme = settings.app.theme if settings.app.theme in THEMES else DARK.name
         self.repo = repo
         self.wdir = wdir
         # ``App.task`` is Textual's internal asynchronous task property.
@@ -163,11 +169,17 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
     def refresh_view(self) -> None:
         if not self.is_mounted:
             return
-        self.query_one("#tester-header", Static).update(to_rich_text(self._header()))
+        self.query_one("#tester-header", Static).update(to_rich_text(self._header(), THEMES[self.theme]))
         output = self.query_one("#tester-output", VerticalScroll)
         width = max(1, output.scrollable_content_region.width)
         content = output.query_one("#tester-output-content", Static)
-        content.update(Text("\n").join(to_rich_text(line) for line in self._output_lines(width)))
+        content.update(Text("\n").join(to_rich_text(line, THEMES[self.theme]) for line in self._output_lines(width)))
+
+    def action_toggle_theme(self) -> None:
+        self.theme = LIGHT.name if self.theme == DARK.name else DARK.name
+        self.settings.app.set_theme(self.theme)
+        self.settings.save_settings()
+        self.refresh_view()
 
     def action_previous(self) -> None:
         self.navigator.go_left(self.state)

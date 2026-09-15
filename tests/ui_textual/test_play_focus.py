@@ -1,4 +1,5 @@
 import asyncio
+from tko.ui_textual.palette import ACCENT, BORDER
 from pathlib import Path
 
 from textual.color import Color
@@ -66,8 +67,8 @@ def test_panel_headers_layout_clicks_and_focus(tmp_path: Path) -> None:
             assert [button.id for button in right_header.query(Button)] == [
                 "top-preview", "top-graph", "top-logs", "top-skills",
             ]
-            assert left.styles.border_top[1] == Color.parse("#0088ff")
-            assert right.styles.border_top[1] == Color.parse("#404040")
+            assert left.styles.border_top[1] == Color.parse(ACCENT)
+            assert right.styles.border_top[1] == Color.parse(BORDER)
             for width in (80, 120):
                 await pilot.resize_terminal(width, 35)
                 await pilot.pause()
@@ -83,8 +84,8 @@ def test_panel_headers_layout_clicks_and_focus(tmp_path: Path) -> None:
                 ):
                     await pilot.click(f"#{identifier}")
                     assert repo.flags.panel.get_value() == mode
-                    assert right.styles.border_top[1] == Color.parse("#0088ff")
-                    assert left.styles.border_top[1] == Color.parse("#404040")
+                    assert right.styles.border_top[1] == Color.parse(ACCENT)
+                    assert left.styles.border_top[1] == Color.parse(BORDER)
                 await pilot.press("tab")
                 assert app.focused is tree
                 await pilot.click("#top-all")
@@ -97,6 +98,6 @@ def test_panel_headers_layout_clicks_and_focus(tmp_path: Path) -> None:
                 assert repo.flags.task_view_mode.is_pinned()
                 await pilot.press("tab")
                 assert app.focused is panel
-                assert right.styles.border_top[1] == Color.parse("#0088ff")
+                assert right.styles.border_top[1] == Color.parse(ACCENT)
 
     asyncio.run(exercise())

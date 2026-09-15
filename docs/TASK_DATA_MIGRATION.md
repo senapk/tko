@@ -14,7 +14,7 @@ o histórico de execuções em `track.jsonl` e a configuração atual em
 `repository.toml`. Quem já executou uma migração anterior deve executar o comando
 novamente.
 
-## Inspecionar e aplicar
+## Aplicar ou simular
 
 Feche os processos TKO que estejam usando o workspace. A operação é offline e
 trabalha em um workspace por vez:
@@ -23,9 +23,15 @@ trabalha em um workspace por vez:
 tko tool migrate /caminho/do/workspace
 ```
 
-Sem opções, o comando apenas mostra correspondências, arquivos afetados e erros;
-não cria backup, não atualiza índices e não escreve no workspace. `tko util migrate`
-é o mesmo comando no grupo de utilitários já existente.
+Sem opções, o comando aplica a migração após validá-la e cria um backup. Para
+revisar correspondências, arquivos afetados e erros sem escrever no workspace,
+use `--dry-run`. `--apply` continua aceito por compatibilidade, mas já é o
+comportamento padrão. `tko util migrate` é o mesmo comando no grupo de
+utilitários já existente.
+
+```sh
+tko tool migrate /caminho/do/workspace --dry-run
+```
 
 O mapa automático usa o caminho atual e o antigo `@rotulo`, quando este ainda
 está presente na linha do índice. Também reconhece a convenção `labs/`: para uma
@@ -39,8 +45,10 @@ nome da pasta. Para fontes Git, lê o
 índice já materializado no workspace; não faz clone, download ou atualização de
 cache.
 
-Se nenhuma dessas regras resolver o rótulo, ou se ele apontar para várias
-atividades, forneça um arquivo JSON:
+Se nenhuma dessas regras resolver o rótulo, o migrador o move para
+`fonte@labs/rotulo` e continua a operação, incluindo as pastas de atividade,
+`track` e `audit`. Quando o rótulo apontar para várias atividades, forneça um
+arquivo JSON:
 
 ```json
 {
@@ -51,7 +59,7 @@ atividades, forneça um arquivo JSON:
 
 ```sh
 tko tool migrate /caminho/do/workspace --map mapa.json
-tko tool migrate /caminho/do/workspace --map mapa.json --apply
+tko tool migrate /caminho/do/workspace --map mapa.json --dry-run
 ```
 
 Destinos explícitos podem representar atividades arquivadas ou fontes cujo índice
@@ -115,8 +123,8 @@ para evitar uma conversão especulativa.
 
 ## Conflitos e recuperação
 
-Referências não resolvidas, logs diários ou registros de execução inválidos e
-históricos de versões com conteúdos diferentes no mesmo destino impedem a aplicação.
+Referências ambíguas, logs diários ou registros de execução inválidos e históricos
+de versões com conteúdos diferentes no mesmo destino impedem a aplicação.
 Arquivos distintos podem ser reunidos na mesma pasta; arquivos idênticos podem compartilhar o destino.
 Não há opção para sobrescrever versões divergentes.
 

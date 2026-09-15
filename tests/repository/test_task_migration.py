@@ -112,11 +112,8 @@ def test_preserves_unknown_log_fields_versions_and_crlf(tmp_path: Path) -> None:
     assert path.read_bytes() == original.replace(b"k:course@old", b"k:course@plan/task")
 
 
-@pytest.mark.parametrize("index", [
-    "- [ ] [Task](plan/old/README.md)\n",
-    "- [ ] `@old` [A](plan/a/README.md)\n- [ ] `@old` [B](plan/b/README.md)\n",
-])
-def test_missing_or_ambiguous_alias_requires_explicit_map(tmp_path: Path, index: str) -> None:
+def test_ambiguous_alias_requires_explicit_map(tmp_path: Path) -> None:
+    index: str = "- [ ] `@old` [A](plan/a/README.md)\n- [ ] `@old` [B](plan/b/README.md)\n"
     _workspace(tmp_path, index)
     log: Path = _write(tmp_path, ".tko/log/2026-09-14.log", _event("course@old", 0))
     plan: MigrationPlan = TaskDataMigration(tmp_path).inspect()
@@ -128,6 +125,24 @@ def test_missing_or_ambiguous_alias_requires_explicit_map(tmp_path: Path, index:
     mapping: Path = _write(tmp_path, "map.json", '{"course@old": "course@plan/old"}')
     TaskDataMigration(tmp_path, read_mapping(mapping)).inspect().apply()
     assert "course@plan/old" in log.read_text()
+
+
+def test_missing_alias_moves_activity_and_history_to_labs(tmp_path: Path) -> None:
+    _workspace(tmp_path, "- [ ] [Task](plan/old/README.md)\n")
+    log: Path = _write(tmp_path, ".tko/log/2026-09-14.log", _event("course@old", 0))
+    history: Path = _write(tmp_path, ".tko/track/course@old/draft.py.json", b"snapshot")
+    activity: Path = _write(tmp_path, "course/old/main.py", b"print(42)\n")
+
+    plan: MigrationPlan = TaskDataMigration(tmp_path).inspect()
+
+    assert plan.errors == []
+    assert plan.mapping["course@old"] == "course@labs/old"
+    plan.apply()
+    assert "course@labs/old" in log.read_text()
+    assert not history.exists()
+    assert (tmp_path / ".tko/track/course/labs/old/draft.py.json").read_bytes() == b"snapshot"
+    assert not activity.exists()
+    assert (tmp_path / "course/labs/old/main.py").read_bytes() == b"print(42)\n"
 
 
 def test_same_labels_in_two_sources_do_not_merge(tmp_path: Path) -> None:
@@ -160,7 +175,7 @@ def test_history_collisions_only_merge_identical_files(tmp_path: Path, same: boo
         assert _snapshot(tmp_path) == before
 
 
-def test_track_csv_migrates_to_jsonl_without_writing_during_preview(tmp_path: Path) -> None:
+def test_track_csv_migrates_to_jsonl_without_writing_during_dry_run(tmp_path: Path) -> None:
     _workspace(tmp_path)
     legacy: Path = _write(tmp_path, ".tko/track/course@old/track.csv", "2026-09-14_10-00-00,100%,main.py:2026-09-14_10-00-00\n")
     before: dict[str, bytes] = _snapshot(tmp_path)
@@ -168,7 +183,7 @@ def test_track_csv_migrates_to_jsonl_without_writing_during_preview(tmp_path: Pa
     assert plan.errors == []
     assert _snapshot(tmp_path) == before
     destination: Path = tmp_path / ".tko/track/course/plan/task/track.jsonl"
-    preview = CliRunner().invoke(app, ["migrate", str(tmp_path)])
+    preview = CliRunner().invoke(app, ["migrate", str(tmp_path), "--dry-run"])
     assert preview.exit_code == 0
     assert "create: .tko/track/course/plan/task/track.jsonl" in preview.output
     assert "delete: .tko/track/course@old/track.csv" in preview.output
@@ -370,18 +385,21 @@ def test_new_workspace_marks_format_before_first_write(tmp_path: Path) -> None:
     require_current_task_data(tmp_path)
 
 
-def test_preview_cli_and_apply(tmp_path: Path) -> None:
+def test_cli_applies_by_default_and_supports_dry_run(tmp_path: Path) -> None:
     _workspace(tmp_path)
     _write(tmp_path, ".tko/log/2026-09-14.log", _event("course@old", 0))
     runner: CliRunner = CliRunner()
     before: dict[str, bytes] = _snapshot(tmp_path)
-    result = runner.invoke(app, ["migrate", str(tmp_path)])
-    assert result.exit_code == 0, result.output
-    assert "course@old -> course@plan/task" in result.output
+    preview = runner.invoke(app, ["migrate", str(tmp_path), "--dry-run"])
+    assert preview.exit_code == 0, preview.output
+    assert "course@old -> course@plan/task" in preview.output
     assert _snapshot(tmp_path) == before
-    applied = runner.invoke(app, ["migrate", str(tmp_path), "--apply"])
+    applied = runner.invoke(app, ["migrate", str(tmp_path)])
     assert applied.exit_code == 0, applied.output
     assert "Backup" in applied.output
+    compatible = runner.invoke(app, ["migrate", str(tmp_path), "--apply"])
+    assert compatible.exit_code == 0, compatible.output
+    assert "Dados já migrados." in compatible.output
 
 
 @pytest.mark.parametrize("mapping", [
@@ -530,6 +548,7 @@ def test_invalid_yaml_cli_reports_error_without_mutation(tmp_path: Path) -> None
     before: dict[str, bytes] = _snapshot(tmp_path)
     result = CliRunner().invoke(app, ["migrate", str(tmp_path), "--apply"])
     assert result.exit_code == 1
+    assert "Migração falhou: Invalid repository configuration" in result.output
     assert "Invalid repository configuration" in result.output
     assert _snapshot(tmp_path) == before
 
@@ -581,23 +600,23 @@ def test_empty_legacy_history_directory_can_identify_old_logs(tmp_path: Path) ->
     "- [ ] [Animal](plan/animal/README.md)\n",
     "- [ ] [Animal](other/labs/animal/README.md)\n",
 ])
-def test_history_directory_requires_exact_labs_path(tmp_path: Path, index: str) -> None:
+def test_history_directory_without_labs_entry_uses_labs_destination(tmp_path: Path, index: str) -> None:
     _workspace(tmp_path, index)
     _write(tmp_path, ".tko/track/course@animal/draft.py.json", b"snapshot")
     plan: MigrationPlan = TaskDataMigration(tmp_path).inspect()
-    assert plan.errors
-    assert "course@animal" not in plan.mapping
+    assert plan.errors == []
+    assert plan.mapping["course@animal"] == "course@labs/animal"
 
 
-def test_history_directory_does_not_match_labs_entry_from_another_source(tmp_path: Path) -> None:
+def test_history_directory_from_another_source_uses_own_labs_destination(tmp_path: Path) -> None:
     _workspace(tmp_path, "# Course\n")
     config: Path = tmp_path / ".tko/repository.toml"
     config.write_text(config.read_text() + '[profile.sources.other]\nuri = "other.md"\n')
     _write(tmp_path, "other.md", "- [ ] [Animal](labs/animal/README.md)\n")
     _write(tmp_path, ".tko/track/course@animal/draft.py.json", b"snapshot")
     plan: MigrationPlan = TaskDataMigration(tmp_path).inspect()
-    assert plan.errors
-    assert "course@animal" not in plan.mapping
+    assert plan.errors == []
+    assert plan.mapping["course@animal"] == "course@labs/animal"
 
 
 @pytest.mark.parametrize("competing_entry", [
@@ -821,9 +840,9 @@ def test_directory_only_activity_can_be_moved(tmp_path: Path) -> None:
     assert (tmp_path / "course/labs/animal/empty").is_dir()
 
 
-def test_cli_reports_activity_move_in_preview(tmp_path: Path) -> None:
+def test_cli_reports_activity_move_in_dry_run(tmp_path: Path) -> None:
     _workspace_with_activity(tmp_path)
-    result = CliRunner().invoke(app, ["migrate", str(tmp_path)])
+    result = CliRunner().invoke(app, ["migrate", str(tmp_path), "--dry-run"])
     assert result.exit_code == 0, result.output
     assert "move directory: course/animal -> course/labs/animal" in result.output
     assert (tmp_path / "course/animal").is_dir()
@@ -886,12 +905,13 @@ def test_nested_legacy_activity_directories_move_to_their_own_destinations(tmp_p
     assert not (tmp_path / "course/parent").exists()
 
 
-def test_activity_move_does_not_absorb_an_existing_index(tmp_path: Path) -> None:
+def test_activity_move_skips_directory_containing_an_existing_index(tmp_path: Path) -> None:
     _workspace(tmp_path)
     config: Path = tmp_path / ".tko/repository.toml"
     config.write_text(config.read_text() + '[profile.sources.nested]\nuri = "course/old/index.md"\n')
-    _write(tmp_path, "course/old/index.md", "# Nested index\n")
+    index: Path = _write(tmp_path, "course/old/index.md", "# Nested index\n")
     plan: MigrationPlan = TaskDataMigration(tmp_path).inspect()
-    assert any("contains a current task or index" in error for error in plan.errors)
-    with pytest.raises(ValueError):
-        plan.apply()
+    assert plan.errors == []
+    assert "course/old" not in plan.moves
+    plan.apply()
+    assert index.read_text() == "# Nested index\n"

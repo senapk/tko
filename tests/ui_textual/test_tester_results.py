@@ -14,6 +14,7 @@ from tko.run.solver_builder import SolverBuilder
 from tko.run.wdir import Wdir
 from tko.tester.tester_state import SeqMode
 from tko.ui_textual.tester_app import TkoTesterApp
+from tko.ui_textual.palette import DARK, LIGHT
 
 
 def make_app(tmp_path: Path) -> TkoTesterApp:
@@ -30,6 +31,21 @@ def mixed_results(app: TkoTesterApp) -> None:
     app.state.results = [(Result.SUCCESS, 0), (Result.WRONG_OUTPUT, 1),
                          (Result.SUCCESS, 2), (Result.EXECUTION_ERROR, 3)]
     app.state.mode = SeqMode.finished
+
+
+def test_tester_shift_c_toggles_and_persists_theme(tmp_path: Path) -> None:
+    async def exercise() -> None:
+        app = make_app(tmp_path)
+        async with app.run_test() as pilot:
+            assert app.theme == DARK.name
+            await pilot.press("C")
+            assert app.theme == LIGHT.name
+            assert Settings(tmp_path).load_settings().app.theme == LIGHT.name
+            await pilot.press("C")
+            assert app.theme == DARK.name
+            assert Settings(tmp_path).load_settings().app.theme == DARK.name
+
+    asyncio.run(exercise())
 
 
 def test_finish_preserves_order_and_selects_first_error(tmp_path: Path) -> None:

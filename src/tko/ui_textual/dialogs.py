@@ -299,7 +299,7 @@ class GradeDialog(ModalScreen[GradeResult | None]):
 
     DEFAULT_CSS = """
     GradeDialog { align: center middle; }
-    GradeDialog #grade-dialog { width: 90%; height: 90%; padding: 1 2; border: round $success; background: #080808; }
+    GradeDialog #grade-dialog { width: 90%; height: 90%; padding: 1 2; border: round $success; background: $background; }
     GradeDialog #grade-error { color: $error; margin: 1 0; }
     GradeDialog #grade-declaration { color: $warning; margin: 1 0; }
     GradeDialog #grade-actions { height: auto; margin-top: 1; }
@@ -316,16 +316,16 @@ class GradeDialog(ModalScreen[GradeResult | None]):
     GradeDialog .feedback-row { height: auto; align-vertical: middle; }
     GradeDialog .feedback-row > Label { width: 45; height: 3; content-align: left middle; }
     GradeDialog .feedback-row > Input { width: 1fr; min-width: 20; margin-left: 1; }
-    GradeDialog .feedback-row > Input { background: #172933; border: tall #3f7185; color: #f1f5f6; }
-    GradeDialog .feedback-row > Input:focus { background: #1d3541; border: tall $success; text-style: bold; }
-    GradeDialog .feedback-row > Input:disabled { background: #111111; border: tall #303030; color: $text-muted; }
-    GradeDialog .feedback-row > Label.missing-required { color: #fbbf24; text-style: bold; }
+    GradeDialog .feedback-row > Input { background: $surface; border: tall $border; color: $foreground; }
+    GradeDialog .feedback-row > Input:focus { background: $panel; border: tall $success; text-style: bold; }
+    GradeDialog .feedback-row > Input:disabled { background: $background; border: tall $border; color: $text-muted; }
+    GradeDialog .feedback-row > Label.missing-required { color: $warning; text-style: bold; }
     GradeDialog #grade-mode-row { height: auto; align-vertical: middle; }
     GradeDialog #grade-mode-row > Label { width: 45; height: 3; content-align: left middle; }
     GradeDialog #grade-mode { layout: horizontal; height: 3; }
     GradeDialog #grade-mode > RadioButton { width: auto; height: 1fr; margin-right: 2; }
-    GradeDialog #grade-mode > RadioButton.-on > .toggle--label { background: #166534; color: #f0fff4; text-style: bold; }
-    GradeDialog #grade-mode:focus > RadioButton.-selected > .toggle--label { background: #22c55e; color: #06130a; text-style: bold; }
+    GradeDialog #grade-mode > RadioButton.-on > .toggle--label { background: $success; color: $background; text-style: bold; }
+    GradeDialog #grade-mode:focus > RadioButton.-selected > .toggle--label { background: $success; color: $background; text-style: bold; }
     """
 
     BINDINGS = [

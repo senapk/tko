@@ -189,10 +189,11 @@ def tool_html(
     convert_markdown_to_html(final_title, Path(input_file), Path(output_file))
 
 
-@app.command("migrate", help="Preview or apply an offline migration of persisted task identities")
+@app.command("migrate", help="Migrate persisted task identities offline")
 def tool_migrate(
     workspace: Path = typer.Argument(..., help="Workspace containing .tko"),
-    apply: bool = typer.Option(False, "--apply", help="Apply after validation, with a backup"),
+    apply: bool = typer.Option(True, "--apply", help="Apply after validation, with a backup (default)"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show the migration plan without changing files"),
     mapping: Path | None = typer.Option(None, "--map", help="JSON map of old keys to canonical keys"),
     recover: bool = typer.Option(False, "--recover", help="Roll back an interrupted migration"),
 ) -> None:
@@ -201,8 +202,8 @@ def tool_migrate(
 
     try:
         if recover:
-            if apply or mapping is not None:
-                raise ValueError("--recover cannot be combined with --apply or --map")
+            if dry_run or mapping is not None:
+                raise ValueError("--recover cannot be combined with --dry-run or --map")
             backup: Path = recover_migration(workspace)
             typer.echo(f"Migração revertida. Backup: {backup}")
             return
@@ -216,16 +217,17 @@ def tool_migrate(
             action: str = "delete" if change.after is None else "create" if change.before is None else "update"
             typer.echo(f"{action}: {change.relative}")
         if plan.errors:
+            typer.echo(f"Migração não aplicada: {len(plan.errors)} erro(s).", err=True)
             for error in plan.errors:
                 typer.echo(error, err=True)
             raise typer.Exit(1)
-        if not apply:
-            typer.echo(f"Simulação: {len(plan.changes)} arquivo(s). Use --apply para aplicar com o TKO fechado.")
+        if dry_run:
+            typer.echo(f"Simulação: {len(plan.changes)} arquivo(s). Execute sem --dry-run para aplicar com o TKO fechado.")
             return
         result: Path | None = plan.apply()
         typer.echo("Dados já migrados." if result is None else f"Migração concluída. Backup: {result}")
     except (ValueError, OSError) as exc:
-        typer.echo(str(exc), err=True)
+        typer.echo(f"Migração falhou: {exc}", err=True)
         if (workspace / ".tko" / "migration-pending.json").exists():
             typer.echo("Aplicação interrompida. Execute o mesmo comando com --recover.", err=True)
         raise typer.Exit(1) from exc

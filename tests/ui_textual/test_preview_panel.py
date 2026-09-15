@@ -11,6 +11,25 @@ from tko.game.task import Task
 from tko.game.task_location import TaskLocation
 from tko.repository.repository import Repository
 from tko.ui_textual.app import TkoApp, TaskTreeView
+from tko.ui_textual.palette import DARK, LIGHT
+
+
+def test_main_app_shift_c_toggles_and_persists_theme(tmp_path: Path) -> None:
+    settings = Settings(tmp_path)
+    repo = Repository(tmp_path, settings.rs, None, recursive_search=False)
+
+    async def exercise() -> None:
+        app = TkoApp(settings, repo, None)
+        async with app.run_test() as pilot:
+            assert app.theme == DARK.name
+            await pilot.press("C")
+            assert app.theme == LIGHT.name
+            assert Settings(tmp_path).load_settings().app.theme == LIGHT.name
+            await pilot.press("C")
+            assert app.theme == DARK.name
+            assert Settings(tmp_path).load_settings().app.theme == DARK.name
+
+    asyncio.run(exercise())
 
 
 def test_preview_selection_rendering_and_scroll(tmp_path: Path) -> None:

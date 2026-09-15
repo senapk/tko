@@ -1,9 +1,13 @@
 from __future__ import annotations
+import json
+from pathlib import Path
+import tomllib
 from typing import Any
+
+import yaml # type: ignore
+
 from tko.config.app_settings import AppSettings
 from tko.config.run_settings import RunSettings
-from pathlib import Path
-import yaml #type: ignore
 
 from tko.config.languages_settings import LanguagesSettings
 from tko.i18n import Msg
@@ -43,7 +47,8 @@ _SETTINGS_REMOTE_SOURCES_REGISTERED = Msg.parse(
 )
 
 class Settings:
-    CFG_FILE = "settings.yaml"
+    CFG_FILE = "settings.toml"
+    LEGACY_CFG_FILE = "settings.yaml"
     LANG_FILE = "programming-languages.toml"
     LANG_FILE_SAMPLE = "programming-languages-sample.toml"
     LOG_FILE = "tko.log"
@@ -80,6 +85,9 @@ class Settings:
 
     def get_settings_file(self) -> Path:
         return self.get_settings_dir() / self.CFG_FILE
+
+    def get_legacy_settings_file(self) -> Path:
+        return self.get_settings_dir() / self.LEGACY_CFG_FILE
     
     def get_languages_sample(self) -> Path:
         return self.get_settings_dir() / self.LANG_FILE_SAMPLE
@@ -116,21 +124,49 @@ class Settings:
     def has_alias_git(self, alias: str) -> bool:
         return alias in self.dict_alias_git
 
+    @staticmethod
+    def _toml_value(value: object) -> str:
+        if isinstance(value, str):
+            return json.dumps(value, ensure_ascii=False)
+        if isinstance(value, bool):
+            return "true" if value else "false"
+        if isinstance(value, (int, float)):
+            return str(value).lower()
+        raise ValueError(f"Unsupported global settings value: {type(value).__name__}")
+
+    @classmethod
+    def _settings_toml(cls, value: dict[str, Any]) -> str:
+        lines: list[str] = []
+        for table in ("gitrepos", "appcfg"):
+            section: object = value.get(table, {})
+            if not isinstance(section, dict):
+                raise ValueError(f"Invalid global settings section: {table}")
+            lines.append(f"[{table}]")
+            for key, item in section.items():
+                if not isinstance(key, str):
+                    raise ValueError(f"Invalid global settings key in {table}")
+                lines.append(f"{json.dumps(key, ensure_ascii=False)} = {cls._toml_value(item)}")
+            lines.append("")
+        return "\n".join(lines)
+
     def load_settings(self):
         try:
             settings_file = self.get_settings_file()
-            content = Decoder.load(settings_file)
+            legacy_file = self.get_legacy_settings_file()
+            using_legacy: bool = not settings_file.is_file() and legacy_file.is_file()
+            source: Path = legacy_file if using_legacy else settings_file
+            content = Decoder.load(source)
 
-            data: Any = yaml.safe_load(content)
+            data: Any = yaml.safe_load(content) if using_legacy else tomllib.loads(content)
 
             if data is None or not isinstance(data, dict):
-                raise FileNotFoundError(f"{_SETTINGS_EMPTY_CONFIG_FILE}".format(path=settings_file))
+                raise FileNotFoundError(f"{_SETTINGS_EMPTY_CONFIG_FILE}".format(path=source))
             self.data = data
-            # self.dict_alias_git: dict[str, str] = dict(self.dict_alias_git) # type: ignore
-            # if len(self.dict_alias_git.keys()) == 0: # type: ignore
-            #     self.dict_alias_git = self.Defaults.alias_git.copy()
-            self.app = AppSettings().from_dict(data.get(self.__appcfg, AppSettings())) # type: ignore
-            # self.colors = Colors().from_dict(data.get(self.__colors, Colors())) # type: ignore
+            gitrepos: object = data.get(self.__gitrepos, {})
+            if isinstance(gitrepos, dict) and all(isinstance(key, str) and isinstance(value, str) for key, value in gitrepos.items()):
+                self.dict_alias_git = dict(gitrepos)
+            app_config: object = data.get(self.__appcfg, {})
+            self.app = AppSettings().from_dict(app_config) if isinstance(app_config, dict) else AppSettings()
             file = self.get_languages_file()
             self.__languages_settings = LanguagesSettings(file).load_file_settings()
 
@@ -140,6 +176,10 @@ class Settings:
                 self.__appcfg: self.app.to_dict(),
                 # self.__colors: self.colors.to_dict()
             }
+            if using_legacy:
+                self._cached_output = {}
+                self.save_settings()
+                legacy_file.replace(legacy_file.with_suffix(".yaml.backup"))
         except:
             self.reset()
             self.save_settings()
@@ -158,7 +198,7 @@ class Settings:
             return self
 
         with open(file, "w", encoding="utf-8") as f:
-            yaml.dump(value, f)
+            _ = f.write(self._settings_toml(value))
 
         # Update the cached output after saving
         self._cached_output = value

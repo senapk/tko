@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from tko.ui_textual.palette import DARK, LIGHT, THEMES, make_theme
+
 from collections.abc import Callable, Iterable
 from pathlib import Path
 from typing import Protocol
@@ -127,7 +129,7 @@ class TaskTreeView(Tree[IsTreeItem]):
         self._node_by_key.clear()
         quest_nodes: dict[str, TreeNode[IsTreeItem]] = {}
         for sentence, item in self.model.get_rendered_items():
-            label = to_rich_text(sentence)
+            label = to_rich_text(sentence, THEMES.get(self.app.theme, DARK))
             if isinstance(item, Quest):
                 expanded = item.basic.full_key in self.model.state.expanded
                 node = self.root.add(label, data=item, expand=expanded, allow_expand=True)
@@ -220,23 +222,23 @@ class TkoApp(App[Callable[[], None] | None]):
     TITLE = "TKO"
     ENABLE_COMMAND_PALETTE = False
     CSS = """
-    Screen { layout: vertical; background: #080808; }
-    .panel-header .top-action { width: 1fr; min-width: 0; height: 1; padding: 0 1; border: none; background: #0088ff; color: $text; }
+    Screen { layout: vertical; background: $background; }
+    .panel-header .top-action { width: 1fr; min-width: 0; height: 1; padding: 0 1; border: none; background: $primary; color: $background; }
     .panel-header .top-action:hover { background: $primary; }
     .panel-header .top-action.active { background: $accent; color: $text; text-style: bold; }
-    #body { height: 1fr; background: #080808; }
-    .play-frame { height: 100%; border: round #404040; background: #080808; }
-    .play-frame:focus-within { border: round #0088ff; }
+    #body { height: 1fr; background: $background; }
+    .play-frame { height: 100%; border: round $border; background: $background; }
+    .play-frame:focus-within { border: round $primary; }
     #task-frame { width: 45%; min-width: 28; }
     #info-frame { width: 55%; min-width: 30; }
-    .panel-header { height: auto; grid-rows: 1; background: #080808; }
+    .panel-header { height: auto; grid-rows: 1; background: $background; }
     #graph-footer { grid-size: 2; grid-columns: 1fr 1fr; display: none; }
     #graph-footer .top-action { padding: 0; }
-    #task-tree { width: 100%; height: 1fr; border: none; background: #080808; }
-    #side-panel { width: 100%; height: 1fr; border: none; padding: 0 1; background: #080808; }
-    #side-content { width: auto; min-width: 100%; height: auto; text-wrap: nowrap; background: #080808; }
+    #task-tree { width: 100%; height: 1fr; border: none; background: $background; }
+    #side-panel { width: 100%; height: 1fr; border: none; padding: 0 1; background: $background; }
+    #side-content { width: auto; min-width: 100%; height: auto; text-wrap: nowrap; background: $background; }
     #side-content.preview { width: 100%; text-wrap: wrap; }
-    Footer { background: #080808; }
+    Footer { background: $background; }
     #search { display: none; margin: 0 1; }
     #search.visible { display: block; }
     .title { text-style: bold; }
@@ -269,11 +271,15 @@ class TkoApp(App[Callable[[], None] | None]):
         Binding("pageup", "scroll_logs_up", "Logs acima", show=False, priority=True),
         Binding("pagedown", "scroll_logs_down", "Logs abaixo", show=False, priority=True),
         Binding("question_mark", "help", "Ajuda"),
+        Binding(GuiKeys.colors, "toggle_theme", "Cores"),
     ]
 
     def __init__(self, settings: Settings, repo: Repository, watcher: RepositoryWatcher | None, need_update: bool = False) -> None:
         super().__init__()
+        self.register_theme(make_theme(DARK))
+        self.register_theme(make_theme(LIGHT))
         self.settings = settings
+        self.theme = settings.app.theme if settings.app.theme in THEMES else DARK.name
         self._bindings = BindingsMap(self._localized_bindings())
         self.repo = repo
         self.watcher = watcher
@@ -319,6 +325,7 @@ class TkoApp(App[Callable[[], None] | None]):
             Binding("pageup", "scroll_logs_up", self._t("Rolar painel acima", "Scroll panel up"), show=False, priority=True),
             Binding("pagedown", "scroll_logs_down", self._t("Rolar painel abaixo", "Scroll panel down"), show=False, priority=True),
             Binding("question_mark", "help", self._t("Ajuda", "Help")),
+            Binding(GuiKeys.colors, "toggle_theme", self._t("Cores", "Colors")),
         ]
 
     def _t(self, portuguese: str, english: str) -> str:
@@ -521,7 +528,13 @@ class TkoApp(App[Callable[[], None] | None]):
                 lines = [RT(self._t("Selecione uma tarefa ou missão.", "Select a task or quest."))]
         else:
             lines = self._graph_lines(item, width, max(3, panel.size.height - 1))
-        self.query_one("#side-content", Static).update(Text("\n").join(to_rich_text(line) for line in lines))
+        self.query_one("#side-content", Static).update(Text("\n").join(to_rich_text(line, THEMES[self.theme]) for line in lines))
+
+    def action_toggle_theme(self) -> None:
+        self.theme = LIGHT.name if self.theme == DARK.name else DARK.name
+        self.settings.app.set_theme(self.theme)
+        self.settings.save_settings()
+        self.refresh_view()
 
     def _refresh_graph_footer(self, item: IsTreeItem | None) -> None:
         footer: Grid = self.query_one("#graph-footer", Grid)

@@ -48,7 +48,6 @@ def plan_activity_moves(
             if any(path.is_relative_to(origin) for path in plan.inputs) or any(
                 path.is_relative_to(origin) for path in canonical_paths.values()
             ):
-                plan.errors.append(f"Activity directory contains a current task or index: {old}")
                 continue
             proposals.setdefault(old, set()).add(new)
     moves: dict[str, str] = {}
