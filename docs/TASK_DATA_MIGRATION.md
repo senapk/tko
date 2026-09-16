@@ -24,7 +24,9 @@ trabalha em um workspace por vez:
 tko tool migrate /caminho/do/workspace
 ```
 
-Sem opções, o comando aplica a migração após validá-la e cria um backup. Para
+Sem opções, o comando aplica a migração após validá-la. Os repositórios dos
+alunos já são versionados no Git, portanto a ferramenta não cria uma cópia local
+dos dados. Para
 revisar correspondências, arquivos afetados e erros sem escrever no workspace,
 use `--dry-run`. Sem path, o comando valida e usa o diretório atual.
 Também é possível selecionar o diretório com `tko -C /caminho/do/workspace tool migrate`.
@@ -80,8 +82,8 @@ ser reformatadas, preservando seus campos.
 Configurações antigas são convertidas para `.tko/repository.toml` durante a mesma
 aplicação: fontes e fonte de autoria passam para `[profile]`, preferências para
 `[preferences]`, seleção para `[state]` e auditoria para `[profile.audit]`.
-O arquivo `repository.yaml` é removido depois da conversão; o original permanece
-no backup da migração. Se YAML e TOML coexistirem, o TOML tem precedência.
+O arquivo `repository.yaml` é removido depois da conversão. Se YAML e TOML
+coexistirem, o TOML tem precedência.
 Campos desconhecidos são preservados quando representáveis em TOML; valores
 `null` desconhecidos bloqueiam a conversão, pois TOML não possui esse valor.
 O carregamento normal não converte mais configurações antigas.
@@ -91,7 +93,7 @@ por linha contendo `timestamp`, `type: "execution"`, `result` e `files`. Se houv
 atuais da mesma atividade, os registros são reunidos e ordenados por horário.
 Somente registros inteiramente iguais são reduzidos a uma cópia; execuções
 distintas no mesmo segundo permanecem separadas. Arquivos CSV são removidos pela
-aplicação, com seus conteúdos preservados no backup. O JSONL de versões de cada
+aplicação. O JSONL de versões de cada
 arquivo de solução continua sendo um histórico diferente e não é concatenado.
 
 As pastas antigas de atividades também são movidas: por exemplo, `poo/animal`
@@ -128,22 +130,20 @@ de versões com conteúdos diferentes no mesmo destino impedem a aplicação.
 Arquivos distintos podem ser reunidos na mesma pasta; arquivos idênticos podem compartilhar o destino.
 Não há opção para sobrescrever versões divergentes.
 
-A aplicação valida novamente os arquivos inspecionados, prepara cópias anteriores
-e posteriores em `.tko/migrations/<id>/` e grava um manifesto com hashes. Durante
-a substituição, `.tko/migration-pending.json` impede a abertura normal. O marcador
-de formato é escrito por último. Executar novamente após concluir não altera os
-dados nem cria outro backup.
+A aplicação valida novamente os arquivos inspecionados e escreve o marcador de
+formato por último. Ela não cria pastas de backup nem cópias dos dados do aluno;
+em caso de interrupção ou erro, restaure o workspace com o Git.
 
-Se uma aplicação for interrompida:
+Workspaces que ainda tenham um marcador de migração pendente criado por uma
+versão anterior podem ser recuperados com:
 
 ```sh
 tko tool migrate /caminho/do/workspace --recover
 ```
 
-A recuperação restaura os arquivos e pastas anteriores usando o manifesto e remove o
+A recuperação restaura os arquivos e pastas anteriores usando o manifesto legado e remove o
 marcador de operação pendente. Ela também pode ser repetida após interrupção.
 Arquivos modificados por outro processo após a migração interrompida fazem a
-recuperação parar, para que não sejam sobrescritos. Os backups ficam disponíveis
-para inspeção; não remova o backup de uma operação pendente. Depois da recuperação,
-inspecione e aplique novamente. `--recover` trata somente operações pendentes;
+recuperação parar, para que não sejam sobrescritos. Depois da recuperação,
+inspecione e aplique novamente. `--recover` trata somente operações pendentes legadas;
 não desfaz automaticamente uma migração já concluída.

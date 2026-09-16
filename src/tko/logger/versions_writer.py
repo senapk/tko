@@ -27,6 +27,18 @@ class InvalidHistoryError(ValueError):
         super().__init__(f"{path}:{line_number}: {reason}")
 
 
+_GIT_CONFLICT_MARKER = re.compile(rb"(?:<{7,}|>{7,}|\|{7,})(?: .*)?|={7,}")
+
+
+def remove_git_conflict_markers(content: bytes) -> bytes:
+    """Remove standalone Git conflict markers while keeping every data line."""
+    retained: list[bytes] = []
+    for line in content.splitlines(keepends=True):
+        if not _GIT_CONFLICT_MARKER.fullmatch(line.rstrip(b"\r\n")):
+            retained.append(line)
+    return b"".join(retained)
+
+
 @dataclass(slots=True)
 class DiffOp:
     tag: Literal["replace", "insert", "delete"]
@@ -249,7 +261,7 @@ class VersionsWriter:
             for line_number, line in enumerate(
                 audit_file.read_bytes().splitlines(keepends=True), start=1
             ):
-                if re.fullmatch(rb"(?:<{7,}|>{7,}|\|{7,})(?: .*)?|={7,}", line.rstrip(b"\r\n")):
+                if _GIT_CONFLICT_MARKER.fullmatch(line.rstrip(b"\r\n")):
                     removed_markers = True
                     continue
                 try:

@@ -26,7 +26,8 @@ def test_migration_combines_track_and_audit_into_history(tmp_path: Path) -> None
     assert plan.errors == []
     assert ".tko/history/course/labs/task/solver.py.jsonl" in {change.relative for change in plan.changes}
     assert ".tko/history/course/labs/task/events.jsonl" in {change.relative for change in plan.changes}
-    assert plan.apply() is not None
+    plan.apply()
+    assert not (tmp_path / ".tko" / "migrations").exists()
     assert (tko / "history/course/labs/task/solver.py.jsonl").is_file()
     events: str = (tko / "history/course/labs/task/events.jsonl").read_text(encoding="utf-8")
     assert '"type":"audit"' in events

@@ -164,12 +164,11 @@ def test_migrates_legacy_sandbox_fields_and_preserves_old_names(tmp_path: Path) 
     )
 
     # Identity and configuration conversion happen in one offline migration.
-    backup = TaskDataMigration(tmp_path, {"sandbox@old": "sandbox@old"}).inspect().apply()
+    TaskDataMigration(tmp_path, {"sandbox@old": "sandbox@old"}).inspect().apply()
     RepositoryLoader(repo).load()
 
     assert not legacy.exists()
-    assert backup is not None
-    assert (backup / "before/.tko/repository.yaml").is_file()
+    assert not (tmp_path / ".tko" / "migrations").exists()
     data = read_toml(repo.paths.config_file)
     assert data["profile"]["authoring_source"] == "sandbox"
     assert data["profile"]["sources"]["sandbox"]["uri"] == "sandbox.md"
@@ -215,7 +214,7 @@ def test_migrates_legacy_source_list_with_writable_sandbox(tmp_path: Path) -> No
         encoding="utf-8",
     )
 
-    backup = TaskDataMigration(tmp_path, {"fup@mat": "fup@mat", "fup@tetris": "fup@tetris"}).inspect().apply()
+    TaskDataMigration(tmp_path, {"fup@mat": "fup@mat", "fup@tetris": "fup@tetris"}).inspect().apply()
     RepositoryLoader(repo).load()
 
     data = read_toml(repo.paths.config_file)
@@ -238,8 +237,7 @@ def test_migrates_legacy_source_list_with_writable_sandbox(tmp_path: Path) -> No
         "selected": "fup@tetris",
         "selected_index": 23,
     }
-    assert backup is not None
-    assert (backup / "before/.tko/repository.yaml").is_file()
+    assert not (tmp_path / ".tko" / "migrations").exists()
 
 
 def test_migration_keeps_toml_when_yaml_also_exists(tmp_path: Path) -> None:

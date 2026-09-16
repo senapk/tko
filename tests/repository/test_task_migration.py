@@ -77,9 +77,9 @@ def test_preview_is_read_only_and_apply_preserves_mixed_history(tmp_path: Path) 
     with pytest.raises(MigrationRequiredError, match="tko tool migrate"):
         Repository(tmp_path, RunSettings(), None, recursive_search=False)
 
-    backup: Path | None = plan.apply()
-    assert backup is not None
-    assert (backup / "before/.tko/log/2026-09-14.log").read_text() == lines
+    plan.apply()
+    assert not (tmp_path / ".tko" / "migrations").exists()
+    assert not (tmp_path / ".tko" / PENDING_FILE).exists()
     assert not legacy.exists()
     assert (tmp_path / ".tko/history/course/plan/task/src/main.py.jsonl").read_bytes() == b'{"history":"untouched"}\n'
     assert (tmp_path / ".tko/history/course/plan/task/src/audit.py.jsonl").read_bytes() == b"snapshot bytes\n"
@@ -304,8 +304,7 @@ def test_legacy_toml_configuration_is_converted_before_loading(tmp_path: Path) -
     plan: MigrationPlan = TaskDataMigration(tmp_path).inspect()
     assert plan.errors == []
     assert _snapshot(tmp_path) == before
-    backup: Path | None = plan.apply()
-    assert backup is not None
+    plan.apply()
     config: dict[str, object] = tomllib.loads((tmp_path / ".tko/repository.toml").read_text())
     assert "sandbox_name" not in config and "flags" not in config
     assert config["state"] == {"selected": "course@plan/task"}
@@ -315,7 +314,7 @@ def test_legacy_toml_configuration_is_converted_before_loading(tmp_path: Path) -
     assert isinstance(profile, dict)
     assert profile["authoring_source"] == "course"
     assert profile["sources"] == {"course": {"uri": "README.md"}}
-    assert (backup / "before/.tko/repository.toml").read_bytes() == before[".tko/repository.toml"]
+    assert not (tmp_path / ".tko" / "migrations").exists()
     assert TaskDataMigration(tmp_path).inspect().apply() is None
 
 
@@ -398,7 +397,9 @@ def test_cli_applies_by_default_and_supports_dry_run(tmp_path: Path) -> None:
     assert _snapshot(tmp_path) == before
     applied = runner.invoke(app, ["migrate", str(tmp_path)])
     assert applied.exit_code == 0, applied.output
-    assert "Backup" in applied.output
+    assert "Migração concluída." in applied.output
+    assert "Backup" not in applied.output
+    assert not (tmp_path / ".tko" / "migrations").exists()
     repeated: Result = runner.invoke(app, ["migrate", str(tmp_path)])
     assert repeated.exit_code == 0, repeated.output
     assert "Dados já migrados." in repeated.output
@@ -496,10 +497,8 @@ def test_history_and_backup_symlinks_are_rejected(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="Symlink"):
         TaskDataMigration(tmp_path).inspect()
     link.unlink()
-    (tmp_path / ".tko/migrations").symlink_to(outside, target_is_directory=True)
     plan: MigrationPlan = TaskDataMigration(tmp_path).inspect()
-    with pytest.raises(ValueError, match="Symlink"):
-        plan.apply()
+    plan.apply()
     assert list(outside.iterdir()) == []
 
 
@@ -566,6 +565,52 @@ def test_malformed_csv_blocks_migration(tmp_path: Path) -> None:
     with pytest.raises(ValueError):
         plan.apply()
     assert _snapshot(tmp_path) == before
+
+
+def test_history_csv_migration_accepts_all_git_conflict_values(tmp_path: Path) -> None:
+    _workspace(tmp_path)
+    history: Path = _write(
+        tmp_path,
+        ".tko/history.csv",
+        "<<<<<<< HEAD\n"
+        "hash-a,2026-09-14 10:00:00,SELF,course@old,value-a\n"
+        "=======\n"
+        "hash-b,2026-09-14 10:01:00,SELF,course@old,value-b\n"
+        ">>>>>>> origin/main\n",
+    )
+
+    plan: MigrationPlan = TaskDataMigration(tmp_path).inspect()
+
+    assert plan.errors == []
+    plan.apply()
+    assert history.read_text() == (
+        "hash-a,2026-09-14 10:00:00,SELF,course@plan/task,value-a\n"
+        "hash-b,2026-09-14 10:01:00,SELF,course@plan/task,value-b\n"
+    )
+
+
+def test_track_csv_migration_accepts_all_git_conflict_values(tmp_path: Path) -> None:
+    _workspace(tmp_path)
+    track: Path = _write(
+        tmp_path,
+        ".tko/track/course@old/track.csv",
+        "<<<<<<< HEAD\n"
+        "2026-09-14_10-00-00,50%,a.py:2026-09-14_10-00-00\n"
+        "=======\n"
+        "2026-09-14_10-01-00,100%,b.py:2026-09-14_10-01-00\n"
+        ">>>>>>> origin/main\n",
+    )
+
+    plan: MigrationPlan = TaskDataMigration(tmp_path).inspect()
+
+    assert plan.errors == []
+    plan.apply()
+    events: list[dict[str, object]] = [
+        json.loads(line)
+        for line in (tmp_path / ".tko/history/course/plan/task/events.jsonl").read_text().splitlines()
+    ]
+    assert [event["result"] for event in events] == ["50%", "100%"]
+    assert not track.exists()
 
 
 @pytest.mark.parametrize("family", ["track", "audit"])
@@ -710,8 +755,7 @@ def test_activity_tree_moves_with_logs_and_versions(tmp_path: Path, remote: bool
     assert not plan.errors
     assert plan.moves == {"course/animal": "course/labs/animal"}
     assert _snapshot(tmp_path) == before
-    backup: Path | None = plan.apply()
-    assert backup is not None
+    plan.apply()
     destination: Path = tmp_path / "course/labs/animal"
     assert not old.exists()
     assert (destination / "README.md").read_bytes() == before["course/animal/README.md"]
@@ -720,7 +764,7 @@ def test_activity_tree_moves_with_logs_and_versions(tmp_path: Path, remote: bool
     if os.name != "nt":
         assert stat.S_IMODE((destination / "src/run.sh").stat().st_mode) == 0o751
     assert (destination / "src/run.sh").stat().st_mtime_ns == 1234567890000000000
-    assert (backup / "before/course/animal/src/run.sh").read_bytes() == before["course/animal/src/run.sh"]
+    assert not (tmp_path / ".tko" / "migrations").exists()
     assert (tmp_path / ".tko/history/course/labs/animal/draft.py.json").read_bytes() == b"track snapshot"
     assert (tmp_path / ".tko/history/course/labs/animal/draft.py.jsonl").read_bytes() == b"audit snapshot"
     assert "course@labs/animal" in log.read_text()

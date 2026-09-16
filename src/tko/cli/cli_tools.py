@@ -235,8 +235,9 @@ def tool_migrate(
         if dry_run:
             typer.echo(f"Simulação: {len(plan.changes)} arquivo(s). Execute sem --dry-run para aplicar com o TKO fechado.")
             return
-        result: Path | None = plan.apply()
-        typer.echo("Dados já migrados." if result is None else f"Migração concluída. Backup: {result}")
+        already_migrated: bool = not plan.changes and not plan.directories
+        plan.apply()
+        typer.echo("Dados já migrados." if already_migrated else "Migração concluída.")
     except (ValueError, OSError) as exc:
         typer.echo(f"Migração falhou: {exc}", err=True)
         if (workspace / ".tko" / "migration-pending.json").exists():

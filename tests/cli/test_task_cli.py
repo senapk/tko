@@ -6,6 +6,7 @@ from typer.testing import CliRunner
 from tko.cli.cli_task import app
 from tko.config.run_settings import RunSettings
 from tko.config.settings import Settings
+from tko.enums.diff_count import DiffCount
 from tko.util.console import Console
 
 
@@ -36,6 +37,76 @@ def test_task_build_passes_explicit_moodle_url(monkeypatch: MonkeyPatch, tmp_pat
     assert result.exit_code == 0
     assert received["remote_url"] == "https://github.com/user/repo/tree/main"
     assert received["targets"] == [Path("task")]
+
+
+def test_task_check_runs_sorted_languages_for_each_activity(
+    monkeypatch: MonkeyPatch, tmp_path: Path,
+) -> None:
+    first: Path = tmp_path / "first"
+    second: Path = tmp_path / "second"
+    (first / "src" / "zlang").mkdir(parents=True)
+    (first / "src" / "alang").mkdir(parents=True)
+    (second / "src" / "clang").mkdir(parents=True)
+    calls: list[dict[str, object]] = []
+
+    class FakeRun:
+        def __init__(self, **kwargs: object) -> None:
+            calls.append(kwargs)
+
+        def execute(self) -> int:
+            return 100
+
+    monkeypatch.setattr("tko.cli.cli_task.load_repo", lambda *_args, **_kwargs: (object(), None))
+    monkeypatch.setattr("tko.cmds.cmd_run.Run", FakeRun)
+
+    result = CliRunner().invoke(
+        app, ["check", str(first), str(second)], obj=_make_app_context(tmp_path),
+    )
+
+    assert result.exit_code == 0, result.output
+    assert [call["language"] for call in calls] == ["alang", "zlang", "clang"]
+    assert all(call["target_list"] in ([first.resolve()], [second.resolve()]) for call in calls)
+    assert all(getattr(call["param"], "compact") for call in calls)
+    assert all(getattr(call["param"], "diff_count") == DiffCount.NONE for call in calls)
+
+
+def test_task_check_continues_after_failure_and_returns_error(
+    monkeypatch: MonkeyPatch, tmp_path: Path,
+) -> None:
+    activity: Path = tmp_path / "activity"
+    (activity / "src" / "cpp").mkdir(parents=True)
+    (activity / "src" / "py").mkdir()
+    results: dict[str, int] = {"cpp": 0, "py": 100}
+    executed: list[str] = []
+
+    class FakeRun:
+        def __init__(self, **kwargs: object) -> None:
+            language: object = kwargs["language"]
+            assert isinstance(language, str)
+            self.language: str = language
+
+        def execute(self) -> int:
+            executed.append(self.language)
+            return results[self.language]
+
+    monkeypatch.setattr("tko.cli.cli_task.load_repo", lambda *_args, **_kwargs: (object(), None))
+    monkeypatch.setattr("tko.cmds.cmd_run.Run", FakeRun)
+
+    result = CliRunner().invoke(app, ["check", str(activity)], obj=_make_app_context(tmp_path))
+
+    assert result.exit_code == 1
+    assert executed == ["cpp", "py"]
+
+
+def test_task_check_reports_missing_languages(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    activity: Path = tmp_path / "activity"
+    activity.mkdir()
+    monkeypatch.setattr("tko.cli.cli_task.load_repo", lambda *_args, **_kwargs: (object(), None))
+
+    result = CliRunner().invoke(app, ["check", str(activity)], obj=_make_app_context(tmp_path))
+
+    assert result.exit_code == 1
+    assert "Nenhuma linguagem encontrada" in result.output
 
 
 

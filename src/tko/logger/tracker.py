@@ -10,7 +10,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Literal, cast
 from tko.logger.patch_history import PatchHistory, PatchInfo
-from tko.logger.versions_writer import InvalidHistoryError, VersionsWriter
+from tko.logger.versions_writer import InvalidHistoryError, VersionsWriter, remove_git_conflict_markers
 from tko.i18n import Msg
 from tko.util.decoder import Decoder
 import tempfile
@@ -108,6 +108,7 @@ def load_track_jsonl(content: bytes, path: Path) -> list[Track]:
 
 def load_track_csv(content: bytes, path: Path) -> list[Track]:
     tracks: list[Track] = []
+    content = remove_git_conflict_markers(content)
     try:
         source: str = content.decode("utf-8")
     except UnicodeError as exc:

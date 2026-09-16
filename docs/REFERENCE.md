@@ -184,9 +184,11 @@ tko config uninstall
 ```
 
 Sem path, `migrate` valida e usa o diretório atual, incluindo o definido por
-`-C`. A migração é aplicada por padrão, com backup. `--dry-run` apenas inspeciona;
-`--map ARQUIVO.json` fornece correspondências explícitas; `--recover` reverte
-uma migração interrompida e não pode ser combinado com `--dry-run` ou `--map`.
+`-C`. A migração é aplicada por padrão, sem criar cópias locais dos dados; o Git
+pode restaurar o repositório em caso de erro. `--dry-run` apenas inspeciona;
+`--map ARQUIVO.json` fornece correspondências explícitas; `--recover` existe
+apenas para reverter migrações interrompidas por versões antigas e não pode ser
+combinado com `--dry-run` ou `--map`.
 Consulte [Migração dos dados de tarefas](TASK_DATA_MIGRATION.md).
 
 Os nomes e opções substituídos foram removidos, sem aliases de compatibilidade.

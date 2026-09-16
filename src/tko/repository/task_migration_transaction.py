@@ -1,4 +1,4 @@
-"""Recoverable, file-based transaction for the offline task migration."""
+"""File-based transaction for the offline task migration."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -7,7 +7,6 @@ import json
 import os
 from pathlib import Path
 import stat
-import uuid
 
 from tko.repository.task_data_format import (
     FORMAT_FILE, PENDING_FILE, DataValue, atomic_bytes, data_value,
@@ -93,11 +92,11 @@ class MigrationPlan:
     directories: list[DirectoryChange] = field(default_factory=list)
     moves: dict[str, str] = field(default_factory=dict)
 
-    def apply(self) -> Path | None:
+    def apply(self) -> None:
         if self.errors:
             raise ValueError("\n".join(self.errors))
         if (self.root / ".tko" / PENDING_FILE).exists():
-            raise ValueError("Migração pendente; execute --recover primeiro")
+            raise ValueError("Migração pendente de uma versão anterior; execute --recover primeiro")
         if not self.changes and not self.directories:
             return None
         for path, original in self.inputs.items():
@@ -128,26 +127,9 @@ class MigrationPlan:
                 if parent.exists() and not parent.is_dir():
                     raise ValueError(f"Destination parent is not a directory: {parent}")
 
-        backup: Path = safe_path(self.root, f".tko/migrations/{uuid.uuid4().hex}")
-        entries: list[dict[str, str | int | None]] = []
-        for change in self.changes:
-            entries.append({"path": change.relative, "before": digest(change.before), "after": digest(change.after),
-                            "before_mode": change.before_mode, "after_mode": change.after_mode,
-                            "before_mtime": change.before_mtime, "after_mtime": change.after_mtime})
-            if change.before is not None:
-                atomic_bytes(safe_path(backup / "before", change.relative), change.before)
-            if change.after is not None:
-                atomic_bytes(safe_path(backup / "after", change.relative), change.after)
-        directory_entries: list[dict[str, str | int | None]] = [
-            {"path": item.relative, "before": item.before, "after": item.after} for item in self.directories
-        ]
-        atomic_bytes(backup / "manifest.json", json.dumps({
-            "version": 2, "files": entries, "directories": directory_entries,
-            "activity_roots": list(self.trees),
-        }, indent=2).encode())
-        pending: Path = self.root / ".tko" / PENDING_FILE
-        atomic_bytes(pending, json.dumps({"backup": backup.relative_to(self.root).as_posix()}).encode())
-        # Readers reject the workspace until the final marker and journal removal.
+        # The workspace is versioned in Git, so keeping a second copy of all
+        # student data here is unnecessary.  If the process is interrupted,
+        # Git is the source of truth for restoring the workspace.
         for directory in sorted(self.directories, key=lambda item: len(Path(item.relative).parts)):
             if directory.after is not None:
                 safe_path(self.root, directory.relative).mkdir(parents=True, exist_ok=True)
@@ -165,8 +147,6 @@ class MigrationPlan:
                 path.chmod(directory.after)
         if marker is not None:
             _write_change(self.root, marker)
-        pending.unlink()
-        return backup
 
 
 def persisted_files(root: Path) -> set[str]:

@@ -84,7 +84,7 @@ class Run:
         
         return self
 
-    def execute(self):
+    def execute(self) -> int:
         loader = RunLoader(self.context)
 
         if not self.context.wdir_builded:

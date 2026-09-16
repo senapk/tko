@@ -47,7 +47,7 @@ def test_command_tree_has_only_canonical_names() -> None:
     root = get_command(app)
     assert isinstance(root, Group)
     expected: dict[str, set[str]] = {
-        "task": {"build", "show", "open", "list", "tests", "download"},
+        "task": {"build", "check", "show", "open", "list", "tests", "download"},
         "collect": {"repo", "tasks", "skills"},
             "config": {"set", "list", "reset", "clear-cache", "self-update", "uninstall", "source", "profile", "audit"},
         "tool": {"mdpp", "convert-tests", "older", "diff", "rebase", "filter", "html", "migrate", "pull"},

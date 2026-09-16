@@ -8,6 +8,7 @@ import typer
 from tko.cli.common import load_repo
 from tko.cli.task_selector import TaskSelector
 from tko.config.settings import Settings
+from tko.enums.diff_count import DiffCount
 from tko.enums.diff_mode import DiffMode
 from tko.game.task import Task
 from tko.repository.repository import Repository
@@ -34,6 +35,46 @@ def _validate_paths(paths: list[Path] | None, fzf: bool) -> None:
             raise typer.BadParameter(f"Path not found: {path}")
 
 
+def _languages_for_activity(activity: Path) -> list[str]:
+    source_root: Path = activity / "src"
+    if not source_root.is_dir():
+        return []
+    return sorted(path.name for path in source_root.iterdir() if path.is_dir())
+
+
+def _check_activity(settings: Settings, repo: Repository | None, activity: Path) -> bool:
+    from tko.cmds.cmd_run import Run
+    from tko.util.param import Param
+
+    languages: list[str] = _languages_for_activity(activity)
+    if not languages:
+        typer.echo(f"Nenhuma linguagem encontrada em {activity / 'src'}", err=True)
+        return False
+
+    succeeded: bool = True
+    for language in languages:
+        typer.echo(f"{activity} [{language}]")
+        param: Param.Basic = Param.Basic()
+        param.set_compact(True)
+        param.set_diff_count(DiffCount.NONE)
+        command: Run = Run(
+            settings=settings,
+            target_list=[activity],
+            param=param,
+            language=language,
+            repo=repo,
+        )
+        try:
+            result: int = command.execute()
+        except Exception as error:
+            typer.echo(f"Falha em {activity} [{language}]: {error}", err=True)
+            succeeded = False
+            continue
+        if result != 100:
+            succeeded = False
+    return succeeded
+
+
 def _selected_task(selector: TaskSelector, path: Path | None, fzf: bool) -> Task:
     try:
         task: Task | None = selector.select_path(path, use_fzf=fzf)
@@ -56,6 +97,26 @@ def task_build(
     from tko.feno.build import build_task
 
     build_task(targets=targets or [], remote_url=moodle, check=check, erase=erase, brief=brief)
+
+
+@app.command("check", help="Run every language found in activity src directories")
+def task_check(
+    ctx: typer.Context,
+    target_list: list[Path] | None = typer.Argument(None, help="Activity directories; defaults to the current directory"),
+) -> None:
+    _validate_paths(target_list, fzf=False)
+    settings: Settings = ctx.obj
+    activities: list[Path] = [path.resolve() for path in (target_list or [Path.cwd()])]
+    repo, _ = load_repo(settings.rs, show_warnings=False)
+    succeeded: bool = True
+    for activity in activities:
+        if not activity.is_dir():
+            typer.echo(f"Activity is not a directory: {activity}", err=True)
+            succeeded = False
+            continue
+        succeeded = _check_activity(settings, repo, activity) and succeeded
+    if not succeeded:
+        raise typer.Exit(1)
 
 
 @app.command("show", help="Show task information, files, scores and graph")

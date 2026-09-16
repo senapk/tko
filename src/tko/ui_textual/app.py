@@ -1020,6 +1020,8 @@ class TkoApp(App[Callable[[], None] | None]):
             return TaskAction.VISITAR
         if task.location.is_non_evaluated and not self.task_formatter.is_downloaded(task):
             return TaskAction.BAIXAR
+        if task.location.is_non_evaluated:
+            return TaskAction.VISITAR
         if not task.location.is_external:
             return TaskAction.EXECUTAR
         if not self.task_formatter.is_downloaded_for_lang(task):
@@ -1062,13 +1064,16 @@ class TkoApp(App[Callable[[], None] | None]):
         if task.location.is_http_link:
             webbrowser.open(task.location.raw_link)
             return
-        origin = self.repo.task_resolver.origin_file(task, load_git=True)
-        if origin is None or not origin.exists():
+        if task.location.is_external:
+            target = self.repo.task_resolver.target_file(task)
+        else:
+            target = self.repo.task_resolver.origin_file(task, load_git=True)
+        if target is None or not target.exists():
             self.notify("Arquivo da tarefa não encontrado.", severity="warning")
             return
         from tko.play.opener import Opener
 
-        Opener(self.settings).add_files_to_open([origin]).open_files()
+        Opener(self.settings).add_files_to_open([target]).open_files()
 
     def _run_task(self, task: Task) -> None:
         from tko.cmds.cmd_down import CmdDown

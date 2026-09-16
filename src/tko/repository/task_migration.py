@@ -16,7 +16,7 @@ from tko.game.task_matcher import TaskMatcher
 from tko.logger.log_history import LogHistory
 from tko.logger.tracker import Track, load_track_csv, load_track_jsonl
 from tko.logger.history import HistoryEvent
-from tko.logger.versions_writer import VersionsWriter
+from tko.logger.versions_writer import VersionsWriter, remove_git_conflict_markers
 
 
 def _merge_history_bytes(first: bytes, second: bytes) -> bytes:
@@ -269,8 +269,9 @@ class TaskDataMigration:
         if path.name == "task_log.csv":
             self.plan.errors.append(f"Unsupported legacy file: {path}; convert its format before migrating")
             return content
+        filtered_content: bytes = remove_git_conflict_markers(content)
         try:
-            rows: list[list[str]] = list(csv.reader(io.StringIO(content.decode("utf-8"), newline=""), strict=True))
+            rows: list[list[str]] = list(csv.reader(io.StringIO(filtered_content.decode("utf-8"), newline=""), strict=True))
         except csv.Error as exc:
             self.plan.errors.append(f"{path}: Invalid CSV: {exc}")
             return content
@@ -292,7 +293,7 @@ class TaskDataMigration:
             changed |= key != row[3]
             row[3] = key
         if not changed:
-            return content
+            return filtered_content
         output: io.StringIO = io.StringIO(newline="")
         csv.writer(output).writerows(rows)
         return output.getvalue().encode("utf-8")
