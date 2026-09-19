@@ -67,8 +67,8 @@ class Tester:
                     self.repo.logger.store(LogItemMove().set_mode(LogItemMoveMode.BACK).set_key(self.task.basic.full_key))
                 return
             try:
-                if not free_run_fn():
-                    return
+                while free_run_fn():
+                    pass
             except CompileError:
                 if self.repo:
                     self.repo.logger.store(
@@ -78,4 +78,4 @@ class Tester:
                         .set_fail(LogItemExec.Fail.COMP)
                     )
                 logger.exception("CompileError during free execution")
-                return
+                input("Pressione ENTER para voltar ao tester")

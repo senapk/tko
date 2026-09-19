@@ -56,6 +56,22 @@ _FREERUN_PROMPT_BACK = Msg.text(
 
 class Free:
     @staticmethod
+    def _terminate_interactive_process(answer: subprocess.Popen[str]) -> None:
+        """Stop only the interactive child after Ctrl+C reaches the parent."""
+        if answer.poll() is not None:
+            return
+
+        try:
+            if sys.platform != "win32":
+                os.killpg(os.getpgid(answer.pid), signal.SIGTERM)
+            else:
+                answer.terminate()
+        except ProcessLookupError:
+            pass
+        finally:
+            answer.wait()
+
+    @staticmethod
     def free_run(solver: SolverBuilder, standalone_mode:bool=True, header: RT | None = None) -> bool:
         if header is None:
             header = RT()
@@ -99,8 +115,7 @@ class Free:
                     try:
                         answer.wait()
                     except KeyboardInterrupt:
-                        answer.kill()
-                        os.killpg(os.getpgid(answer.pid), signal.SIGTERM)
+                        Free._terminate_interactive_process(answer)
                 Console.print(cap.getvalue())
 
                 if answer.returncode != 0 and answer.returncode != 1:
