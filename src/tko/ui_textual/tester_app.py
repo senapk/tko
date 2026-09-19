@@ -147,7 +147,10 @@ class TkoTesterApp(App[Callable[[], bool] | None]):
             executable, _ = solver.get_executable()
             return [RT(line, "r") for line in executable.get_error_msg().plain().splitlines()]
         if not self.wdir.has_tests:
-            return [RT("Nenhum teste cadastrado para esta atividade.", "y")]
+            # Tasks without test cases still run the solver with the dummy
+            # unit when Enter is pressed. Render that result like the legacy
+            # tester instead of replacing it with the header-only message.
+            return DiffBuilderDown(width, self.state.get_focused_unit(self.wdir)).build_diff()
         if self.state.errors_only and not self.state.visible_indices(len(self.wdir.unit_list)):
             return [RT("Nenhum teste com erro.", "y")]
         if self.state.is_all_right():

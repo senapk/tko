@@ -45,14 +45,23 @@ class TesterTopBar:
         sources = Button.info_label(source_names or "Nenhum teste cadastrado")
         right: RT = RT.join([solvers, sources], " ")
         width = max(0, width)
-        # Reserve most of the line for cases; shorten metadata first.
-        side_width: int = max(0, (width - min(width, max(12, width // 2)) - 2) // 2)
-        left: RT = activity.truncate(side_width)
-        right = right.truncate(side_width)
-        if side_width == 0:
-            return self.build_unit_list(state, width)
-        center_width: int = width - 2 * side_width - 2
-        return left.ljust(side_width) + " " + self.build_unit_list(state, center_width) + " " + right.rjust(side_width)
+        if width == 0:
+            return RT()
+
+        # Keep the task anchored at the left edge and metadata anchored at
+        # the right edge. Test cases use only the space left between them.
+        if len(activity) + len(right) + 2 <= width:
+            center_width: int = width - len(activity) - len(right) - 2
+            center = self.build_unit_list(state, center_width).center(center_width)
+            return activity + " " + center + " " + right
+
+        # On narrow terminals there is no room for the center region. Split
+        # the available space between both edge regions while preserving the
+        # left/right alignment contract.
+        available: int = max(0, width - 1)
+        left_width: int = min(len(activity), max(0, available // 2))
+        right_width: int = available - left_width
+        return activity.truncate(left_width) + " " + right.truncate(right_width).rjust(right_width)
 
     def build_unit_list(self, state: TesterState, width: int) -> RT:
         """Render a compact, horizontally windowed result token for each case."""

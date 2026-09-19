@@ -27,6 +27,13 @@ def make_app(tmp_path: Path) -> TkoTesterApp:
     return TkoTesterApp(settings, None, wdir, Task(), None)
 
 
+def make_app_without_tests(tmp_path: Path) -> TkoTesterApp:
+    settings = Settings(tmp_path)
+    wdir = Wdir(settings)
+    wdir.setup_solver([tmp_path / "main.py"])
+    return TkoTesterApp(settings, None, wdir, Task(), None)
+
+
 def mixed_results(app: TkoTesterApp) -> None:
     app.state.results = [(Result.SUCCESS, 0), (Result.WRONG_OUTPUT, 1),
                          (Result.SUCCESS, 2), (Result.EXECUTION_ERROR, 3)]
@@ -44,6 +51,54 @@ def test_tester_shift_c_toggles_and_persists_theme(tmp_path: Path) -> None:
             await pilot.press("C")
             assert app.theme == DARK.name
             assert Settings(tmp_path).load_settings().app.theme == DARK.name
+
+    asyncio.run(exercise())
+
+
+def test_tester_header_keeps_metadata_at_the_right_edge(tmp_path: Path) -> None:
+    app = make_app_without_tests(tmp_path)
+
+    header = app.top_bar.build_top_line_header(app.state, 80).plain()
+
+    assert len(header) == 80
+    assert header.rstrip().endswith("✗(0)")
+    assert header.index("main.py") < header.index("✗(0)")
+    assert header.startswith(" ")
+
+
+def test_tester_header_keeps_test_cases_between_edges(tmp_path: Path) -> None:
+    app = make_app(tmp_path)
+    app.wdir.source_list = [tmp_path / "tests.tio"]
+    app.wdir.pack_list = [app.wdir.unit_list]
+
+    header = app.top_bar.build_top_line_header(app.state, 80).plain()
+
+    assert len(header) == 80
+    assert "main.py" in header
+    assert "tests.tio(4)" in header
+    assert "00" in header
+    assert header.index("00") < header.index("main.py") < header.index("tests.tio(4)")
+
+
+def test_enter_runs_and_renders_tasks_without_tests(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    app = make_app_without_tests(tmp_path)
+
+    def run_unit(solver: SolverBuilder, unit: Unit, timeout: float | None) -> Result:
+        unit.set_received("program output\n")
+        return Result.WRONG_OUTPUT
+
+    monkeypatch.setattr(UnitRunner, "run_unit", run_unit)
+
+    async def exercise() -> None:
+        async with app.run_test(size=(80, 24)) as pilot:
+            assert "Pressione Enter" in app._output_lines(80)[0].plain()
+            await pilot.press("enter")
+            await pilot.pause()
+
+            assert app.state.mode == SeqMode.finished
+            rendered = "\n".join(line.plain() for line in app._output_lines(80))
+            assert "Nenhum teste cadastrado" not in rendered
+            assert "program output" in rendered
 
     asyncio.run(exercise())
 
