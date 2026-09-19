@@ -39,6 +39,8 @@ A documentação temática está organizada no [índice da Wiki](../wiki/README.
 - [EXAMPLES.md](EXAMPLES.md): fluxos completos de uso professor/aluno.
 - [FAQ.md](FAQ.md): dúvidas e problemas comuns.
 - [FORMATS.md](FORMATS.md): formatos de arquivos e convenções principais.
+- [TASK_COMPONENTS.md](TASK_COMPONENTS.md): contrato dos componentes de uma
+  tarefa para ingestão e integração externa.
 - [LANGUAGE_SUPPORT.md](LANGUAGE_SUPPORT.md): como configurar linguagens.
 - [REFERENCE.md](REFERENCE.md): referência rápida de comandos CLI.
 - [TASK_LIFECYCLE.md](TASK_LIFECYCLE.md): ciclo de criação/publicação/consumo de tarefas.

@@ -6,6 +6,10 @@ Use-o quando precisar escrever, converter ou publicar casos de teste.
 Para estrutura do repositorio, formato de quests, formato de tasks e checklist
 de publicacao, consulte primeiro o guia principal.
 
+Para extrair uma tarefa para outro sistema, use o [contrato de componentes da
+tarefa](../docs/TASK_COMPONENTS.md), que diferencia fontes, testes, starters e
+artefatos gerados.
+
 ## Onde colocar testes
 
 Uma tarefa com avaliacao automatica normalmente usa `eval=diff` na linha do

@@ -5,6 +5,9 @@ seus proprios repositorios de tarefas no TKO.
 
 Para uma visão geral do fluxo completo, consulte o [ciclo de vida de tarefas](../docs/TASK_LIFECYCLE.md).
 
+Para integrar tarefas com outra ferramenta ou base de dados, consulte o
+[contrato dos componentes de uma tarefa](../docs/TASK_COMPONENTS.md).
+
 A ideia central e simples: o repositorio tem um `README.md` principal que
 funciona como indice navegavel das atividades. Esse indice organiza as tarefas
 em quests, guarda metadados pedagogicos e aponta para as pastas ou links onde

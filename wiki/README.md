@@ -9,6 +9,8 @@
   workspace, materialização e identidade das tarefas.
 - [Ciclo de vida de tarefas](../docs/TASK_LIFECYCLE.md): criação, publicação,
   sincronização e consumo.
+- [Componentes de uma tarefa](../docs/TASK_COMPONENTS.md): contrato de dados
+  para descrição, testes, starters e artefatos.
 - [Gamificação e progressão](Gamificacao-e-Progressao.md): quests, XP e filtros.
 
 ## Usar como aluno
@@ -26,6 +28,8 @@
   quests, tasks e publicação.
 - [Criando tarefas e testes](Criando-Tarefas-e-Testes.md): testes, conversões,
   drafts e pipeline de publicação.
+- [Componentes de uma tarefa](../docs/TASK_COMPONENTS.md): inventário técnico
+  para integração com outras bases.
 - [Desenvolvimento de tarefas](Desenvolvimento-de-Tarefas.md): detalhes para
   manutenção do parser e da engine.
 
