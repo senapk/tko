@@ -179,6 +179,18 @@ Quando o pipeline `tko task build --moodle URL` for executado, podem existir:
 - `.cache/tests.vpl`: testes convertidos para VPL;
 - `.cache/starter/<linguagem>/...`: starters filtrados.
 
+Para publicação no Moodle pelo Mula, o pacote mínimo é:
+
+```text
+.cache/README.html
+.cache/tests.vpl
+.cache/starter/<linguagem>/   # quando a atividade usa starters
+```
+
+O Mula recebe um clone local, usa o caminho relativo da tarefa como chave e
+executa `tko task build --moodle` quando esses artefatos ainda não existem.
+Não é necessário gerar nem consumir `.cache/mapi.json` no fluxo atual.
+
 Esses arquivos não substituem as fontes originais. O banco deve indicar
 claramente `is_generated=true`, `generated_from` e, se possível, o comando e a
 revisão que produziram o artefato.

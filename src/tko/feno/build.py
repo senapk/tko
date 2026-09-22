@@ -76,12 +76,29 @@ class Actions:
             return self.source_dir
         return max(files, key=lambda path: path.stat().st_mtime)
 
-    def need_rebuild(self, moodle: bool = False):
-        artifact = self.output_cases if moodle else self.output_starter
-        if not os.path.exists(artifact):
+    def _moodle_artifacts(self) -> list[Path]:
+        artifacts: list[Path] = [
+            self.output_readme,
+            self.output_html,
+            self.output_cases,
+        ]
+        if self.source_src.is_dir():
+            artifacts.append(self.output_starter)
+        return artifacts
+
+    def need_rebuild(self, moodle: bool = False) -> bool:
+        artifacts: list[Path]
+        if moodle:
+            artifacts = self._moodle_artifacts()
+        else:
+            artifacts = [self.output_starter]
+
+        if any(not artifact.exists() for artifact in artifacts):
             return True
-        older = Older.find_older([self._latest_source_file(), artifact])
-        if older == artifact:
+
+        latest_source: Path = self._latest_source_file()
+        source_mtime: float = Older.last_update(latest_source)[1]
+        if all(Older.last_update(artifact)[1] >= source_mtime for artifact in artifacts):
             return False
 
         Log.resume("Changes ", end="")

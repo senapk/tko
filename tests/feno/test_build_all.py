@@ -1,7 +1,9 @@
 from pathlib import Path
+import subprocess
 
 import pytest
 import tko.feno.build as build_module
+from tko.feno.cases import Cases
 
 
 def test_build_all_moodle_writes_rebased_readme_and_artifacts(
@@ -78,3 +80,51 @@ def test_build_runs_mdpp_only_after_local_steps(monkeypatch: pytest.MonkeyPatch,
     )
 
     assert calls == ["title", "cache", "recreate", "drafts", "local", "mdpp"]
+
+
+def test_moodle_rebuild_requires_every_published_artifact(tmp_path: Path) -> None:
+    task = tmp_path / "task"
+    source = task / "src" / "py"
+    source.mkdir(parents=True)
+    (task / "README.md").write_text("# Task\n", encoding="utf-8")
+    (source / "main.py").write_text("print(1)\n", encoding="utf-8")
+
+    actions = build_module.Actions(task)
+    actions.cache.mkdir()
+    actions.output_readme.write_text("# Task\n", encoding="utf-8")
+    actions.output_html.write_text("<h1>Task</h1>\n", encoding="utf-8")
+    actions.output_cases.write_text("case\n", encoding="utf-8")
+    (actions.output_starter / "py").mkdir(parents=True)
+    (actions.output_starter / "py" / "main.py").write_text("print(1)\n", encoding="utf-8")
+
+    assert actions.need_rebuild(moodle=True) is False
+
+    actions.output_html.unlink()
+
+    assert actions.need_rebuild(moodle=True) is True
+
+
+def test_cases_excludes_feedback_configuration(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    source_dir = tmp_path / "task"
+    source_dir.mkdir()
+    source_readme = source_dir / "README.md"
+    source_readme.write_text("# Task\n", encoding="utf-8")
+    (source_dir / "tests.toml").write_text("[[tests]]\n", encoding="utf-8")
+    (source_dir / "feedback.toml").write_text("[feedback]\n", encoding="utf-8")
+
+    commands: list[list[str]] = []
+
+    def fake_run(command: list[str], *, stdout: int, check: bool) -> None:
+        _ = stdout
+        _ = check
+        commands.append(command)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    Cases.run(tmp_path / "tests.vpl", source_readme, source_dir)
+
+    assert len(commands) == 1
+    assert str(source_dir / "tests.toml") in commands[0]
+    assert str(source_dir / "feedback.toml") not in commands[0]

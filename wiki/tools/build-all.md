@@ -69,6 +69,25 @@ No modo Moodle, os artefatos ficam dentro da pasta `.cache` da tarefa:
 - `.cache/tests.vpl`: arquivo de casos gerado a partir do `README.md` e dos arquivos `.tio`, `.vpl` e `.toml` encontrados na tarefa.
 - `.cache/starter/<linguagem>/...`: starters filtrados a partir de `src/<linguagem>/...`, preservando a estrutura de arquivos por linguagem.
 
+Esses três artefatos formam o pacote consumido pelo Mula:
+
+```text
+.cache/README.html
+.cache/tests.vpl
+.cache/starter/<linguagem>/
+```
+
+O Mula recebe a raiz do clone e o caminho relativo da tarefa. Quando algum
+artefato necessário não existe, ele executa este build automaticamente usando
+a URL GitHub obtida do `origin`:
+
+```bash
+tko task build labs/carro --moodle https://github.com/usuario/repositorio/tree/main
+```
+
+O fluxo atual não depende de `.cache/mapi.json`. O caminho relativo da pasta,
+como `labs/carro`, é a chave estável usada para publicar e atualizar a tarefa.
+
 ## Relacao com mdpp, filter e rascunhos
 
 ### mdpp
