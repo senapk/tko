@@ -24,19 +24,20 @@ class Palette:
     info: str
     special: str
     on_color: str
+    selected_bg: str
 
     @property
     def foregrounds(self) -> dict[str, str]:
         return {"k": self.background, "r": self.error, "g": self.success, "y": self.warning,
-                "b": self.accent, "m": self.special, "c": self.info, "w": self.foreground}
+                "b": self.accent, "m": self.special, "c": self.info, "s": self.muted, "w": self.foreground}
 
     @property
     def backgrounds(self) -> dict[str, str]:
-        return {key.upper(): value for key, value in self.foregrounds.items()}
+        return {**{key.upper(): value for key, value in self.foregrounds.items()}, "Q": self.selected_bg}
 
 
-DARK: Final[Palette] = Palette("tko-dark", "#101419", "#1b232d", "#232e3b", "#e6edf3", "#a5b3c2", "#59697c", "#82b6ff", "#8bd5a0", "#f0ce82", "#f2919a", "#8bd5dc", "#c6a0f6", "#101419")
-LIGHT: Final[Palette] = Palette("tko-light", "#f7f9fb", "#e8edf3", "#d8e0e8", "#17212b", "#526273", "#8797a8", "#1769aa", "#18794e", "#8a5a00", "#b42318", "#087f8c", "#6941c6", "#f7f9fb")
+DARK: Final[Palette] = Palette("tko-dark", "#101419", "#1b232d", "#232e3b", "#e6edf3", "#a5b3c2", "#59697c", "#82b6ff", "#8bd5a0", "#f0ce82", "#f2919a", "#8bd5dc", "#c6a0f6", "#101419", "#394654")
+LIGHT: Final[Palette] = Palette("tko-light", "#f7f9fb", "#e8edf3", "#d8e0e8", "#17212b", "#526273", "#8797a8", "#1769aa", "#18794e", "#8a5a00", "#b42318", "#087f8c", "#6941c6", "#f7f9fb", "#9bb6d0")
 THEMES: Final[dict[str, Palette]] = {DARK.name: DARK, LIGHT.name: LIGHT}
 
 # Backward-compatible dark aliases for callers that imported these constants.
@@ -55,6 +56,7 @@ def make_theme(palette: Palette = DARK) -> Theme:
         dark=palette is DARK, text_alpha=1,
         variables={
             "text-muted": palette.muted, "border": palette.border,
+            "selected-bg": palette.selected_bg,
             "input-background": palette.surface, "input-selection-background": palette.panel,
             "input-cursor-foreground": palette.on_color, "input-cursor-background": palette.accent,
             "block-cursor-foreground": palette.on_color, "block-cursor-background": palette.accent,

@@ -81,7 +81,7 @@ class TesterTopBar:
                 token: RT = tester_util.get_token(result_by_index.get(index, ExecutionResult.UNTESTED))
                 entry: RT = RT(f"{index:02}").set_style(token.runs[0][0]) + token
                 if index == state.focused_index and state.mode != SeqMode.intro:
-                    entry = entry.add_style("X")
+                    entry = entry.add_style("Q")
                 tokens.append(entry)
             return RT("… " if start else "") + RT.join(tokens, "  ") + RT(" …" if end < count else "")
 

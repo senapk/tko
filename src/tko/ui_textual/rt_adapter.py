@@ -16,6 +16,7 @@ def to_rich_style(style: TextStyle, palette: Palette = DARK) -> Style:
     foreground: str = palette.foregrounds.get(style.fg or "", palette.foreground)
     if background is not None and style.fg is None:
         foreground = palette.foreground if style.bg == "K" else palette.on_color
+
     if background is not None:
         foreground = readable_foreground(foreground, background, palette)
     return Style(

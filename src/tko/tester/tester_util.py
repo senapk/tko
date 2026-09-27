@@ -18,10 +18,10 @@ def get_token(result: ExecutionResult) -> RT:
     if result == ExecutionResult.WRONG_OUTPUT:
         return RT(ExecutionResult.get_symbol(ExecutionResult.WRONG_OUTPUT).plain(), "R")
     if result == ExecutionResult.COMPILATION_ERROR:
-        return RT(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).plain(), "X")
+        return RT(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).plain(), "s")
     if result == ExecutionResult.EXECUTION_ERROR:
         return RT(ExecutionResult.get_symbol(ExecutionResult.EXECUTION_ERROR).plain(), "Y")
-    return RT(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).plain(), "X")
+    return RT(ExecutionResult.get_symbol(ExecutionResult.UNTESTED).plain(), "s")
 
 
 def get_diff_symbol(diff_mode: DiffMode) -> str:
