@@ -11,6 +11,16 @@ def test_default_languages_include_kotlin() -> None:
     assert kotlin.draft == 'fun main() {\n    println("Hello, World!")\n}\n'
 
 
+def test_default_typescript_draft_uses_typed_input() -> None:
+    typescript = LanguagesSettings.default_lang_settings["ts"]
+
+    assert typescript.build_cmd == ["npx", "esbuild", "{files}", "--outdir={cache}", "--format=cjs", "--log-level=error"]
+    assert typescript.run_cmd == ["node", "{entry}"]
+    assert 'const input: () => string = (() => {' in typescript.draft
+    assert r'require("fs").readFileSync(0, "utf8").split(/\r?\n/)' in typescript.draft
+    assert "// MACRO" not in typescript.draft
+
+
 def test_languages_with_drafts_include_kotlin(tmp_path: Path) -> None:
     drafts = LanguagesSettings(tmp_path / "programming-languages.toml").get_languages_with_drafts()
 

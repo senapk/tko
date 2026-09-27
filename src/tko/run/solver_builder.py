@@ -7,7 +7,6 @@ from tko.util.rt import RT
 from tko.util.runner import Runner
 from tko.config.settings import Settings
 from pathlib import Path
-from tko.run_build.ts_macro_preprocessor import TypeScriptMacroPreprocessor
 from tko.i18n import Msg
 
 
@@ -19,11 +18,6 @@ _SOLVER_EXTENSION_UNRECOGNIZED = Msg.text(
     pt="Falha: Extensão de arquivo '{suffix}' não reconhecida e sem configuração de linguagem",
     en="Fail: File extension '{suffix}' not recognized and no language configuration found",
 )
-_SOLVER_TS_CONFIG_NOT_FOUND = Msg.text(
-    pt="Falha: Configuração da linguagem 'ts' não encontrada",
-    en="Fail: Language configuration for 'ts' not found",
-)
-
 class CompileError(Exception):
     def __init__(self, message: str):
         self.message = message
@@ -75,9 +69,6 @@ class Executable:
         return self.__error_msg
 
 class SolverBuilder:
-    TS_DEFAULT_BUILD_CMD = ["npx", "esbuild", "{files}", "--outdir={cache}", "--format=cjs", "--log-level=error"]
-    TS_DEFAULT_RUN_CMD = ["node", "{entry}"]
-
     def __init__(self, args_list: list[Path], settings: Settings):
         self.settings = settings
         self.args_list: list[Path] = args_list
@@ -137,7 +128,6 @@ class SolverBuilder:
 
         handlers: dict[str, Callable[[], None]] = {
             ".mk": self.__prepare_make,
-            ".ts": self.__prepare_ts,
         }
         handler = handlers.get(first.suffix)
 
@@ -213,33 +203,3 @@ class SolverBuilder:
             self.__exec.set_compile_error(stdout + stderr)
         else:
             self.__exec.set_executable(cmd=["make", "-s", "-C", folder, "-f", solver, "run"], files=[], folder=Path(""))
-
-    def __prepare_ts(self):
-        copy_dir = self.cache_dir / "src"
-        if copy_dir.exists():
-            shutil.rmtree(copy_dir, ignore_errors=True)
-        new_files = TypeScriptMacroPreprocessor.copy_and_patch(self.args_list, copy_dir)
-
-        transpiler = "npx"
-        if os.name == "nt":
-            transpiler += ".cmd"
-
-        self.check_tool(transpiler)
-        self.check_tool("node")
-
-        original_args = self.args_list
-        self.args_list = new_files
-        try:
-            lang = self.settings.get_languages_settings().get_languages().get("ts", None)
-            if lang is None:
-                self.__exec.set_compile_error(RT(str(_SOLVER_TS_CONFIG_NOT_FOUND), "r"))
-                return
-            build_cmd = lang.build_cmd
-            run_cmd = lang.run_cmd
-            if len(build_cmd) == 0:
-                build_cmd = self.TS_DEFAULT_BUILD_CMD
-            if len(run_cmd) == 0:
-                run_cmd = self.TS_DEFAULT_RUN_CMD
-            self._prepare_exec_with_commands(build_cmd, run_cmd)
-        finally:
-            self.args_list = original_args

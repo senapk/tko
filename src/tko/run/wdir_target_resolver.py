@@ -37,6 +37,11 @@ class WdirTargetResolver:
             solver_list: list[Path] = finder.load_source_files()
             return source_list, sorted(solver_list)
         return source_list, []
+
+    @staticmethod
+    def resolve_solvers_for_source(source: Path, lang: str) -> list[Path]:
+        finder = DraftsFinderCached(source.parent, lang)
+        return sorted(finder.load_source_files())
     
     @staticmethod
     def filter_and_order_sources(files: list[Path]):

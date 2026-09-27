@@ -51,7 +51,15 @@ fun main() {
 """[1:]
 
 ts_draft = r"""
-const input = () => ""; // MACRO
+const input: () => string = (() => {
+    let lines: string[] | undefined;
+    let index = 0;
+    return (): string => {
+        if (process.stdin.isTTY) { const readline = require("readline-sync"); return readline.question(); }
+        lines ??= require("fs").readFileSync(0, "utf8").split(/\r?\n/);
+        return lines![index++] ?? "";
+    };
+})();
 export {};
 console.log("Hello, World!");
 """[1:]

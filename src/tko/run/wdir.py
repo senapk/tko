@@ -76,6 +76,8 @@ class Wdir:
             return
         
         sources, solvers = WdirTargetResolver.identify_source_and_solver_targets(target_list)
+        if not solvers and self.lang and len(target_list) == 1 and len(sources) == 1:
+            solvers = WdirTargetResolver.resolve_solvers_for_source(sources[0], self.lang)
         self.setup_solver(solvers)
         self.source_list = sources
 
