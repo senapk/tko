@@ -24,8 +24,10 @@ class RepositoryWatcher:
         self.versions_writer: VersionsWriter = VersionsWriter()
         self.audit_coordinator = AuditCoordinator(repo.root_dir)
         self.audit_lock_acquired: bool = False
+        self.audit_notification_callback: Callable[[str], None] | None = None
 
     def set_audit_notification_callback(self, callback: Callable[[str], None] | None) -> None:
+        self.audit_notification_callback = callback
         if self.audit_tracker is not None:
             self.audit_tracker.set_notification_callback(callback)
 
@@ -68,6 +70,7 @@ class RepositoryWatcher:
                 interval_seconds=audit_interval_seconds,
                 versions_writer=self.versions_writer,
             )
+            self.audit_tracker.set_notification_callback(self.audit_notification_callback)
             self.audit_logger = AuditLogger(task_lookup=self.repo, audit_tracker=self.audit_tracker)
             self.monitor.add_observer(interval_seconds=audit_interval_seconds, on_flush_events=self.audit_logger.on_flush_events)
 

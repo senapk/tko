@@ -9,8 +9,6 @@ from typing import Callable, Protocol, cast
 from tko.util.decoder import Decoder
 from hashlib import blake2s
 import json
-from tko.util.console import Console
-from tko.util.rt import RT
 from tko.logger.versions_writer import VersionsWriter
 from tko.repository.task_data_format import initialize_task_data
 from tko.logger.history import HistoryEvent, append_event, event_timestamp
@@ -198,7 +196,5 @@ class AuditTracker:
             message: str = f"[audit] {hh_mm_ss} {task_key}"
             if self.notification_callback is not None:
                 self.notification_callback(message)
-            else:
-                Console.print(RT(message, "y"), flush=True)
 
         return True, line_count

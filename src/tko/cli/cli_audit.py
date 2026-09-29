@@ -33,6 +33,7 @@ def audit_start(
         interval = repo.audit.interval_seconds
         
     watcher = RepositoryWatcher(repo)
+    watcher.set_audit_notification_callback(lambda message: Console.print(message, flush=True))
     try:
         watcher.start_watching(
             log_edits=False,
