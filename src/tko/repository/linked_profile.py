@@ -121,7 +121,7 @@ class LinkedProfileService:
             path = (self.repo.root_dir / path).resolve()
         if not path.exists():
             raise ValueError(str(_PROFILE_LOAD_FAILED))
-        return Decoder.load(path), "", str(path)
+        return Decoder.load(path), "", path.as_posix()
 
     def _git_revision(self, path: Path) -> str:
         current = path

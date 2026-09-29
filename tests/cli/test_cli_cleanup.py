@@ -393,7 +393,7 @@ def test_config_profile_uses_selected_repository(tmp_path: Path) -> None:
     loaded: Repository = Repository(repo_dir, RunSettings(), None, recursive_search=False)
     RepositoryLoader(loaded).load()
     assert loaded.data.link is not None
-    assert loaded.data.link.uri == str(profile)
+    assert loaded.data.link.uri == profile.as_posix()
     status: Result = invoke(tmp_path, ["-C", str(repo_dir), "repo", "profile", "status"])
     assert status.exit_code == 0, status.output
     profile.write_text(profile.read_text().replace('language = "py"', 'language = "java"'))
