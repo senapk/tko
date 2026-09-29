@@ -12,7 +12,7 @@ O TKO pode ser utilizado por comandos individuais:
 
 ```bash
 tko task list
-tko task download poo@carro
+tko task down poo@carro
 tko run
 ```
 
@@ -52,7 +52,7 @@ Em princípio, os arquivos do TKO poderiam ser transportados por outros mecanism
 Um workspace TKO é uma pasta inicializada por meio de:
 
 ```bash
-tko init
+tko repo init
 ```
 
 Esse comando cria a pasta `.tko/` e prepara o ambiente no qual o usuário poderá cadastrar fontes, acessar atividades, executar código e registrar seu progresso.
@@ -133,14 +133,14 @@ teacher-content/
 └── wiki/
 ```
 
-Ele não precisa conter `.tko/`, pois seu objetivo principal é publicar conteúdo. Se o produtor executar `tko init`, o mesmo diretório também se torna um workspace pessoal, sem que a `.tko/` passe a integrar obrigatoriamente o formato público do conteúdo.
+Ele não precisa conter `.tko/`, pois seu objetivo principal é publicar conteúdo. Se o produtor executar `tko repo init`, o mesmo diretório também se torna um workspace pessoal, sem que a `.tko/` passe a integrar obrigatoriamente o formato público do conteúdo.
 
 ### Repositório do aluno
 
 O aluno:
 
 1. recebe ou cria um repositório Git, normalmente privado;
-2. executa `tko init`;
+2. executa `tko repo init`;
 3. escolhe a linguagem de trabalho;
 4. adiciona o índice do professor como fonte;
 5. realiza as atividades;

@@ -29,7 +29,7 @@ O aluno:
 1. Cria um repositório no GitHub, normalmente privado.
 2. Dá acesso ao professor como colaborador, quando necessário.
 3. Clona o repositório na própria máquina, WSL ou Codespace.
-4. Executa `tko init`.
+4. Executa `tko repo init`.
 5. Adiciona a fonte indicada pelo professor.
 6. Resolve as atividades.
 7. Faz commits e push com frequência.
@@ -37,13 +37,13 @@ O aluno:
 Exemplo de configuração de fonte:
 
 ```bash
-tko config source add fup @fup
+tko repo source add fup @fup
 ```
 
 Para apontar para um repositório personalizado:
 
 ```bash
-tko config source add disciplina https://github.com/<usuario-ou-org>/<repositorio>
+tko repo source add disciplina https://github.com/<usuario-ou-org>/<repositorio>
 ```
 
 ## Opção 2: professor cria em lote
@@ -92,9 +92,9 @@ Fluxo comum:
 Exemplos:
 
 ```bash
-tko tool pull aluno1 aluno2 aluno3
-tko collect tasks aluno1 aluno2 aluno3 --csv tasks.csv
-tko collect skills aluno1 aluno2 aluno3 --csv skills.csv --source course --language py
+tkm tool pull aluno1 aluno2 aluno3
+tkm collect tasks aluno1 aluno2 aluno3 --csv tasks.csv
+tkm collect skills aluno1 aluno2 aluno3 --csv skills.csv --source course --language py
 ```
 
 Os argumentos são caminhos para os repositórios locais dos alunos. Eles podem ser informados um a um ou expandidos pelo shell, conforme a organização da pasta.

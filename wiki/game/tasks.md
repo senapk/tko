@@ -31,7 +31,7 @@ O sistema preserva o valor fracionário nos cálculos. A lista de tarefas o most
 
 ## Normalização pelo índice
 
-`tko index build` valida links, inclui tarefas encontradas nas fontes e preserva
+`tkm index build` valida links, inclui tarefas encontradas nas fontes e preserva
 o front matter e as variáveis existentes; ele não converte métricas em um formato
 global nem inventa valores para novas tarefas.
 

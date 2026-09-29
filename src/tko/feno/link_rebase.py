@@ -103,7 +103,7 @@ class LinkRebase:
         Ordinary Markdown links still become absolute so the copied index can
         render anywhere. Task links are different: their local link names the
         future materialized folder, while the remote URL is retained only as
-        provenance for ``tko index update``.
+        provenance for ``tkm index update``.
         """
         rebased = LinkRebase.rebase(content, ghu)
         output: list[str] = []

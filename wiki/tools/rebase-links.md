@@ -1,6 +1,6 @@
 # Rebase de links markdown
 
-O comando `tko tool rebase` recalcula links de um markdown para funcionar a partir de um novo arquivo de saída.
+O comando `tkm tool rebase` recalcula links de um markdown para funcionar a partir de um novo arquivo de saída.
 Ao rebasear um índice vindo do GitHub, as linhas de tarefa passam ao formato
 materializável: o link aponta para o `README.md` local e a URL remota é
 registrada em `<!-- source=... -->`. Os demais links continuam absolutos.
@@ -17,22 +17,22 @@ registrada em `<!-- source=... -->`. Os demais links continuam absolutos.
 
 ```bash
 # Rebase a partir de arquivo local
-tko tool rebase src/myfile.md -o docs/myfile.md
+tkm tool rebase src/myfile.md -o docs/myfile.md
 
 # Com output explícito
-tko tool rebase README.md -o docs/README.local.md
+tkm tool rebase README.md -o docs/README.local.md
 
 # Baixa markdown remoto
-tko tool rebase https://github.com/qxcodefup/arcade/blob/main/README.md -o docs/README.fup.md
+tkm tool rebase https://github.com/qxcodefup/arcade/blob/main/README.md -o docs/README.fup.md
 
 # Com output explícito
-tko tool rebase https://github.com/qxcodefup/arcade/blob/main/README.md -o docs/README.fup.md
+tkm tool rebase https://github.com/qxcodefup/arcade/blob/main/README.md -o docs/README.fup.md
 
 # Usa alias configurado em settings
-tko tool rebase @fup -o docs/README.fup.md
+tkm tool rebase @fup -o docs/README.fup.md
 
 # Com output explícito
-tko tool rebase @fup -o docs/README.fup.md
+tkm tool rebase @fup -o docs/README.fup.md
 ```
 
 ## Saída

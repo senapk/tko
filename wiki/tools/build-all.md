@@ -3,12 +3,12 @@
 Este guia documenta o que o comando abaixo faz na pratica:
 
 ```bash
-tko task build
+tkm task build
 ```
 
 ## Visao geral
 
-O comando tko task build roda um pipeline de preparacao de artefatos por pasta alvo.
+O comando tkm task build roda um pipeline de preparacao de artefatos por pasta alvo.
 
 No fluxo padrao, ele:
 
@@ -18,7 +18,7 @@ No fluxo padrao, ele:
 
 No fluxo moodle (opcional), ele tambem:
 
-- Gera README rebaseado usando uma URL GitHub indicada explicitamente.
+- Gera um README autocontido com arquivos locais embutidos em Base64.
 - Gera HTML do enunciado.
 - Gera arquivo de testes.
 - Mantem os starters filtrados por linguagem em `.cache/starter`.
@@ -28,20 +28,20 @@ No fluxo moodle (opcional), ele tambem:
 Uso basico:
 
 ```bash
-tko task build
+tkm task build
 ```
 
 Com alvos especificos:
 
 ```bash
-tko task build labs/tres labs/media
+tkm task build labs/tres labs/media
 ```
 
 Opcoes principais:
 
 - -c, --check: so reconstrui quando detectar mudancas.
 - -b, --brief: reduz logs.
-- -m, --moodle URL: ativa pipeline de artefatos Moodle usando a URL raiz do repositório GitHub para rebasear links (README rebaseado, html, tests.vpl e starters).
+- -m, --moodle: ativa o pipeline de artefatos Moodle (README com arquivos locais embutidos, HTML, tests.vpl e starters).
 - -e, --erase: apaga arquivos temporarios de saida (README.md, README.html, tests.vpl em .cache).
 
 ## Ordem real das etapas
@@ -54,8 +54,9 @@ Para cada alvo (diretorio):
 4. Gera starters com DeepFilter de src para .cache/starter.
 5. Executa local.sh (se existir).
 6. Executa mdpp no README da origem.
-7. Se --moodle URL:
-   - rebase de links (README para .cache/README.md)
+7. Se --moodle:
+   - embute arquivos locais referenciados no README como URLs data: Base64
+   - grava o README autocontido em .cache/README.md
    - gera .cache/README.html
    - gera .cache/tests.vpl
 8. Se --erase, remove alguns artefatos temporarios.
@@ -64,7 +65,7 @@ Para cada alvo (diretorio):
 
 No modo Moodle, os artefatos ficam dentro da pasta `.cache` da tarefa:
 
-- `.cache/README.md`: copia especial do README da tarefa, com links locais reescritos. Imagens apontam para `raw.githubusercontent.com`; links para arquivos apontam para `github.com/.../blob`; links para pastas apontam para `github.com/.../tree`.
+- `.cache/README.md`: cópia autocontida do README da tarefa. Referências locais a arquivos em Markdown e HTML são embutidas em Base64; links externos, âncoras e pastas permanecem como estão.
 - `.cache/README.html`: HTML gerado a partir de `.cache/README.md`, usado como enunciado no Moodle.
 - `.cache/tests.vpl`: arquivo de casos gerado a partir do `README.md` e dos arquivos `.tio`, `.vpl` e `.toml` encontrados na tarefa.
 - `.cache/starter/<linguagem>/...`: starters filtrados a partir de `src/<linguagem>/...`, preservando a estrutura de arquivos por linguagem.
@@ -78,11 +79,11 @@ Esses três artefatos formam o pacote consumido pelo Mula:
 ```
 
 O Mula recebe a raiz do clone e o caminho relativo da tarefa. Quando algum
-artefato necessário não existe, ele executa este build automaticamente usando
-a URL GitHub obtida do `origin`:
+artefato necessário não existe, ele executa este build automaticamente sem
+precisar de uma URL GitHub:
 
 ```bash
-tko task build labs/carro --moodle https://github.com/usuario/repositorio/tree/main
+tkm task build labs/carro --moodle
 ```
 
 O fluxo atual não depende de `.cache/mapi.json`. O caminho relativo da pasta,
@@ -97,7 +98,7 @@ O build chama internamente o preprocessador markdown para atualizar o README.
 Relaciona-se ao comando manual:
 
 ```bash
-tko tool mdpp README.md
+tkm tool mdpp README.md
 ```
 
 ### filter e drafts
@@ -107,7 +108,7 @@ O build usa DeepFilter sobre src e envia resultado para .cache/starter.
 Relaciona-se ao comando manual:
 
 ```bash
-tko tool filter src -r -o .cache/starter
+tkm tool filter src -r -o .cache/starter
 ```
 
 Observacao: no build, o filtro e chamado pelo pipeline interno, com indentacao configurada, focando geracao de drafts.
@@ -122,13 +123,13 @@ Na raiz de uma tarefa:
 
 ```bash
 # pipeline padrao: drafts + local.sh + mdpp
-tko task build .
+tkm task build .
 
 # pipeline completo para moodle
-tko task build . --moodle https://github.com/usuario/repositorio/tree/main
+tkm task build . --moodle
 
 # so reconstruir se houver mudancas
-tko task build . -c --moodle https://github.com/usuario/repositorio/tree/main
+tkm task build . -c --moodle
 ```
 
 ## Quando usar cada modo
@@ -137,12 +138,13 @@ tko task build . -c --moodle https://github.com/usuario/repositorio/tree/main
   - ciclo rapido de preparacao local.
   - atualizacao de markdown e drafts.
 
-- task build com --moodle URL:
-  - geracao de artefatos para publicacao/empacotamento (README rebaseado, html, tests.vpl e starters).
+- task build com --moodle:
+  - geracao de artefatos para publicacao/empacotamento (README autocontido, HTML, tests.vpl e starters).
 
 ## Observacoes importantes
 
 - Se nenhum alvo for informado, o comando usa o diretorio atual.
 - Pastas iniciadas com ., _ e + sao ignoradas no pipeline.
 - local.sh e opcional e executado no diretorio da tarefa.
-- A URL passada para --moodle define os links remotos. O caminho da tarefa é calculado relativamente ao diretório em que o comando é executado.
+- Arquivos locais referenciados devem existir dentro da pasta da atividade; a falta de um arquivo impede gerar o HTML desse alvo e resulta em erro no comando.
+- Arquivos locais referenciados são embutidos no README de cache. Arquivos maiores aumentam o tamanho de `.cache/README.md` e `.cache/README.html`.

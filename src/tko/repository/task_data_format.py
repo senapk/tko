@@ -76,7 +76,7 @@ def atomic_bytes(path: Path, content: bytes) -> None:
 
 def migration_command(root: Path) -> str:
     """Omit the workspace argument when migration can use the current directory."""
-    return "tko tool migrate" if root.resolve() == Path.cwd().resolve() else f'tko tool migrate "{root}"'
+    return "tko repo migrate" if root.resolve() == Path.cwd().resolve() else f'tko repo migrate "{root}"'
 
 
 def require_current_task_data(root: Path) -> None:

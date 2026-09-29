@@ -49,7 +49,7 @@ class _GuiHelpMsg:
                                  en=" Default editor ")
     EDITOR_DESC = Msg.parse(pt=" Para mudar o editor padrão para abrir arquivos use o comando", 
                       en=" To change the default editor used to open files, run")
-    EDITOR_COMMAND = Msg.parse(pt="tko config set --editor <comando>", 
+    EDITOR_COMMAND = Msg.parse(pt="tko config set --editor <comando>",
                          en="tko config set --editor <command>")
 
 

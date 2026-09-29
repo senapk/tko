@@ -5,6 +5,7 @@ import pytest
 from typer.testing import CliRunner
 
 from tko.cli.cli_tools import app
+from tko.tkm import tests_app as _tests_cli_app
 from tko.config.settings import Settings
 from tko.util.console import Console
 
@@ -14,7 +15,7 @@ def test_convert_tests_writes_selected_format(tmp_path: Path) -> None:
     origin.write_text("[[tests]]\ninput = '1'\noutput = '2'\n", encoding="utf-8")
     output: Path = tmp_path / "out.tio"
     result: Result = CliRunner().invoke(
-        app, ["convert-tests", str(origin), "-o", str(output), "--sort", "--number"],
+        _tests_cli_app, ["convert", str(origin), "-o", str(output), "--sort", "--number"],
         obj=Settings(tmp_path / "settings"),
     )
     assert result.exit_code == 0, result.output
@@ -26,7 +27,7 @@ def test_convert_tests_defaults_to_stdout(tmp_path: Path) -> None:
     origin: Path = tmp_path / "cases.toml"
     origin.write_text("[[tests]]\ninput = '1'\noutput = '2'\n", encoding="utf-8")
     with Console.capture() as output:
-        result: Result = CliRunner().invoke(app, ["convert-tests", str(origin)], obj=Settings(tmp_path / "settings"))
+        result: Result = CliRunner().invoke(_tests_cli_app, ["convert", str(origin)], obj=Settings(tmp_path / "settings"))
     assert result.exit_code == 0, result.output
     assert "[[tests]]" in result.output + output.getvalue()
 

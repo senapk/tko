@@ -84,7 +84,7 @@ tko open
 Se o repositório ainda não for um workspace TKO:
 
 ```bash
-tko init
+tko repo init
 ```
 
 Depois adicione a fonte indicada pelo professor.

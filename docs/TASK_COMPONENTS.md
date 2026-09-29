@@ -33,7 +33,7 @@ labs/
     │   ├── py/solver.py          # solução ou fonte para gerar starter
     │   └── feedback.toml         # feedback/autoavaliação, quando usado
     └── .cache/
-        ├── README.md             # README rebaseado, opcional
+        ├── README.md             # README com arquivos locais embutidos, opcional
         ├── README.html           # enunciado publicado, opcional
         ├── tests.vpl             # testes convertidos, opcional
         └── starter/
@@ -57,7 +57,7 @@ relativo ao README de índice, desde que a entrada aponte para o
 | Código de autoria | Não | `<tarefa>/src/<linguagem>/` | arquivos de referência, solução ou draft |
 | Starter distribuído | Não | `<tarefa>/.cache/starter/<linguagem>/` | arquivos entregues ao aluno e origem do filtro |
 | Feedback | Não | `<tarefa>/src/feedback.toml` | regras de feedback/autoavaliação |
-| Artefatos de publicação | Não | `<tarefa>/.cache/` | README rebaseado, HTML e testes VPL |
+| Artefatos de publicação | Não | `<tarefa>/.cache/` | README autocontido, HTML e testes VPL |
 | Proveniência | Sim | Git e comentário `source` | URL, commit, caminho, data e hash dos arquivos |
 
 `README.md` da raiz é o índice do repositório de conteúdo. Ele não deve ser
@@ -110,7 +110,7 @@ O arquivo `<tarefa>/README.md` é obrigatório. O importador deve armazenar:
 - hash, tamanho e codificação;
 - assets existentes, especialmente em `assets/`.
 
-Não substitua o Markdown original pelo HTML. O HTML e o README rebaseado são
+Não substitua o Markdown original pelo HTML. O HTML e o README autocontido são
 representações derivadas e devem ser armazenados separadamente.
 
 ## 3. Testes
@@ -151,7 +151,7 @@ src/<linguagem>/...              # fonte mantida pelo autor
 
 O diretório `src/` pode conter uma solução completa, código de apoio ou
 marcadores usados pelo filtro. O diretório `.cache/starter/` contém o resultado
-gerado por `tko task build` ou pelo filtro equivalente.
+gerado por `tkm task build` ou pelo filtro equivalente.
 
 Recomenda-se registrar cada arquivo de starter com:
 
@@ -172,9 +172,9 @@ teste comum.
 
 ## 5. Artefatos derivados
 
-Quando o pipeline `tko task build --moodle URL` for executado, podem existir:
+Quando o pipeline `tkm task build --moodle` for executado, podem existir:
 
-- `.cache/README.md`: README com links rebaseados;
+- `.cache/README.md`: README com referências a arquivos locais embutidas em Base64;
 - `.cache/README.html`: versão HTML do enunciado;
 - `.cache/tests.vpl`: testes convertidos para VPL;
 - `.cache/starter/<linguagem>/...`: starters filtrados.
@@ -188,7 +188,7 @@ Para publicação no Moodle pelo Mula, o pacote mínimo é:
 ```
 
 O Mula recebe um clone local, usa o caminho relativo da tarefa como chave e
-executa `tko task build --moodle` quando esses artefatos ainda não existem.
+executa `tkm task build --moodle` quando esses artefatos ainda não existem.
 Não é necessário gerar nem consumir `.cache/mapi.json` no fluxo atual.
 
 Esses arquivos não substituem as fontes originais. O banco deve indicar

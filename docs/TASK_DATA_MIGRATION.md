@@ -21,7 +21,7 @@ Feche os processos TKO que estejam usando o workspace. A operação é offline e
 trabalha em um workspace por vez:
 
 ```sh
-tko tool migrate /caminho/do/workspace
+tko repo migrate /caminho/do/workspace
 ```
 
 Sem opções, o comando aplica a migração após validá-la. Os repositórios dos
@@ -32,7 +32,7 @@ use `--dry-run`. Sem path, o comando valida e usa o diretório atual.
 Também é possível selecionar o diretório com `tko -C /caminho/do/workspace tool migrate`.
 
 ```sh
-tko tool migrate /caminho/do/workspace --dry-run
+tko repo migrate /caminho/do/workspace --dry-run
 ```
 
 O mapa automático usa o caminho atual e o antigo `@rotulo`, quando este ainda
@@ -60,8 +60,8 @@ arquivo JSON:
 ```
 
 ```sh
-tko tool migrate /caminho/do/workspace --map mapa.json
-tko tool migrate /caminho/do/workspace --map mapa.json --dry-run
+tko repo migrate /caminho/do/workspace --map mapa.json
+tko repo migrate /caminho/do/workspace --map mapa.json --dry-run
 ```
 
 Destinos explícitos podem representar atividades arquivadas ou fontes cujo índice
@@ -138,7 +138,7 @@ Workspaces que ainda tenham um marcador de migração pendente criado por uma
 versão anterior podem ser recuperados com:
 
 ```sh
-tko tool migrate /caminho/do/workspace --recover
+tko repo migrate /caminho/do/workspace --recover
 ```
 
 A recuperação restaura os arquivos e pastas anteriores usando o manifesto legado e remove o

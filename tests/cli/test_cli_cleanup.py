@@ -7,6 +7,7 @@ from typer.main import get_command
 from typer.testing import CliRunner
 
 from tko.__main__ import app
+from tko.tkm import app as tejo_app
 from tko.config.run_settings import RunSettings
 from tko.config.settings import Settings
 from tko.enums.diff_mode import DiffMode
@@ -41,33 +42,33 @@ def invoke(root: Path, args: list[str], input: str | None = None) -> Result:
     return CliRunner().invoke(app, ["-S", str(root / "settings"), "-O", *args], input=input)
 
 
+def invoke_tejo(root: Path, args: list[str], input: str | None = None) -> Result:
+    return CliRunner().invoke(tejo_app, ["-S", str(root / "settings"), "-O", *args], input=input)
+
+
 def test_command_tree_has_only_canonical_names() -> None:
     from click import Group
 
     root = get_command(app)
     assert isinstance(root, Group)
-    expected: dict[str, set[str]] = {
-        "task": {"build", "check", "show", "open", "list", "tests", "download"},
-        "collect": {"repo", "tasks", "skills"},
-            "config": {"set", "list", "reset", "clear-cache", "self-update", "uninstall", "source", "profile", "audit"},
-        "tool": {"mdpp", "convert-tests", "older", "diff", "rebase", "filter", "html", "migrate", "pull"},
-    }
-    assert not {"util", "reset", "cache", "profile", "source", "self-update", "uninstall", "class"} & root.commands.keys()
-    for name, children in expected.items():
-        group = root.commands[name]
-        assert isinstance(group, Group)
-        assert set(group.commands) == children
+    assert set(root.commands) == {"run", "open", "update", "uninstall", "task", "repo", "config"}
+    task = root.commands["task"]
+    assert isinstance(task, Group)
+    assert set(task.commands) == {"show", "open", "list", "down"}
+    repo = root.commands["repo"]
+    assert isinstance(repo, Group)
+    assert {"init", "list", "migrate", "profile", "source", "audit"} == set(repo.commands)
 
-    config = root.commands["config"]
-    assert isinstance(config, Group)
-    for name, children in {"source": {"list", "add", "remove", "set"}, "profile": {"link", "status", "update", "unlink"}}.items():
-        group = config.commands[name]
-        assert isinstance(group, Group)
-        assert set(group.commands) == children
+    tkm = get_command(tejo_app)
+    assert isinstance(tkm, Group)
+    assert {"audit", "collect", "index", "tool", "task", "tests"} == set(tkm.commands)
+    tool = tkm.commands["tool"]
+    assert isinstance(tool, Group)
+    assert {"pull", "mdpp", "older", "diff", "rebase", "filter", "html"} == set(tool.commands)
 
 
 @pytest.mark.parametrize("args", [
-    ["util"], ["reset"], ["cache", "clear"], ["profile", "status"], ["source", "list"], ["self-update"], ["uninstall"], ["class"], ["class", "pull"], ["task", "down"], ["collect", "task"], ["class", "tasks"],
+    ["util"], ["reset"], ["cache", "clear"], ["profile", "status"], ["source", "list"], ["self-update"], ["class"], ["class", "pull"], ["collect", "task"], ["class", "tasks"],
     ["class", "skills"], ["source", "rm"], ["source", "set-authoring"], ["tool", "tests"],
     ["--lang", "pt"], ["run", "--lang", "py"], ["run", "--side"], ["run", "--down"],
     ["run", "--none"], ["run", "--all"], ["run", "-f"], ["init", "--skip-remotes"],
@@ -95,10 +96,10 @@ def test_changedir_controls_migration_and_restores_cwd(tmp_path: Path, monkeypat
     marker.unlink()
     monkeypatch.chdir(tmp_path)
     selected: str = "repo" if relative else str(tmp_path / "repo")
-    preview: Result = invoke(tmp_path, ["-C", selected, "tool", "migrate", "--dry-run"])
+    preview: Result = invoke(tmp_path, ["-C", selected, "repo", "migrate", "--dry-run"])
     assert preview.exit_code == 0, preview.output
     assert not marker.exists()
-    result: Result = invoke(tmp_path, ["-C", selected, "tool", "migrate"])
+    result: Result = invoke(tmp_path, ["-C", selected, "repo", "migrate"])
     assert result.exit_code == 0, result.output
     assert marker.read_bytes() == FORMAT_BYTES
     assert Path.cwd() == tmp_path
@@ -139,7 +140,7 @@ def test_show_absolute_path_finds_repository_from_outside(tmp_path: Path) -> Non
     assert "Task: course@labs/task" in output.getvalue()
 
 
-@pytest.mark.parametrize("command", ["show", "tests"])
+@pytest.mark.parametrize("command", ["show", "list"])
 def test_current_subdirectory_and_root_selection(tmp_path: Path, command: str) -> None:
     activity: Path = workspace(tmp_path / "repo")
     current: Result = invoke(tmp_path, ["-C", str(activity / "nested"), "task", command])
@@ -162,13 +163,13 @@ def test_fzf_explicitly_overrides_current_task(tmp_path: Path, monkeypatch: pyte
         return elements[0][0]
 
     monkeypatch.setattr("tko.cli.task_selector.select_with_fzf", choose)
-    result: Result = invoke(tmp_path, ["-C", str(activity), "task", "tests", "--fzf"])
+    result: Result = invoke(tmp_path, ["-C", str(activity), "task", "list", "--fzf"])
     assert result.exit_code == 0, result.output
     assert len(calls) == 1
     assert "1 test(s)" in result.output
 
 
-@pytest.mark.parametrize("command", ["show", "open", "tests"])
+@pytest.mark.parametrize("command", ["show", "open", "list"])
 def test_paths_cannot_be_combined_with_fzf(tmp_path: Path, command: str) -> None:
     activity: Path = workspace(tmp_path / "repo")
     result: Result = invoke(tmp_path, ["task", command, str(activity), "--fzf"])
@@ -181,7 +182,7 @@ def test_paths_cannot_be_combined_with_fzf(tmp_path: Path, command: str) -> None
 def test_tests_accepts_multiple_standalone_paths(tmp_path: Path) -> None:
     first: Path = workspace(tmp_path / "repo1") / "README.md"
     second: Path = workspace(tmp_path / "repo2") / "README.md"
-    result: Result = invoke(tmp_path, ["-C", str(tmp_path), "task", "tests", str(first), str(second)])
+    result: Result = invoke(tmp_path, ["-C", str(tmp_path), "task", "list", str(first), str(second)])
     assert result.exit_code == 0, result.output
     assert result.output.count("1 test(s)") == 2
 
@@ -263,7 +264,7 @@ def test_run_propagates_explicit_options(tmp_path: Path, monkeypatch: pytest.Mon
 def test_config_reset_restores_defaults(tmp_path: Path) -> None:
     changed: Result = invoke(tmp_path, ["config", "set", "--diff-mode", "down", "--editor", "custom-editor"])
     assert changed.exit_code == 0
-    reset: Result = invoke(tmp_path, ["config", "reset"])
+    reset: Result = invoke(tmp_path, ["config", "reset", "settings"])
     assert reset.exit_code == 0, reset.output
     loaded: Settings = Settings(tmp_path / "settings")
     loaded.load_settings()
@@ -282,7 +283,7 @@ def test_cache_clear_only_removes_global_cache(tmp_path: Path, monkeypatch: pyte
         return cache
 
     monkeypatch.setattr("tko.config.user_data.UserData.global_cache_dir", global_cache)
-    result: Result = invoke(tmp_path, ["config", "clear-cache"])
+    result: Result = invoke(tmp_path, ["config", "reset", "cache"])
     assert result.exit_code == 0, result.output
     assert cache.is_dir() and list(cache.iterdir()) == []
     assert (activity / "README.md").is_file()
@@ -299,14 +300,14 @@ def test_collect_routes_reports_with_their_parameters(tmp_path: Path, monkeypatc
 
     monkeypatch.setattr("tko.collect.collect_many.CollectMany.load_tasks", tasks)
     monkeypatch.setattr("tko.collect.collect_many.CollectMany.load_skills", skills)
-    task_result: Result = invoke(tmp_path, ["collect", "tasks", "student1", "student2", "--csv", "tasks.csv"])
-    skill_result: Result = invoke(tmp_path, ["collect", "skills", "student1", "--csv", "skills.csv", "--source", "course", "--language", "py"])
+    task_result: Result = invoke_tejo(tmp_path, ["collect", "tasks", "student1", "student2", "--csv", "tasks.csv"])
+    skill_result: Result = invoke_tejo(tmp_path, ["collect", "skills", "student1", "--csv", "skills.csv", "--source", "course", "--language", "py"])
     assert task_result.exit_code == skill_result.exit_code == 0
     assert calls == [([Path("student1"), Path("student2")], "tasks.csv", None, None), ([Path("student1")], "skills.csv", "course", "py")]
 
 
 def test_collect_repo_requires_repository(tmp_path: Path) -> None:
-    result: Result = invoke(tmp_path, ["-C", str(tmp_path), "collect", "repo", "--json"])
+    result: Result = invoke_tejo(tmp_path, ["-C", str(tmp_path), "collect", "repo", "--json"])
     assert result.exit_code == 1
     assert "No TKO repository found" in result.output
 
@@ -318,7 +319,7 @@ def test_tool_pull_routes_paths_and_threads(monkeypatch: pytest.MonkeyPatch, tmp
         observed.append((paths, threads))
 
     monkeypatch.setattr("tko.collect.pull.Pull.pull_all_parallel", pull_all)
-    result: Result = invoke(tmp_path, ["tool", "pull", "one", "two", "--threads", "4"])
+    result: Result = invoke_tejo(tmp_path, ["tool", "pull", "one", "two", "--threads", "4"])
     assert result.exit_code == 0, result.output
     assert observed == [([Path("one"), Path("two")], 4)]
 
@@ -326,9 +327,9 @@ def test_tool_pull_routes_paths_and_threads(monkeypatch: pytest.MonkeyPatch, tmp
 def test_config_source_uses_selected_repository(tmp_path: Path) -> None:
     repo_dir: Path = tmp_path / "repo"
     workspace(repo_dir)
-    added: Result = invoke(tmp_path, ["-C", str(repo_dir), "config", "source", "add", "extra", "extra/README.md"])
+    added: Result = invoke(tmp_path, ["-C", str(repo_dir), "repo", "source", "add", "extra", "extra/README.md"])
     assert added.exit_code == 0, added.output
-    changed: Result = invoke(tmp_path, ["-C", str(repo_dir), "config", "source", "set", "extra", "--uri", "new/README.md", "--authoring"])
+    changed: Result = invoke(tmp_path, ["-C", str(repo_dir), "repo", "source", "set", "extra", "--uri", "new/README.md", "--authoring"])
     assert changed.exit_code == 0, changed.output
     loaded: Repository = Repository(repo_dir, RunSettings(), None, recursive_search=False)
     RepositoryLoader(loaded).load()
@@ -346,20 +347,20 @@ def test_config_profile_uses_selected_repository(tmp_path: Path) -> None:
         'version = "0.1"\nname = "Local profile"\nauthoring_source = "course"\n'
         'language = "py"\n[sources.course]\nuri = "README.md"\n', encoding="utf-8",
     )
-    linked: Result = invoke(tmp_path, ["-C", str(repo_dir), "config", "profile", "link", "profile.toml"])
+    linked: Result = invoke(tmp_path, ["-C", str(repo_dir), "repo", "profile", "link", "profile.toml"])
     assert linked.exit_code == 0, linked.output
     loaded: Repository = Repository(repo_dir, RunSettings(), None, recursive_search=False)
     RepositoryLoader(loaded).load()
     assert loaded.data.link is not None
     assert loaded.data.link.uri == str(profile)
-    status: Result = invoke(tmp_path, ["-C", str(repo_dir), "config", "profile", "status"])
+    status: Result = invoke(tmp_path, ["-C", str(repo_dir), "repo", "profile", "status"])
     assert status.exit_code == 0, status.output
     profile.write_text(profile.read_text().replace('language = "py"', 'language = "java"'))
-    updated: Result = invoke(tmp_path, ["-C", str(repo_dir), "config", "profile", "update"])
+    updated: Result = invoke(tmp_path, ["-C", str(repo_dir), "repo", "profile", "update"])
     assert updated.exit_code == 0, updated.output
     RepositoryLoader(loaded).load()
     assert loaded.data.profile_language == "java"
-    unlinked: Result = invoke(tmp_path, ["-C", str(repo_dir), "config", "profile", "unlink"])
+    unlinked: Result = invoke(tmp_path, ["-C", str(repo_dir), "repo", "profile", "unlink"])
     assert unlinked.exit_code == 0, unlinked.output
     RepositoryLoader(loaded).load()
     assert loaded.data.link is None

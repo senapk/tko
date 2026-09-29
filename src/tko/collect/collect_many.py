@@ -31,8 +31,8 @@ CMD_COLLECT_MULTIPLE_REPOS_FOUND = Msg.parse(
     en="[r] - Multiple TKO repos found, using the first one.[]",
 )
 CMD_COLLECT_RUNNING_IN = Msg.parse(
-    pt="{username: <{padding}} Executando tko collect em {folder}",
-    en="{username: <{padding}} Running tko collect in {folder}",
+    pt="{username: <{padding}} Executando tkm collect em {folder}",
+    en="{username: <{padding}} Running tkm collect in {folder}",
 )
 CMD_COLLECT_JSON_PARSE_FAILED = Msg.parse(
     pt="Erro: Falha ao analisar saída JSON para {username}",

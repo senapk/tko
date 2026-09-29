@@ -32,9 +32,9 @@ git clone https://github.com/algumacoisa/rep-git-bloco-a
 cd rep-git-bloco-a 
 
 # cria sua pasta de tarefas do tko vazia para esse bloco de atividades
-tko init
+tko repo init
 # Define a fonte de onde as tarefas serão carregadas, por exemplo:
-tko config source add ed @ed # para carregar todos repositório padrão de Estrutura de dados
+tko repo source add ed @ed # para carregar todos repositório padrão de Estrutura de dados
 
 # abre sua pasta de tarefas de forma interativa
 tko open

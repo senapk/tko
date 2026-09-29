@@ -5,11 +5,11 @@
 mkdir tko-teste
 cd tko-teste
 # inicializa um repositório do tko vazio
-tko init
+tko repo init
 # Define a fonte de onde as tarefas serão carregadas, por exemplo:
-tko config source add fup @fup # para carregar todas as atividades de fup
-tko config source add ed @ed # para carregar todas as atividades de ed
-tko config source add poo @poo # para carregar todas as atividades de poo
+tko repo source add fup @fup # para carregar todas as atividades de fup
+tko repo source add ed @ed # para carregar todas as atividades de ed
+tko repo source add poo @poo # para carregar todas as atividades de poo
 # abre o repositório interativamente
 tko open
 ```

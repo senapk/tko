@@ -7,8 +7,8 @@ Este guia mostra fluxos completos e curtos para começar com TKO.
 Objetivo: conectar repositório do professor e abrir tarefas.
 
 ```bash
-tko init
-tko config source add poo https://github.com/exemplo/disciplina-poo
+tko repo init
+tko repo source add poo https://github.com/exemplo/disciplina-poo
 tko open
 ```
 
@@ -26,8 +26,8 @@ Passos:
 
 1. Criar pasta da tarefa e README com enunciado.
 2. Adicionar casos de teste (`tests.toml` ou pasta).
-3. Se tiver rascunhos a serem gerados para essa tarefa, ou links a serem atualizados, rodar `tko task build` na pasta da tarefa.
-4. Atualizar README de índice da trilha rodando no root do projeto `tko index build README.md --from labs`.
+3. Se tiver rascunhos a serem gerados para essa tarefa, ou links a serem atualizados, rodar `tkm task build` na pasta da tarefa.
+4. Atualizar README de índice da trilha rodando no root do projeto `tkm index build README.md --from labs`.
 5. Commit e push no repositório da disciplina.
 
 Após publicação:
@@ -54,13 +54,13 @@ Objetivo: alternar entre formato compacto e pasta.
 
 ```bash
 # extrair para pasta
-tko tool convert-tests pasta -o tests.toml
+tkm tests convert pasta -o tests.toml
 
 # converter para vpl
-tko tool convert-tests t.vpl -o tests.toml
+tkm tests convert t.vpl -o tests.toml
 
 # gerar t.tio a partir de README + extra
-tko tool convert-tests README.md extra.tio -o t.tio
+tkm tests convert README.md extra.tio -o t.tio
 ```
 
 ## Exemplo 5 - Rodar testes de desenvolvimento do projeto

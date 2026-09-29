@@ -86,39 +86,6 @@ def _selected_task(selector: TaskSelector, path: Path | None, fzf: bool) -> Task
     return task
 
 
-@app.command("build", help="Build task artifacts and update task README.md")
-def task_build(
-    targets: list[Path] | None = typer.Argument(None, help="Task directories"),
-    check: bool = typer.Option(False, "--check", "-c", help="Check if the file needs to be rebuilt"),
-    brief: bool = typer.Option(False, "--brief", "-b", help="Brief mode"),
-    moodle: str | None = typer.Option(None, "--moodle", "-m", help="GitHub repository URL for Moodle VPL build"),
-    erase: bool = typer.Option(False, "--erase", "-e", help="Erase temporary files"),
-) -> None:
-    from tko.feno.build import build_task
-
-    build_task(targets=targets or [], remote_url=moodle, check=check, erase=erase, brief=brief)
-
-
-@app.command("check", help="Run every language found in activity src directories")
-def task_check(
-    ctx: typer.Context,
-    target_list: list[Path] | None = typer.Argument(None, help="Activity directories; defaults to the current directory"),
-) -> None:
-    _validate_paths(target_list, fzf=False)
-    settings: Settings = ctx.obj
-    activities: list[Path] = [path.resolve() for path in (target_list or [Path.cwd()])]
-    repo, _ = load_repo(settings.rs, show_warnings=False)
-    succeeded: bool = True
-    for activity in activities:
-        if not activity.is_dir():
-            typer.echo(f"Activity is not a directory: {activity}", err=True)
-            succeeded = False
-            continue
-        succeeded = _check_activity(settings, repo, activity) and succeeded
-    if not succeeded:
-        raise typer.Exit(1)
-
-
 @app.command("show", help="Show task information, files, scores and graph")
 def task_show(
     ctx: typer.Context,
@@ -171,22 +138,8 @@ def task_open(
     cmd_run.execute()
 
 
-@app.command("list", help="List tasks")
+@app.command("list", help="List components and tests in a task")
 def task_list(
-    ctx: typer.Context,
-    all: bool = typer.Option(False, "--all", "-a", help="Show all tasks"),
-    downloaded: bool = typer.Option(False, "--downloaded", help="Show downloaded tasks only"),
-    quests: bool = typer.Option(False, "--quest", "-q", help="Show quests"),
-) -> None:
-    from tko.cmds.cmd_open import CmdOpen
-
-    settings: Settings = ctx.obj
-    repo: Repository = _repository(settings)
-    CmdOpen(settings, repo).list(show_all=all, only_down=downloaded, show_quests=quests)
-
-
-@app.command("tests", help="List test cases without running a solver")
-def task_tests(
     ctx: typer.Context,
     target_list: list[Path] | None = typer.Argument(None, help="Existing README, test files or activity directories"),
     fzf: bool = typer.Option(False, "--fzf", "-f", help="Select a task with fzf"),
@@ -208,13 +161,18 @@ def task_tests(
         except (OSError, ValueError) as error:
             typer.echo(f"Unable to inspect {target}: {error}", err=True)
             raise typer.Exit(1) from error
-        typer.echo(f"{target}: {len(units)} test(s)")
+        activity: Path = target if target.is_dir() else target.parent
+        source_root: Path = activity / "src"
+        components: list[Path] = sorted(path for path in source_root.rglob("*") if path.is_file()) if source_root.is_dir() else []
+        typer.echo(f"{target}: {len(components)} component(s), {len(units)} test(s)")
+        for component in components:
+            typer.echo(f"  component: {component.relative_to(activity)}")
         for unit in units:
             label: str = unit.case or str(unit.index)
             typer.echo(f"  {label} ({unit.source})")
 
 
-@app.command("download", help="Download an activity by key or interactive selection")
+@app.command("down", help="Download an activity by key or interactive selection")
 def task_download(
     ctx: typer.Context,
     pattern: str | None = typer.Argument(None, help="Task key, such as course@labs/fila"),

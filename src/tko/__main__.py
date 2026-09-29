@@ -10,13 +10,10 @@ import typer
 from icecream import ic  # type: ignore
 
 from tko.__init__ import __version__
-from tko.cli.cli_audit import app as audit_app
-from tko.cli.cli_collect import app as collect_app
 from tko.cli.cli_config import app as config_app
 from tko.cli.cli_main import register_main_commands
 from tko.cli.cli_task import app as task_app
-from tko.cli.cli_index import app as index_app
-from tko.cli.cli_tools import app as tool_app
+from tko.cli.cli_repo import app as repo_app
 from tko.i18n import Msg, set_language
 from tko.util.Renderer import RenderMode
 from tko.util.console import Console
@@ -35,12 +32,9 @@ if os.name != "nt":
 app = typer.Typer(name="tko", help=f"tko {__version__}", no_args_is_help=True, context_settings={"help_option_names": ["-h", "--help"]})
 
 
-app.add_typer(audit_app, name="audit")
 app.add_typer(task_app, name="task")
-app.add_typer(index_app, name="index")
+app.add_typer(repo_app, name="repo")
 app.add_typer(config_app, name="config")
-app.add_typer(collect_app, name="collect")
-app.add_typer(tool_app, name="tool")
 
 register_main_commands(app)
 
@@ -63,7 +57,7 @@ def main_callback(
     from tko.util.console import PrintWriter
 
     if version:
-        Console.print("tko {version}".format(version=__version__))
+        Console.print("{program} {version}".format(program=ctx.info_name or "tko", version=__version__))
         raise typer.Exit()
 
     if width is not None:

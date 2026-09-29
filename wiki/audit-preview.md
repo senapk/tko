@@ -1,11 +1,11 @@
 # Visualizando timelines de auditoria
 
-O comando `tko audit preview` abre uma timeline interativa no `fzf` para navegar por versões salvas de um arquivo e comparar cada snapshot com o snapshot anterior.
+O comando `tkm audit preview` abre uma timeline interativa no `fzf` para navegar por versões salvas de um arquivo e comparar cada snapshot com o snapshot anterior.
 
 Ele substitui o fluxo manual:
 
 ```bash
-tko audit unpack arquivo.jsonl
+tkm audit unpack arquivo.jsonl
 tools/fzf-preview.sh pasta-extraida
 ```
 
@@ -59,7 +59,7 @@ solver.py.jsonl
 main.cpp.jsonl
 ```
 
-Esses arquivos `.jsonl` armazenam a sequência de versões capturadas pelo watcher de auditoria. O `tko audit preview` lê esses históricos, materializa snapshots temporários ordenados e mostra os diffs no `fzf`.
+Esses arquivos `.jsonl` armazenam a sequência de versões capturadas pelo watcher de auditoria. O `tkm audit preview` lê esses históricos, materializa snapshots temporários ordenados e mostra os diffs no `fzf`.
 
 ## Ferramentas externas
 
@@ -94,13 +94,13 @@ Se `delta` ou `bat` não estiverem instalados, o preview ainda funciona, mas per
 Para ativar auditoria persistente no repositório:
 
 ```bash
-tko config audit on
+tko repo audit on
 ```
 
 Para definir um intervalo entre snapshots:
 
 ```bash
-tko config audit on --interval 20
+tko repo audit on --interval 20
 ```
 
 Depois, rode o TKO normalmente mantendo o watcher ativo:
@@ -112,13 +112,13 @@ tko open
 Também é possível iniciar a auditoria explicitamente em foreground:
 
 ```bash
-tko audit init
+tkm audit init
 ```
 
 Com intervalo específico:
 
 ```bash
-tko audit init --interval 20
+tkm audit init --interval 20
 ```
 
 ## Usando o preview
@@ -126,7 +126,7 @@ tko audit init --interval 20
 Para abrir a timeline padrão do repositório atual:
 
 ```bash
-tko audit preview
+tkm audit preview
 ```
 
 Sem argumentos, o comando procura a pasta:
@@ -138,20 +138,20 @@ Sem argumentos, o comando procura a pasta:
 Para abrir a auditoria de uma tarefa específica:
 
 ```bash
-tko audit preview .tko/audit/fup@soma
+tkm audit preview .tko/audit/fup@soma
 ```
 
 Para abrir um arquivo `.jsonl` específico:
 
 ```bash
-tko audit preview .tko/audit/fup@soma/solver.py.jsonl
+tkm audit preview .tko/audit/fup@soma/solver.py.jsonl
 ```
 
 Também é possível passar uma pasta já extraída ou arquivos comuns:
 
 ```bash
-tko audit preview /tmp/tko-audit-unpack-abc123
-tko audit preview snapshot-1.py snapshot-2.py snapshot-3.py
+tkm audit preview /tmp/tko-audit-unpack-abc123
+tkm audit preview snapshot-1.py snapshot-2.py snapshot-3.py
 ```
 
 ## Atalhos no preview
@@ -178,14 +178,14 @@ Elapsed=00:01:20 | Mode=diff | Shortcuts=...
 O fluxo manual continua possível:
 
 ```bash
-tko audit unpack .tko/audit/fup@soma/solver.py.jsonl
+tkm audit unpack .tko/audit/fup@soma/solver.py.jsonl
 tools/fzf-preview.sh /tmp/tko-audit-unpack-...
 ```
 
 Mas, para o uso comum, prefira:
 
 ```bash
-tko audit preview .tko/audit/fup@soma/solver.py.jsonl
+tkm audit preview .tko/audit/fup@soma/solver.py.jsonl
 ```
 
 Esse comando evita a etapa manual de extração e abre diretamente a mesma ideia de timeline navegável.

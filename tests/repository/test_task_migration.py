@@ -10,7 +10,7 @@ import pytest
 from typer.testing import CliRunner
 from click.testing import Result
 
-from tko.cli.cli_tools import app
+from tko.cli.cli_repo import app
 from tko.config.run_settings import RunSettings
 from tko.game.game import Game
 from tko.logger.log_history import LogHistory
@@ -74,7 +74,7 @@ def test_preview_is_read_only_and_apply_preserves_mixed_history(tmp_path: Path) 
     assert plan.errors == []
     assert plan.mapping["course@old"] == "course@plan/task"
     assert _snapshot(tmp_path) == before
-    with pytest.raises(MigrationRequiredError, match="tko tool migrate"):
+    with pytest.raises(MigrationRequiredError, match="tko repo migrate"):
         Repository(tmp_path, RunSettings(), None, recursive_search=False)
 
     plan.apply()
@@ -998,9 +998,9 @@ def test_migration_hint_omits_current_repository_path(
     monkeypatch.chdir(tmp_path)
     with pytest.raises(MigrationRequiredError) as error:
         require_current_task_data(tmp_path)
-    command: str = "tko tool migrate --recover" if pending else "tko tool migrate"
+    command: str = "tko repo migrate --recover" if pending else "tko repo migrate"
     assert str(error.value).endswith(f"Execute: {command}")
     monkeypatch.chdir(tmp_path.parent)
     with pytest.raises(MigrationRequiredError) as external_error:
         require_current_task_data(tmp_path)
-    assert f'tko tool migrate "{tmp_path}"' in str(external_error.value)
+    assert f'tko repo migrate "{tmp_path}"' in str(external_error.value)

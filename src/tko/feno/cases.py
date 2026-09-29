@@ -1,10 +1,13 @@
 from pathlib import Path
-import subprocess
+
+from tko.config.settings import Settings
+from tko.cmds.cmd_build import CmdBuild
+from tko.util.param import Param
 
 class Cases:
 
     @staticmethod
-    def run(cases_file: Path, source_readme: Path, source_dir: Path) -> None:
+    def run(cases_file: Path, source_readme: Path, source_dir: Path, settings: Settings | None = None) -> bool:
         # Encontra recursivamente arquivos de casos, sem tratar configurações
         # de feedback como testes.
         files: list[Path] = sorted(
@@ -18,7 +21,9 @@ class Cases:
             key=lambda path: path.as_posix(),
         )
 
-        # evita shell=True e mantém tipagem correta
-        cmd: list[str] = ["tko", "build", "tests", str(cases_file), str(source_readme)] + [str(f) for f in files]
-
-        subprocess.run(cmd, stdout=subprocess.PIPE, check=False)
+        effective_settings: Settings = settings if settings is not None else Settings(None)
+        command: CmdBuild = CmdBuild(cases_file, [source_readme, *files], Param.Manip(), effective_settings).set_quiet(True)
+        succeeded: bool = command.execute()
+        if not succeeded:
+            cases_file.unlink(missing_ok=True)
+        return succeeded

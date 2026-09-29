@@ -24,8 +24,13 @@ def _managed_installation(root: Path) -> ManagedInstallation:
     launcher.parent.mkdir(parents=True)
     executable: Path = root / "venv" / bin_dir / ("tko.exe" if os.name == "nt" else "tko")
     launcher.write_text(f'#!/bin/sh\nexec "{executable}" "$@"\n', encoding="utf-8")
+    aliases: tuple[Path, ...] = (root.parent.parent / "bin" / "tkm",)
+    for alias in aliases:
+        alias_binary: str = "tkm" if alias.name == "tkm" else "tko"
+        alias_executable: Path = root / "venv" / bin_dir / (f"{alias_binary}.exe" if os.name == "nt" else alias_binary)
+        alias.write_text(f'#!/bin/sh\nexec "{alias_executable}" "$@"\n', encoding="utf-8")
     (root / "install.toml").write_text(
-        f'method = "managed"\nlauncher = "{launcher.as_posix()}"\n', encoding="utf-8"
+        f'method = "managed"\nlauncher = "{launcher.as_posix()}"\naliases = ["{aliases[0].as_posix()}"]\n', encoding="utf-8"
     )
     installation = ManagedInstallation.from_executable(python)
     assert installation is not None
@@ -65,6 +70,7 @@ def test_removing_managed_installation_keeps_other_files(tmp_path: Path) -> None
 
     assert not installation.root.exists()
     assert not installation.launcher.exists()
+    assert all(not alias.exists() for alias in installation.aliases)
     assert unrelated.read_text(encoding="utf-8") == "keep"
 
 

@@ -22,6 +22,7 @@ class ManagedInstallation:
     venv: Path
     metadata: Path
     launcher: Path
+    aliases: tuple[Path, ...] = ()
 
     @property
     def python(self) -> Path:
@@ -50,7 +51,13 @@ class ManagedInstallation:
         launcher: object = data.get("launcher")
         if not isinstance(launcher, str) or not launcher:
             return None
-        return cls(root, root / "venv", metadata, Path(launcher))
+        aliases_value: object = data.get("aliases", [])
+        aliases: tuple[Path, ...] = (
+            tuple(Path(alias) for alias in aliases_value if isinstance(alias, str))
+            if isinstance(aliases_value, list)
+            else ()
+        )
+        return cls(root, root / "venv", metadata, Path(launcher), aliases)
 
 
 def installation_method(executable: Path | None = None) -> InstallationMethod:
@@ -77,9 +84,30 @@ def remove_managed_installation(installation: ManagedInstallation) -> None:
         or installation.metadata != installation.root / "install.toml"
     ):
         raise ValueError("Invalid managed TKO installation")
-    if installation.launcher.exists():
-        expected_target: str = str(installation.executable)
-        if expected_target not in installation.launcher.read_text(encoding="utf-8"):
+    launchers: tuple[Path, ...] = (installation.launcher, *installation.aliases)
+    for launcher in launchers:
+        if not launcher.exists():
+            continue
+        if launcher == installation.launcher and launcher.name == "tko" and not installation.aliases:
+            binaries: tuple[str, ...] = ("tko",)
+        elif launcher.name == "tko":
+            binaries = ("tko", "soin")
+        elif launcher.name == "tkm":
+            binaries = ("tkm", "tejo")
+        elif launcher.name in {"tejo", "koa"}:
+            binaries = ("tejo",)
+        elif launcher.name == "soin":
+            binaries = ("soin",)
+        else:
+            binaries = ("tko",)
+        bin_folder: str = "Scripts" if sys.platform == "win32" else "bin"
+        expected_targets: tuple[str, ...] = tuple(
+            str(installation.venv / bin_folder / (f"{binary}.exe" if sys.platform == "win32" else binary))
+            for binary in binaries
+        )
+        launcher_contents: str = launcher.read_text(encoding="utf-8")
+        if not any(target in launcher_contents for target in expected_targets):
             raise ValueError("Managed TKO launcher does not match its virtual environment")
-    installation.launcher.unlink(missing_ok=True)
+    for launcher in launchers:
+        launcher.unlink(missing_ok=True)
     shutil.rmtree(installation.root)

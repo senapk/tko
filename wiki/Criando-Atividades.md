@@ -66,7 +66,7 @@ expr: "value"
 ```
 
 Use `[x]` nas tarefas que contam para a meta principal da quest. Ao rodar
-`tko index build`, o TKO pode usar essas marcacoes para recalcular o `xpgoal`.
+`tkm index build`, o TKO pode usar essas marcacoes para recalcular o `xpgoal`.
 Tarefas extras ou desafios podem ficar com `[ ]`.
 
 ## Criando quests
@@ -146,7 +146,7 @@ Para verificar os casos sem executar uma solução (inclusive quando os testes
 estão no README ou em outro formato suportado):
 
 ```bash
-tko task tests labs/minha_tarefa
+tko task list labs/minha_tarefa
 ```
 
 ## Escrevendo testes simples
@@ -176,7 +176,7 @@ consulte [Criando testes e conversoes](Criando-Tarefas-e-Testes.md).
 Depois de criar, renomear ou remover tarefas locais, rode:
 
 ```bash
-tko index build README.md --from labs --from wiki
+tkm index build README.md --from labs --from wiki
 ```
 
 Esse comando:
@@ -200,7 +200,7 @@ ou links para outros arquivos Markdown.
 - [ ] `gain=2 cost=2 size=2 eval=diff` [Fila](https://github.com/qxcodeed/arcade/blob/main/labs/fila/README.md)
 ```
 
-A identidade da tarefa é inferida do diretório do `README.md`. `tko index
+A identidade da tarefa é inferida do diretório do `README.md`. `tkm index
 download` é a transição explícita desse formato legado: ele baixa a atividade
 na pasta indicada pela URL e reescreve a linha para que o jogo use o caminho
 local, preservando a origem no comentário canônico:
@@ -214,8 +214,8 @@ criar rascunhos para a tarefa usam exclusivamente o `README.md` local. O índice
 do professor pode ser preparado e atualizado assim:
 
 ```bash
-tko index download README.md
-tko index update README.md
+tkm index download README.md
+tkm index update README.md
 ```
 
 O primeiro comando baixa as atividades com URL como link principal. O segundo
@@ -226,7 +226,7 @@ Para preparar um índice externo reutilizável, com tarefas no formato local e
 origem remota em comentários `source`:
 
 ```bash
-tko tool rebase @fup -o README.fup.md
+tkm tool rebase @fup -o README.fup.md
 ```
 
 Esse fluxo evita links relativos quebrados ao transportar uma lista de tarefas
@@ -240,13 +240,13 @@ Fluxo tipico:
 2. Valide o indice e as tarefas localmente.
 3. Faca commit e push para o GitHub.
 4. Informe aos alunos a URL do repositorio.
-5. Oriente os alunos a registrar a fonte com `tko config source add`.
+5. Oriente os alunos a registrar a fonte com `tko repo source add`.
 
 Exemplo para o aluno:
 
 ```bash
-tko init
-tko config source add disciplina https://github.com/<usuario>/<repositorio>
+tko repo init
+tko repo source add disciplina https://github.com/<usuario>/<repositorio>
 tko open
 ```
 
@@ -259,7 +259,7 @@ tko open
 - As linhas usam `gain`, `cost`, `size` e `eval`.
 - Os enunciados abrem corretamente no GitHub.
 - Os testes executam localmente nas tarefas com `eval=diff`.
-- `tko index build README.md --from labs --from wiki` foi executado e o diff foi revisado.
+- `tkm index build README.md --from labs --from wiki` foi executado e o diff foi revisado.
 - O repositorio foi commitado e publicado.
 
 ## Referencias

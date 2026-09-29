@@ -59,7 +59,13 @@ def register_main_commands(app: typer.Typer) -> None:
         settings: Settings = ctx.obj
         repo, _ = load_repo(settings.rs, show_warnings=True, auto_load=True)
         if repo is None:
-            raise typer.Exit(1)
+            from tko.repository.repository_starter import RepositoryStarter
+
+            if not RepositoryStarter(settings=settings, language=None, skip_add_remote=False).execute():
+                raise typer.Exit(1)
+            repo, _ = load_repo(settings.rs, show_warnings=True, auto_load=True)
+            if repo is None:
+                raise typer.Exit(1)
         settings.rs.changedir = repo.root_dir
         # change dir to repo root dir so that all commands run in the correct context
         import os
@@ -80,17 +86,14 @@ def register_main_commands(app: typer.Typer) -> None:
         action.execute()
         watcher.stop_watching()
 
-    @app.command("init", help="Initialize empty TKO repository")
-    def init_cmd(
-        ctx: typer.Context,
-        language: Optional[str] = typer.Option(None, "--language", "-l", help="Default repository language (e.g. py, cpp, java, go, kt)"),
-        skip: bool = typer.Option(False, "--skip-sources", "-s", help="Skip asking about default sources"),
-        profile: Optional[str] = typer.Option(None, "--profile", help="Initialize from a linked profile URI"),
-    ) -> None:
-        from tko.repository.repository_starter import RepositoryStarter
+    @app.command("update", help="Update a script-managed TKO installation")
+    def update_cmd() -> None:
+        from tko.cli.cli_config import self_update_cmd
 
+        self_update_cmd()
 
-        settings: Settings = ctx.obj
+    @app.command("uninstall", help="Remove a script-managed TKO installation")
+    def uninstall_cmd(yes: bool = typer.Option(False, "--yes", "-y", help="Remove without confirmation")) -> None:
+        from tko.cli.cli_config import uninstall_cmd as uninstall
 
-        rep_starter = RepositoryStarter(settings=settings, language=language, skip_add_remote=skip, profile_uri=profile)
-        rep_starter.execute()
+        uninstall(yes)

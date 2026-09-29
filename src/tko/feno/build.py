@@ -2,14 +2,14 @@ from tko.feno.title import FenoTitle
 from tko.feno.older import Older
 from tko.feno.html import convert_markdown_to_html
 from tko.feno.cases import Cases
-from tko.feno.link_rebase import LinkRebase
+from tko.feno.embed_local_assets import LocalAssetError, embed_local_assets, validate_local_assets
 from tko.feno.log import Log
 from tko.feno.mdpp import Mdpp
 from tko.feno.filter import DeepFilter
 from tko.i18n import Msg
 from tko.util.decoder import Decoder
-from tko.util.git_hub_url import GitHubUrl
 from pathlib import Path
+from tko.config.settings import Settings
 from tko.util.console import Console
 import subprocess
 import os
@@ -26,9 +26,10 @@ _FENO_BUILD_TARGET_NOT_DIRECTORY = Msg.parse(
 )
 
 class Actions:
-    def __init__(self, source_dir: Path):
+    def __init__(self, source_dir: Path, settings: Settings | None = None) -> None:
         self.hook = source_dir.name
         self.source_dir = source_dir
+        self.settings = settings if settings is not None else Settings(None)
         self.source_readme = self.source_dir / "README.md"
         self.source_src = self.source_dir / "src"
         self.local_sh = self.source_dir / "local.sh"
@@ -39,12 +40,7 @@ class Actions:
         self.output_cases = self.cache / "tests.vpl"
         self.output_starter = self.cache / "starter"
         self.output_html = self.cache / "README.html"
-        self.remote_url: str | None = None
         self.use_pandoc: bool = False
-
-    def set_remote_url(self, remote_url: str | None):
-        self.remote_url = remote_url
-        return self
 
     def in_blacklist(self):
         if self.hook == "node_modules":
@@ -87,6 +83,9 @@ class Actions:
         return artifacts
 
     def need_rebuild(self, moodle: bool = False) -> bool:
+        if moodle:
+            validate_local_assets(Decoder.load(self.source_readme), self.source_dir)
+
         artifacts: list[Path]
         if moodle:
             artifacts = self._moodle_artifacts()
@@ -105,35 +104,24 @@ class Actions:
         Log.verbose(f"Changes in {self.source_dir}")
         return True
 
-    def remote_md(self):
-        content = Decoder.load(self.source_readme)
-        if self.remote_url is None:
-            raise ValueError("remote URL is required for Moodle builds")
-        remote = GitHubUrl.parse(self.remote_url)
-        if remote is None:
-            raise ValueError(f"invalid GitHub URL: {self.remote_url}")
-        try:
-            relative_readme = self.source_readme.resolve().relative_to(Path.cwd().resolve())
-            remote = remote.set_relative_path(relative_readme.as_posix())
-            content = LinkRebase.rebase(content, remote)
-        except ValueError:
-            pass
-
+    def embed_markdown_assets(self) -> None:
+        content: str = embed_local_assets(Decoder.load(self.source_readme), self.source_dir)
         Decoder.save(self.output_readme, content)
         Log.resume("Readme ", end="")
         Log.verbose(f"Readme file: {self.output_readme}")
 
-    def html(self):
-        title = FenoTitle.extract_title(self.source_readme)
+    def html(self) -> None:
+        title: str = FenoTitle.extract_title(self.source_readme)
         convert_markdown_to_html(title, self.output_readme, self.output_html)
         Log.resume("HTML ", end="")
         Log.verbose(f"HTML  file: {self.output_html}")
 
     # uses tko to generate cases file
-    def build_cases(self):
-        Cases.run(self.output_cases, self.source_readme, self.source_dir)
+    def build_cases(self) -> bool:
+        succeeded: bool = Cases.run(self.output_cases, self.source_readme, self.source_dir, self.settings)
         Log.resume("Cases ", end="")
         Log.verbose(f"Cases file: {self.output_cases}")
+        return succeeded
 
     def copy_drafts(self):
         source_src = self.source_src
@@ -166,8 +154,11 @@ class Actions:
             Log.resume("Mdpp ", end="")
             Log.verbose(f"Mdpp updading")
 
-def build_task(targets: list[Path], remote_url: str | None, check: bool, erase: bool, brief: bool):
+def build_task(
+    targets: list[Path], moodle: bool, check: bool, erase: bool, brief: bool, settings: Settings | None = None
+) -> bool:
     Log.set_verbose(not brief)
+    succeeded: bool = True
 
     if len(targets) == 0:
         targets = [Path(".")]
@@ -176,9 +167,10 @@ def build_task(targets: list[Path], remote_url: str | None, check: bool, erase: 
     for target in targets:
         if not os.path.isdir(target):
             Console.print(f"\n    {_FENO_BUILD_TARGET_NOT_DIRECTORY}".format(target=target))
+            succeeded = False
             continue
         hook = target.name
-        actions = Actions(target).set_remote_url(remote_url)
+        actions: Actions = Actions(target, settings if settings is not None else Settings(None))
 
         if not actions.in_blacklist():
             continue
@@ -188,17 +180,26 @@ def build_task(targets: list[Path], remote_url: str | None, check: bool, erase: 
 
         actions.load_title()
         actions.create_cache()
-        moodle = remote_url is not None
+        try:
+            rebuild: bool = not check or actions.need_rebuild(moodle)
+            if rebuild:
+                actions.recreate_cache()  # erase .cache
+                actions.copy_drafts()
+                actions.run_local_sh()
+                actions.update_markdown()  # se os drafts tiverem mudado o markdown precisa ser atualizado
+                if moodle:
+                    actions.embed_markdown_assets()
+                    actions.html()
+                    if not actions.build_cases():
+                        succeeded = False
+                actions.clean(erase)
+        except LocalAssetError as error:
+            actions.output_readme.unlink(missing_ok=True)
+            actions.output_html.unlink(missing_ok=True)
+            actions.output_cases.unlink(missing_ok=True)
+            Console.print(f"\n    fail: {target}: {error}")
+            succeeded = False
+        finally:
+            Log.resume("]")
 
-        if not check or actions.need_rebuild(moodle):
-            actions.recreate_cache()  # erase .cache
-            actions.copy_drafts()
-            actions.run_local_sh()
-            actions.update_markdown()  # se os drafts tiverem mudado o markdown precisa ser atualizado
-            if moodle:
-                actions.remote_md()
-                actions.html()
-                actions.build_cases()
-            actions.clean(erase)
-
-        Log.resume("]")
+    return succeeded

@@ -44,7 +44,7 @@ tko --help
 Saída esperada:
 
 - O comando `tko --version` deve mostrar a versão instalada.
-- O comando `tko --help` deve listar os comandos principais (`task`, `index`, `collect`, `config`, ...).
+- O comando `tko --help` deve listar os comandos principais (`task`, `repo`, `config`, `run`, ...).
 
 Se `tko` não for encontrado, adicione `~/.local/bin` ao PATH e abra um novo terminal:
 
@@ -58,6 +58,9 @@ Instalações existentes via `pipx` continuam suportadas:
 pipx install tko
 ```
 
+O pacote oferece dois comandos: `tko` para consumo das tarefas e `tkm` para
+operações administrativas e de produção.
+
 ### Windows
 
 Use o guia recomendado para setup com VS Code, WSL e Ubuntu:
@@ -68,39 +71,41 @@ Use o guia recomendado para setup com VS Code, WSL e Ubuntu:
 
 ```text
 tko
-├── init, open, run
-├── task     build, show, open, list, tests, download
-├── index    build, download, update
-├── config
-│   ├── set, list, reset, self-update, uninstall, clear-cache
-│   ├── profile  link, status, update, unlink
-│   └── source   list, add, remove, set
-├── collect  repo, tasks, skills
-├── audit    on, off, start, preview, unpack
-└── tool     mdpp, convert-tests, older, diff, rebase, filter, html, migrate, pull
+├── open, run, update, uninstall
+├── task       show, open, list, down
+├── repo       init, list, migrate, profile, source, audit
+└── config     set, list, reset [cache|settings|languages]
+
+tkm
+├── task       build, check
+├── tests      convert, list
+├── index      build, download, update
+├── collect    repo, tasks, skills
+├── audit      init, preview, unpack
+└── tool       pull, mdpp, older, diff, rebase, filter, html
 ```
 
 ```bash
 # No repositório do aluno
-tko task download course@labs/fila
+tko task down course@labs/fila
 tko task show course/labs/fila
 tko task open course/labs/fila
 
 # Dentro da pasta da atividade, o caminho é implícito
-tko task tests
+tko task list
 tko run --language py --diff-mode side --failures first
 
 # Escolher outra atividade explicitamente
 tko task open --fzf
 
 # Diretório efetivo para qualquer comando
-tko -C caminho/do/repositorio tool migrate --dry-run
-tko -C caminho/do/repositorio tool migrate
+tko -C caminho/do/repositorio repo migrate --dry-run
+tko -C caminho/do/repositorio repo migrate
 ```
 
-`task show`, `task open` e `task tests` aceitam caminhos existentes. Sem caminho,
+`task show`, `task open` e `task list` aceitam caminhos existentes. Sem caminho,
 usam a atividade da pasta atual ou abrem um seletor quando não há atividade atual.
-`task download` recebe uma chave, pois a atividade ainda não foi baixada.
+`task down` recebe uma chave, pois a atividade ainda não foi baixada.
 `--fzf/-f` abre o seletor; `--filter/-F` filtra código antes da execução.
 O idioma da interface usa `--ui-language pt|en` antes do comando; a linguagem de
 programação usa `--language/-l` em `init`, `run` e `collect skills`.
@@ -196,7 +201,7 @@ Repositórios de referência:
 Para a instalação recomendada, use:
 
 ```bash
-tko config self-update
+tko update
 ```
 
 Para instalações existentes via `pipx`, use:

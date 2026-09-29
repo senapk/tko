@@ -104,7 +104,7 @@ def test_load_config_uses_main_file_and_sets_source_globals(tmp_path: Path):
 def test_loader_rejects_yaml_instead_of_converting_it(tmp_path: Path) -> None:
     loader, repo = make_loader(tmp_path)
     write_text(repo.paths.legacy_config_file, "version: '0.2'\n")
-    with pytest.raises(MigrationRequiredError, match="tko tool migrate"):
+    with pytest.raises(MigrationRequiredError, match="tko repo migrate"):
         loader.load()
     assert not repo.paths.config_file.exists()
 

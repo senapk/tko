@@ -147,7 +147,7 @@ def test_source_help_does_not_announce_remote_group() -> None:
 def test_config_help_announces_source_not_remote() -> None:
     from tko.__main__ import app
 
-    result = CliRunner().invoke(app, ["config", "--help"])
+    result = CliRunner().invoke(app, ["repo", "--help"])
 
     assert result.exit_code == 0
     assert "source" in result.output

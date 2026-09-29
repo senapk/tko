@@ -56,7 +56,7 @@ Quando o enunciado precisa mostrar exemplos gerados a partir dos testes, use o
 preprocessador Markdown:
 
 ```bash
-tko tool mdpp README.md
+tkm tool mdpp README.md
 ```
 
 Ele pode carregar testes de `tests.toml` e inserir blocos renderizados no
@@ -68,33 +68,33 @@ O destino pode ser omitido. Nesse caso, o resultado é escrito como TOML na
 saída padrão:
 
 ```bash
-tko tool convert-tests tests.toml > normalized.toml
+tkm tests convert tests.toml > normalized.toml
 ```
 
 Gerar `t.vpl` a partir de `tests.toml`:
 
 ```bash
-tko tool convert-tests tests.toml -o t.vpl
+tkm tests convert tests.toml -o t.vpl
 ```
 
 Gerar `t.tio` a partir de `README.md` e `extra.tio`:
 
 ```bash
-tko tool convert-tests README.md extra.tio -o t.tio
+tkm tests convert README.md extra.tio -o t.tio
 ```
 
 Extrair testes para uma pasta:
 
 ```bash
 mkdir pasta
-tko tool convert-tests tests.toml -o pasta
+tkm tests convert tests.toml -o pasta
 ```
 
 Extrair de `cases.tio`:
 
 ```bash
 mkdir pasta
-tko tool convert-tests cases.tio -o pasta
+tkm tests convert cases.tio -o pasta
 ```
 
 ## Testes em pasta
@@ -121,7 +121,7 @@ Use `--write-pattern` para escolher os nomes dos arquivos gerados. O caractere `
 como marcador da numeracao.
 
 ```bash
-tko tool convert-tests cases.tio -o pasta/ --write-pattern "in.@ out.@"
+tkm tests convert cases.tio -o pasta/ --write-pattern "in.@ out.@"
 ```
 
 Padroes comuns:
@@ -136,7 +136,7 @@ Quando a disciplina mantem uma solucao completa do professor e precisa gerar
 arquivos iniciais para alunos, use:
 
 ```bash
-tko tool filter
+tkm tool filter
 ```
 
 Os arquivos de solucao costumam ficar em `src/<lang>/...`, conforme convencao
@@ -148,7 +148,7 @@ Para tarefas que usam preprocessamento de Markdown, rebase de links, VPL ou
 rascunhos, o comando mais conveniente e:
 
 ```bash
-tko task build
+tkm task build
 ```
 
 Ele executa a preparacao da tarefa e gera artefatos de publicacao quando

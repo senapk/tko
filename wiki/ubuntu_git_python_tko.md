@@ -98,7 +98,7 @@ Instalações via `pipx` continuam suportadas como alternativa: `pipx install tk
 ## Atualizar TKO
 
 ```bash
-tko config self-update
+tko update
 ```
 
 Para uma instalação via `pipx`, use `pipx upgrade tko`.

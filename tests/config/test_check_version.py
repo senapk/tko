@@ -7,7 +7,7 @@ from tko.installation import InstallationMethod
 def test_update_command_uses_managed_installer(monkeypatch: MonkeyPatch) -> None:
     monkeypatch.setattr("tko.config.check_version.installation_method", lambda: InstallationMethod.MANAGED)
 
-    assert CheckVersion.update_command() == "tko config self-update"
+    assert CheckVersion.update_command() == "tko update"
 
 
 def test_update_command_preserves_pipx_workflow(monkeypatch: MonkeyPatch) -> None:

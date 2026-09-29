@@ -29,7 +29,7 @@ Para preparar um índice remoto reutilizável, com tarefas materializáveis e
 origem remota em comentários `source`, use:
 
 ```bash
-tko tool rebase @fup -o README.fup.md
+tkm tool rebase @fup -o README.fup.md
 ```
 
 O fluxo de `rebase` evita links relativos quebrados ao transportar um `README.md` entre repositorios.
@@ -43,13 +43,13 @@ Organizacao comum de solucoes:
 Com marcacoes de corte no codigo, o comando abaixo permite gerar versoes de material/rascunho:
 
 ```bash
-tko tool filter
+tkm tool filter
 ```
 
 Para preprocessamento de markdown, o comando implementado atualmente e:
 
 ```bash
-tko tool mdpp
+tkm tool mdpp
 ```
 
 Capacidades relevantes para autoria de tarefas:

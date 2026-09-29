@@ -104,12 +104,6 @@ class Settings:
         self.dict_alias_git = self.Defaults.alias_git.copy()
         self.app = AppSettings()
         self.colors = Colors()
-        lang_file = self.get_languages_file()
-        if lang_file.exists():
-            lang_file.unlink()
-        sample_file = self.get_languages_sample()
-        with open(sample_file, "w") as f:
-            f.write(LanguagesSettings(self.get_languages_file()).build_file_sample())
         return self
 
     def set_alias_git(self, alias: str, git_url: str):

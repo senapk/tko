@@ -66,31 +66,6 @@ def tool_mdpp(
         Mdpp.update_file(target, action, quiet)
 
 
-@app.command("convert-tests", help="Convert test cases between supported formats")
-def tool_convert_tests(
-    ctx: typer.Context,
-    origins: list[str] = typer.Argument(..., help="Input test targets"),
-    output: str | None = typer.Option(None, "--output", "-o", help="Output file or directory; defaults to TOML on stdout"),
-    read_pattern: str = typer.Option("@.in @.sol", "--read-pattern", help="Input/output filename pattern for directory origins"),
-    write_pattern: str = typer.Option("@.in @.sol", "--write-pattern", help="Input/output filename pattern for directory targets"),
-    unlabel: bool = typer.Option(False, "--unlabel", "-u", help="Remove all labels"),
-    number: bool = typer.Option(False, "--number", "-n", help="Number labels"),
-    sort: bool = typer.Option(False, "--sort", "-s", help="Sort test cases by input size"),
-) -> None:
-    from tko.cmds.cmd_build import CmdBuild
-    from tko.util.param import Param
-
-    manip = Param.Manip().set_unlabel(unlabel).set_to_sort(sort).set_to_number(number)
-    CmdBuild(
-        None if output is None else Path(output),
-        [Path(origin) for origin in origins],
-        manip,
-        ctx.obj,
-        read_pattern=read_pattern,
-        write_pattern=write_pattern,
-    ).execute()
-
-
 @app.command("older", help="Check if the source is newer than the target")
 def tool_older(
     targets: list[str] = typer.Argument(..., help="Target files or directories")
@@ -201,48 +176,6 @@ def tool_html(
     convert_markdown_to_html(final_title, Path(input_file), Path(output_file))
 
 
-@app.command("migrate", help="Migrate persisted task identities offline")
-def tool_migrate(
-    workspace: Path = typer.Argument(Path("."), help="Workspace containing .tko (defaults to the current directory)"),
-    dry_run: bool = typer.Option(False, "--dry-run", help="Show the migration plan without changing files"),
-    mapping: Path | None = typer.Option(None, "--map", help="JSON map of old keys to canonical keys"),
-    recover: bool = typer.Option(False, "--recover", help="Roll back an interrupted migration"),
-) -> None:
-    from tko.repository.task_migration import TaskDataMigration, read_mapping
-    from tko.repository.task_migration_transaction import MigrationPlan, recover_migration
-
-    try:
-        if recover:
-            if dry_run or mapping is not None:
-                raise ValueError("--recover cannot be combined with --dry-run or --map")
-            backup: Path = recover_migration(workspace)
-            typer.echo(f"Migração revertida. Backup: {backup}")
-            return
-        plan: MigrationPlan = TaskDataMigration(workspace, read_mapping(mapping)).inspect()
-        for old, new in sorted(plan.mapping.items()):
-            if old != new:
-                typer.echo(f"{old} -> {new}")
-        for old, new in sorted(plan.moves.items()):
-            typer.echo(f"move directory: {old} -> {new}")
-        for change in plan.changes:
-            action: str = "delete" if change.after is None else "create" if change.before is None else "update"
-            typer.echo(f"{action}: {change.relative}")
-        if plan.errors:
-            typer.echo(f"Migração não aplicada: {len(plan.errors)} erro(s).", err=True)
-            for error in plan.errors:
-                typer.echo(error, err=True)
-            raise typer.Exit(1)
-        if dry_run:
-            typer.echo(f"Simulação: {len(plan.changes)} arquivo(s). Execute sem --dry-run para aplicar com o TKO fechado.")
-            return
-        already_migrated: bool = not plan.changes and not plan.directories
-        plan.apply()
-        typer.echo("Dados já migrados." if already_migrated else "Migração concluída.")
-    except (ValueError, OSError) as exc:
-        typer.echo(f"Migração falhou: {exc}", err=True)
-        if (workspace / ".tko" / "migration-pending.json").exists():
-            typer.echo("Aplicação interrompida. Execute o mesmo comando com --recover.", err=True)
-        raise typer.Exit(1) from exc
 
 
 if __name__ == "__main__":

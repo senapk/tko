@@ -98,7 +98,7 @@ A quest soma XP obtido e total, e deriva percentuais.
 Pontos importantes:
 
 - Quest completa depende de `min` (padrao 50%).
-- `xpgoal` pode ser definido manualmente ou gerado pelo `tko index build` a partir das tasks marcadas com `[x]` no indice.
+- `xpgoal` pode ser definido manualmente ou gerado pelo `tkm index build` a partir das tasks marcadas com `[x]` no indice.
 
 Comportamento no codigo:
 
@@ -116,12 +116,12 @@ Comportamento no codigo:
 - Filtros e montagem da árvore: [src/tko/play_tree/tree_builder.py](../src/tko/play_tree/tree_builder.py)
 - Estado dos filtros: [src/tko/play_tree/tree_state.py](../src/tko/play_tree/tree_state.py)
 
-## Papel do `tko index build` no banco de tarefas
+## Papel do `tkm index build` no banco de tarefas
 
 Como o indice e o ponto de metadados, mantenha ele sincronizado com:
 
 ```bash
-tko index build README.md --from labs --from wiki
+tkm index build README.md --from labs --from wiki
 ```
 
 Esse comando ajuda a:

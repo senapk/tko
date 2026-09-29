@@ -2,9 +2,8 @@ from pathlib import Path
 
 from _pytest.monkeypatch import MonkeyPatch
 from typer.testing import CliRunner
-import typer
 
-from tko.cli.cli_main import register_main_commands
+from tko.cli.cli_repo import app
 from tko.config.run_settings import RunSettings
 from tko.config.settings import Settings
 
@@ -17,8 +16,6 @@ def _make_app_context(tmp_path: Path) -> Settings:
 
 def test_init_passes_arguments_to_repository_starter(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
     runner = CliRunner()
-    app = typer.Typer()
-    register_main_commands(app)
     ctx = _make_app_context(tmp_path)
 
     captured: dict[str, object] = {"execute": False}
@@ -56,8 +53,6 @@ def test_init_passes_arguments_to_repository_starter(monkeypatch: MonkeyPatch, t
 
 def test_init_passes_profile_to_repository_starter(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
     runner = CliRunner()
-    app = typer.Typer()
-    register_main_commands(app)
     ctx = _make_app_context(tmp_path)
 
     captured: dict[str, object] = {}

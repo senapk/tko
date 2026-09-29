@@ -3,7 +3,8 @@ from _pytest.monkeypatch import MonkeyPatch
 
 from typer.testing import CliRunner
 
-from tko.cli.cli_task import app
+from tko.tkm import task_app as app
+from tko.cli.cli_task import app as tko_task_app
 from tko.config.run_settings import RunSettings
 from tko.config.settings import Settings
 from tko.enums.diff_count import DiffCount
@@ -17,26 +18,40 @@ def _make_app_context(tmp_path: Path) -> Settings:
 
 
 def test_task_commands_include_build_and_no_build_group_remains() -> None:
-    assert "build" in {command.name for command in app.registered_commands}
+    assert {"build", "check"} == {command.name for command in app.registered_commands}
 
 
-def test_task_build_passes_explicit_moodle_url(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
-    received: dict[str, object] = {}
+def test_task_build_uses_moodle_flag_without_url(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:
+    received: dict[str, tuple[object, ...]] = {}
 
-    def fake_build_task(**kwargs: object) -> None:
-        received.update(kwargs)
+    def fake_build_task(*args: object) -> bool:
+        received["args"] = args
+        return True
 
     monkeypatch.setattr("tko.feno.build.build_task", fake_build_task)
 
     result = CliRunner().invoke(
         app,
-        ["build", "task", "--moodle", "https://github.com/user/repo/tree/main"],
+        ["build", "task", "--moodle"],
         obj=_make_app_context(tmp_path),
     )
 
     assert result.exit_code == 0
-    assert received["remote_url"] == "https://github.com/user/repo/tree/main"
-    assert received["targets"] == [Path("task")]
+    assert received["args"][:5] == ([Path("task")], True, False, False, False)
+
+
+def test_task_build_returns_failure_when_target_build_fails(
+    monkeypatch: MonkeyPatch, tmp_path: Path
+) -> None:
+    def fake_build_task(*_args: object) -> bool:
+        return False
+
+    monkeypatch.setattr("tko.feno.build.build_task", fake_build_task)
+    result = CliRunner().invoke(
+        app, ["build", "task", "--moodle"], obj=_make_app_context(tmp_path)
+    )
+
+    assert result.exit_code == 1
 
 
 def test_task_check_runs_sorted_languages_for_each_activity(
@@ -120,12 +135,12 @@ def test_task_download_requires_repository(monkeypatch: MonkeyPatch, tmp_path: P
 
     monkeypatch.setattr("tko.cli.cli_task.load_repo", fake_load_repo)
 
-    result = runner.invoke(app, ["download"], obj=ctx)
+    result = runner.invoke(tko_task_app, ["down"], obj=ctx)
 
     assert result.exit_code == 1
 
 
-def test_task_list_prints_each_duplicate_key_only_once(tmp_path: Path) -> None:
+def test_task_list_prints_components_and_tests(tmp_path: Path) -> None:
     (tmp_path / ".tko").mkdir()
     (tmp_path / ".tko" / "repository.toml").write_text(
         'version = "0.3"\n\n'
@@ -160,13 +175,11 @@ def test_task_list_prints_each_duplicate_key_only_once(tmp_path: Path) -> None:
     ctx = _make_app_context(tmp_path)
     ctx.rs.force_offline = True
 
-    with Console.capture() as output:
-        result = CliRunner().invoke(app, ["list", "--all"], obj=ctx)
-    rendered = output.getvalue()
+    result = CliRunner().invoke(tko_task_app, ["list", str(tmp_path / "same")], obj=ctx)
+    rendered = result.output
 
     assert result.exit_code == 0
-    assert rendered.count("base@same") == 1
-    assert rendered.count("base@unique") == 1
+    assert "0 test(s)" in rendered
 
 
 def test_task_tests_lists_cases_without_running_solver(tmp_path: Path) -> None:
@@ -177,7 +190,7 @@ def test_task_tests_lists_cases_without_running_solver(tmp_path: Path) -> None:
         encoding="utf-8",
     )
 
-    result = CliRunner().invoke(app, ["tests", str(activity)], obj=_make_app_context(tmp_path))
+    result = CliRunner().invoke(tko_task_app, ["list", str(activity)], obj=_make_app_context(tmp_path))
 
     assert result.exit_code == 0
     assert "1 test(s)" in result.stdout

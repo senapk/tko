@@ -52,11 +52,11 @@ Primeira configuração no ambiente local:
 
 1. Inicializar estrutura local de tarefas:
 
-   tko init
+   tko repo init
 
 2. Adicionar remoto da disciplina:
 
-   tko config source add <label> <url_git_do_professor>
+   tko repo source add <label> <url_git_do_professor>
 
 3. Abrir interface de tarefas:
 

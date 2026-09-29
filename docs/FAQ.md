@@ -17,7 +17,7 @@ Depois abra um novo terminal. Em instalações via `pipx`, use `pipx ensurepath`
 ## 2) Como atualizo o TKO?
 
 ```bash
-tko config self-update
+tko update
 ```
 
 Instalações via `pipx` continuam usando:
@@ -78,9 +78,9 @@ Conversões e exemplos:
 Exemplos:
 
 ```bash
-tko tool convert-tests t.vpl -o tests.toml
-tko tool convert-tests README.md extra.tio -o t.tio
-tko tool convert-tests pasta -o tests.toml
+tkm tests convert t.vpl -o tests.toml
+tkm tests convert README.md extra.tio -o t.tio
+tkm tests convert pasta -o tests.toml
 ```
 
 Para padrões de nome personalizados, use `-p`.
