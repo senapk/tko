@@ -21,7 +21,7 @@ def _make_app_context(tmp_path: Path) -> Settings:
 
 def test_task_build_moves_to_build_group() -> None:
     assert "build" not in {command.name for command in app.registered_commands}
-    assert {"task"} == {command.name for command in build_app.registered_commands}
+    assert {"task", "index", "download"} == {command.name for command in build_app.registered_commands}
 
 
 def test_task_build_uses_moodle_flag_without_url(monkeypatch: MonkeyPatch, tmp_path: Path) -> None:

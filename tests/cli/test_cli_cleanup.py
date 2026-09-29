@@ -156,7 +156,7 @@ def test_show_absolute_path_finds_repository_from_outside(tmp_path: Path) -> Non
     assert "Task: course@labs/task" in output.getvalue()
 
 
-@pytest.mark.parametrize("command", ["show", "list"])
+@pytest.mark.parametrize("command", ["show"])
 def test_current_subdirectory_and_root_selection(tmp_path: Path, command: str) -> None:
     activity: Path = workspace(tmp_path / "repo")
     current: Result = invoke(tmp_path, ["-C", str(activity / "nested"), "task", command])
@@ -179,13 +179,14 @@ def test_fzf_explicitly_overrides_current_task(tmp_path: Path, monkeypatch: pyte
         return elements[0][0]
 
     monkeypatch.setattr("tko.cli.task_selector.select_with_fzf", choose)
-    result: Result = invoke(tmp_path, ["-C", str(activity), "task", "list", "--fzf"])
+    with Console.capture() as output:
+        result: Result = invoke(tmp_path, ["-C", str(activity), "task", "show", "--fzf"])
     assert result.exit_code == 0, result.output
     assert len(calls) == 1
-    assert "1 test(s)" in result.output
+    assert "Task: course@labs/task" in output.getvalue()
 
 
-@pytest.mark.parametrize("command", ["show", "open", "list"])
+@pytest.mark.parametrize("command", ["show", "open"])
 def test_paths_cannot_be_combined_with_fzf(tmp_path: Path, command: str) -> None:
     activity: Path = workspace(tmp_path / "repo")
     result: Result = invoke(tmp_path, ["task", command, str(activity), "--fzf"])
@@ -198,7 +199,7 @@ def test_paths_cannot_be_combined_with_fzf(tmp_path: Path, command: str) -> None
 def test_tests_accepts_multiple_standalone_paths(tmp_path: Path) -> None:
     first: Path = workspace(tmp_path / "repo1") / "README.md"
     second: Path = workspace(tmp_path / "repo2") / "README.md"
-    result: Result = invoke(tmp_path, ["-C", str(tmp_path), "task", "list", str(first), str(second)])
+    result: Result = invoke(tmp_path, ["-C", str(tmp_path), "tests", "list", str(first), str(second)])
     assert result.exit_code == 0, result.output
     assert result.output.count("1 test(s)") == 2
 

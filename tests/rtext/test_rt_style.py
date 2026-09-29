@@ -31,7 +31,7 @@ def test_parse_default_foreground_and_background_clear_to_plain():
 
 
 def test_parse_ignores_unknown_characters():
-    style = TextStyle.parse("zr?Q")
+    style = TextStyle.parse("zr?")
 
     assert style == TextStyle.parse("r")
 

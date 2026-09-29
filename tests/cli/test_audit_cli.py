@@ -1,4 +1,5 @@
 from pathlib import Path
+from collections.abc import Callable
 from types import SimpleNamespace
 from typing import Any
 import re
@@ -56,6 +57,9 @@ def test_audit_starts_watcher_with_verbose_and_interval(monkeypatch: MonkeyPatch
     class DummyWatcher:
         def __init__(self, _repo: object):
             captured["repo"] = _repo
+
+        def set_audit_notification_callback(self, callback: Callable[[str], None] | None) -> None:
+            captured["audit_notification_callback"] = callback
 
         def start_watching(
             self,
@@ -230,7 +234,7 @@ def test_audit_preview_render_first_file_outputs_content(monkeypatch: MonkeyPatc
 
     result = runner.invoke(
         app,
-        ["preview", "--index-file", str(index_file), "--preview-index", "1"],
+            ["timeline", "--index-file", str(index_file), "--preview-index", "1"],
     )
 
     assert result.exit_code == 0
@@ -256,7 +260,7 @@ def test_audit_preview_elapsed_ignores_unpack_index_prefix(monkeypatch: MonkeyPa
 
     result = runner.invoke(
         app,
-        ["preview", "--index-file", str(index_file), "--preview-index", "2"],
+            ["timeline", "--index-file", str(index_file), "--preview-index", "2"],
     )
 
     assert result.exit_code == 0

@@ -23,7 +23,7 @@ from tko.repository.task_data_format import (
     initialize_task_data, require_current_task_data,
 )
 from tko.repository.task_migration import TaskDataMigration, read_mapping
-from tko.repository.task_migration_transaction import MigrationPlan, recover_migration
+from tko.repository.task_migration_transaction import MigrationPlan
 import tko.repository.task_migration_transaction as transaction
 
 
@@ -243,7 +243,9 @@ def test_invalid_track_record_blocks_all_migration_writes(tmp_path: Path, filena
     assert _snapshot(tmp_path) == before
 
 
-def test_track_csv_merge_recovers_after_interrupted_apply(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_track_csv_merge_leaves_format_marker_unwritten_after_interruption(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
     _workspace(tmp_path)
     _write(tmp_path, ".tko/track/course@old/track.csv", "2026-09-14_10-00-00,50%,\n")
     _write(tmp_path, ".tko/track/course/plan/task/track.csv", "2026-09-14_10-01-00,70%,\n")
@@ -260,9 +262,9 @@ def test_track_csv_merge_recovers_after_interrupted_apply(tmp_path: Path, monkey
         patch.setattr(transaction, "atomic_bytes", interrupted_write)
         with pytest.raises(OSError, match="simulated interruption"):
             plan.apply()
-    recover_migration(tmp_path)
-    restored: dict[str, bytes] = {name: content for name, content in _snapshot(tmp_path).items() if not name.startswith(".tko/migrations/")}
-    assert restored == before
+    assert not (tmp_path / ".tko" / FORMAT_FILE).exists()
+    assert not (tmp_path / ".tko" / PENDING_FILE).exists()
+    assert _snapshot(tmp_path) != before
 
 
 @pytest.mark.parametrize("line", ["broken\n", _event("course@old", 0, "UNKNOWN"), _event("course@old", 0, fields=", k:course@old")])
@@ -340,7 +342,9 @@ def test_unknown_yaml_null_blocks_conversion_without_losing_data(tmp_path: Path)
     assert _snapshot(tmp_path) == before
 
 
-def test_recovery_after_interrupted_apply_restores_originals(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_interrupted_apply_requires_git_restore_and_does_not_create_journal(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
     _workspace(tmp_path)
     _write(tmp_path, ".tko/log/2026-09-14.log", _event("course@old", 0))
     _write(tmp_path, ".tko/track/course@old/main.jsonl", b"snapshot")
@@ -357,15 +361,11 @@ def test_recovery_after_interrupted_apply_restores_originals(tmp_path: Path, mon
         patch.setattr(transaction, "atomic_bytes", interrupted_write)
         with pytest.raises(OSError, match="simulated"):
             plan.apply()
-    with pytest.raises(MigrationRequiredError, match="--recover"):
+    with pytest.raises(MigrationRequiredError, match="tko repo migrate"):
         require_current_task_data(tmp_path)
-    backup: Path = recover_migration(tmp_path)
-    assert backup.is_dir()
     assert not (tmp_path / ".tko" / PENDING_FILE).exists()
-    restored: dict[str, bytes] = {name: content for name, content in _snapshot(tmp_path).items() if not name.startswith(".tko/migrations/")}
-    assert restored == before
-    TaskDataMigration(tmp_path).inspect().apply()
-    require_current_task_data(tmp_path)
+    assert not (tmp_path / ".tko" / FORMAT_FILE).exists()
+    assert _snapshot(tmp_path) != before
 
 
 def test_changed_input_prevents_stale_plan_application(tmp_path: Path) -> None:
@@ -502,7 +502,9 @@ def test_history_and_backup_symlinks_are_rejected(tmp_path: Path) -> None:
     assert list(outside.iterdir()) == []
 
 
-def test_recovery_refuses_to_overwrite_later_changes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_interrupted_apply_preserves_later_changes_without_journal(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
     _workspace(tmp_path)
     log: Path = _write(tmp_path, ".tko/log/2026-09-14.log", _event("course@old", 0))
     plan: MigrationPlan = TaskDataMigration(tmp_path).inspect()
@@ -518,10 +520,9 @@ def test_recovery_refuses_to_overwrite_later_changes(tmp_path: Path, monkeypatch
         with pytest.raises(OSError):
             plan.apply()
     log.write_text("a later edit")
-    with pytest.raises(ValueError, match="File changed"):
-        recover_migration(tmp_path)
     assert log.read_text() == "a later edit"
-    assert (tmp_path / ".tko" / PENDING_FILE).exists()
+    assert not (tmp_path / ".tko" / PENDING_FILE).exists()
+    assert not (tmp_path / ".tko" / FORMAT_FILE).exists()
 
 
 def test_remote_source_uses_local_snapshot_without_materializing(tmp_path: Path) -> None:
@@ -794,7 +795,7 @@ def test_activity_destination_collision_never_overwrites_work(tmp_path: Path, id
 
 
 @pytest.mark.parametrize("existing_destination", [False, True])
-def test_recovery_restores_moved_activity_and_metadata(
+def test_interrupted_activity_move_keeps_format_marker_unwritten(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, existing_destination: bool,
 ) -> None:
     import stat
@@ -806,8 +807,6 @@ def test_recovery_restores_moved_activity_and_metadata(
     (old / "empty").mkdir()
     if existing_destination:
         _write(tmp_path, "course/labs/animal/notes.txt", b"existing destination")
-    before: dict[str, bytes] = _snapshot(tmp_path)
-    dirs_before: set[str] = {p.relative_to(tmp_path).as_posix() for p in tmp_path.rglob("*") if p.is_dir()}
     plan: MigrationPlan = TaskDataMigration(tmp_path).inspect()
     original_write = transaction.atomic_bytes
 
@@ -821,16 +820,12 @@ def test_recovery_restores_moved_activity_and_metadata(
         with pytest.raises(OSError, match="interrupted"):
             plan.apply()
     assert not old.exists()
-    recover_migration(tmp_path)
-    restored: dict[str, bytes] = {name: data for name, data in _snapshot(tmp_path).items() if not name.startswith(".tko/migrations/")}
-    assert restored == before
-    dirs_after: set[str] = {p.relative_to(tmp_path).as_posix() for p in tmp_path.rglob("*") if p.is_dir() and not p.is_relative_to(tmp_path / ".tko/migrations")}
-    assert dirs_after == dirs_before
+    assert (tmp_path / "course/labs/animal").is_dir()
+    assert not (tmp_path / ".tko" / FORMAT_FILE).exists()
+    assert not (tmp_path / ".tko" / PENDING_FILE).exists()
     if os.name != "nt":
-        assert stat.S_IMODE(script.stat().st_mode) == 0o755
-    assert script.stat().st_mtime_ns == 1234567890000000000
-    TaskDataMigration(tmp_path).inspect().apply()
-    assert not old.exists()
+        assert stat.S_IMODE((tmp_path / "course/labs/animal/run.sh").stat().st_mode) == 0o755
+    assert (tmp_path / "course/labs/animal/run.sh").stat().st_mtime_ns == 1234567890000000000
 
 
 def test_prior_identity_migration_requires_directory_upgrade(tmp_path: Path) -> None:
@@ -897,10 +892,11 @@ def test_cli_reports_activity_move_in_dry_run(tmp_path: Path) -> None:
     assert not (tmp_path / "course/labs/animal").exists()
 
 
-def test_recovery_handles_partial_activity_file_transfer(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_interrupted_activity_transfer_does_not_create_recovery_journal(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
     old: Path = _workspace_with_activity(tmp_path)
     _write(tmp_path, "course/animal/src/main.py", b"work")
-    before: dict[str, bytes] = _snapshot(tmp_path)
     plan: MigrationPlan = TaskDataMigration(tmp_path).inspect()
     original_write = transaction.atomic_bytes
 
@@ -914,13 +910,13 @@ def test_recovery_handles_partial_activity_file_transfer(tmp_path: Path, monkeyp
         with pytest.raises(OSError, match="interrupted"):
             plan.apply()
     assert old.is_dir()
-    recover_migration(tmp_path)
-    restored: dict[str, bytes] = {name: data for name, data in _snapshot(tmp_path).items() if not name.startswith(".tko/migrations/")}
-    assert restored == before
-    assert not (tmp_path / "course/labs").exists()
+    assert not (tmp_path / ".tko" / FORMAT_FILE).exists()
+    assert not (tmp_path / ".tko" / PENDING_FILE).exists()
 
 
-def test_recovery_refuses_new_files_inside_moved_activity(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_interrupted_move_keeps_later_files_for_git_restore(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
     _workspace_with_activity(tmp_path)
     plan: MigrationPlan = TaskDataMigration(tmp_path).inspect()
     original_write = transaction.atomic_bytes
@@ -935,9 +931,9 @@ def test_recovery_refuses_new_files_inside_moved_activity(tmp_path: Path, monkey
         with pytest.raises(OSError):
             plan.apply()
     later: Path = _write(tmp_path, "course/labs/animal/later.txt", b"new work")
-    with pytest.raises(ValueError, match="File added after migration"):
-        recover_migration(tmp_path)
     assert later.read_bytes() == b"new work"
+    assert not (tmp_path / ".tko" / PENDING_FILE).exists()
+    assert not (tmp_path / ".tko" / FORMAT_FILE).exists()
 
 
 def test_nested_legacy_activity_directories_move_to_their_own_destinations(tmp_path: Path) -> None:

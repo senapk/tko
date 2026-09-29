@@ -13,7 +13,7 @@ Distribuição de tarefas de programação com Git, desenvolvimento na IDE do al
 [![Downloads](https://static.pepy.tech/badge/tko/month)](https://pepy.tech/project/tko)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Repo](https://img.shields.io/badge/GitHub-senapk%2Ftko-181717?logo=github)](https://github.com/senapk/tko)
-[![Stars](https://img.shields.io/github/stars/senapk/tko?style=social)](https://github.com/senapk/tko/stargazers)
+[![Stars](https://img.shields.io/github/stars/senapk/tko?style=social)](https://github.com/senapk/tko)
 
 O TKO é um ecossistema de ensino de programação centrado em prática, versionamento e evidências de aprendizagem. Ele distribui atividades via Git, permite desenvolvimento na IDE local e acompanha progresso de turmas com dados reais de evolução.
 

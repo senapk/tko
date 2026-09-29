@@ -37,7 +37,8 @@ dependencies = [
     "pygments>=2.19.1",
     "pymdown-extensions>=10.15",
     "pyyaml>=6.0.2",
-    "typer>=0.25.0",
+    "typer>=0.25.0,<0.26",
+    "click>=8.3.3,<8.4",
     "watchdog>=6.0.0",
     "wcwidth>=0.2.13",
     "icecream>=2.1.4",
@@ -49,7 +50,6 @@ dependencies = [
 [project.optional-dependencies]
 
 dev = [
-    "click>=8.3.3",
     "pytest>=9.0.2",
     "pytest-cov>=7.1.0",
     "types-chardet>=5.0.4.6",
