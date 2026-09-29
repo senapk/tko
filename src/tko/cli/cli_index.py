@@ -82,9 +82,11 @@ def _materialize(index: Path, paths: list[str], replace: bool) -> int:
                 raise typer.BadParameter(f"Activity destination is not a directory: {destination}")
             if not replace:
                 if matcher.is_url:
-                    raise typer.BadParameter(
-                        f"Activity destination already exists: {destination}. Use --replace to overwrite it."
+                    typer.echo(
+                        f"Activity destination already exists: {destination}. Use --replace to overwrite it.",
+                        err=True,
                     )
+                    raise typer.Exit(code=2)
                 continue
 
         local_readme: str = (destination_path / "README.md").as_posix()
