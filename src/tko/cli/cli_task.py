@@ -75,6 +75,37 @@ def _check_activity(settings: Settings, repo: Repository | None, activity: Path)
     return succeeded
 
 
+def task_build(
+    ctx: typer.Context,
+    targets: list[str] = typer.Argument([]),
+    check: bool = typer.Option(False, "--check", "-c"),
+    brief: bool = typer.Option(False, "--brief", "-b"),
+    moodle: bool = typer.Option(False, "--moodle", "-m"),
+    erase: bool = typer.Option(False, "--erase", "-e"),
+) -> None:
+    from tko.feno.build import build_task
+
+    settings: Settings = ctx.obj
+    if not build_task([Path(target) for target in targets], moodle, check, erase, brief, settings):
+        raise typer.Exit(1)
+
+
+@app.command("check", help="Run each language found under activity src directories")
+def task_check(ctx: typer.Context, targets: list[str] = typer.Argument([])) -> None:
+    settings: Settings = ctx.obj
+    activities: list[Path] = [Path(target).resolve() for target in targets] if targets else [Path.cwd()]
+    repo, _ = load_repo(settings.rs, show_warnings=False)
+    succeeded: bool = True
+    for activity in activities:
+        if not activity.is_dir():
+            typer.echo(f"Activity is not a directory: {activity}", err=True)
+            succeeded = False
+            continue
+        succeeded = _check_activity(settings, repo, activity) and succeeded
+    if not succeeded:
+        raise typer.Exit(1)
+
+
 def _selected_task(selector: TaskSelector, path: Path | None, fzf: bool) -> Task:
     try:
         task: Task | None = selector.select_path(path, use_fzf=fzf)
@@ -136,40 +167,6 @@ def task_open(
         cmd_run.set_task(repo, selected_task)
     cmd_run.set_tui()
     cmd_run.execute()
-
-
-@app.command("list", help="List components and tests in a task")
-def task_list(
-    ctx: typer.Context,
-    target_list: list[Path] | None = typer.Argument(None, help="Existing README, test files or activity directories"),
-    fzf: bool = typer.Option(False, "--fzf", "-f", help="Select a task with fzf"),
-) -> None:
-    from tko.loader.test_discovery import TestDiscovery
-    from tko.run.unit import Unit
-
-    _validate_paths(target_list, fzf)
-    targets: list[Path] = target_list or []
-    if not targets:
-        settings: Settings = ctx.obj
-        repo: Repository = _repository(settings)
-        selector: TaskSelector = TaskSelector(repo, settings)
-        task: Task = _selected_task(selector, None, fzf)
-        targets = [selector.task_folder(task)]
-    for target in targets:
-        try:
-            units: list[Unit] = TestDiscovery.discover(target)
-        except (OSError, ValueError) as error:
-            typer.echo(f"Unable to inspect {target}: {error}", err=True)
-            raise typer.Exit(1) from error
-        activity: Path = target if target.is_dir() else target.parent
-        source_root: Path = activity / "src"
-        components: list[Path] = sorted(path for path in source_root.rglob("*") if path.is_file()) if source_root.is_dir() else []
-        typer.echo(f"{target}: {len(components)} component(s), {len(units)} test(s)")
-        for component in components:
-            typer.echo(f"  component: {component.relative_to(activity)}")
-        for unit in units:
-            label: str = unit.case or str(unit.index)
-            typer.echo(f"  {label} ({unit.source})")
 
 
 @app.command("down", help="Download an activity by key or interactive selection")

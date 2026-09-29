@@ -75,7 +75,7 @@ class TaskParser:
         task = self.task
         if tm.is_url:
             # Direct remote links are migration-only. They retain their old
-            # explicit key until ``tkm index download`` creates a local link.
+            # explicit key until ``tko build download`` creates a local link.
             task.basic.key = tm.legacy_key or ""
         else:
             try:

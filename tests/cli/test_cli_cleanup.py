@@ -51,20 +51,32 @@ def test_command_tree_has_only_canonical_names() -> None:
 
     root = get_command(app)
     assert isinstance(root, Group)
-    assert set(root.commands) == {"run", "open", "update", "uninstall", "task", "repo", "config"}
+    assert set(root.commands) == {
+        "run", "open", "update", "uninstall", "task", "repo", "config",
+        "collect", "build", "tests", "tool",
+    }
     task = root.commands["task"]
     assert isinstance(task, Group)
-    assert set(task.commands) == {"show", "open", "list", "down"}
+    assert set(task.commands) == {"check", "show", "open", "down"}
+    build = root.commands["build"]
+    assert isinstance(build, Group)
+    assert set(build.commands) == {"task", "index", "download"}
+    tests = root.commands["tests"]
+    assert isinstance(tests, Group)
+    assert set(tests.commands) == {"list", "convert"}
     repo = root.commands["repo"]
     assert isinstance(repo, Group)
     assert {"init", "list", "migrate", "profile", "source", "audit"} == set(repo.commands)
+    audit = repo.commands["audit"]
+    assert isinstance(audit, Group)
+    assert set(audit.commands) == {"init", "on", "off", "status"}
 
     tkm = get_command(tejo_app)
     assert isinstance(tkm, Group)
-    assert {"audit", "collect", "index", "tool", "task", "tests"} == set(tkm.commands)
-    tool = tkm.commands["tool"]
+    assert set(tkm.commands) == set(root.commands)
+    tool = root.commands["tool"]
     assert isinstance(tool, Group)
-    assert {"pull", "mdpp", "older", "diff", "rebase", "filter", "html"} == set(tool.commands)
+    assert {"timeline", "unpack", "pull", "mdpp", "older", "diff", "rebase", "filter", "html"} == set(tool.commands)
 
 
 @pytest.mark.parametrize("args", [
@@ -74,7 +86,10 @@ def test_command_tree_has_only_canonical_names() -> None:
     ["run", "--none"], ["run", "--all"], ["run", "-f"], ["init", "--skip-remotes"],
     ["tool", "migrate", "--apply"], ["tool", "diff", "a", "b", "--text"],
     ["tool", "diff", "a", "b", "--path"], ["tool", "rebase", "x", "--relative", "y"],
-    ["config", "set", "--side"], ["task", "list", "--down"],
+    ["config", "set", "--side"], ["task", "list"],
+    ["build", "index", "sync"], ["build", "index", "pull"],
+    ["task", "build"], ["build", "tests"], ["tool", "preview"], ["index", "build"],
+    ["index", "download"], ["index", "update"],
 ])
 def test_removed_interfaces_are_rejected(tmp_path: Path, args: list[str]) -> None:
     assert invoke(tmp_path, args).exit_code == 2

@@ -3,11 +3,13 @@ from __future__ import annotations
 import typer
 
 from tko.config.settings import Settings
+from tko.cli.cli_audit import audit_start as audit_init_command
 from tko.i18n import Msg
 from tko.repository.audit_coordinator import AuditCoordinator
 from tko.util.console import Console
 
 app = typer.Typer(help="Manage repository audit configuration", no_args_is_help=True)
+app.command("init", help="Start standalone audit watcher")(audit_init_command)
 
 
 @app.command("on", help="Enable persistent audit in the repository")

@@ -20,11 +20,6 @@ _FENO_BUILD_NO_TARGET_SPECIFIED = Msg.parse(
     pt="Nenhum target especificado, usando diretório atual",
     en="No target specified, using current directory",
 )
-_FENO_BUILD_TARGET_NOT_DIRECTORY = Msg.parse(
-    pt="fail: {target} não é um diretório",
-    en="fail: {target} is not a directory",
-)
-
 class Actions:
     def __init__(self, source_dir: Path, settings: Settings | None = None) -> None:
         self.hook = source_dir.name
@@ -166,8 +161,6 @@ def build_task(
 
     for target in targets:
         if not os.path.isdir(target):
-            Console.print(f"\n    {_FENO_BUILD_TARGET_NOT_DIRECTORY}".format(target=target))
-            succeeded = False
             continue
         hook = target.name
         actions: Actions = Actions(target, settings if settings is not None else Settings(None))

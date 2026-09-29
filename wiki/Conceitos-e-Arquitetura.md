@@ -11,7 +11,7 @@ Seu objetivo não é apenas armazenar a solução final produzida pelo estudante
 O TKO pode ser utilizado por comandos individuais:
 
 ```bash
-tko task list
+tko task show
 tko task down poo@carro
 tko run
 ```

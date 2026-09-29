@@ -26,8 +26,8 @@ Passos:
 
 1. Criar pasta da tarefa e README com enunciado.
 2. Adicionar casos de teste (`tests.toml` ou pasta).
-3. Se tiver rascunhos a serem gerados para essa tarefa, ou links a serem atualizados, rodar `tkm task build` na pasta da tarefa.
-4. Atualizar README de índice da trilha rodando no root do projeto `tkm index build README.md --from labs`.
+3. Se tiver rascunhos a serem gerados para essa tarefa, ou links a serem atualizados, rodar `tko build task` na pasta da tarefa.
+4. Atualizar README de índice da trilha rodando no root do projeto `tko build index README.md --from labs`.
 5. Commit e push no repositório da disciplina.
 
 Após publicação:
@@ -54,13 +54,13 @@ Objetivo: alternar entre formato compacto e pasta.
 
 ```bash
 # extrair para pasta
-tkm tests convert pasta -o tests.toml
+tko tests convert pasta -o tests.toml
 
 # converter para vpl
-tkm tests convert t.vpl -o tests.toml
+tko tests convert t.vpl -o tests.toml
 
 # gerar t.tio a partir de README + extra
-tkm tests convert README.md extra.tio -o t.tio
+tko tests convert README.md extra.tio -o t.tio
 ```
 
 ## Exemplo 5 - Rodar testes de desenvolvimento do projeto

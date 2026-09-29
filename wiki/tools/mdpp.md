@@ -5,7 +5,7 @@ O `mdpp` é um pré-processador de Markdown usado para atualizar blocos dinâmic
 No TKO, ele está disponível no comando:
 
 ```bash
-tkm tool mdpp [targets...] [--clean] [--quiet]
+tko tool mdpp [targets...] [--clean] [--quiet]
 ```
 
 Se nenhum `target` for passado, o comportamento padrão é processar `README.md` no diretório atual.
@@ -33,13 +33,13 @@ O `mdpp` oferece ações e diretivas estruturadas:
 Atualiza e gera o conteúdo dinâmico entre os marcadores:
 
 ```bash
-tkm tool mdpp README.md
+tko tool mdpp README.md
 ```
 
 Ou em múltiplos arquivos:
 
 ```bash
-tkm tool mdpp README.md docs/aula.md docs/guia.md
+tko tool mdpp README.md docs/aula.md docs/guia.md
 ```
 
 ### Modo CLEAN
@@ -47,7 +47,7 @@ tkm tool mdpp README.md docs/aula.md docs/guia.md
 Limpa os blocos gerados, mantendo apenas os marcadores iniciais e finais:
 
 ```bash
-tkm tool mdpp README.md --clean
+tko tool mdpp README.md --clean
 ```
 
 ---
@@ -286,7 +286,7 @@ Resultado:
 
 ## 7. Pipeline Completo do Arquivo
 
-Ao processar um documento `.md` com `tkm tool mdpp`, a ordem das diretivas executadas é:
+Ao processar um documento `.md` com `tko tool mdpp`, a ordem das diretivas executadas é:
 
 1. `Toc.execute` (`<!-- toc -->`)
 2. `TocTable.execute` (`<!-- toc-table -->` e `<!-- toch -->`)

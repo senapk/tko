@@ -151,7 +151,7 @@ src/<linguagem>/...              # fonte mantida pelo autor
 
 O diretório `src/` pode conter uma solução completa, código de apoio ou
 marcadores usados pelo filtro. O diretório `.cache/starter/` contém o resultado
-gerado por `tkm task build` ou pelo filtro equivalente.
+gerado por `tko build task` ou pelo filtro equivalente.
 
 Recomenda-se registrar cada arquivo de starter com:
 
@@ -172,7 +172,7 @@ teste comum.
 
 ## 5. Artefatos derivados
 
-Quando o pipeline `tkm task build --moodle` for executado, podem existir:
+Quando o pipeline `tko build task --moodle` for executado, podem existir:
 
 - `.cache/README.md`: README com referências a arquivos locais embutidas em Base64;
 - `.cache/README.html`: versão HTML do enunciado;
@@ -188,7 +188,7 @@ Para publicação no Moodle pelo Mula, o pacote mínimo é:
 ```
 
 O Mula recebe um clone local, usa o caminho relativo da tarefa como chave e
-executa `tkm task build --moodle` quando esses artefatos ainda não existem.
+executa `tko build task --moodle` quando esses artefatos ainda não existem.
 Não é necessário gerar nem consumir `.cache/mapi.json` no fluxo atual.
 
 Esses arquivos não substituem as fontes originais. O banco deve indicar

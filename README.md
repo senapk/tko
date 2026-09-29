@@ -58,7 +58,7 @@ Instalações existentes via `pipx` continuam suportadas:
 pipx install tko
 ```
 
-O pacote oferece dois comandos: `tko` para consumo das tarefas e `tkm` para
+O pacote oferece dois comandos: `tko` para consumo das tarefas e `tko` para
 operações administrativas e de produção.
 
 ### Windows
@@ -76,7 +76,7 @@ tko
 ├── repo       init, list, migrate, profile, source, audit
 └── config     set, list, reset [cache|settings|languages]
 
-tkm
+tko
 ├── task       build, check
 ├── tests      convert, list
 ├── index      build, download, update
@@ -92,7 +92,7 @@ tko task show course/labs/fila
 tko task open course/labs/fila
 
 # Dentro da pasta da atividade, o caminho é implícito
-tko task list
+tko task show
 tko run --language py --diff-mode side --failures first
 
 # Escolher outra atividade explicitamente
@@ -103,8 +103,8 @@ tko -C caminho/do/repositorio repo migrate --dry-run
 tko -C caminho/do/repositorio repo migrate
 ```
 
-`task show`, `task open` e `task list` aceitam caminhos existentes. Sem caminho,
-usam a atividade da pasta atual ou abrem um seletor quando não há atividade atual.
+`task show` e `task open` aceitam caminhos existentes. Sem caminho, usam a
+atividade da pasta atual ou abrem um seletor quando não há atividade atual.
 `task down` recebe uma chave, pois a atividade ainda não foi baixada.
 `--fzf/-f` abre o seletor; `--filter/-F` filtra código antes da execução.
 O idioma da interface usa `--ui-language pt|en` antes do comando; a linguagem de

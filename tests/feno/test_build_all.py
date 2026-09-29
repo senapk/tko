@@ -87,6 +87,44 @@ def test_build_runs_mdpp_only_after_local_steps(monkeypatch: pytest.MonkeyPatch,
     assert calls == ["title", "cache", "recreate", "drafts", "local", "mdpp"]
 
 
+def test_build_skips_non_directories_and_processes_directory(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    non_directory: Path = tmp_path / "README.md"
+    non_directory.write_text("# Not a task directory\n", encoding="utf-8")
+    task: Path = tmp_path / "task"
+    task.mkdir()
+    processed: list[Path] = []
+
+    monkeypatch.setattr(build_module.Actions, "in_blacklist", lambda _self: True)
+    monkeypatch.setattr(build_module.Actions, "load_title", lambda self: processed.append(self.source_dir))
+    monkeypatch.setattr(build_module.Actions, "create_cache", lambda _self: None)
+    monkeypatch.setattr(build_module.Actions, "recreate_cache", lambda _self: None)
+    monkeypatch.setattr(build_module.Actions, "copy_drafts", lambda _self: None)
+    monkeypatch.setattr(build_module.Actions, "run_local_sh", lambda _self: None)
+    monkeypatch.setattr(build_module.Actions, "update_markdown", lambda _self: None)
+
+    succeeded: bool = build_module.build_task(
+        targets=[non_directory, task], moodle=False, check=False, erase=False, brief=True
+    )
+
+    assert succeeded is True
+    assert processed == [task]
+
+
+def test_build_succeeds_when_all_targets_are_non_directories(tmp_path: Path) -> None:
+    first_file: Path = tmp_path / "README.md"
+    second_file: Path = tmp_path / "tests.toml"
+    first_file.write_text("# Task\n", encoding="utf-8")
+    second_file.write_text("[[tests]]\n", encoding="utf-8")
+
+    succeeded: bool = build_module.build_task(
+        targets=[first_file, second_file], moodle=False, check=False, erase=False, brief=True
+    )
+
+    assert succeeded is True
+
+
 def test_missing_local_asset_fails_moodle_target_and_removes_stale_html(
     tmp_path: Path,
 ) -> None:

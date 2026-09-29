@@ -11,6 +11,10 @@ from icecream import ic  # type: ignore
 
 from tko.__init__ import __version__
 from tko.cli.cli_config import app as config_app
+from tko.cli.cli_collect import app as collect_app
+from tko.cli.cli_build import app as build_app
+from tko.cli.cli_tests import app as tests_app
+from tko.cli.cli_tools import app as tool_app
 from tko.cli.cli_main import register_main_commands
 from tko.cli.cli_task import app as task_app
 from tko.cli.cli_repo import app as repo_app
@@ -29,12 +33,22 @@ if os.name != "nt":
 
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
-app = typer.Typer(name="tko", help=f"tko {__version__}", no_args_is_help=True, context_settings={"help_option_names": ["-h", "--help"]})
+app = typer.Typer(
+    name="tko",
+    help=f"tko {__version__}",
+    no_args_is_help=True,
+    add_completion=False,
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
 
 
 app.add_typer(task_app, name="task")
 app.add_typer(repo_app, name="repo")
 app.add_typer(config_app, name="config")
+app.add_typer(collect_app, name="collect")
+app.add_typer(build_app, name="build")
+app.add_typer(tests_app, name="tests")
+app.add_typer(tool_app, name="tool")
 
 register_main_commands(app)
 
@@ -43,14 +57,14 @@ register_main_commands(app)
 def main_callback(
     ctx: typer.Context,
     settings: Path | None = typer.Option(None, "-S", "--settings", help="Global Settings config directory"),
-    changedir: Path = typer.Option(Path("."), "-C", "--changedir", help="Working directory for commands and relative paths"),
+    changedir: Path = typer.Option(Path(), "-C", "--changedir", help="Working directory"),
     width: int | None = typer.Option(None, "-w", "--width", help="Terminal width"),
-    ui_language: Literal["pt", "en"] | None = typer.Option(None, "--ui-language", help="Interface language"),
+    ui_language: Literal["pt", "en"] | None = typer.Option(None, "-L", "--ui-language", help="Interface language"),
     version: bool = typer.Option(False, "-v", "--version", help="Show version and exit"),
     mono: bool = typer.Option(False, "-m", "--mono", help="Disable colors"),
     debug: bool = typer.Option(False, "-D", "--debug", help="Enable debug mode"),
-    update: bool = typer.Option(False, "-U", "--update", help="Force update external URL sources"),
-    offline: bool = typer.Option(False, "-O", "--offline", help="Disable any update attempts (Offline mode)"),
+    update: bool = typer.Option(False, "-U", "--update", help="Force update in URL sources"),
+    offline: bool = typer.Option(False, "-O", "--offline", help="Offline - Disable update attempts"),
 ) -> None:
     from tko.config.settings import Settings
     from tko.util.raw_terminal import RawTerminal

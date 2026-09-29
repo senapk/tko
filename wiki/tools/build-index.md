@@ -2,11 +2,11 @@
 
 Este guia explica o comando:
 
-    tkm index build INDEX_MD --from SOURCE [--from SOURCE...]
+    tko build index INDEX_MD --from SOURCE [--from SOURCE...]
 
 Exemplo:
 
-    tkm index build README.md --from labs --from wiki
+    tko build index README.md --from labs --from wiki
 
 Onde:
 
@@ -65,11 +65,11 @@ O comando possui duas opcoes para sincronizar titulo entre indice e README da ta
 
 Carregar titulo do README para o indice:
 
-    tkm index build README.md --from labs --from wiki --load
+    tko build index README.md --from labs --from wiki --load
 
 Salvar titulo do indice para o README da tarefa:
 
-    tkm index build README.md --from labs --from wiki --save
+    tko build index README.md --from labs --from wiki --save
 
 Resumo:
 
@@ -97,7 +97,7 @@ Quando voce nao quiser contar esse total manualmente, marque com `[x]` as tarefa
 Ao executar:
 
 ```bash
-tkm index build README.md --from labs --from wiki
+tko build index README.md --from labs --from wiki
 ```
 
 o indexer soma o `gain` das tarefas marcadas com `[x]` e grava esse valor em `xpgoal`:
@@ -128,7 +128,7 @@ Regras importantes:
 3. Removeu pasta antiga labs/tarefa_antiga/.
 3. Executou:
 
-    tkm index build README.md --from labs --from wiki
+    tko build index README.md --from labs --from wiki
 
 4. Resultado esperado:
 - Entradas de labs/nova_tarefa e wiki/nova_referencia adicionadas.

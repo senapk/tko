@@ -57,7 +57,7 @@ def audit_start(
         logger.info(f"{Msg.parse(pt='Monitor de auditoria parado.', en='Audit watcher stopped.')}")
 
 
-@app.command("preview", help="Preview audit snapshots with fzf")
+@app.command("timeline", help="Browse saved file versions and diffs with fzf")
 def audit_preview(
     ctx: typer.Context,
     target_list: list[Path] | None = typer.Argument(

@@ -4,7 +4,7 @@ O modo de auditoria registra snapshots periodicos dos arquivos que o aluno edita
 
 Hoje o comportamento e:
 
-- A auditoria funciona enquanto houver um watcher ativo, seja pela auditoria persistente ligada com `tko repo audit on`, ou pelo monitor em foreground iniciado com `tkm audit init`.
+- A auditoria funciona enquanto houver um watcher ativo, seja pela auditoria persistente ligada com `tko repo audit on`, ou pelo monitor em foreground iniciado com `tko repo audit init`.
 - Os snapshots sao gerados periodicamente pelo watcher do repositorio.
 - Apenas arquivos dentro de `src/lang/...` da tarefa entram na auditoria.
 - O historico de cada arquivo auditado e salvo em um arquivo `.jsonl`.
@@ -17,7 +17,7 @@ Hoje o comportamento e:
 No modo explícito de auditoria, use `--interval` no comando:
 
 ```bash
-tkm audit init --interval 60
+tko repo audit init --interval 60
 ```
 
 Se o parâmetro não for informado, o TKO usa o intervalo configurado no repositorio ou o valor padrão da ferramenta.
@@ -41,14 +41,14 @@ tko repo audit on --interval 20
 tko open
 ```
 
-Se quiser iniciar auditoria explícita em foreground (com logs de snapshots no terminal), use `tkm audit init`.
+Se quiser iniciar auditoria explícita em foreground (com logs de snapshots no terminal), use `tko repo audit init`.
 
-## Modo manual em foreground (`tkm audit init`)
+## Modo manual em foreground (`tko repo audit init`)
 
 Quando quiser transparência total no terminal, use:
 
 ```bash
-tkm audit init
+tko repo audit init
 ```
 
 Esse comando inicia o watcher com auditoria ligada e fica em foreground mostrando os snapshots salvos, por exemplo:
@@ -62,7 +62,7 @@ Para encerrar, use `Ctrl+C`.
 Tambem e possivel ajustar o intervalo apenas para a sessao manual:
 
 ```bash
-tkm audit init --interval 60
+tko repo audit init --interval 60
 ```
 
 ## Protecao contra multiplos watchers (lock)
@@ -73,7 +73,7 @@ Agora o sistema usa lock por repositorio em:
 .tko/watcher.lock
 ```
 
-Com isso, se ja houver um `tko open`/`tkm audit init` ativo no mesmo repositorio, uma segunda tentativa de iniciar watcher falha com aviso, evitando snapshots duplicados e redundancia de copia.
+Com isso, se ja houver um `tko open`/`tko repo audit init` ativo no mesmo repositorio, uma segunda tentativa de iniciar watcher falha com aviso, evitando snapshots duplicados e redundancia de copia.
 
 Se o aluno fechar o `tko open`, o watcher para e nenhum novo snapshot sera criado.
 
@@ -112,14 +112,14 @@ main.cpp.jsonl
 
 Esses arquivos armazenam a sequencia de versoes capturadas pelo watcher e permitem comparar a evolucao do codigo ao longo do tempo.
 
-## Como o professor analisa os arquivos com `tkm audit preview`
+## Como o professor analisa os arquivos com `tko tool timeline`
 
-O comando `tkm audit preview` abre uma timeline interativa para navegar pelos snapshots e comparar um arquivo com a versao anterior.
+O comando `tko tool timeline` abre uma timeline interativa para navegar pelos snapshots e comparar um arquivo com a versao anterior.
 
 Exemplo entrando na pasta de auditoria de uma tarefa:
 
 ```bash
-tkm audit preview .tko/audit/fup@soma
+tko tool timeline .tko/audit/fup@soma
 ```
 
 Como cada arquivo `.jsonl` guarda as versoes em ordem temporal, o preview mostra a diferenca entre um snapshot e o imediatamente anterior.
@@ -138,7 +138,7 @@ O comando tambem aceita arquivos `.jsonl` como parametros.
 Exemplo para analisar apenas os snapshots do `solver.py`:
 
 ```bash
-tkm audit preview .tko/audit/fup@soma/solver.py.jsonl
+tko tool timeline .tko/audit/fup@soma/solver.py.jsonl
 ```
 
 Se nenhum parametro for informado, o comando procura a auditoria do repositorio atual.
@@ -148,14 +148,14 @@ Se nenhum parametro for informado, o comando procura a auditoria do repositorio 
 Para o aluno:
 
 1. Entrar no repositorio da disciplina.
-2. Garantir que a auditoria esteja ativa, com `tko repo audit on` ou `tkm audit init`.
+2. Garantir que a auditoria esteja ativa, com `tko repo audit on` ou `tko repo audit init`.
 3. Executar `tko open`, se a auditoria persistente estiver habilitada.
 4. Resolver a atividade com o `tko open` ainda aberto.
 
 Para o professor:
 
 1. Abrir a pasta `.tko/audit/<source@task>` do aluno.
-2. Rodar `tkm audit preview` nessa pasta.
+2. Rodar `tko tool timeline` nessa pasta.
 3. Navegar pelos snapshots para observar a evolucao da solucao.
 4. Comparar o ritmo das alteracoes com o historico esperado da resolucao.
 
@@ -165,7 +165,7 @@ Use o modo de auditoria quando quiser evidencias temporais do processo de constr
 
 Os pontos principais sao:
 
-- iniciar auditoria explicitamente com `tkm audit init` (ou `tkm audit init --interval ...`);
+- iniciar auditoria explicitamente com `tko repo audit init` (ou `tko repo audit init --interval ...`);
 - habilitar auditoria persistente com `tko repo audit on`;
 - manter o processo de auditoria ativo durante a resolucao;
-- analisar os snapshots gerados com `tkm audit preview`.
+- analisar os snapshots gerados com `tko tool timeline`.

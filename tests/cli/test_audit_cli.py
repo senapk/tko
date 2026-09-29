@@ -286,7 +286,7 @@ def test_audit_preview_invokes_fzf_with_numbered_files(monkeypatch: MonkeyPatch,
     monkeypatch.setattr(audit_preview.subprocess, "run", fake_run)
 
     files = [file.as_posix() for file in source_dir.iterdir() if file.is_file()]
-    result = runner.invoke(app, ["preview"] + files)
+    result = runner.invoke(app, ["timeline"] + files)
 
     assert result.exit_code == 0
     assert captured["args"][0] == "fzf"

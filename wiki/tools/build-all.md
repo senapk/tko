@@ -3,12 +3,12 @@
 Este guia documenta o que o comando abaixo faz na pratica:
 
 ```bash
-tkm task build
+tko build task
 ```
 
 ## Visao geral
 
-O comando tkm task build roda um pipeline de preparacao de artefatos por pasta alvo.
+O comando tko build task roda um pipeline de preparacao de artefatos por pasta alvo.
 
 No fluxo padrao, ele:
 
@@ -28,13 +28,13 @@ No fluxo moodle (opcional), ele tambem:
 Uso basico:
 
 ```bash
-tkm task build
+tko build task
 ```
 
 Com alvos especificos:
 
 ```bash
-tkm task build labs/tres labs/media
+tko build task labs/tres labs/media
 ```
 
 Opcoes principais:
@@ -83,7 +83,7 @@ artefato necessário não existe, ele executa este build automaticamente sem
 precisar de uma URL GitHub:
 
 ```bash
-tkm task build labs/carro --moodle
+tko build task labs/carro --moodle
 ```
 
 O fluxo atual não depende de `.cache/mapi.json`. O caminho relativo da pasta,
@@ -98,7 +98,7 @@ O build chama internamente o preprocessador markdown para atualizar o README.
 Relaciona-se ao comando manual:
 
 ```bash
-tkm tool mdpp README.md
+tko tool mdpp README.md
 ```
 
 ### filter e drafts
@@ -108,7 +108,7 @@ O build usa DeepFilter sobre src e envia resultado para .cache/starter.
 Relaciona-se ao comando manual:
 
 ```bash
-tkm tool filter src -r -o .cache/starter
+tko tool filter src -r -o .cache/starter
 ```
 
 Observacao: no build, o filtro e chamado pelo pipeline interno, com indentacao configurada, focando geracao de drafts.
@@ -123,22 +123,22 @@ Na raiz de uma tarefa:
 
 ```bash
 # pipeline padrao: drafts + local.sh + mdpp
-tkm task build .
+tko build task .
 
 # pipeline completo para moodle
-tkm task build . --moodle
+tko build task . --moodle
 
 # so reconstruir se houver mudancas
-tkm task build . -c --moodle
+tko build task . -c --moodle
 ```
 
 ## Quando usar cada modo
 
-- task build sem --moodle:
+- `tko build task` sem `--moodle`:
   - ciclo rapido de preparacao local.
   - atualizacao de markdown e drafts.
 
-- task build com --moodle:
+- `tko build task` com `--moodle`:
   - geracao de artefatos para publicacao/empacotamento (README autocontido, HTML, tests.vpl e starters).
 
 ## Observacoes importantes

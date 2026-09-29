@@ -78,9 +78,9 @@ Conversões e exemplos:
 Exemplos:
 
 ```bash
-tkm tests convert t.vpl -o tests.toml
-tkm tests convert README.md extra.tio -o t.tio
-tkm tests convert pasta -o tests.toml
+tko tests convert t.vpl -o tests.toml
+tko tests convert README.md extra.tio -o t.tio
+tko tests convert pasta -o tests.toml
 ```
 
 Para padrões de nome personalizados, use `-p`.

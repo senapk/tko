@@ -92,9 +92,9 @@ Fluxo comum:
 Exemplos:
 
 ```bash
-tkm tool pull aluno1 aluno2 aluno3
-tkm collect tasks aluno1 aluno2 aluno3 --csv tasks.csv
-tkm collect skills aluno1 aluno2 aluno3 --csv skills.csv --source course --language py
+tko tool pull aluno1 aluno2 aluno3
+tko collect tasks aluno1 aluno2 aluno3 --csv tasks.csv
+tko collect skills aluno1 aluno2 aluno3 --csv skills.csv --source course --language py
 ```
 
 Os argumentos são caminhos para os repositórios locais dos alunos. Eles podem ser informados um a um ou expandidos pelo shell, conforme a organização da pasta.

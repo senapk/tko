@@ -5,6 +5,7 @@ from tko.enums.diff_mode import DiffMode
 from tko.config.settings import Settings
 from tko.i18n import Msg
 from tko.util.console import Console
+from tko.cli.cli_audit import audit_preview, audit_unpack
 
 
 _CLI_TOOL_MDPP_UPDATING_README = Msg.parse(
@@ -38,6 +39,9 @@ _CLI_TOOL_HTML_OUTPUT_HTML_REQUIRED = Msg.parse(
 
 
 app = typer.Typer(help="Utility tools for one-off operations")
+
+app.command("timeline", help="Browse saved file versions and diffs with fzf")(audit_preview)
+app.command("unpack", help="Unpack audit data from a .json or .jsonl file into individual files")(audit_unpack)
 
 
 @app.command("pull", help="Perform git pull in many repositories using threads")

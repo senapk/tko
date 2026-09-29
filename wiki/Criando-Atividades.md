@@ -66,7 +66,7 @@ expr: "value"
 ```
 
 Use `[x]` nas tarefas que contam para a meta principal da quest. Ao rodar
-`tkm index build`, o TKO pode usar essas marcacoes para recalcular o `xpgoal`.
+`tko build index`, o TKO pode usar essas marcacoes para recalcular o `xpgoal`.
 Tarefas extras ou desafios podem ficar com `[ ]`.
 
 ## Criando quests
@@ -146,7 +146,7 @@ Para verificar os casos sem executar uma solução (inclusive quando os testes
 estão no README ou em outro formato suportado):
 
 ```bash
-tko task list labs/minha_tarefa
+tko tests list labs/minha_tarefa
 ```
 
 ## Escrevendo testes simples
@@ -176,7 +176,7 @@ consulte [Criando testes e conversoes](Criando-Tarefas-e-Testes.md).
 Depois de criar, renomear ou remover tarefas locais, rode:
 
 ```bash
-tkm index build README.md --from labs --from wiki
+tko build index README.md --from labs --from wiki
 ```
 
 Esse comando:
@@ -200,8 +200,8 @@ ou links para outros arquivos Markdown.
 - [ ] `gain=2 cost=2 size=2 eval=diff` [Fila](https://github.com/qxcodeed/arcade/blob/main/labs/fila/README.md)
 ```
 
-A identidade da tarefa é inferida do diretório do `README.md`. `tkm index
-download` é a transição explícita desse formato legado: ele baixa a atividade
+A identidade da tarefa é inferida do diretório do `README.md`.
+`tko build download` é a transição explícita desse formato legado: ele baixa a atividade
 na pasta indicada pela URL e reescreve a linha para que o jogo use o caminho
 local, preservando a origem no comentário canônico:
 
@@ -214,19 +214,19 @@ criar rascunhos para a tarefa usam exclusivamente o `README.md` local. O índice
 do professor pode ser preparado e atualizado assim:
 
 ```bash
-tkm index download README.md
-tkm index update README.md
+tko build download README.md
+tko build download --replace README.md
 ```
 
-O primeiro comando baixa as atividades com URL como link principal. O segundo
-localiza apenas comentários `source`, substitui as cópias locais pelas versões
-atuais e descarta alterações locais nessas pastas.
+O primeiro comando baixa as atividades com URL como link principal e restaura
+cópias ausentes. O segundo também usa comentários `source` para substituir
+cópias locais pelas versões atuais, descartando alterações nessas pastas.
 
 Para preparar um índice externo reutilizável, com tarefas no formato local e
 origem remota em comentários `source`:
 
 ```bash
-tkm tool rebase @fup -o README.fup.md
+tko tool rebase @fup -o README.fup.md
 ```
 
 Esse fluxo evita links relativos quebrados ao transportar uma lista de tarefas
@@ -259,7 +259,7 @@ tko open
 - As linhas usam `gain`, `cost`, `size` e `eval`.
 - Os enunciados abrem corretamente no GitHub.
 - Os testes executam localmente nas tarefas com `eval=diff`.
-- `tkm index build README.md --from labs --from wiki` foi executado e o diff foi revisado.
+- `tko build index README.md --from labs --from wiki` foi executado e o diff foi revisado.
 - O repositorio foi commitado e publicado.
 
 ## Referencias

@@ -19,7 +19,7 @@ where = ["src"]
 
 [project]
 name = "tko"
-version = "12.2.0"
+version = "12.3.0"
 description = "Add your description here"
 authors = [
     { name = "David", email = "sena.ufc@gmail.com" }
@@ -57,4 +57,3 @@ dev = [
 
 [project.scripts]
 tko = "tko.__main__:main"
-tkm = "tko.tkm:main"
