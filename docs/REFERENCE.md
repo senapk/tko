@@ -28,12 +28,14 @@ tko repo init --skip-sources
 tko repo init --profile URL_DO_PERFIL
 tko repo source add course URL_DO_INDICE
 tko open
-tko run [ARQUIVOS_OU_DIRETORIOS...] --language py --diff-mode side --failures first
+tko run [ARQUIVOS_OU_DIRETORIOS...] --language py --side
 ```
 
 `open` abre a interface do repositório; `run` executa testes no terminal e também
 funciona com arquivos independentes, sem um repositório TKO.
-`--failures first|all|none` controla as falhas exibidas; o padrão é `first`.
+`--all` mostra todas as falhas; `--none` oculta as falhas. Sem uma dessas opções,
+`run` mostra a primeira. `--side` e `--down` escolhem o layout; sem ambas, usa a
+preferência configurada.
 `run --filter/-F` filtra os solvers temporariamente. `--index/-i` escolhe um teste.
 
 ## Atividades: task
@@ -43,7 +45,7 @@ tko repo list --all
 tko repo list --downloaded
 tko task show [PATH] --width 100 --height 12
 tko task show [PATH] --graph-only
-tko task open [PATHS...] --diff-mode side
+tko task open [PATHS...]
 tko task down [CHAVE]
 tko build task [DIRETORIOS...]
 tko task check [DIRETORIOS...]
@@ -70,7 +72,8 @@ Ao atualizar uma tarefa já materializada, substitui os Markdown, testes (`.toml
 preservadas.
 
 `task open --filter/-F` filtra solvers temporariamente. `run` e `task open`
-herdam o modo de diff da configuração, salvo quando `--diff-mode` é informado.
+herdam o modo de diff da configuração; `run` pode sobrescrevê-lo com `--side` ou
+`--down`.
 
 ## Índices
 
@@ -112,7 +115,7 @@ ser alteradas localmente. `repo profile unlink` mantém o perfil atual localment
 
 ```bash
 tko config list
-tko config set --diff-mode side --editor code --timeout 5
+tko config set --side --editor code --timeout 5
 tko config reset settings
 tko config reset cache
 tko config reset languages
@@ -160,8 +163,8 @@ tko tool mdpp README.md
 tko tests convert README.md extra.tio -o tests.toml
 tko tests convert pasta -o tests.toml --read-pattern "in.@ out.@"
 tko tests convert tests.toml -o pasta/ --write-pattern "@.in @.sol"
-tko tool diff "texto A" "texto B" --diff-mode side
-tko tool diff esperado.txt recebido.txt --input-type file --diff-mode down
+tko tool diff "texto A" "texto B" --side
+tko tool diff esperado.txt recebido.txt --input-type file --down
 tko tool rebase README.md -o docs/README.md
 tko tool filter solver.cpp
 tko tool html README.md pagina.html

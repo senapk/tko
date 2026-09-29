@@ -73,12 +73,17 @@ class DiffBuilderDown:
             opening = "├"
             ending = "┤" if self.tui else "╯"
         self.output.append(RT(DiffBuilder.vexpected, color).center_in(self.width, Symbols.hbar, opening, ending))
+        expected: list[RT] = []
         for line, _ in self.expected_received:
             if line is not None:
-                if self.tui:
-                    self.output.append(line.ljust(self.width - 1, " ") + Symbols.vbar)
-                else:
-                    self.output.append(line)
+                expected.append(line)
+        while len(expected) > 1 and len(expected[-1]) == 2:
+            expected.pop()
+        for line in expected:
+            if self.tui:
+                self.output.append(line.ljust(self.width - 1, " ") + Symbols.vbar)
+            else:
+                self.output.append(line)
 
     def insert_received(self):
         # headers

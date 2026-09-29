@@ -9,7 +9,6 @@ from tko.cli.common import load_repo
 from tko.cli.task_selector import TaskSelector
 from tko.config.settings import Settings
 from tko.enums.diff_count import DiffCount
-from tko.enums.diff_mode import DiffMode
 from tko.game.task import Task
 from tko.repository.repository import Repository
 
@@ -142,9 +141,7 @@ def task_show(
 def task_open(
     ctx: typer.Context,
     target_list: list[Path] | None = typer.Argument(None, help="Existing solver files, test files or directories"),
-    index: int | None = typer.Option(None, "--index", "-i", help="Run a specific test index"),
     filter: bool = typer.Option(False, "--filter", "-F", help="Filter solver files in a temporary directory"),
-    diff_mode: DiffMode | None = typer.Option(None, "--diff-mode", help="Diff layout"),
     fzf: bool = typer.Option(False, "--fzf", "-f", help="Select a task with fzf"),
 ) -> None:
     from tko.util.param import Param
@@ -153,8 +150,8 @@ def task_open(
     _validate_paths(target_list, fzf)
     settings: Settings = ctx.obj
     repo: Repository = _repository(settings, target_list[0] if target_list else None)
-    param: Param.Basic = Param.Basic().set_index(index)
-    param.set_diff_mode(diff_mode if diff_mode is not None else settings.app.diff_mode)
+    param: Param.Basic = Param.Basic()
+    param.set_diff_mode(settings.app.diff_mode)
     param.set_filter(filter)
     selected_task: Task | None = None
     targets: list[Path] = target_list or []

@@ -136,15 +136,19 @@ def completion_uninstall(
 @app.command("set", help="Set default configuration values")
 def config_set(
     ctx: typer.Context,
-    diff_mode: DiffMode | None = typer.Option(None, "--diff-mode", help="Default diff layout"),
+    side: bool = typer.Option(False, "--side", help="Use side-by-side diffs by default"),
+    down: bool = typer.Option(False, "--down", help="Use vertical diffs by default"),
     editor : None | str = typer.Option(None, "--editor", help="Set editor command"),
     images: Literal["0", "1"] | None = typer.Option(None, "--images", help="Enable images [0|1]"),
     timeout: None | int = typer.Option(None, "--timeout", min=1, help="Set timeout in sec"),
 ) -> None:
     from tko.cmds.cmd_config import CmdConfig, ConfigParams
     settings: Settings = ctx.obj
+    if side and down:
+        raise typer.BadParameter("--side and --down cannot be used together")
+
     param: ConfigParams = ConfigParams()
-    param.diff_mode = diff_mode
+    param.diff_mode = DiffMode.SIDE if side else DiffMode.DOWN if down else None
     param.images = images
     param.editor = editor
     param.timeout = timeout

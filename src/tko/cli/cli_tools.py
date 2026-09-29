@@ -83,9 +83,14 @@ def tool_diff(
     target_a: str = typer.Argument(..., help="First target to be compared"),
     target_b: str = typer.Argument(..., help="Second target to be compared"),
     input_type: Literal["text", "file"] = typer.Option("text", "--input-type", help="Interpret targets as text or file paths"),
-    diff_mode: DiffMode = typer.Option(DiffMode.DOWN, "--diff-mode", help="Diff layout"),
+    side: bool = typer.Option(False, "--side", help="Display differences side by side"),
+    down: bool = typer.Option(False, "--down", help="Display differences one above the other"),
 ) -> None:
     from tko.cmds.cmd_diff import cmd_diff
+    if side and down:
+        raise typer.BadParameter("--side and --down cannot be used together")
+
+    diff_mode: DiffMode = DiffMode.SIDE if side else DiffMode.DOWN
     try:
         cmd_diff(target_a, target_b, diff_mode, input_type == "file")
     except OSError as exc:

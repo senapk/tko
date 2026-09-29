@@ -16,5 +16,5 @@ class Test:
     def test_run_mixed_7(self, capsys: pytest.CaptureFixture[str]) -> None:
         Compare.text(capsys,  "out7", "-w 80 -m run solver.py cases_empty.tio")
     def test_run_mixed_8(self, capsys: pytest.CaptureFixture[str]) -> None:
-        Compare.text(capsys,  "out8", "-w 80 -m run solver.py cases.tio --diff-mode side")
+        Compare.text(capsys,  "out8", "-w 80 -m run solver.py cases.tio --side")
         

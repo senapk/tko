@@ -82,11 +82,11 @@ def test_command_tree_has_only_canonical_names() -> None:
 @pytest.mark.parametrize("args", [
     ["util"], ["reset"], ["cache", "clear"], ["profile", "status"], ["source", "list"], ["self-update"], ["class"], ["class", "pull"], ["collect", "task"], ["class", "tasks"],
     ["class", "skills"], ["source", "rm"], ["source", "set-authoring"], ["tool", "tests"],
-    ["--lang", "pt"], ["run", "--lang", "py"], ["run", "--side"], ["run", "--down"],
-    ["run", "--none"], ["run", "--all"], ["run", "-f"], ["init", "--skip-remotes"],
+    ["--lang", "pt"], ["run", "--lang", "py"], ["run", "--diff", "side"],
+    ["run", "--failures", "all"], ["run", "-f"], ["init", "--skip-remotes"],
     ["tool", "migrate", "--apply"], ["tool", "diff", "a", "b", "--text"],
     ["tool", "diff", "a", "b", "--path"], ["tool", "rebase", "x", "--relative", "y"],
-    ["config", "set", "--side"], ["task", "list"],
+    ["task", "list"],
     ["build", "index", "sync"], ["build", "index", "pull"],
     ["task", "build"], ["build", "tests"], ["tool", "preview"], ["index", "build"],
     ["index", "download"], ["index", "update"],
@@ -96,8 +96,9 @@ def test_removed_interfaces_are_rejected(tmp_path: Path, args: list[str]) -> Non
 
 
 @pytest.mark.parametrize("args", [
-    ["run", "--diff-mode", "invalid"], ["run", "--failures", "invalid"],
-    ["task", "open", "--diff-mode", "invalid"], ["config", "set", "--diff-mode", "invalid"],
+    ["run", "--side", "--down"], ["run", "--all", "--none"],
+    ["config", "set", "--side", "--down"],
+    ["tool", "diff", "a", "b", "--side", "--down"],
     ["tool", "diff", "a", "b", "--input-type", "invalid"], ["config", "source", "set", "course"],
 ])
 def test_invalid_options_are_rejected(tmp_path: Path, args: list[str]) -> None:
@@ -123,7 +124,7 @@ def test_changedir_controls_migration_and_restores_cwd(tmp_path: Path, monkeypat
 def test_changedir_preserves_settings_base_and_restores_on_error(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     activity: Path = workspace(tmp_path / "repo")
     monkeypatch.chdir(tmp_path)
-    result: Result = CliRunner().invoke(app, ["-S", "settings", "-C", "repo", "config", "set", "--diff-mode", "down"])
+    result: Result = CliRunner().invoke(app, ["-S", "settings", "-C", "repo", "config", "set", "--down"])
     assert result.exit_code == 0, result.output
     settings: Settings = Settings(tmp_path / "settings")
     settings.load_settings()
@@ -211,7 +212,7 @@ def test_graph_only_does_not_print_task_details(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize("explicit", [False, True])
-def test_task_open_uses_paths_and_diff_mode(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, explicit: bool) -> None:
+def test_task_open_uses_paths_and_configured_diff_mode(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, explicit: bool) -> None:
     activity: Path = workspace(tmp_path / "repo")
     observed: list[tuple[list[Path], DiffMode, bool]] = []
 
@@ -226,13 +227,20 @@ def test_task_open_uses_paths_and_diff_mode(tmp_path: Path, monkeypatch: pytest.
             pass
 
     monkeypatch.setattr("tko.cmds.cmd_run.Run", FakeRun)
-    args: list[str] = ["-C", str(activity), "task", "open", "--filter", "--diff-mode", "down"]
+    args: list[str] = ["-C", str(activity), "task", "open", "--filter"]
     if explicit:
         args.extend(["README.md", "nested/solver.py"])
     result: Result = invoke(tmp_path, args)
     assert result.exit_code == 0, result.exception
     expected: list[Path] = [Path("README.md"), Path("nested/solver.py")] if explicit else [activity]
-    assert observed == [(expected, DiffMode.DOWN, True)]
+    assert observed == [(expected, DiffMode.SIDE, True)]
+
+
+@pytest.mark.parametrize("option", [["--index", "1"], ["-i", "1"], ["--diff", "down"], ["-d", "down"]])
+def test_task_open_rejects_run_only_options(tmp_path: Path, option: list[str]) -> None:
+    result: Result = invoke(tmp_path, ["task", "open", *option])
+
+    assert result.exit_code == 2
 
 
 def test_source_combined_update_is_atomic(tmp_path: Path) -> None:
@@ -257,8 +265,22 @@ def test_source_combined_update_is_atomic(tmp_path: Path) -> None:
     assert updated is not None and updated.path_or_url == "new/README.md"
 
 
-@pytest.mark.parametrize("failures", ["first", "all", "none"])
-def test_run_propagates_explicit_options(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, failures: str) -> None:
+@pytest.mark.parametrize(
+    ("failures_option", "expected_count"),
+    [([], "first"), (["--all"], "all"), (["--none"], "none")],
+)
+@pytest.mark.parametrize(
+    ("diff_option", "expected_mode"),
+    [([], DiffMode.SIDE), (["--side"], DiffMode.SIDE), (["--down"], DiffMode.DOWN)],
+)
+def test_run_propagates_explicit_options(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    failures_option: list[str],
+    expected_count: str,
+    diff_option: list[str],
+    expected_mode: DiffMode,
+) -> None:
     from tko.enums.diff_count import DiffCount
 
     observed: list[tuple[DiffMode, DiffCount, bool, str | None]] = []
@@ -270,14 +292,17 @@ def test_run_propagates_explicit_options(tmp_path: Path, monkeypatch: pytest.Mon
             pass
 
     monkeypatch.setattr("tko.cmds.cmd_run.Run", FakeRun)
-    result: Result = invoke(tmp_path, ["-C", str(tmp_path), "run", "--language", "py", "--diff-mode", "down", "--failures", failures, "-F"])
+    result: Result = invoke(
+        tmp_path,
+        ["-C", str(tmp_path), "run", "--language", "py", *diff_option, *failures_option, "-F"],
+    )
     assert result.exit_code == 0, result.exception
     expected: dict[str, DiffCount] = {"first": DiffCount.FIRST, "all": DiffCount.ALL, "none": DiffCount.NONE}
-    assert observed == [(DiffMode.DOWN, expected[failures], True, "py")]
+    assert observed == [(expected_mode, expected[expected_count], True, "py")]
 
 
 def test_config_reset_restores_defaults(tmp_path: Path) -> None:
-    changed: Result = invoke(tmp_path, ["config", "set", "--diff-mode", "down", "--editor", "custom-editor"])
+    changed: Result = invoke(tmp_path, ["config", "set", "--down", "--editor", "custom-editor"])
     assert changed.exit_code == 0
     reset: Result = invoke(tmp_path, ["config", "reset", "settings"])
     assert reset.exit_code == 0, reset.output

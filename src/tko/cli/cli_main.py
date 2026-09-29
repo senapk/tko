@@ -1,5 +1,5 @@
 import typer
-from typing import Optional, Literal
+from typing import Optional
 from tko.enums.diff_mode import DiffMode
 from pathlib import Path
 
@@ -18,8 +18,10 @@ def register_main_commands(app: typer.Typer) -> None:
         filter: bool = typer.Option(False, "--filter", "-F", help="Filter solver files in temporary directory before running"),
         eval: bool = typer.Option(False, "--eval", "-e", help="Show percentage of passed tests"),
         compact: bool = typer.Option(False, "--compact", "-c", help="Hide test case descriptions in failures"),
-        failures: Literal["first", "all", "none"] = typer.Option("first", "--failures", help="Failures to display"),
-        diff_mode: DiffMode | None = typer.Option(None, "--diff-mode", help="Diff layout"),
+        all_failures: bool = typer.Option(False, "--all", help="Display all failures"),
+        no_failures: bool = typer.Option(False, "--none", help="Hide failures"),
+        side: bool = typer.Option(False, "--side", help="Display differences side by side"),
+        down: bool = typer.Option(False, "--down", help="Display differences one above the other"),
     ) -> None:
         from tko.cli.common import load_repo
         from tko.util.param import Param
@@ -30,15 +32,23 @@ def register_main_commands(app: typer.Typer) -> None:
         settings: Settings = ctx.obj
 
         param = Param.Basic().set_index(index)
-        counts: dict[str, DiffCount] = {"first": DiffCount.FIRST, "all": DiffCount.ALL, "none": DiffCount.NONE}
-        param.set_diff_count(counts[failures])
+        if all_failures and no_failures:
+            raise typer.BadParameter("--all and --none cannot be used together")
+        if side and down:
+            raise typer.BadParameter("--side and --down cannot be used together")
+
+        diff_count: DiffCount = (
+            DiffCount.ALL if all_failures else DiffCount.NONE if no_failures else DiffCount.FIRST
+        )
+        param.set_diff_count(diff_count)
 
         if filter:
             param.set_filter(True)
         if compact:
             param.set_compact(True)
 
-        param.set_diff_mode(diff_mode if diff_mode is not None else settings.app.diff_mode)
+        diff_mode: DiffMode = DiffMode.SIDE if side else DiffMode.DOWN if down else settings.app.diff_mode
+        param.set_diff_mode(diff_mode)
 
         repo, _ = load_repo(settings.rs, show_warnings=False)
         targets = [Path(target) for target in target_list] if target_list else []

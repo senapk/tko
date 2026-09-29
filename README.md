@@ -93,7 +93,7 @@ tko task open course/labs/fila
 
 # Dentro da pasta da atividade, o caminho é implícito
 tko task show
-tko run --language py --diff-mode side --failures first
+tko run --language py --side
 
 # Escolher outra atividade explicitamente
 tko task open --fzf

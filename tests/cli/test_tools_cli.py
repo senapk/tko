@@ -38,10 +38,11 @@ def test_diff_compares_text_and_files(tmp_path: Path, mode: str) -> None:
     second: Path = tmp_path / "second.txt"
     first.write_text("alpha\n")
     second.write_text("beta\n")
+    diff_option: str = "--side" if mode == "side" else "--down"
     with Console.capture() as file_output:
-        files: Result = CliRunner().invoke(app, ["diff", str(first), str(second), "--input-type", "file", "--diff-mode", mode])
+        files: Result = CliRunner().invoke(app, ["diff", str(first), str(second), "--input-type", "file", diff_option])
     with Console.capture() as text_output:
-        texts: Result = CliRunner().invoke(app, ["diff", "alpha\\n", "beta\\n", "--diff-mode", mode])
+        texts: Result = CliRunner().invoke(app, ["diff", "alpha\\n", "beta\\n", diff_option])
     assert files.exit_code == texts.exit_code == 0
     assert file_output.getvalue() == text_output.getvalue()
     assert "alpha" in file_output.getvalue()

@@ -9,8 +9,8 @@ class Test:
         os.chdir(Path(__file__).parent)
                 
     def test_run_mixed_1(self, capsys: pytest.CaptureFixture[str]) -> None:
-        Compare.text(capsys, "out1", "-w 80 -m run cases.tio solver.py --diff-mode side")
+        Compare.text(capsys, "out1", "-w 80 -m run cases.tio solver.py --side")
 
 
     def test_run_mixed_2(self, capsys: pytest.CaptureFixture[str]) -> None:
-        Compare.text(capsys, "out2", "-w 80 -m run cases.tio solver.py --diff-mode down")
+        Compare.text(capsys, "out2", "-w 80 -m run cases.tio solver.py --down")
