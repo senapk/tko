@@ -169,7 +169,7 @@ def build_task(
             continue
 
         Log.resume("- " + hook, end=": [ ")
-        Log.verbose("- " + hook)
+        Log.verbose(f"- {hook} {actions.source_readme}")
 
         actions.load_title()
         actions.create_cache()

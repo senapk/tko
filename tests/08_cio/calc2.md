@@ -5,7 +5,7 @@
 [Intro](#intro) | [Draft](#draft) | [Guide](#guide) | [Shell](#shell)
 -- | -- | -- | --
 
-<!-- toch -->
+<!-- end -->
 
 ![cover](cover.jpg)
 
@@ -125,7 +125,7 @@ class Legenda {
 
 ```
 
-<!-- load -->
+<!-- end -->
 
 ***
 

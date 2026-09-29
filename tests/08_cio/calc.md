@@ -5,7 +5,7 @@
 [Intro Modelo Árvore](#intro-modelo-árvore) | [Intro Modelo Tabela](#intro-modelo-tabela) | [Draft](#draft) | [Guide](#guide) | [Shell](#shell)
 -- | -- | -- | -- | --
 
-<!-- toch -->
+<!-- end -->
 
 ![cover](cover.jpg)
 
@@ -135,7 +135,7 @@ class Legenda {
 
 ```
 
-<!-- load -->
+<!-- end -->
 
 ***
 

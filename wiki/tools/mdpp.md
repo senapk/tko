@@ -21,8 +21,10 @@ O `mdpp` oferece ações e diretivas estruturadas:
 - `links PATH` — insere links para arquivos e diretórios
 - `load PATH [OPTIONS]` — carrega e transforma conteúdo de arquivos
 - `tests PATH [--limit N]` — apresenta os casos de teste como tabela
-- `save` — grava blocos de código Markdown de volta em arquivos
-- `clean` — limpa o conteúdo gerado, preservando os marcadores
+
+Todas as diretivas usam `<!-- end -->` como fechamento. Fechamentos antigos com o nome da diretiva
+continuam aceitos e são normalizados para `<!-- end -->` ao processar o arquivo. O modo `--clean`
+remove o conteúdo gerado e preserva os marcadores.
 
 ---
 
@@ -60,7 +62,7 @@ Marcador:
 
 ```md
 <!-- toc -->
-<!-- toc -->
+<!-- end -->
 ```
 
 Exemplo:
@@ -69,7 +71,7 @@ Exemplo:
 # Título Principal
 
 <!-- toc -->
-<!-- toc -->
+<!-- end -->
 
 ## Seção 1
 ### Subseção 1.1
@@ -83,7 +85,7 @@ Saída gerada:
 - [Seção 1](#secao-1)
   - [Subseção 1.1](#subsecao-11)
 - [Seção 2](#secao-2)
-<!-- toc -->
+<!-- end -->
 ```
 
 Observações:
@@ -101,7 +103,7 @@ Marcador recomendado:
 
 ```md
 <!-- toc-table -->
-<!-- toc-table -->
+<!-- end -->
 ```
 
 *(Marcador legado `<!-- toch -->` continua sendo suportado como alias).*
@@ -112,7 +114,7 @@ Exemplo de saída:
 <!-- toc-table -->
 [Seção 1](#secao-1) | [Seção 2](#secao-2)
 -- | --
-<!-- toc-table -->
+<!-- end -->
 ```
 
 Observação:
@@ -128,14 +130,14 @@ Sintaxe:
 
 ```md
 <!-- links caminho/relativo -->
-<!-- links -->
+<!-- end -->
 ```
 
 Exemplo:
 
 ```md
 <!-- links exemplos -->
-<!-- links -->
+<!-- end -->
 ```
 
 Com a estrutura de arquivos:
@@ -155,12 +157,12 @@ Saída gerada:
 - [base.md](exemplos/base.md)
 - avancado
   - [lista.md](exemplos/avancado/lista.md)
-<!-- links -->
+<!-- end -->
 ```
 
 Observações:
 - Arquivos e diretórios ocultos (iniciados com `.`) são ignorados.
-- Em modo `--clean`, o bloco retorna para `<!-- links exemplos -->\n<!-- links -->`.
+- Em modo `--clean`, o bloco retorna para `<!-- links exemplos -->\n<!-- end -->`.
 
 ---
 
@@ -172,7 +174,7 @@ Sintaxe base:
 
 ```md
 <!-- load caminho/do/arquivo [OPCOES] -->
-<!-- load -->
+<!-- end -->
 ```
 
 ### 6.1 Opções de Modificação
@@ -191,7 +193,7 @@ As diretivas de testes são independentes de `load`.
 
 ```md
 <!-- tests cases.toml -->
-<!-- tests -->
+<!-- end -->
 ```
 
 `tests` renderiza entrada e saída em uma tabela HTML. Sem `--limit`, todos os
@@ -239,7 +241,7 @@ Markdown:
 
 ```md
 <!-- load src/app.py --fenced -->
-<!-- load -->
+<!-- end -->
 ```
 
 Resultado:
@@ -250,7 +252,7 @@ Resultado:
 def soma(a: int, b: int) -> int:
     return a + b
 ```
-<!-- load -->
+<!-- end -->
 ````
 
 #### Exemplo com `tests`:
@@ -271,7 +273,7 @@ Markdown:
 
 ```md
 <!-- tests tests.toml -->
-<!-- tests -->
+<!-- end -->
 ```
 
 Resultado:
@@ -279,7 +281,7 @@ Resultado:
 ````md
 <!-- tests tests.toml --limit 1 -->
 <table>...</table>
-<!-- tests -->
+<!-- end -->
 ````
 
 ---

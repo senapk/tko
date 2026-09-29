@@ -5,7 +5,7 @@ Veja a versão online: [aqui.](https://github.com/qxcodepoo/arcade/blob/main/bas
 <!-- toch -->
 [Intro](#intro) | [Draft](#draft) | [Guide](#guide) | [Shell](#shell)
 -- | -- | -- | --
-<!-- toch -->
+<!-- end -->
 
 ![cover](https://raw.githubusercontent.com/qxcodepoo/arcade/main/base/002/cover.jpg)
 
@@ -109,7 +109,7 @@ class Legenda {
 
 ```
 
-<!-- load -->
+<!-- end -->
 
 ***
 

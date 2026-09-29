@@ -43,7 +43,7 @@ def test_toc_execute():
 - [Sec 1](#sec-1)
   - [Sub 1](#sub-1)
 - [Sec 2](#sec-2)
-<!-- toc -->
+<!-- end -->
 ## Sec 1
 ### Sub 1
 ## Sec 2
@@ -60,7 +60,7 @@ def test_toc_execute_clean():
 """
     expected = """# Main
 <!-- toc -->
-<!-- toc -->
+<!-- end -->
 ## Sec 1
 """
     out = Toc.execute(content, Action.CLEAN)
@@ -95,7 +95,7 @@ def test_toc_table_execute():
 <!-- toc-table -->
 [Sec 1](#sec-1) | [Sec 2](#sec-2)
 -- | --
-<!-- toc-table -->
+<!-- end -->
 ## Sec 1
 ### Sub 1
 ## Sec 2
@@ -113,7 +113,7 @@ def test_toc_table_execute_clean():
 """
     expected = """# Main
 <!-- toc-table -->
-<!-- toc-table -->
+<!-- end -->
 ## Sec 1
 """
     out = TocTable.execute(content, Action.CLEAN)
@@ -131,7 +131,7 @@ def test_toch_execute():
 <!-- toch -->
 [Sec 1](#sec-1) | [Sec 2](#sec-2)
 -- | --
-<!-- toch -->
+<!-- end -->
 ## Sec 1
 ### Sub 1
 ## Sec 2
@@ -149,7 +149,7 @@ def test_toch_execute_clean():
 """
     expected = """# Main
 <!-- toch -->
-<!-- toch -->
+<!-- end -->
 ## Sec 1
 """
     out = Toch.execute(content, Action.CLEAN)
@@ -279,7 +279,7 @@ def test_load_execute(tmp_path: Path):
 ```py
 print('hello')
 ```
-<!-- load -->
+<!-- end -->
 """
     assert out == expected
 
@@ -289,12 +289,12 @@ def test_load_execute_clean(tmp_path: Path):
 ```py
 print('old')
 ```
-<!-- load -->
+<!-- end -->
 """
     out = Load.execute(content, tmp_path, Action.CLEAN)
     expected = """# Main
 <!-- load script.py --fenced -->
-<!-- load -->
+<!-- end -->
 """
     assert out == expected
 
@@ -318,8 +318,7 @@ something stale
 
         expected = """# Main
 <!-- load missing.py -->
-
-<!-- load -->
+<!-- end -->
 """
 
         assert out == expected
@@ -373,20 +372,20 @@ output = "100"
 <!-- tests -->
 """
     out = Tests.execute(content, tmp_path, Action.RUN)
-    blocks = out.split("<!-- tests -->")
+    blocks = out.split("<!-- end -->")
     assert blocks[0].count("<table>") == 5
     assert blocks[1].count("<table>") == 2
     assert blocks[2].count("<table>") == 5
 
     cleaned = Tests.execute(out, tmp_path, Action.CLEAN)
     assert cleaned == """<!-- tests tests.toml -->
-<!-- tests -->
+<!-- end -->
 
 <!-- tests tests.toml --limit 2 -->
-<!-- tests -->
+<!-- end -->
 
 <!-- tests tests.toml --limit 0 -->
-<!-- tests -->
+<!-- end -->
 """
 
 def test_tests_execute_expands_loaded_cases_and_warns_on_invalid_limit(tmp_path: Path):
@@ -466,7 +465,7 @@ def test_links_execute(tmp_path: Path):
 <!-- links my_links -->
 - [page1.md](my_links/page1.md)
 - [page2.md](my_links/page2.md)
-<!-- links -->
+<!-- end -->
 """
     assert out == expected
 
@@ -480,7 +479,7 @@ def test_links_execute_clean(tmp_path: Path):
     out = Links.execute(readme, content, Action.CLEAN)
     expected = """# Main
 <!-- links docs -->
-<!-- links -->
+<!-- end -->
 """
     assert out == expected
 
@@ -550,6 +549,85 @@ output = "3"
     clean_content = readme.read_text()
     assert "def add" not in clean_content
     assert "<table>" not in clean_content
-    assert "<!-- toc -->\n<!-- toc -->" in clean_content
-    assert "<!-- toc-table -->\n<!-- toc-table -->" in clean_content
-    assert "<!-- links docs -->\n<!-- links -->" in clean_content
+    assert "<!-- toc -->\n<!-- end -->" in clean_content
+    assert "<!-- toc-table -->\n<!-- end -->" in clean_content
+    assert "<!-- links docs -->\n<!-- end -->" in clean_content
+
+
+def test_all_directives_accept_generic_end_and_clean(tmp_path: Path) -> None:
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "guide.md").write_text("# Guide\n", encoding="utf-8")
+    (tmp_path / "helper.py").write_text("print('helper')\n", encoding="utf-8")
+    (tmp_path / "tests.toml").write_text(
+        '[[tests]]\ninput = "a"\noutput = "b"\n', encoding="utf-8"
+    )
+    readme: Path = tmp_path / "README.md"
+    readme.write_text(
+        "# Example\n\n"
+        "<!-- toc -->\n<!-- end -->\n\n"
+        "<!-- toc-table -->\n<!-- end -->\n\n"
+        "<!-- links docs -->\n<!-- end -->\n\n"
+        "<!-- load helper.py --fenced py -->\n<!-- end -->\n\n"
+        "<!-- tests tests.toml -->\n<!-- end -->\n",
+        encoding="utf-8",
+    )
+
+    assert Mdpp.update_file(readme, Action.RUN) is True
+    rendered: str = readme.read_text(encoding="utf-8")
+    assert "- [guide.md](docs/guide.md)" in rendered
+    assert "print('helper')" in rendered
+    assert "<table>" in rendered
+    assert rendered.count("<!-- end -->") == 5
+
+    assert Mdpp.update_file(readme, Action.CLEAN) is True
+    cleaned: str = readme.read_text(encoding="utf-8")
+    assert "<table>" not in cleaned
+    assert "print('helper')" not in cleaned
+    assert cleaned.count("<!-- end -->") == 5
+
+
+def test_unclosed_block_does_not_consume_next_directive(tmp_path: Path) -> None:
+    (tmp_path / "tests.toml").write_text(
+        '[[tests]]\ninput = "x"\noutput = "y"\n', encoding="utf-8"
+    )
+    messages: list[str] = []
+    sink_id: int = logger.add(messages.append, level="WARNING", format="{message}")
+    content: str = (
+        "<!-- tests missing.toml -->\n"
+        "## Heading outside the unclosed block\n"
+        "<!-- tests tests.toml -->\n"
+        "<!-- end -->\n"
+    )
+
+    try:
+        result: str = Tests.execute(content, tmp_path, Action.RUN)
+    finally:
+        logger.remove(sink_id)
+
+    assert "## Heading outside the unclosed block" in result
+    assert "<table>" in result
+    assert "<!-- tests tests.toml -->\n" in result
+    assert "bloco mdpp 'tests missing.toml' sem fechamento" in "\n".join(messages)
+
+
+def test_markers_inside_fenced_code_are_ignored() -> None:
+    fence: str = chr(96) * 3
+    content: str = (
+        f"{fence}md\n<!-- toc -->\n<!-- end -->\n{fence}\n"
+        "## Visible\n<!-- toc -->\n<!-- end -->\n"
+    )
+
+    result: str = Toc.execute(content, Action.RUN)
+
+    assert f"{fence}md\n<!-- toc -->\n<!-- end -->\n{fence}" in result
+    assert "- [Visible](#visible)" in result
+
+
+def test_generic_end_accepts_crlf_markers() -> None:
+    content: str = "# Main\r\n<!-- toc -->\r\nstale\r\n<!-- end -->\r\n## Title\r\n"
+
+    result: str = Toc.execute(content, Action.RUN)
+
+    assert "- [Title](#title)" in result
+    assert "<!-- end -->" in result
+    assert "\n" not in result.replace("\r\n", "")

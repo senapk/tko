@@ -19,7 +19,7 @@ Baruel Ruel tem muitas figurinhas do álbum de futebol. Ele estava indo para uma
 
 ## Testes
 
-<!-- load tests.toml --tests 2 -->
+<!-- tests tests.toml --limit 2 -->
 <table><tr><th><code>      Entrada      </code>
 </th><th><code>   Saída   </code>
 </th></tr><tr><td valign="top"><pre>
@@ -42,4 +42,4 @@ Baruel Ruel tem muitas figurinhas do álbum de futebol. Ele estava indo para uma
 N
 </pre></td></tr></table>
 
-<!-- load -->
+<!-- end -->

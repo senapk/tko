@@ -4,6 +4,7 @@
 import os
 import re
 import enum
+from collections.abc import Callable
 from loguru import logger
 from tko.feno.filter import Filter
 from tko.i18n import Msg
@@ -38,10 +39,171 @@ _MDPP_FILE_NOT_MARKDOWN = Msg.text(
     pt="Arquivo {path} não é um arquivo markdown",
     en="File {path} is not a markdown file",
 )
+_MDPP_UNCLOSED_BLOCK = Msg.text(
+    pt="bloco mdpp '{marker}' sem fechamento <!-- end -->",
+    en="mdpp block '{marker}' is missing its <!-- end --> closing marker",
+)
 
 class Action(enum.Enum):
     RUN = 1
     CLEAN = 2
+
+
+@dataclass(frozen=True)
+class MdppBlock:
+    name: str
+    opening: str
+    command: str
+    start: int
+    end: int
+    newline: str
+
+
+def _marker_payload(line: str) -> str | None:
+    marker: str = line.strip()
+    if not marker.startswith("<!--") or not marker.endswith("-->"):
+        return None
+    return marker[4:-3].strip()
+
+
+def _opening_marker(payload: str) -> tuple[str, str] | None:
+    if payload in {"toc", "toc-table", "toch"}:
+        name: str = "toc-table" if payload == "toch" else payload
+        return name, ""
+    for name in ("links", "load", "tests"):
+        prefix: str = f"{name} "
+        if payload.startswith(prefix) and payload[len(prefix):].strip():
+            return name, payload[len(prefix):].strip()
+    return None
+
+
+def _is_legacy_close(payload: str, name: str, opening: str) -> bool:
+    if name in {"toc", "toc-table"}:
+        return payload == opening
+    return payload == name
+
+
+def _line_fence(line: str, fence_char: str | None, fence_size: int) -> tuple[str | None, int, bool]:
+    text: str = line.rstrip("\r\n")
+    if fence_char is not None:
+        closing: re.Match[str] | None = re.fullmatch(
+            rf" {{0,3}}{re.escape(fence_char)}{{{fence_size},}}[ \t]*", text
+        )
+        if closing is not None:
+            return None, 0, True
+        return fence_char, fence_size, True
+
+    tick: str = chr(96)
+    opening: re.Match[str] | None = re.match(rf" {{0,3}}({tick}{{3,}}|~{{3,}})", text)
+    if opening is None:
+        return None, 0, False
+    fence: str = opening.group(1)
+    if fence[0] == tick and tick in text[opening.end():]:
+        return None, 0, False
+    return fence[0], len(fence), True
+
+
+def _find_blocks(content: str) -> tuple[list[MdppBlock], list[tuple[str, str]]]:
+    lines: list[str] = content.splitlines(keepends=True)
+    offsets: list[int] = []
+    offset: int = 0
+    for line in lines:
+        offsets.append(offset)
+        offset += len(line)
+
+    blocks: list[MdppBlock] = []
+    unclosed: list[tuple[str, str]] = []
+    fence_char: str | None = None
+    fence_size: int = 0
+    line_index: int = 0
+    closing_markers: set[str] = {"end", "toc", "toc-table", "toch", "links", "load", "tests"}
+
+    while line_index < len(lines):
+        fence_char, fence_size, in_fence = _line_fence(lines[line_index], fence_char, fence_size)
+        if in_fence:
+            line_index += 1
+            continue
+
+        payload: str | None = _marker_payload(lines[line_index])
+        opening: tuple[str, str] | None = _opening_marker(payload) if payload is not None else None
+        if opening is None:
+            line_index += 1
+            continue
+
+        name, command = opening
+        opening_text: str = payload if payload is not None else ""
+        close_index: int | None = None
+        scan_index: int = line_index + 1
+        block_fence_char: str | None = fence_char
+        block_fence_size: int = fence_size
+
+        while scan_index < len(lines):
+            block_fence_char, block_fence_size, in_fence = _line_fence(
+                lines[scan_index], block_fence_char, block_fence_size
+            )
+            if in_fence:
+                scan_index += 1
+                continue
+
+            inner_payload: str | None = _marker_payload(lines[scan_index])
+            if inner_payload is None:
+                scan_index += 1
+                continue
+            if inner_payload == "end" or _is_legacy_close(inner_payload, name, opening_text):
+                close_index = scan_index
+                fence_char, fence_size = block_fence_char, block_fence_size
+                break
+            if _opening_marker(inner_payload) is not None:
+                unclosed.append((name, opening_text))
+                fence_char, fence_size = block_fence_char, block_fence_size
+                line_index = scan_index
+                break
+            if inner_payload in closing_markers:
+                unclosed.append((name, opening_text))
+                fence_char, fence_size = block_fence_char, block_fence_size
+                line_index = scan_index + 1
+                break
+            scan_index += 1
+        else:
+            unclosed.append((name, opening_text))
+            fence_char, fence_size = block_fence_char, block_fence_size
+            line_index = len(lines)
+
+        if close_index is None:
+            continue
+
+        start: int = offsets[line_index]
+        end: int = offsets[close_index] + len(lines[close_index].rstrip("\r\n"))
+        newline: str = "\r\n" if lines[line_index].endswith("\r\n") else "\n"
+        blocks.append(MdppBlock(name, opening_text, command, start, end, newline))
+        line_index = close_index + 1
+
+    return blocks, unclosed
+
+
+def _replace_blocks(
+    content: str,
+    names: set[str],
+    action: Action,
+    render: Callable[[MdppBlock], str],
+) -> str:
+    blocks, unclosed = _find_blocks(content)
+    for name, marker in unclosed:
+        if name in names:
+            logger.warning(str(_MDPP_UNCLOSED_BLOCK).format(marker=marker))
+
+    updated: str = content
+    for block in reversed(blocks):
+        if block.name not in names:
+            continue
+        body: str = "" if action == Action.CLEAN else render(block)
+        body = body.replace("\r\n", "\n").replace("\n", block.newline)
+        separator: str = "" if not body or body.endswith(block.newline) else block.newline
+        replacement: str = (
+            f"<!-- {block.opening} -->{block.newline}{body}{separator}<!-- end -->"
+        )
+        updated = updated[:block.start] + replacement + updated[block.end:]
+    return updated
 
 class TocMaker:
     @staticmethod
@@ -125,36 +287,32 @@ class TocMaker:
 class Toc:
     @staticmethod
     def execute(content: str, action: Action = Action.RUN) -> str:
-        regex = r"<!-- toc -->\n" + r"(.*?)"+ r"<!-- toc -->"
-        if action == Action.RUN:
-            new_toc = TocMaker.execute_toc(content)
-            subst = r"<!-- toc -->\n" + new_toc + r"\n<!-- toc -->"
-        else:
-            subst = r"<!-- toc -->\n<!-- toc -->"
-        return re.sub(regex, subst, content, 0, re.MULTILINE | re.DOTALL)
+        return _replace_blocks(
+            content,
+            {"toc"},
+            action,
+            lambda _block: TocMaker.execute_toc(content),
+        )
 
 class TocTable:
     @staticmethod
     def execute(content: str, action: Action = Action.RUN) -> str:
-        regex = r"<!-- toc-table -->\n" + r"(.*?)" + r"<!-- toc-table -->"
-        if action == Action.RUN:
-            new_toc = TocMaker.execute_toc_table(content)
-            subst = r"<!-- toc-table -->\n" + new_toc + r"\n<!-- toc-table -->"
-        else:
-            subst = r"<!-- toc-table -->\n<!-- toc-table -->"
-        content = re.sub(regex, subst, content, 0, re.MULTILINE | re.DOTALL)
-        return Toch.execute(content, action)
+        return _replace_blocks(
+            content,
+            {"toc-table", "toch"},
+            action,
+            lambda _block: TocMaker.execute_toc_table(content),
+        )
 
 class Toch:
     @staticmethod
     def execute(content: str, action: Action = Action.RUN) -> str:
-        regex = r"<!-- toch -->\n" + r"(.*?)" + r"<!-- toch -->"
-        if action == Action.RUN:
-            new_toc = TocMaker.execute_toch(content)
-            subst = r"<!-- toch -->\n" + new_toc + r"\n<!-- toch -->"
-        else:
-            subst = r"<!-- toch -->\n<!-- toch -->"
-        return re.sub(regex, subst, content, 0, re.MULTILINE | re.DOTALL)
+        return _replace_blocks(
+            content,
+            {"toc-table"},
+            action,
+            lambda _block: TocMaker.execute_toch(content),
+        )
 
 class Links:
 
@@ -184,38 +342,13 @@ class Links:
 
     @staticmethod
     def execute(path: Path, content: str, action: Action = Action.RUN) -> str:
-        regex = r"<!-- links (\S*?) -->\r?\n(.*?)<!-- links -->"
-        matches = re.finditer(regex, content, re.MULTILINE | re.DOTALL)
-
-        for match in matches:
-            filter_dir = match.group(1)
-
-            lregex = (
-                r"<!-- links "
-                + re.escape(filter_dir)
-                + r" -->\r?\n(.*?)<!-- links -->"
-            )
-
-            if action == Action.RUN:
-                readme_dir = path.parent.resolve()
-                new_links = Links.load_links(readme_dir, Path(filter_dir))
-
-                subst = (
-                    f"<!-- links {filter_dir} -->\n"
-                    f"{new_links}"
-                    f"<!-- links -->"
-                )
-            else:
-                subst = f"<!-- links {filter_dir} -->\n<!-- links -->"
-
-            content = re.sub(
-                lregex,
-                lambda _: subst,
-                content,
-                flags=re.MULTILINE | re.DOTALL,
-            )
-
-        return content
+        readme_dir: Path = path.parent.resolve()
+        return _replace_blocks(
+            content,
+            {"links"},
+            action,
+            lambda block: Links.load_links(readme_dir, Path(block.command)),
+        )
 
 @dataclass
 class LoadParams:
@@ -356,24 +489,17 @@ class Load:
 
     @staticmethod
     def execute(content: str, target_dir: Path, action: Action = Action.RUN) -> str:
-        regex = r"<!-- load\s*(.*?)\s*-->\n(.*?)(?=<!-- load -->)<!-- load -->"
-        
-        def replace_tag_fn(match: re.Match[str]) -> str:
-            full_command = match.group(1).strip()
-            _ = match.group(2) 
+        def render(block: MdppBlock) -> str:
+            full_command: str = block.command
             parts = full_command.split(maxsplit=1)
             path_str = parts[0] if len(parts) > 0 else ""
             flags_str = parts[1] if len(parts) > 1 else ""
-            result = [f"<!-- load {full_command} -->"]
-            if action == Action.RUN:
-                params = Load.parse_tags(flags_str)
-                abspath = (Path(target_dir) / path_str).resolve()
-                result.append(Load._process_file_content(abspath, path_str, params))
-            result.append("<!-- load -->")
-            return "\n".join(result)
+            params: LoadParams = Load.parse_tags(flags_str)
+            abspath: Path = (Path(target_dir) / path_str).resolve()
+            return Load._process_file_content(abspath, path_str, params)
 
-        # O sub substitui as ocorrências usando a função de callback
-        return re.sub(regex, replace_tag_fn, content, flags=re.MULTILINE | re.DOTALL)
+        return _replace_blocks(content, {"load"}, action, render)
+
 
 
 class Tests:
@@ -406,24 +532,16 @@ class Tests:
 
     @staticmethod
     def execute(content: str, target_dir: Path, action: Action = Action.RUN) -> str:
-        regex = r"<!-- tests\s+(.+?)\s*-->\n(.*?)(?=<!-- tests -->)<!-- tests -->"
+        def render(block: MdppBlock) -> str:
+            path_str, limit = Tests._parse_command(block.command)
+            path: Path = (Path(target_dir) / path_str).resolve()
+            if not path.is_file():
+                logger.warning(str(_MDPP_FILE_NOT_FOUND).format(path=path_str))
+                return ""
+            return Load.generate_tests_table_from_toml(Decoder.load(path), path, limit)
 
-        def replace_tag_fn(match: re.Match[str]) -> str:
-            full_command = match.group(1).strip()
-            result = [f"<!-- tests {full_command} -->"]
-            if action == Action.RUN:
-                path_str, limit = Tests._parse_command(full_command)
-                path = (Path(target_dir) / path_str).resolve()
-                if not path.is_file():
-                    logger.warning(str(_MDPP_FILE_NOT_FOUND).format(path=path_str))
-                else:
-                    result.append(
-                        Load.generate_tests_table_from_toml(Decoder.load(path), path, limit)
-                    )
-            result.append("<!-- tests -->")
-            return "\n".join(result)
+        return _replace_blocks(content, {"tests"}, action, render)
 
-        return re.sub(regex, replace_tag_fn, content, flags=re.MULTILINE | re.DOTALL)
 
 class MdppMain:
     @staticmethod
