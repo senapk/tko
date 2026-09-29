@@ -70,7 +70,10 @@ class _AssetResolver:
             return destination
 
         mime_type: str = mimetypes.guess_type(target.name)[0] or "application/octet-stream"
-        encoded: str = base64.b64encode(target.read_bytes()).decode("ascii")
+        content: bytes = target.read_bytes()
+        if mime_type.startswith("text/"):
+            content = content.replace(b"\r\n", b"\n")
+        encoded: str = base64.b64encode(content).decode("ascii")
         data_uri: str = f"data:{mime_type};base64,{encoded}"
         if parsed.fragment:
             data_uri += f"#{parsed.fragment}"

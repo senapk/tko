@@ -146,6 +146,8 @@ class TaskTreeView(Tree[IsTreeItem]):
             self.call_after_refresh(self._restore_cursor, selected_key)
 
     def _restore_cursor(self, key: str) -> None:
+        if self.model.state.selected != key:
+            return
         selected = self._node_by_key.get(key)
         if selected is not None:
             self.move_cursor(selected)  # type: ignore[arg-type]

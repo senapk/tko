@@ -47,6 +47,15 @@ def test_missing_local_reference_raises_error(tmp_path: Path) -> None:
         embed_local_assets("![missing](missing.png)", tmp_path)
 
 
+def test_embedded_text_normalizes_windows_line_endings(tmp_path: Path) -> None:
+    (tmp_path / "guide.md").write_bytes(b"# Guide\r\n")
+
+    result: str = embed_local_assets("[Guide](guide.md)", tmp_path)
+
+    normalized: str = base64.b64encode(b"# Guide\n").decode("ascii")
+    assert result == f"[Guide](data:text/markdown;base64,{normalized})"
+
+
 def test_reference_outside_activity_raises_error(tmp_path: Path) -> None:
     activity: Path = tmp_path / "activity"
     activity.mkdir()
