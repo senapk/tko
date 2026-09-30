@@ -9,6 +9,7 @@ tko tool mdpp [targets...] [--clean] [--quiet]
 ```
 
 Se nenhum `target` for passado, o comportamento padrão é processar `README.md` no diretório atual.
+Quando um `target` for uma pasta, o mdpp processa o `README.md` dentro dela.
 
 ---
 
@@ -196,8 +197,10 @@ As diretivas de testes são independentes de `load`.
 <!-- end -->
 ```
 
-`tests` renderiza entrada e saída em uma tabela HTML. Sem `--limit`, todos os
-casos são exibidos. Use `--limit N` para mostrar os primeiros `N` casos;
+`tests` renderiza todos os casos em uma única tabela HTML, com uma linha por
+teste e colunas Entrada e Saída. Os conteúdos ficam em linhas próprias, separados
+das tags HTML pelos blocos `<!-- INPUT -->` e `<!-- OUTPUT -->`. Sem `--limit`,
+todos os casos são exibidos. Use `--limit N` para mostrar os primeiros `N` casos;
 `--limit 0` também exibe todos.
 
 ### Ordem do Pipeline de Transformação

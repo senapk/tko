@@ -423,43 +423,27 @@ class Load:
         return params
 
     @staticmethod
-    def __calc_input_and_output_pad(arr: list[UnitData]) -> tuple[int, int]:
-        input_lines: list[str] = []
-        output_lines: list[str] = []
-        for unit in arr:
-            input_lines.extend(unit.input.splitlines())
-            output_lines.extend(unit.output.splitlines())
-        input_pad = max((len(line) for line in input_lines), default=0)
-        output_pad = max((len(line) for line in output_lines), default=0)
-        return input_pad, output_pad
-
-    @staticmethod
     def generate_tests_table_from_toml(content: str, path: Path, limit: int | None = None) -> str:
-        def format_table(_input: str, _output: str, pad_input: int, pad_output: int) -> str:
-            pad_input += 3
-            if pad_input % 2 == 0:
-                pad_input += 1
-            pad_output += 3
-            if pad_output % 2 == 0:
-                pad_output += 1
-            # Envolvemos o texto e o padding dentro da tag <code>
-            header_in = f'{"Entrada".center(pad_input, " ")}'
-            header_out = f'{"Saída".center(pad_output, " ")}'
-            
-            table_start = f'<table><tr><th><code>{header_in}</code>\n</th><th><code>{header_out}</code>\n</th></tr><tr><td valign="top"><pre>\n'
-            table_mid = '</pre></td><td valign="top"><pre>\n'
-            table_end = '</pre></td></tr></table>'
-            
-            return table_start + _input + table_mid + _output + table_end
-        
         from tko.loader.toml_parser import TomlParser
+
         test_data_list: list[UnitData] = TomlParser.extract_toml_units(content, path)
         if limit is not None:
             test_data_list = test_data_list[:limit]
-        pad_input, pad_output = Load.__calc_input_and_output_pad(test_data_list)
-        table_data_list = [format_table(unit.input, unit.output, pad_input, pad_output) for unit in test_data_list]
+        if not test_data_list:
+            return ""
 
-        return "\n\n".join(table_data_list)
+        lines: list[str] = [
+            '<table><tr><th><code>Entrada</code></th><th><code>Saída</code></th></tr>'
+        ]
+        for unit in test_data_list:
+            lines.append('<!-- INPUT --><tr><td valign="top"><pre>')
+            lines.append(unit.input.removesuffix("\n"))
+            lines.append('</pre></td>')
+            lines.append('<!-- OUTPUT --><td valign="top"><pre>')
+            lines.append(unit.output.removesuffix("\n"))
+            lines.append('</pre></td></tr>')
+        lines.append('</table>')
+        return "\n".join(lines)
 
     @staticmethod
     def _process_file_content(abspath: Path, rel_path: str, params: LoadParams) -> str:
@@ -545,7 +529,7 @@ class Tests:
 
 class MdppMain:
     @staticmethod
-    def fix_path(target: Path):
+    def fix_path(target: Path) -> Path:
         target = target.resolve()
         if target.is_dir():
             target = target / "README.md"
@@ -562,8 +546,7 @@ class MdppMain:
 class Mdpp:
     @staticmethod
     def update_file(target: Path, action: Action = Action.RUN, quiet: bool = False) -> bool:
-        # path = MdppMain.fix_path(target)
-        path = target
+        path: Path = MdppMain.fix_path(target)
         if not path.suffix == ".md":
             logger.warning(str(_MDPP_FILE_NOT_MARKDOWN).format(path=path))
             return False
@@ -579,7 +562,7 @@ class Mdpp:
         updated = TocTable.execute(updated, action)
         updated = Tests.execute(updated, target_dir, action)
         updated = Load.execute(updated, target_dir, action)
-        updated = Links.execute(target, updated, action)
+        updated = Links.execute(path, updated, action)
         if updated != original:
             Decoder.save(path, updated)
             return True

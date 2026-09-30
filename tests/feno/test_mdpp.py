@@ -214,7 +214,7 @@ def test_load_rejects_removed_extract_option():
     finally:
         logger.remove(sink_id)
 
-def test_generate_table_from_test_toml_all_cases(tmp_path: Path):
+def test_generate_table_from_test_toml_all_cases(tmp_path: Path) -> None:
     toml_content = """[[tests]]
 input = '''
 1
@@ -234,13 +234,29 @@ c
 '''
 """
     out = Load.generate_tests_table_from_toml(toml_content, tmp_path / "cases.toml")
-    assert out.count("<table>") == 2
+    assert out.count("<table>") == 1
+    assert out.count("<!-- INPUT -->") == 2
     assert "Entrada" in out
     assert "Saída" in out
     assert "1\n2\n" in out
-    assert "b\nc\n" in out
+    assert out == """<table><tr><th><code>Entrada</code></th><th><code>Saída</code></th></tr>
+<!-- INPUT --><tr><td valign="top"><pre>
+1
+2
+</pre></td>
+<!-- OUTPUT --><td valign="top"><pre>
+3
+</pre></td></tr>
+<!-- INPUT --><tr><td valign="top"><pre>
+a
+</pre></td>
+<!-- OUTPUT --><td valign="top"><pre>
+b
+c
+</pre></td></tr>
+</table>"""
 
-def test_generate_table_from_test_toml_all_cases_with_multiline_content(tmp_path: Path):
+def test_generate_table_from_test_toml_all_cases_with_multiline_content(tmp_path: Path) -> None:
     toml_content = """[[tests]]
 input = '''
 left
@@ -258,7 +274,8 @@ case
 '''
 """
     out = Load.generate_tests_table_from_toml(toml_content, tmp_path / "cases.toml")
-    assert out.count("<table>") == 2
+    assert out.count("<table>") == 1
+    assert out.count("<!-- INPUT -->") == 2
     assert "left\n" in out
     assert "right\n" in out
     assert "second\n" in out
@@ -344,7 +361,7 @@ def test_load_execute_multiple_blocks(tmp_path: Path):
     assert "print('b')" in out
     assert out.count("```py") == 2
 
-def test_tests_execute_renders_all_cases_and_honors_limit(tmp_path: Path):
+def test_tests_execute_renders_all_cases_and_honors_limit(tmp_path: Path) -> None:
     toml_file = tmp_path / "tests.toml"
     toml_file.write_text("""[[tests]]
 input = "10"
@@ -373,9 +390,12 @@ output = "100"
 """
     out = Tests.execute(content, tmp_path, Action.RUN)
     blocks = out.split("<!-- end -->")
-    assert blocks[0].count("<table>") == 5
-    assert blocks[1].count("<table>") == 2
-    assert blocks[2].count("<table>") == 5
+    assert blocks[0].count("<table>") == 1
+    assert blocks[0].count("<!-- INPUT -->") == 5
+    assert blocks[1].count("<table>") == 1
+    assert blocks[1].count("<!-- INPUT -->") == 2
+    assert blocks[2].count("<table>") == 1
+    assert blocks[2].count("<!-- INPUT -->") == 5
 
     cleaned = Tests.execute(out, tmp_path, Action.CLEAN)
     assert cleaned == """<!-- tests tests.toml -->
@@ -388,7 +408,7 @@ output = "100"
 <!-- end -->
 """
 
-def test_tests_execute_expands_loaded_cases_and_warns_on_invalid_limit(tmp_path: Path):
+def test_tests_execute_expands_loaded_cases_and_warns_on_invalid_limit(tmp_path: Path) -> None:
     cases = tmp_path / "cases.toml"
     cases.write_text("""[[tests]]
 input = "one"
@@ -406,7 +426,8 @@ output = "2"
 <!-- tests -->
 """
         out = Tests.execute(content, tmp_path, Action.RUN)
-        assert out.count("<table>") == 2
+        assert out.count("<table>") == 1
+        assert out.count("<!-- INPUT -->") == 2
         assert "valor inválido ou faltando para --limit" in "\n".join(messages)
     finally:
         logger.remove(sink_id)
@@ -631,3 +652,37 @@ def test_generic_end_accepts_crlf_markers() -> None:
     assert "- [Title](#title)" in result
     assert "<!-- end -->" in result
     assert "\n" not in result.replace("\r\n", "")
+
+
+def test_mdpp_directory_target_resolves_readme_and_relative_directives(tmp_path: Path) -> None:
+    folder: Path = tmp_path / "activity"
+    folder.mkdir()
+    (folder / "helper.py").write_text("print('hello')\n", encoding="utf-8")
+    (folder / "docs").mkdir()
+    (folder / "docs" / "guide.md").write_text("# Guide\n", encoding="utf-8")
+    readme: Path = folder / "README.md"
+    original: str = (
+        "<!-- load helper.py --fenced py -->\n<!-- end -->\n"
+        "<!-- links docs -->\n<!-- end -->\n"
+    )
+    readme.write_text(original, encoding="utf-8")
+
+    assert Mdpp.update_file(folder) is True
+    rendered: str = readme.read_text(encoding="utf-8")
+    assert "```py\nprint('hello')\n```" in rendered
+    assert "- [guide.md](docs/guide.md)" in rendered
+    assert Mdpp.update_file(folder) is False
+    assert Mdpp.update_file(folder, Action.CLEAN) is True
+    assert readme.read_text(encoding="utf-8") == original
+
+
+def test_mdpp_directory_without_readme_warns(tmp_path: Path) -> None:
+    messages: list[str] = []
+    sink_id: int = logger.add(messages.append, level="WARNING", format="{message}")
+    try:
+        assert Mdpp.update_file(tmp_path) is False
+    finally:
+        logger.remove(sink_id)
+
+    assert f"arquivo {tmp_path / 'README.md'} não encontrado" in "\n".join(messages)
+    assert not (tmp_path / "README.md").exists()
