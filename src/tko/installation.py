@@ -34,11 +34,13 @@ class ManagedInstallation:
 
     @classmethod
     def from_executable(cls, executable: Path) -> ManagedInstallation | None:
-        resolved: Path = executable.resolve()
-        venv_parent: Path = resolved.parent
+        # Keep the virtualenv path intact: on Unix, venv/bin/python is usually
+        # a symlink to the system interpreter, and resolve() loses the venv.
+        absolute: Path = executable.absolute()
+        venv_parent: Path = absolute.parent
         if venv_parent.name not in {"bin", "Scripts"} or venv_parent.parent.name != "venv":
             return None
-        root: Path = resolved.parent.parent.parent
+        root: Path = absolute.parent.parent.parent
         metadata: Path = root / "install.toml"
         if not metadata.is_file():
             return None
@@ -64,7 +66,7 @@ def installation_method(executable: Path | None = None) -> InstallationMethod:
     current: Path = executable or Path(sys.executable)
     if ManagedInstallation.from_executable(current) is not None:
         return InstallationMethod.MANAGED
-    if "pipx" in current.resolve().parts:
+    if "pipx" in current.absolute().parts:
         return InstallationMethod.PIPX
     return InstallationMethod.OTHER
 

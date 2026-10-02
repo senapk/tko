@@ -63,7 +63,7 @@ def test_command_tree_has_only_canonical_names() -> None:
     assert set(build.commands) == {"task", "index", "download"}
     tests = root.commands["tests"]
     assert isinstance(tests, Group)
-    assert set(tests.commands) == {"list", "convert"}
+    assert set(tests.commands) == {"list", "convert", "update-outputs"}
     repo = root.commands["repo"]
     assert isinstance(repo, Group)
     assert {"init", "list", "migrate", "profile", "source", "audit"} == set(repo.commands)

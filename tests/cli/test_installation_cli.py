@@ -40,6 +40,27 @@ def test_self_update_uses_managed_installation(monkeypatch: MonkeyPatch, tmp_pat
     assert "TKO atualizado." in result.output
 
 
+def test_managed_installation_detects_symlinked_venv_python(tmp_path: Path) -> None:
+    root: Path = tmp_path / ".local" / "share" / "tko"
+    venv_bin: Path = root / "venv" / "bin"
+    venv_bin.mkdir(parents=True)
+    system_python: Path = tmp_path / "system-python"
+    system_python.touch()
+    python: Path = venv_bin / "python"
+    python.symlink_to(system_python)
+    metadata: Path = root / "install.toml"
+    metadata.write_text(
+        f'method = "managed"\nlauncher = "{tmp_path / ".local" / "bin" / "tko"}"\n',
+        encoding="utf-8",
+    )
+
+    installation: ManagedInstallation | None = ManagedInstallation.from_executable(python)
+
+    assert installation is not None
+    assert installation.root == root
+    assert installation.python == python
+
+
 def test_self_update_preserves_pipx_installation(monkeypatch: MonkeyPatch) -> None:
     def missing_installation(_executable: Path) -> None:
         return None
