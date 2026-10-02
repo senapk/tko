@@ -14,7 +14,7 @@ def _fake_python(path: Path) -> None:
         "if [ \"$1\" = \"-m\" ] && [ \"$2\" = \"venv\" ]; then\n"
         "  mkdir -p \"$3/bin\"\n"
         "  printf '#!/usr/bin/env sh\\nexit 0\\n' > \"$3/bin/python\"\n"
-        "  for name in tko tkm; do printf '#!/usr/bin/env sh\\nexit 0\\n' > \"$3/bin/$name\"; chmod 755 \"$3/bin/$name\"; done\n"
+        "  printf '#!/usr/bin/env sh\\nexit 0\\n' > \"$3/bin/tko\"; chmod 755 \"$3/bin/tko\"\n"
         "  chmod 755 \"$3/bin/python\"\n"
         "fi\n",
         encoding="utf-8",
@@ -46,17 +46,11 @@ def test_install_script_creates_managed_venv_launcher_and_metadata(tmp_path: Pat
     launcher: Path = home / ".local" / "bin" / "tko"
     assert result.returncode == 0, result.stderr
     assert (root / "venv" / "bin" / "tko").is_file()
-    assert (root / "venv" / "bin" / "tkm").is_file()
     assert 'method = "managed"' in (root / "install.toml").read_text(encoding="utf-8")
     assert str(launcher) in (root / "install.toml").read_text(encoding="utf-8")
     assert str(root / "venv" / "bin" / "tko") in launcher.read_text(encoding="utf-8")
     bin_dir: Path = home / ".local" / "bin"
-    assert str(bin_dir / "tkm") in (root / "install.toml").read_text(encoding="utf-8")
     assert str(root / "venv" / "bin" / "tko") in (bin_dir / "tko").read_text(encoding="utf-8")
-    assert str(bin_dir / "tkm") in (root / "install.toml").read_text(encoding="utf-8")
-    assert not (bin_dir / "koa").exists()
-    assert not (bin_dir / "soin").exists()
-    assert not (bin_dir / "tejo").exists()
 
 
 def test_install_script_does_not_replace_existing_launcher(tmp_path: Path) -> None:
@@ -79,7 +73,7 @@ def test_install_script_does_not_replace_existing_launcher(tmp_path: Path) -> No
     assert "não será sobrescrito" in result.stderr
 
 
-def test_install_script_replaces_managed_soin_tejo_launchers(tmp_path: Path) -> None:
+def test_install_script_replaces_existing_managed_launcher(tmp_path: Path) -> None:
     fake_bin: Path = tmp_path / "bin"
     fake_bin.mkdir()
     _fake_python(fake_bin / "python3")
@@ -87,11 +81,10 @@ def test_install_script_replaces_managed_soin_tejo_launchers(tmp_path: Path) -> 
     bin_dir: Path = home / ".local" / "bin"
     bin_dir.mkdir(parents=True)
     venv: Path = home / ".local" / "share" / "tko" / "venv"
-    for name, binary in (("tko", "soin"), ("soin", "soin"), ("tejo", "tejo"), ("koa", "tejo")):
-        (bin_dir / name).write_text(
-            f'#!/usr/bin/env sh\nexec "{venv / "bin" / binary}" "$@"\n',
-            encoding="utf-8",
-        )
+    (bin_dir / "tko").write_text(
+        f'#!/usr/bin/env sh\nexec "{venv / "bin" / "tko"}" "$@"\n',
+        encoding="utf-8",
+    )
 
     result = subprocess.run(
         ["/usr/bin/env", "bash", "install.sh"],
@@ -104,10 +97,6 @@ def test_install_script_replaces_managed_soin_tejo_launchers(tmp_path: Path) -> 
 
     assert result.returncode == 0, result.stderr
     assert str(venv / "bin" / "tko") in (bin_dir / "tko").read_text(encoding="utf-8")
-    assert str(venv / "bin" / "tkm") in (bin_dir / "tkm").read_text(encoding="utf-8")
-    assert not (bin_dir / "soin").exists()
-    assert not (bin_dir / "tejo").exists()
-    assert not (bin_dir / "koa").exists()
 
 
 def test_install_script_is_idempotent_when_pipx_is_present(tmp_path: Path) -> None:

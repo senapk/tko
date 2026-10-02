@@ -7,7 +7,6 @@ from typer.main import get_command
 from typer.testing import CliRunner
 
 from tko.__main__ import app
-from tko.tkm import app as tejo_app
 from tko.config.run_settings import RunSettings
 from tko.config.settings import Settings
 from tko.enums.diff_mode import DiffMode
@@ -42,10 +41,6 @@ def invoke(root: Path, args: list[str], input: str | None = None) -> Result:
     return CliRunner().invoke(app, ["-S", str(root / "settings"), "-O", *args], input=input)
 
 
-def invoke_tejo(root: Path, args: list[str], input: str | None = None) -> Result:
-    return CliRunner().invoke(tejo_app, ["-S", str(root / "settings"), "-O", *args], input=input)
-
-
 def test_command_tree_has_only_canonical_names() -> None:
     from click import Group
 
@@ -71,9 +66,6 @@ def test_command_tree_has_only_canonical_names() -> None:
     assert isinstance(audit, Group)
     assert set(audit.commands) == {"init", "on", "off", "status"}
 
-    tkm = get_command(tejo_app)
-    assert isinstance(tkm, Group)
-    assert set(tkm.commands) == set(root.commands)
     tool = root.commands["tool"]
     assert isinstance(tool, Group)
     assert {"timeline", "unpack", "pull", "mdpp", "older", "diff", "rebase", "filter", "html"} == set(tool.commands)
@@ -341,14 +333,14 @@ def test_collect_routes_reports_with_their_parameters(tmp_path: Path, monkeypatc
 
     monkeypatch.setattr("tko.collect.collect_many.CollectMany.load_tasks", tasks)
     monkeypatch.setattr("tko.collect.collect_many.CollectMany.load_skills", skills)
-    task_result: Result = invoke_tejo(tmp_path, ["collect", "tasks", "student1", "student2", "--csv", "tasks.csv"])
-    skill_result: Result = invoke_tejo(tmp_path, ["collect", "skills", "student1", "--csv", "skills.csv", "--source", "course", "--language", "py"])
+    task_result: Result = invoke(tmp_path, ["collect", "tasks", "student1", "student2", "--csv", "tasks.csv"])
+    skill_result: Result = invoke(tmp_path, ["collect", "skills", "student1", "--csv", "skills.csv", "--source", "course", "--language", "py"])
     assert task_result.exit_code == skill_result.exit_code == 0
     assert calls == [([Path("student1"), Path("student2")], "tasks.csv", None, None), ([Path("student1")], "skills.csv", "course", "py")]
 
 
 def test_collect_repo_requires_repository(tmp_path: Path) -> None:
-    result: Result = invoke_tejo(tmp_path, ["-C", str(tmp_path), "collect", "repo", "--json"])
+    result: Result = invoke(tmp_path, ["-C", str(tmp_path), "collect", "repo", "--json"])
     assert result.exit_code == 1
     assert "No TKO repository found" in result.output
 
@@ -360,7 +352,7 @@ def test_tool_pull_routes_paths_and_threads(monkeypatch: pytest.MonkeyPatch, tmp
         observed.append((paths, threads))
 
     monkeypatch.setattr("tko.collect.pull.Pull.pull_all_parallel", pull_all)
-    result: Result = invoke_tejo(tmp_path, ["tool", "pull", "one", "two", "--threads", "4"])
+    result: Result = invoke(tmp_path, ["tool", "pull", "one", "two", "--threads", "4"])
     assert result.exit_code == 0, result.output
     assert observed == [([Path("one"), Path("two")], 4)]
 

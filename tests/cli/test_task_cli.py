@@ -3,7 +3,7 @@ from _pytest.monkeypatch import MonkeyPatch
 
 from typer.testing import CliRunner
 
-from tko.tkm import task_app as app
+from tko.cli.cli_task import app
 from tko.cli.cli_build import app as build_app
 from tko.cli.cli_task import app as tko_task_app
 from tko.cli.cli_tests import app as tests_app
