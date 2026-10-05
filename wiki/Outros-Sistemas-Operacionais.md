@@ -9,7 +9,7 @@ O sistema precisa oferecer:
 - terminal compatível com fluxo de desenvolvimento;
 - Git instalado;
 - autenticação com GitHub funcionando;
-- Python 3 compatível com a versão exigida pelo TKO;
+- Python 3.12 ou mais recente;
 - TKO instalado pelo script oficial ou via `pipx`;
 - VS Code ou outro editor configurado;
 - compiladores ou interpretadores usados pela disciplina.

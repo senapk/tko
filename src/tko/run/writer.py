@@ -32,9 +32,12 @@ class Writer:
         pass
 
     @staticmethod
-    def to_vpl(unit: Unit):
+    def to_vpl(unit: Unit) -> str:
+        input_text: str = unit.input
+        if not input_text.endswith("\n"):
+            input_text += "\n"
         text = "case=" + unit.case + "\n"
-        text += "input=" + unit.input
+        text += "input=" + input_text
         text += "output=\"" + unit.get_expected() + "\"\n"
         if unit.grade is None:
             text += "\n"

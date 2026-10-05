@@ -8,3 +8,7 @@
 - Ajuste anotações dos limites entre camadas (UI, domínio e repositório) para que tipos desconhecidos não se propaguem.
 - Ao receber uma dependência que usa apenas parte de outra classe, declare um `Protocol` com essa interface mínima em vez de exigir a classe concreta. Isso deve permitir dublês de teste tipados estruturalmente, sem `cast` ou `# type: ignore`.
 - Antes de concluir alterações que envolvam tipos, execute o verificador também nos testes modificados; não configure o projeto para ocultar diagnósticos dos testes.
+
+## Commits
+
+- Quando o usuário pedir um commit neste repositório, leia e siga a skill local em `skills/tko-commit/SKILL.md`.

@@ -11,7 +11,7 @@ Ao final, o terminal deve ter:
 - Git instalado.
 - Nome e e-mail configurados no Git.
 - Autenticação com GitHub funcionando.
-- Python 3 instalado.
+- Python 3.12 ou mais recente instalado.
 - TKO instalado em ambiente virtual próprio.
 - `tko --version` e `tko --help` funcionando.
 
@@ -22,6 +22,10 @@ sudo apt update
 sudo apt install -y build-essential git curl ca-certificates python3 python3-venv
 ```
 
+Confira `python3 --version` antes de instalar o TKO: a versão deve ser 3.12 ou
+mais recente. Se a distribuição fornecer uma versão anterior, instale Python
+3.12 ou mais recente com suporte a `venv` e indique o executável ao instalador,
+por exemplo: `curl -fsSL https://raw.githubusercontent.com/senapk/tko/main/install.sh | PYTHON=python3.12 bash`.
 
 ## Configurar Git
 

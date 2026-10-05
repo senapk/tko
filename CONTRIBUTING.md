@@ -22,7 +22,7 @@ Este guia descreve o fluxo recomendado para abrir issues, propor mudanças e env
 
 Requisitos:
 
-- Python 3.10+
+- Python 3.12+
 - uv
 - Git
 

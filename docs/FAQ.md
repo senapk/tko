@@ -33,7 +33,7 @@ tko --version
 tko --help
 ```
 
-Se `--help` listar comandos como `task`, `index`, `config` e `tool`, a instalação está ok.
+Se `--help` listar comandos como `task`, `build`, `config` e `tool`, a instalação está ok.
 
 ## 4) Como rodar os testes do projeto TKO?
 
@@ -83,7 +83,8 @@ tko tests convert README.md extra.tio -o t.tio
 tko tests convert pasta -o tests.toml
 ```
 
-Para padrões de nome personalizados, use `-p`.
+Para padrões de nome personalizados, use `--read-pattern` ao ler uma pasta ou
+`--write-pattern` ao gerar arquivos em uma pasta.
 
 ## 9) Como adicionar suporte a linguagem no fluxo atual?
 
@@ -93,7 +94,7 @@ Guia:
 
 - `wiki/Linguagens.md`
 
-## 9) O que fazer quando um link da documentação quebra?
+## 10) O que fazer quando um link da documentação quebra?
 
 1. Abra issue usando o template de docs.
 2. Informe arquivo e trecho afetado.
@@ -103,7 +104,7 @@ Template:
 
 - `.github/ISSUE_TEMPLATE/documentation_bug.yml`
 
-## 10) A documentação está desatualizada. Como contribuir?
+## 11) A documentação está desatualizada. Como contribuir?
 
 1. Abra PR com correção objetiva.
 2. Preencha checklist de docs no template de PR.

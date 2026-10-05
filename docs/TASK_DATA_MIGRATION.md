@@ -29,7 +29,7 @@ alunos já são versionados no Git, portanto a ferramenta não cria uma cópia l
 dos dados. Para
 revisar correspondências, arquivos afetados e erros sem escrever no workspace,
 use `--dry-run`. Sem path, o comando valida e usa o diretório atual.
-Também é possível selecionar o diretório com `tko -C /caminho/do/workspace tool migrate`.
+Também é possível selecionar o diretório com `tko -C /caminho/do/workspace repo migrate`.
 
 ```sh
 tko repo migrate /caminho/do/workspace --dry-run

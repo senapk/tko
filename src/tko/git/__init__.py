@@ -1,0 +1,1 @@
+"""Student-friendly Git operations."""

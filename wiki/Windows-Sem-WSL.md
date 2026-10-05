@@ -17,7 +17,7 @@ Se ainda for necessário usar Windows sem WSL, a máquina precisa ter:
 - VS Code instalado.
 - Git instalado e disponível no terminal.
 - Autenticação com GitHub funcionando.
-- Python 3 instalado.
+- Python 3.12 ou mais recente instalado.
 - `pipx` instalado e disponível no PATH.
 - TKO instalado via `pipx`.
 - Linguagens da disciplina instaladas.

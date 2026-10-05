@@ -31,6 +31,19 @@ Observação:
 - O conteúdo é tratado pelo TKO como formato de casos de teste serializados.
 - Para edição manual de casos, prefira extrair para pasta.
 
+## Formato VPL (`.vpl` e `.cases`)
+
+```text
+case=exemplo
+input=1
+output="2"
+```
+
+O valor de `input` é texto bruto e pode ocupar várias linhas; aspas fariam parte
+da entrada enviada ao programa. No `output`, aspas duplas indicam comparação
+exata no avaliador VPL. O TKO mantém `output=` em uma linha separada, mesmo
+quando a entrada está vazia.
+
 ## Pasta de testes (`.in`/`.sol`)
 
 Estrutura esperada:
@@ -42,10 +55,11 @@ Estrutura esperada:
 Conversão a partir de `tests.toml`:
 
 ```bash
-tko tests convert pasta -o tests.toml
+mkdir -p pasta
+tko tests convert tests.toml -o pasta/
 ```
 
-Personalização de nomes com `-p`:
+Para ler uma pasta com nomes personalizados, use `--read-pattern`:
 
 ```bash
 tko tests convert pasta -o tests.toml --read-pattern "in.@ out.@"

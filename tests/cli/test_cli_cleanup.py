@@ -48,7 +48,7 @@ def test_command_tree_has_only_canonical_names() -> None:
     assert isinstance(root, Group)
     assert set(root.commands) == {
         "run", "open", "update", "uninstall", "task", "repo", "config",
-        "collect", "build", "tests", "tool",
+        "collect", "build", "tests", "tool", "git",
     }
     task = root.commands["task"]
     assert isinstance(task, Group)
@@ -68,12 +68,15 @@ def test_command_tree_has_only_canonical_names() -> None:
 
     tool = root.commands["tool"]
     assert isinstance(tool, Group)
-    assert {"timeline", "unpack", "pull", "mdpp", "older", "diff", "rebase", "filter", "html"} == set(tool.commands)
+    assert {"timeline", "unpack", "mdpp", "older", "diff", "rebase", "filter", "html"} == set(tool.commands)
+    git = root.commands["git"]
+    assert isinstance(git, Group)
+    assert set(git.commands) == {"sync", "reset-to-remote"}
 
 
 @pytest.mark.parametrize("args", [
     ["util"], ["reset"], ["cache", "clear"], ["profile", "status"], ["source", "list"], ["self-update"], ["class"], ["class", "pull"], ["collect", "task"], ["class", "tasks"],
-    ["class", "skills"], ["source", "rm"], ["source", "set-authoring"], ["tool", "tests"],
+    ["class", "skills"], ["source", "rm"], ["source", "set-authoring"], ["tool", "tests"], ["tool", "pull"],
     ["--lang", "pt"], ["run", "--lang", "py"], ["run", "--diff", "side"],
     ["run", "--failures", "all"], ["run", "-f"], ["init", "--skip-remotes"],
     ["tool", "migrate", "--apply"], ["tool", "diff", "a", "b", "--text"],
@@ -345,14 +348,17 @@ def test_collect_repo_requires_repository(tmp_path: Path) -> None:
     assert "No TKO repository found" in result.output
 
 
-def test_tool_pull_routes_paths_and_threads(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_git_reset_routes_paths_and_threads(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    from tko.git.reset_remote import ResetResult
+
     observed: list[tuple[list[Path], int]] = []
 
-    def pull_all(paths: list[Path], threads: int) -> None:
+    def reset_many(paths: list[Path], threads: int) -> list[ResetResult]:
         observed.append((paths, threads))
+        return [ResetResult(path, True, "ok") for path in paths]
 
-    monkeypatch.setattr("tko.collect.pull.Pull.pull_all_parallel", pull_all)
-    result: Result = invoke(tmp_path, ["tool", "pull", "one", "two", "--threads", "4"])
+    monkeypatch.setattr("tko.cli.cli_git.RemoteReset.reset_many", reset_many)
+    result: Result = invoke(tmp_path, ["git", "reset-to-remote", "one", "two", "--threads", "4"])
     assert result.exit_code == 0, result.output
     assert observed == [([Path("one"), Path("two")], 4)]
 

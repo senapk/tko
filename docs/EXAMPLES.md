@@ -54,10 +54,11 @@ Objetivo: alternar entre formato compacto e pasta.
 
 ```bash
 # extrair para pasta
-tko tests convert pasta -o tests.toml
+mkdir -p pasta
+tko tests convert tests.toml -o pasta/
 
 # converter para vpl
-tko tests convert t.vpl -o tests.toml
+tko tests convert tests.toml -o t.vpl
 
 # gerar t.tio a partir de README + extra
 tko tests convert README.md extra.tio -o t.tio

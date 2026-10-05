@@ -44,15 +44,6 @@ app.command("timeline", help="Browse saved file versions and diffs with fzf")(au
 app.command("unpack", help="Unpack audit data from a .json or .jsonl file into individual files")(audit_unpack)
 
 
-@app.command("pull", help="Perform git pull in many repositories using threads")
-def tool_pull(
-    path: list[Path] = typer.Argument(..., help="Paths to repositories"),
-    threads: int = typer.Option(10, "--threads", "-t", min=1, help="Number of parallel workers"),
-) -> None:
-    from tko.collect.pull import Pull
-
-    Pull.pull_all_parallel(path, threads)
-
 @app.command("mdpp", help="Preprocessor for markdown files")
 def tool_mdpp(
     targets: Optional[list[str]] = typer.Argument(None, help="Readme files or None to default task behavior"),

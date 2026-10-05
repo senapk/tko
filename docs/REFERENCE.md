@@ -22,6 +22,17 @@ tko --ui-language pt -C meu-repositorio task show
 
 ## Inicialização e execução
 
+Para sincronizar o repositório Git do aluno na branch `main` com `origin`:
+
+```bash
+tko git sync
+```
+
+O comando confirma antes de adicionar todas as alterações e pedir a mensagem do
+commit. Se houver conflitos, mostra os arquivos que precisam de resolução e
+continua em uma nova execução. Os logs ficam no diretório de dados do usuário
+do TKO, fora do repositório. O comando é atualizado junto com o pacote TKO.
+
 ```bash
 tko repo init --language py
 tko repo init --skip-sources
@@ -133,11 +144,15 @@ tko collect repo --history --game --json
 tko collect repo --daily --width 100 --height 10
 tko collect tasks aluno1 aluno2 --csv tasks.csv
 tko collect skills aluno1 aluno2 --csv skills.csv --source course --language py
-tko tool pull aluno1 aluno2 --threads 10
+tko git reset-to-remote aluno1 aluno2 --threads 10
 ```
 
 `collect repo` trabalha no repositório atual; `tasks` e `skills` produzem
-relatórios CSV de vários repositórios. `tko tool pull` atualiza repositórios via Git em paralelo.
+relatórios CSV de vários repositórios. `tko git reset-to-remote` busca a branch
+padrão de `origin`, descarta commits e alterações locais, remove arquivos não
+rastreados e ignorados e substitui o conteúdo local pelo remoto. A operação
+processa vários repositórios em paralelo. O Git não recupera os arquivos não
+rastreados ou ignorados removidos pelo comando.
 O gráfico de uma atividade está em `task show --graph-only`.
 
 ## Auditoria

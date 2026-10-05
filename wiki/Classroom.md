@@ -92,12 +92,15 @@ Fluxo comum:
 Exemplos:
 
 ```bash
-tko tool pull aluno1 aluno2 aluno3
+tko git reset-to-remote aluno1 aluno2 aluno3
 tko collect tasks aluno1 aluno2 aluno3 --csv tasks.csv
 tko collect skills aluno1 aluno2 aluno3 --csv skills.csv --source course --language py
 ```
 
 Os argumentos são caminhos para os repositórios locais dos alunos. Eles podem ser informados um a um ou expandidos pelo shell, conforme a organização da pasta.
+`reset-to-remote` descarta alterações e commits locais e remove arquivos não
+rastreados, inclusive os ignorados pelo Git. Use apenas nas cópias locais que
+devem ser substituídas pelo conteúdo remoto.
 
 ## Evidências coletadas
 

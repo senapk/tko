@@ -9,7 +9,7 @@ Distribuição de tarefas de programação com Git, desenvolvimento na IDE do al
 
 [![Tests](https://github.com/senapk/tko/actions/workflows/tests.yml/badge.svg)](https://github.com/senapk/tko/actions/workflows/tests.yml)
 [![PyPI version](https://img.shields.io/pypi/v/tko)](https://pypi.org/project/tko/)
-[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](https://pypi.org/project/tko/)
+[![Python](https://img.shields.io/badge/python-3.12%2B-blue)](https://pypi.org/project/tko/)
 [![Downloads](https://static.pepy.tech/badge/tko/month)](https://pepy.tech/project/tko)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Repo](https://img.shields.io/badge/GitHub-senapk%2Ftko-181717?logo=github)](https://github.com/senapk/tko)
@@ -46,6 +46,12 @@ Saída esperada:
 - O comando `tko --version` deve mostrar a versão instalada.
 - O comando `tko --help` deve listar os comandos principais (`task`, `repo`, `config`, `run`, ...).
 
+No repositório Git do aluno, `tko git sync` confirma e salva alterações locais,
+recebe atualizações de `origin/main` e envia os commits. Em caso de conflito,
+resolva os arquivos indicados e execute o comando novamente.
+Para substituir cópias locais pelo remoto, `tko git reset-to-remote` descarta
+alterações e commits locais e apaga arquivos não rastreados e ignorados.
+
 Se `tko` não for encontrado, adicione `~/.local/bin` ao PATH e abra um novo terminal:
 
 ```bash
@@ -58,9 +64,6 @@ Instalações existentes via `pipx` continuam suportadas:
 pipx install tko
 ```
 
-O pacote oferece dois comandos: `tko` para consumo das tarefas e `tko` para
-operações administrativas e de produção.
-
 ### Windows
 
 Use o guia recomendado para setup com VS Code, WSL e Ubuntu:
@@ -72,17 +75,14 @@ Use o guia recomendado para setup com VS Code, WSL e Ubuntu:
 ```text
 tko
 ├── open, run, update, uninstall
-├── task       show, open, list, down
+├── task       show, open, down, check
 ├── repo       init, list, migrate, profile, source, audit
-└── config     set, list, reset [cache|settings|languages]
-
-tko
-├── task       build, check
-├── tests      convert, list
-├── index      build, download, update
+├── build      task, index, download
+├── tests      convert, list, update-outputs
+├── git        sync, reset-to-remote
 ├── collect    repo, tasks, skills
-├── audit      init, preview, unpack
-└── tool       pull, mdpp, older, diff, rebase, filter, html
+├── config     set, list, reset [cache|settings|languages]
+└── tool       timeline, unpack, mdpp, older, diff, rebase, filter, html
 ```
 
 ```bash
