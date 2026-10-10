@@ -49,6 +49,35 @@ funciona com arquivos independentes, sem um repositório TKO.
 preferência configurada.
 `run --filter/-F` filtra os solvers temporariamente. `--index/-i` escolhe um teste.
 
+### Revisão de repositórios de alunos
+
+```bash
+tko review caminho/para/turma
+```
+
+Cada subpasta imediata de `turma` deve ser um repositório TKO de um aluno. O
+comando abre os repositórios em ordem alfabética, mostrando o aluno atual e sua
+posição na lista. Use `n` para avançar e `N` para voltar. A tarefa selecionada
+pela chave completa, as quests expandidas, o filtro de tarefas e o painel aberto
+acompanham a navegação. Se a tarefa não existir no próximo repositório, a
+interface indica sua ausência e mantém a chave para os alunos seguintes.
+
+O modo de revisão permite as mesmas ações de `tko open`, inclusive execução,
+avaliação e edição. Ele não descarta alterações automaticamente; quando
+necessário, use `tko git reset-to-remote` separadamente nas cópias locais.
+Com uma tarefa selecionada, pressione `m` para comparar todos os alunos em uma
+tabela. Use a busca para filtrar nomes, selecione um cabeçalho para ordenar,
+`Enter` para abrir o aluno, `Esc` para voltar, `r` para atualizar e `e` para
+exportar um CSV da tarefa com todos os alunos. A tabela distingue tarefa
+ausente, aluno sem atividade e erro de carga.
+
+Se um repositório exigir migração, `review` aplica automaticamente o plano de
+`tko repo migrate` e tenta abri-lo de novo. Se a migração não puder ser aplicada,
+informa o erro e continua no próximo aluno. Migrações interrompidas que exigem
+`--recover` continuam dependendo de recuperação manual.
+Ao abrir a tabela, a revisão também tenta migrar cada repositório da turma que
+precisar e mantém as falhas visíveis nas respectivas linhas.
+
 ## Atividades: task
 
 ```bash

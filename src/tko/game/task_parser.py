@@ -7,7 +7,6 @@ from tko.game.source_xp_config import SourceXpConfig
 from tko.util.git_hub_url import GitHubUrl
 from tko.feno.task_source import activity_path_from_local_link
 from tko.i18n import Msg
-from icecream import ic # type: ignore
 from pathlib import Path
 from urllib.parse import urlparse
 

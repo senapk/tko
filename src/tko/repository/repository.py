@@ -9,7 +9,6 @@ from tko.repository.remote import Source
 from tko.game.game import Game
 from tko.logger.logger import Logger
 from tko.repository.repository_paths import RepositoryPaths
-from icecream import ic # type: ignore
 from tko.repository.git_cache import GitCache
 from tko.config.flags import Flags
 from tko.game.task import Task

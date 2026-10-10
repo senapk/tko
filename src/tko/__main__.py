@@ -7,7 +7,6 @@ import sys
 import os
 from pathlib import Path
 import typer
-from icecream import ic  # type: ignore
 
 from tko.__init__ import __version__
 from tko.cli.cli_config import app as config_app

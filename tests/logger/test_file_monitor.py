@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from pathlib import Path
+import time
 
 from tko.logger.file_monitor import FileMonitor
 
@@ -49,3 +50,14 @@ def test_file_monitor_callback_is_not_called_when_no_changes(tmp_path: Path) -> 
     monitor.force_flush()
 
     assert callback_called["value"] is False
+
+
+def test_file_monitor_stops_without_waiting_for_poll_interval(tmp_path: Path) -> None:
+    monitor = FileMonitor(root_directory=tmp_path)
+    monitor.init()
+    time.sleep(0.05)
+
+    start: float = time.monotonic()
+    monitor.stop()
+
+    assert time.monotonic() - start < 0.3

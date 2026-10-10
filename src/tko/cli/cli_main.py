@@ -96,6 +96,19 @@ def register_main_commands(app: typer.Typer) -> None:
         action.execute()
         watcher.stop_watching()
 
+    @app.command("review", help="Browse student TKO repositories in a folder")
+    def review_cmd(
+        ctx: typer.Context,
+        parent: Path = typer.Argument(..., help="Folder containing one TKO repository per student"),
+    ) -> None:
+        from tko.play.review import ReviewFolderError, ReviewSession
+
+        settings: Settings = ctx.obj
+        try:
+            ReviewSession(settings, parent.resolve()).run()
+        except ReviewFolderError as error:
+            raise typer.BadParameter(str(error), param_hint="PARENT") from error
+
     @app.command("update", help="Update a script-managed TKO installation")
     def update_cmd() -> None:
         from tko.cli.cli_config import self_update_cmd

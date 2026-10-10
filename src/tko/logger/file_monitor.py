@@ -1,6 +1,5 @@
 from pathlib import Path
 import threading
-import time
 from datetime import datetime
 from typing import Callable
 from watchdog.observers import Observer
@@ -88,7 +87,7 @@ class FileMonitor:
         try:
             while not self._stop_event.is_set():
                 self._check_save_events()
-                time.sleep(0.5)
+                self._stop_event.wait(0.5)
         finally:
             self._observer.stop()
             self._observer.join()

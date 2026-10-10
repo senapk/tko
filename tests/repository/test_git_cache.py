@@ -369,6 +369,25 @@ def test_non_expired_repository_is_marked_updated(
     assert url in cache.updated
 
 
+def test_fresh_cached_repository_does_not_check_network(
+    monkeypatch: MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    cache = GitCacheProbe(tmp_path, update_mode=UpdateMode.IF_OLDER)
+    url = "https://example.com/repo.git"
+    repo = cache.public_repo_dir(url)
+    (repo / ".git").mkdir(parents=True)
+    cache.public_mark_updated(repo)
+
+    def fail_if_checked(_timeout: int = 1) -> bool:
+        raise AssertionError("fresh cache must not probe the network")
+
+    monkeypatch.setattr("tko.repository.git_cache.has_internet", fail_if_checked)
+
+    assert cache.get_repository_dir(url, load_git=True) == (repo, True)
+    assert url in cache.updated
+
+
 def test_failed_update_is_added_to_avoid(
     monkeypatch: MonkeyPatch,
     tmp_path: Path,

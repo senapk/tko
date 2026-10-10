@@ -7,7 +7,6 @@ from tko.logger.log_item_move import LogItemMove
 from tko.logger.log_item_self import LogItemSelf
 from tko.logger.delta import Delta, DeltaMode
 import datetime as dt
-from icecream import ic # type: ignore
 
 
 class LogSort:
@@ -67,5 +66,3 @@ class LogSort:
             self.__cached_move_list.append((delta, item))
         elif isinstance(item, LogItemSelf):
             self.__cached_self_list.append((delta, item))
-            
-    

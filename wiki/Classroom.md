@@ -102,6 +102,15 @@ Os argumentos são caminhos para os repositórios locais dos alunos. Eles podem 
 rastreados, inclusive os ignorados pelo Git. Use apenas nas cópias locais que
 devem ser substituídas pelo conteúdo remoto.
 
+Para inspecionar os alunos um de cada vez na interface normal do TKO, execute
+`tko review .` nessa pasta. Use `n` e `N` para alternar entre alunos mantendo a
+tarefa e a visualização. O modo de revisão tenta migrar automaticamente cada
+repositório antigo ao abri-lo e segue para o próximo aluno se a migração falhar.
+Ele não executa reset automaticamente.
+Com uma tarefa selecionada, `m` abre uma tabela de todos os alunos para essa
+tarefa. `Enter` abre o aluno destacado; `e` exporta a comparação em CSV. A tabela
+tenta migrar os repositórios da turma e mostra uma linha de erro se algum falhar.
+
 ## Evidências coletadas
 
 O professor pode analisar:

@@ -47,7 +47,7 @@ def test_command_tree_has_only_canonical_names() -> None:
     root = get_command(app)
     assert isinstance(root, Group)
     assert set(root.commands) == {
-        "run", "open", "update", "uninstall", "task", "repo", "config",
+        "run", "open", "review", "update", "uninstall", "task", "repo", "config",
         "collect", "build", "tests", "tool", "git",
     }
     task = root.commands["task"]

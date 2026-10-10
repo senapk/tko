@@ -4,6 +4,7 @@ from tko.config.settings import Settings
 from tko.play.language_setter import LanguageSetter
 from tko.repository.repository import Repository
 from tko.repository.repository_watcher import RepositoryWatcher
+from tko.play.review_context import ReviewNavigation, ReviewTarget
 
 
 class Play:
@@ -36,4 +37,6 @@ class Play:
             ).run()
             if action is None:
                 return
+            if isinstance(action, (ReviewNavigation, ReviewTarget)):
+                raise RuntimeError("Student navigation requires a review session")
             action()

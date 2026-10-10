@@ -262,9 +262,10 @@ class Renderer:
     def write_file(self, header: list[TaskLine | str], quests: list[QuestLine]) -> None:
         # Combine header and quests into a single list of lines
         output = self._render(header, quests)
-        # print("\n".join(output))
-        with open(self.index_path, "w", encoding="utf-8") as f:
-            f.write("\n".join(output) + "\n")
+        content: bytes = ("\n".join(output) + "\n").encode("utf-8")
+        if self.index_path.is_file() and self.index_path.read_bytes() == content:
+            return
+        self.index_path.write_bytes(content)
 
 
 class Finder:

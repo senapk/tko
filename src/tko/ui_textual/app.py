@@ -23,6 +23,8 @@ from tko.game.task import Task
 from tko.game.tree_item import IsTreeItem
 from tko.play.daily_graph import DailyGraph
 from tko.play.gui_keys import GuiKeys
+from tko.play.review_context import ReviewContext, ReviewLocation, ReviewNavigation, ReviewTarget
+from tko.play.review_overview import ReviewOverviewService
 from tko.play.preview_service import PreviewService
 from tko.play.search import Search
 from tko.play.task_action import TaskAction
@@ -76,9 +78,10 @@ class HelpScreen(ModalScreen[None]):
     #help-dialog { width: 76; height: auto; max-height: 80%; padding: 1 2; border: round $accent; background: $surface; }
     """
 
-    def __init__(self, portuguese: bool = True) -> None:
+    def __init__(self, portuguese: bool = True, review: bool = False) -> None:
         super().__init__()
         self.portuguese = portuguese
+        self.review = review
 
     def compose(self) -> ComposeResult:
         title = "Atalhos do TKO" if self.portuguese else "TKO shortcuts"
@@ -95,6 +98,11 @@ class HelpScreen(ModalScreen[None]):
             "Tab switch panel  •  [/] expand/collapse all  •  R reload  •  q quit\n\n"
             "Press Esc to close."
         )
+        if self.review:
+            content += (
+                "\nRevisão: n próximo aluno • N aluno anterior • m tabela da turma."
+                if self.portuguese else "\nReview: n next student • N previous student • m class table."
+            )
         yield Vertical(
             Label(title, classes="title"),
             Static(content, markup=False),
@@ -218,13 +226,14 @@ class TaskTreeView(Tree[IsTreeItem]):
         self.rebuild()
 
 
-class TkoApp(App[Callable[[], None] | None]):
+class TkoApp(App[Callable[[], None] | ReviewNavigation | ReviewTarget | None]):
     """The Textual replacement for the repository browser in ``tko open``."""
 
     TITLE = "TKO"
     ENABLE_COMMAND_PALETTE = False
     CSS = """
     Screen { layout: vertical; background: $background; }
+    #review-header { height: 1; padding: 0 1; background: $primary; color: $background; }
     .panel-header .top-action { width: 1fr; min-width: 0; height: 1; padding: 0 1; border: none; background: $primary; color: $background; }
     .panel-header .top-action:hover { background: $primary; }
     .panel-header .top-action.active { background: $accent; color: $text; text-style: bold; }
@@ -276,17 +285,51 @@ class TkoApp(App[Callable[[], None] | None]):
         Binding(GuiKeys.colors, "toggle_theme", "Cores"),
     ]
 
-    def __init__(self, settings: Settings, repo: Repository, watcher: RepositoryWatcher | None, need_update: bool = False) -> None:
+    def __init__(
+        self, settings: Settings, repo: Repository, watcher: RepositoryWatcher | None,
+        need_update: bool = False,
+        review_context: ReviewContext | None = None,
+        review_location: ReviewLocation | None = None,
+        review_overview: ReviewOverviewService | None = None,
+    ) -> None:
         super().__init__()
         self.register_theme(make_theme(DARK))
         self.register_theme(make_theme(LIGHT))
         self.settings = settings
         self.theme = settings.app.theme if settings.app.theme in THEMES else DARK.name
+        self.review_context = review_context
+        self.review_location = review_location
+        self.review_overview: ReviewOverviewService | None = review_overview
+        self._overview_task_key: str | None = None
         self._bindings = BindingsMap(self._localized_bindings())
         self.repo = repo
         self.watcher = watcher
         self.need_update = need_update
         self.model = TaskTree(settings, repo)
+        self._review_missing_key: str | None = None
+        self._review_fallback_selected: str = ""
+        self._review_forced_all: bool = False
+        self._review_user_changed_view: bool = False
+        self._view_ready: bool = False
+        if review_context is not None and review_context.initialized:
+            self.model.state.expanded = set(review_context.expanded)
+            key: str = review_context.selected_key
+            if key in repo.game.tasks or key in repo.game.quests:
+                self.model.state.selected = key
+            elif key:
+                self._review_missing_key = key
+                self.model.state.selected = ""
+            if review_context.view_mode:
+                repo.flags.task_view_mode.set_value(review_context.view_mode)
+            if review_context.panel_mode:
+                repo.flags.panel.set_value(review_context.panel_mode)
+            if (
+                key in repo.game.tasks
+                and repo.flags.task_view_mode.is_pinned()
+                and key not in self.model.state.pinned
+            ):
+                repo.flags.task_view_mode.set_view_all()
+                self._review_forced_all = True
         # TreeRenderer keeps task and quest text within the available tree
         # content width. The callback is evaluated only while rendering, after
         # the widget has a layout size.
@@ -299,7 +342,7 @@ class TkoApp(App[Callable[[], None] | None]):
         self.skills = GuiSkillsBar(repo.game, settings.colors, repo.flags, lambda: self._selected_source())
 
     def _localized_bindings(self) -> list[Binding]:
-        return [
+        bindings: list[Binding] = [
             Binding("q", "quit", self._t("Sair", "Quit"), show=False),
             Binding("escape", "escape", self._t("Sair", "Quit")),
             Binding("slash", "search", self._t("Buscar", "Search")),
@@ -329,6 +372,13 @@ class TkoApp(App[Callable[[], None] | None]):
             Binding("question_mark", "help", self._t("Ajuda", "Help")),
             Binding(GuiKeys.colors, "toggle_theme", self._t("Cores", "Colors")),
         ]
+        if self.review_context is not None:
+            bindings.extend([
+                Binding("n", "next_student", self._t("Próximo aluno", "Next student")),
+                Binding("N", "previous_student", self._t("Aluno anterior", "Previous student")),
+                Binding("m", "class_overview", self._t("Turma", "Class overview")),
+            ])
+        return bindings
 
     def _t(self, portuguese: str, english: str) -> str:
         return portuguese if self.settings.app.ui_language == "pt-BR" else english
@@ -340,6 +390,8 @@ class TkoApp(App[Callable[[], None] | None]):
         self.refresh_view()
 
     def compose(self) -> ComposeResult:
+        if self.review_location is not None:
+            yield Static("", id="review-header", markup=False)
         yield Input(placeholder=self._t("Buscar tarefas…", "Search tasks…"), id="search")
         with Horizontal(id="body"):
             with Vertical(id="task-frame", classes="play-frame"):
@@ -365,7 +417,12 @@ class TkoApp(App[Callable[[], None] | None]):
             self.watcher.set_audit_notification_callback(self._notify_audit)
         self._apply_panel_size()
         self.refresh_view()
+        self._view_ready = True
+        # The tree's own width is settled only after the first layout pass.
+        # Rebuild once with that width so task titles are not cut at 30 cells.
         self.call_after_refresh(self.refresh_view)
+        if self._review_missing_key is not None:
+            self._review_fallback_selected = self.model.state.selected
         self.query_one(TaskTreeView).focus()
         if self.need_update:
             from tko.config.check_version import CheckVersion
@@ -403,6 +460,15 @@ class TkoApp(App[Callable[[], None] | None]):
     def on_tree_node_highlighted(self, event: Tree.NodeHighlighted[IsTreeItem]) -> None:
         if event.node.data is not None:
             self.model.state.selected = event.node.data.basic.full_key
+            if (
+                self._review_missing_key is not None
+                and self._review_fallback_selected
+                and self.model.state.selected != self._review_fallback_selected
+            ):
+                self._review_missing_key = None
+                if self.review_context is not None:
+                    self.review_context.selected_key = self.model.state.selected
+                self._refresh_review_header()
             self.refresh_panel()
 
     def on_tree_node_expanded(self, event: Tree.NodeExpanded[IsTreeItem]) -> None:
@@ -453,7 +519,7 @@ class TkoApp(App[Callable[[], None] | None]):
             self.refresh_view()
 
     def on_resize(self) -> None:
-        if self.is_mounted:
+        if self._view_ready:
             self.refresh_view()
 
     def _tree_content_width(self) -> int:
@@ -492,8 +558,21 @@ class TkoApp(App[Callable[[], None] | None]):
         self.refresh_panel()
 
     def refresh_view(self) -> None:
+        self._refresh_review_header()
         self._refresh_panel_headers()
         self.refresh_tree()
+
+    def _refresh_review_header(self) -> None:
+        if self.review_location is not None:
+            location: ReviewLocation = self.review_location
+            label: str = f"{location.student} ({location.index + 1}/{location.total})"
+            if self._review_missing_key is not None:
+                label += self._t(
+                    f" · tarefa ausente: {self._review_missing_key}",
+                    f" · missing task: {self._review_missing_key}",
+                )
+            label += self._t(" · n próximo / N anterior / m turma", " · n next / N previous / m class")
+            self.query_one("#review-header", Static).update(label)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         actions = {
@@ -653,10 +732,12 @@ class TkoApp(App[Callable[[], None] | None]):
             self.notify("Nenhuma tarefa fixada.", severity="warning")
             return
         self.repo.flags.task_view_mode.set_view_pinned()
+        self._review_user_changed_view = True
         self.refresh_view()
 
     def action_show_all(self) -> None:
         self.repo.flags.task_view_mode.set_view_all()
+        self._review_user_changed_view = True
         self.refresh_view()
 
     def _set_panel(self, value: str) -> None:
@@ -725,7 +806,7 @@ class TkoApp(App[Callable[[], None] | None]):
         self.notify("Repositório recarregado.")
 
     def action_help(self) -> None:
-        self.push_screen(HelpScreen(self.settings.app.ui_language == "pt-BR"))
+        self.push_screen(HelpScreen(self.settings.app.ui_language == "pt-BR", self.review_context is not None))
 
     def action_choose_language(self) -> None:
         from tko.repository.repository_config import RepositoryLoader
@@ -1000,6 +1081,10 @@ class TkoApp(App[Callable[[], None] | None]):
 
     def action_activate(self) -> None:
         item = self._selected_item()
+        if self.review_context is not None and item is not None:
+            self._review_missing_key = None
+            self.review_context.selected_key = item.basic.full_key
+            self._refresh_review_header()
         if isinstance(item, Quest):
             if item.basic.full_key in self.model.state.expanded:
                 self.model.state.expanded.remove(item.basic.full_key)
@@ -1102,11 +1187,74 @@ class TkoApp(App[Callable[[], None] | None]):
             DefaultDraftCreator(self.settings).create(drafts_folder, self.repo.data.lang)
 
     def _run_after_exit(self, callback: Callable[[], None]) -> None:
+        self._capture_review_context()
         self.model.save_state()
         self.settings.save_settings()
         self.exit(result=callback)
 
     async def action_quit(self) -> None:
+        self._capture_review_context()
         self.model.save_state()
         self.settings.save_settings()
         self.exit()
+
+    def _capture_review_context(self) -> None:
+        context: ReviewContext | None = self.review_context
+        if context is None:
+            return
+        selected: str = self.model.state.selected
+        if self._review_missing_key is None or selected != self._review_fallback_selected:
+            context.selected_key = selected
+        context.expanded = set(self.model.state.expanded)
+        if not self._review_forced_all or self._review_user_changed_view:
+            context.view_mode = self.repo.flags.task_view_mode.get_value()
+        context.panel_mode = self.repo.flags.panel.get_value()
+        context.initialized = True
+
+    def _navigate_student(self, delta: int) -> None:
+        location: ReviewLocation | None = self.review_location
+        if location is None:
+            return
+        target: int = location.index + delta
+        if target < 0 or target >= location.total:
+            self.notify(self._t("Não há mais alunos nessa direção.", "No more students in that direction."))
+            return
+        self._capture_review_context()
+        self.model.save_state()
+        self.settings.save_settings()
+        self.exit(result=ReviewNavigation(delta))
+
+    def action_next_student(self) -> None:
+        self._navigate_student(1)
+
+    def action_previous_student(self) -> None:
+        self._navigate_student(-1)
+
+    def action_class_overview(self) -> None:
+        service: ReviewOverviewService | None = self.review_overview
+        location: ReviewLocation | None = self.review_location
+        item: IsTreeItem | None = self._selected_item()
+        if service is None or location is None:
+            return
+        if not isinstance(item, Task):
+            self.notify(self._t("Selecione uma tarefa para comparar.", "Select a task to compare."), severity="warning")
+            return
+        from tko.ui_textual.review_overview import ReviewOverviewScreen
+
+        self._overview_task_key = item.basic.full_key
+        self.push_screen(ReviewOverviewScreen(service, item.basic.full_key, location.index), self._overview_selected)
+
+    def _overview_selected(self, index: int | None) -> None:
+        location: ReviewLocation | None = self.review_location
+        task_key: str | None = self._overview_task_key
+        self._overview_task_key = None
+        if task_key is not None:
+            self.model.state.selected = task_key
+        if index is None or location is None or index == location.index:
+            return
+        self._capture_review_context()
+        if self.review_context is not None and task_key is not None:
+            self.review_context.selected_key = task_key
+        self.model.save_state()
+        self.settings.save_settings()
+        self.exit(result=ReviewTarget(index))

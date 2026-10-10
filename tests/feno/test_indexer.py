@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import pytest
@@ -172,6 +173,23 @@ def test_fix_readme_does_not_duplicate_source_prefixed_task_keys(tmp_path: Path)
 
     content = index_path.read_text(encoding="utf-8")
     assert content.count("[New task](labs/new_task/README.md)") == 1
+
+
+def test_fix_readme_keeps_mtime_when_content_is_unchanged(tmp_path: Path) -> None:
+    from tko.feno.indexer import fix_readme
+
+    index: Path = tmp_path / "README.md"
+    source: Path = tmp_path / "labs"
+    source.mkdir()
+    index.write_text("# labs\n", encoding="utf-8")
+    fix_readme(index, source, verbose=False)
+    original: bytes = index.read_bytes()
+    os.utime(index, ns=(1_000_000_000, 1_000_000_000))
+
+    fix_readme(index, source, verbose=False)
+
+    assert index.read_bytes() == original
+    assert index.stat().st_mtime_ns == 1_000_000_000
 
 
 def test_fix_readme_removes_existing_duplicate_local_task(tmp_path: Path) -> None:

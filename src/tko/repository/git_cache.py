@@ -227,6 +227,28 @@ class GitCache:
                 return target_path, True
             return target_path, False
 
+        if url in self.avoid:
+            if target_path.exists():
+                logger.debug(f"Skipping update for {url} due to previous failure. Using old content.")
+                return target_path, True
+            logger.debug(f"Skipping update for {url} due to previous failure. Directory missing.")
+            return target_path, False
+
+        if url in self.updated:
+            return target_path, True
+
+        if (
+            self.update_mode == UpdateMode.IF_OLDER
+            and self._is_valid_repo(target_path)
+            and not self._is_expired(target_path)
+        ):
+            # Keep the cache lock used by the normal path: another process may
+            # be updating the repository while this instance opens it.
+            with self._acquire_lock(self._lock_path(target_path)):
+                if self._is_valid_repo(target_path) and not self._is_expired(target_path):
+                    self.updated[url] = True
+                    return target_path, True
+
         if not has_internet(1):
             if target_path.exists():
                 logger.debug(
@@ -237,18 +259,6 @@ class GitCache:
                 return target_path, True
 
             return target_path, False
-
-        if url in self.avoid:
-            if target_path.exists():
-                logger.debug( f"Skipping update for {url} due to previous failure. Using old content." )
-                return target_path, True
-
-            logger.debug( f"Skipping update for {url} due to previous failure. Directory missing." )
-
-            return target_path, False
-
-        if url in self.updated:
-            return target_path, True
 
         lock_path = self._lock_path(target_path)
 

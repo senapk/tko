@@ -74,7 +74,7 @@ Use o guia recomendado para setup com VS Code, WSL e Ubuntu:
 
 ```text
 tko
-├── open, run, update, uninstall
+├── open, review, run, update, uninstall
 ├── task       show, open, down, check
 ├── repo       init, list, migrate, profile, source, audit
 ├── build      task, index, download
@@ -111,6 +111,15 @@ O idioma da interface usa `--ui-language pt|en` antes do comando; a linguagem de
 programação usa `--language/-l` em `init`, `run` e `collect skills`.
 
 Veja a [referência da CLI](docs/REFERENCE.md) para parâmetros e exemplos completos.
+
+Para revisar uma pasta com um repositório TKO por aluno, use `tko review PASTA`.
+Na interface, `n` e `N` alternam entre alunos, mantendo a tarefa selecionada,
+as quests expandidas e o painel. Com uma tarefa selecionada, `m` abre a tabela
+da turma para comparar avaliação, execuções, versões, tempo e último evento de
+todos os alunos; `Enter` abre o aluno destacado e `e` exporta um CSV. As ações
+normais do TKO continuam disponíveis;
+o comando não executa `reset-to-remote` automaticamente. Repositórios que
+precisem de migração são migrados ao serem abertos na revisão.
 
 ## Casos de Uso
 
