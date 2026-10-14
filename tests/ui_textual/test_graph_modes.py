@@ -98,7 +98,15 @@ def test_graph_footer_buttons_and_layout(tmp_path: Path) -> None:
                 assert time.has_class("active")
             app.selected = Quest("Quest", "quest")
             app.refresh_panel()
-            assert time.disabled and executions.disabled
+            assert not time.disabled and not executions.disabled
+            assert str(time.label) == "Tabela [PgDn]"
+            assert str(executions.label) == "Barras [PgUp]"
+            await pilot.click("#graph-time")
+            assert repo.flags.quest_graph_mode.is_table_view()
+            assert time.has_class("active")
+            await pilot.click("#graph-executions")
+            assert repo.flags.quest_graph_mode.is_bars_view()
+            assert executions.has_class("active")
             assert footer.display
             app.selected = None
             app.refresh_panel()

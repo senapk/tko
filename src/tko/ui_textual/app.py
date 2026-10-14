@@ -28,6 +28,7 @@ from tko.play.review_overview import ReviewOverviewService
 from tko.play.preview_service import PreviewService
 from tko.play.search import Search
 from tko.play.task_action import TaskAction
+from tko.play.weekly_study_table import WeeklyStudyTable
 from tko.play_gui.gui_graph_panel import GuiGraphPanel
 from tko.play_gui.gui_skills_bar import GuiSkillsBar
 from tko.play_tree.task_formatter import TaskFormatter
@@ -89,12 +90,14 @@ class HelpScreen(ModalScreen[None]):
             "↑/↓ navegar  •  ←/→ expandir/contrair  •  Enter abrir/executar\n"
             "/ buscar  •  f fixar  •  b baixar  •  1/2 tarefas  •  3/4/5/6 painel\n"
             "Gráfico: 4 alterna eixo X • PgUp execuções • PgDn tempo (min)\n"
+            "Quests: PgUp barras • PgDn tabela semanal\n"
             "Tab alternar painel  •  [/] expandir/compactar tudo  •  R recarregar  •  q sair\n\n"
             "Pressione Esc para fechar."
             if self.portuguese
             else "↑/↓ navigate  •  ←/→ expand/collapse  •  Enter open/run\n"
             "/ search  •  f pin  •  b download  •  1/2 tasks  •  3/4/5/6 panel\n"
             "Graph: 4 switches X axis • PgUp executions • PgDn time (min)\n"
+            "Quests: PgUp bars • PgDn weekly table\n"
             "Tab switch panel  •  [/] expand/collapse all  •  R reload  •  q quit\n\n"
             "Press Esc to close."
         )
@@ -645,22 +648,37 @@ class TkoApp(App[Callable[[], None] | ReviewNavigation | ReviewTarget | None]):
             footer.display = visible
             self.call_after_refresh(self.refresh_panel)
         time_view: bool = self.repo.flags.task_graph_mode.is_time_view()
-        options: list[tuple[str, str, bool]] = [
-            ("graph-executions", self._t("Gráfico Execução [PgUp]", "Execution Graph [PgUp]"), not time_view),
-            ("graph-time", self._t("Gráfico Tempo [PgDown]", "Time Graph [PgDown]"), time_view),
-        ]
+        if isinstance(item, Quest):
+            table_view: bool = self.repo.flags.quest_graph_mode.is_table_view()
+            options: list[tuple[str, str, bool]] = [
+                ("graph-executions", self._t("Barras [PgUp]", "Bars [PgUp]"), not table_view),
+                ("graph-time", self._t("Tabela [PgDn]", "Table [PgDn]"), table_view),
+            ]
+        else:
+            options = [
+                ("graph-executions", self._t("Gráfico Execução [PgUp]", "Execution Graph [PgUp]"), not time_view),
+                ("graph-time", self._t("Gráfico Tempo [PgDown]", "Time Graph [PgDown]"), time_view),
+            ]
         for identifier, label, active in options:
             button: Button = self.query_one(f"#{identifier}", Button)
             button.label = Text(label)
-            button.disabled = not isinstance(item, Task)
+            button.disabled = not isinstance(item, (Task, Quest))
             button.set_class(active, "active")
 
     def action_graph_time(self) -> None:
-        self.repo.flags.task_graph_mode.set_time_view()
+        item: IsTreeItem | None = self._selected_item()
+        if isinstance(item, Quest):
+            self.repo.flags.quest_graph_mode.set_table_view()
+        else:
+            self.repo.flags.task_graph_mode.set_time_view()
         self.refresh_panel()
 
     def action_graph_executions(self) -> None:
-        self.repo.flags.task_graph_mode.set_exec_view()
+        item: IsTreeItem | None = self._selected_item()
+        if isinstance(item, Quest):
+            self.repo.flags.quest_graph_mode.set_bars_view()
+        else:
+            self.repo.flags.task_graph_mode.set_exec_view()
         self.refresh_panel()
 
     def action_scroll_logs_up(self) -> None:
@@ -681,6 +699,11 @@ class TkoApp(App[Callable[[], None] | ReviewNavigation | ReviewTarget | None]):
             _, header, lines = self.graph.get_task_graph(item.basic.full_key, width, height + 1)
             return lines + [info.center(width) for info in header]
         if isinstance(item, Quest):
+            if self.repo.flags.quest_graph_mode.is_table_view():
+                return WeeklyStudyTable(
+                    self.repo.logger,
+                    portuguese=self.settings.app.ui_language == "pt-BR",
+                ).get_table()
             header, lines = DailyGraph(self.repo.logger, width, height).get_graph()
             return lines + [info.center(width) for info in header]
         return [RT(self._t("Selecione uma tarefa ou missão.", "Select a task or quest."))]
@@ -746,7 +769,11 @@ class TkoApp(App[Callable[[], None] | ReviewNavigation | ReviewTarget | None]):
 
     def action_show_graph(self) -> None:
         if self.repo.flags.panel.is_graph():
-            self.repo.flags.task_graph_mode.toggle()
+            item: IsTreeItem | None = self._selected_item()
+            if isinstance(item, Quest):
+                self.repo.flags.quest_graph_mode.toggle()
+            else:
+                self.repo.flags.task_graph_mode.toggle()
         self._set_panel(PanelMode.GRAPH)
 
     def action_show_logs(self) -> None:

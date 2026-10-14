@@ -4,17 +4,17 @@ from tko.logger.log_sort import LogSort
 from tko.logger.delta import Delta, DeltaMode, DeltaAction
         
 class DayInfo:
-    def __init__(self, day:str = "", week_day: str = "", elapsed_seconds: int = 0):
-        self.day = day
-        self.week_day = week_day
-        self.elapsed_seconds = elapsed_seconds
+    def __init__(self, day: str = "", week_day: str = "", elapsed_seconds: int = 0) -> None:
+        self.day: str = day
+        self.week_day: str = week_day
+        self.elapsed_seconds: int = elapsed_seconds
 
 class DailyListener:
     def __init__(self):
         self.day_actions: dict[str, LogSort] = {}
         self.log_file: str | None = None
 
-    def handle_entry_incoming(self, item: LogItemBase, new_entry: bool = False):
+    def handle_entry_incoming(self, item: LogItemBase, new_entry: bool = False) -> None:
         day = item.datetime.strftime('%Y-%m-%d')
 
         if day not in self.day_actions:
@@ -26,7 +26,7 @@ class DailyListener:
 
         # print(f"Added item for day {day}: {item} with result {delta}") 
 
-    def resume(self):
+    def resume(self) -> dict[str, DayInfo]:
         days = sorted(self.day_actions.keys())
         if days:
             day = days[0]
@@ -50,7 +50,7 @@ class DailyListener:
             output[day] = DayInfo(day = day, week_day=week_day, elapsed_seconds=elapsed)
         return output
     
-    def save_yaml(self):
+    def save_yaml(self) -> None:
         if self.log_file is None:
             return
         with open(self.log_file, 'w') as file:

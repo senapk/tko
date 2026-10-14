@@ -1,4 +1,4 @@
-from tko.config.flags import BoolFlag, Flag, Flags, PanelMode, TaskGraphMode, ViewMode
+from tko.config.flags import BoolFlag, Flag, Flags, PanelMode, QuestGraphMode, TaskGraphMode, ViewMode
 
 
 class TestFlag:
@@ -55,6 +55,7 @@ class TestFlags:
             "inbox": ViewMode.ALL,
             "panel": PanelMode.LOGS,
             "task_graph_mode": TaskGraphMode.TIME,
+            "quest_graph_mode": QuestGraphMode.BARS,
             "show_time": BoolFlag.FALSE,
         }
 
@@ -78,6 +79,7 @@ class TestFlags:
         original.task_view_mode.set_view_all()
         original.panel.set_skills()
         original.task_graph_mode.set_time_view()
+        original.quest_graph_mode.set_table_view()
         original.show_time.set_false()
 
         restored = Flags()
@@ -86,4 +88,5 @@ class TestFlags:
         assert restored.task_view_mode.is_all() is True
         assert restored.panel.is_skills() is True
         assert restored.task_graph_mode.is_time_view() is True
+        assert restored.quest_graph_mode.is_table_view() is True
         assert restored.show_time.is_true() is False

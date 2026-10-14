@@ -164,6 +164,35 @@ class TaskGraphMode(Flag):
         self._value = TaskGraphMode.TIME
 
 
+class QuestGraphMode(Flag):
+    BARS = "bars"
+    TABLE = "table"
+
+    def __init__(self, id: str):
+        super().__init__(
+            id=id,
+            default_value=QuestGraphMode.BARS,
+            msgs={
+                QuestGraphMode.BARS: "Gráfico diário",
+                QuestGraphMode.TABLE: "Tabela semanal",
+            },
+            description="Modo de visualização das quests",
+            keycode="",
+        )
+
+    def is_bars_view(self) -> bool:
+        return self.get_value() == QuestGraphMode.BARS
+
+    def is_table_view(self) -> bool:
+        return self.get_value() == QuestGraphMode.TABLE
+
+    def set_bars_view(self) -> None:
+        self._value = QuestGraphMode.BARS
+
+    def set_table_view(self) -> None:
+        self._value = QuestGraphMode.TABLE
+
+
 class Flags:
     def __init__(self):
         self.task_view_mode = ViewMode("inbox")
@@ -183,6 +212,8 @@ class Flags:
 
         self.task_graph_mode = TaskGraphMode("task_graph_mode")
 
+        self.quest_graph_mode = QuestGraphMode("quest_graph_mode")
+
         self.show_time = BoolFlag(
             id="show_time",
             default_value=True,
@@ -199,6 +230,7 @@ class Flags:
             self.panel,
             # self.show_panel,
             self.task_graph_mode,
+            self.quest_graph_mode,
             self.show_time,
         ]
 
@@ -208,6 +240,7 @@ class Flags:
             self.panel.id: self.panel.get_value(),
             # self.show_panel.id: self.show_panel.get_value(),
             self.task_graph_mode.id: self.task_graph_mode.get_value(),
+            self.quest_graph_mode.id: self.quest_graph_mode.get_value(),
             self.show_time.id: self.show_time.get_value(),
         }
 
@@ -216,4 +249,5 @@ class Flags:
         self.panel.set_value(data.get(self.panel.id, self.panel.default))
         # self.show_panel.set_value(data.get(self.show_panel.id, self.show_panel.default))
         self.task_graph_mode.set_value(data.get(self.task_graph_mode.id, self.task_graph_mode.default))
+        self.quest_graph_mode.set_value(data.get(self.quest_graph_mode.id, self.quest_graph_mode.default))
         self.show_time.set_value(data.get(self.show_time.id, self.show_time.default))
