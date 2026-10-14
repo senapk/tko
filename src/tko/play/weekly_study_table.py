@@ -18,6 +18,8 @@ class WeeklyStudyTable:
 
     @staticmethod
     def _format_time(elapsed_seconds: int) -> str:
+        if elapsed_seconds <= 0:
+            return ""
         total_minutes: int = max(0, elapsed_seconds) // 60
         hours: int
         minutes: int
@@ -47,8 +49,17 @@ class WeeklyStudyTable:
             if self.portuguese
             else ("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
         )
-        header: str = "Sem." + " " + " ".join(f"{day:>4}" for day in weekdays)
-        lines: list[RT] = [RT(header)]
+        widths: tuple[int, ...] = (5, 4, 4, 4, 4, 4, 4, 4)
+
+        def border() -> str:
+            return "+" + "+".join("-" * width for width in widths) + "+"
+
+        def row(cells: tuple[str, ...]) -> str:
+            return "|" + "|".join(
+                f"{cell:^{width}}" for cell, width in zip(cells, widths, strict=True)
+            ) + "|"
+
+        lines: list[RT] = [RT(border()), RT(row(("Sem.", *weekdays))), RT(border())]
 
         week: date = last_sunday
         while week >= first_sunday:
@@ -56,8 +67,9 @@ class WeeklyStudyTable:
             for offset in range(7):
                 day: date = week + timedelta(days=offset)
                 seconds: int = elapsed_by_day.get(day, 0)
-                cells.append(self._format_time(seconds).rjust(4))
-            lines.append(RT(f"{week:%d/%m} " + " ".join(cells)))
+                cells.append(self._format_time(seconds))
+            lines.append(RT(row((week.strftime("%d/%m"), *cells))))
+            lines.append(RT(border()))
             week -= timedelta(days=7)
 
         return lines
