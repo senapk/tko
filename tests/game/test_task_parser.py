@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from tko.game.source_xp_config import SourceXpConfig, XpExpressionError
+from tko.game.task import Task
 from tko.game.task_parser import TaskParser
 
 
@@ -15,7 +16,7 @@ def source_config(variables: str, formula: str) -> SourceXpConfig:
     )
 
 
-def parse(line: str, variables: str = "value", formula: str = "value"):
+def parse(line: str, variables: str = "value", formula: str = "value") -> Task | None:
     return TaskParser(INDEX, xp_config=source_config(variables, formula)).parse_line(line, 7)
 
 
@@ -54,9 +55,18 @@ def test_none_ignores_legacy_or_source_specific_annotations() -> None:
     assert task is not None and task.xp == 0.0
 
 
-def test_missing_declared_variable_has_task_context() -> None:
-    with pytest.raises(XpExpressionError, match=r"course:.+task @task: missing variable\(s\): depth"):
-        parse("- [ ] `@task value=3 eval=self` [Title](task/README.md)", "value, depth", "value + depth")
+def test_missing_declared_variable_assigns_zero_xp() -> None:
+    task = parse("- [ ] `@task value=3 eval=self` [Title](task/README.md)", "value, depth", "value + depth")
+
+    assert task is not None
+    assert task.basic.key == "task"
+    assert task.xp == 0.0
+
+
+def test_invalid_xp_result_assigns_zero_xp() -> None:
+    task = parse("- [ ] `@task value=3 eval=self` [Title](task/README.md)", "value", "value / 0")
+
+    assert task is not None and task.xp == 0.0
 
 
 def test_unconfigured_source_assigns_default_xp() -> None:

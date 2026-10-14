@@ -3,12 +3,13 @@ from tko.game.task import Task
 from tko.game.task_config import TaskConfig
 from tko.game.task_location import TaskLocation
 from tko.game.task_matcher import TaskMatcher
-from tko.game.source_xp_config import SourceXpConfig
+from tko.game.source_xp_config import SourceXpConfig, XpExpressionError
 from tko.util.git_hub_url import GitHubUrl
 from tko.feno.task_source import activity_path_from_local_link
 from tko.i18n import Msg
 from pathlib import Path
 from urllib.parse import urlparse
+from loguru import logger
 
 
 
@@ -106,7 +107,11 @@ class TaskParser:
         )
 
         if task.config.awards_xp:
-            task.game.xp = self.xp_config.calculate(tm.variables, task.basic.key, line_num)
+            try:
+                task.game.xp = self.xp_config.calculate(tm.variables, task.basic.key, line_num)
+            except XpExpressionError as exc:
+                logger.warning("{}; assigning 0 XP to this task", exc)
+                task.game.xp = 0.0
         else:
             task.game.xp = 0.0
 

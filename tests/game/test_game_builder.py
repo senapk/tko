@@ -163,6 +163,22 @@ def test_quest_goal_uses_all_non_wiki_task_xp_without_references(tmp_path: Path)
     assert quest.game.goal_xp == 14.0
 
 
+def test_invalid_task_xp_does_not_discard_source_or_other_tasks(tmp_path: Path) -> None:
+    builder = build_game(
+        tmp_path,
+        '---\nargs: [g, l, s]\nexpr: "g * l * s"\n---\n'
+        '## Quest <!-- @quest -->\n'
+        '- [ ] `eval=self` [Wiki](wiki/cpp/README.md)\n'
+        '- [ ] `g=2 l=3 s=1 eval=diff` [Exercise](exercise/README.md)\n',
+    )
+
+    tasks = builder.collect_tasks()
+    assert list(tasks) == ["base@wiki/cpp", "base@exercise"]
+    assert tasks["base@wiki/cpp"].xp == 0.0
+    assert tasks["base@exercise"].xp == 6.0
+    assert builder.collect_quests()["base@quest"].game.goal_xp == 6.0
+
+
 def test_each_source_uses_its_own_xp_formula(tmp_path: Path) -> None:
     first = tmp_path / "first.md"
     second = tmp_path / "second.md"
