@@ -133,8 +133,10 @@ class TaskTreeView(Tree[IsTreeItem]):
         self.show_root = False
         self.guide_depth = 2
         self._node_by_key: dict[str, TreeNode[IsTreeItem]] = {}
+        self._rendered_width: int = 0
 
     def rebuild(self) -> None:
+        self._rendered_width = self.size.width
         self.model.update()
         self.clear()
         self._node_by_key.clear()
@@ -155,6 +157,10 @@ class TaskTreeView(Tree[IsTreeItem]):
             # Nodes receive their screen line during the next layout pass, so
             # restore the cursor after Textual has refreshed this tree.
             self.call_after_refresh(self._restore_cursor, selected_key)
+
+    def on_resize(self) -> None:
+        if self.size.width > 0 and self.size.width != self._rendered_width:
+            self.rebuild()
 
     def _restore_cursor(self, key: str) -> None:
         if self.model.state.selected != key:
@@ -421,9 +427,6 @@ class TkoApp(App[Callable[[], None] | ReviewNavigation | ReviewTarget | None]):
         self._apply_panel_size()
         self.refresh_view()
         self._view_ready = True
-        # The tree's own width is settled only after the first layout pass.
-        # Rebuild once with that width so task titles are not cut at 30 cells.
-        self.call_after_refresh(self.refresh_view)
         if self._review_missing_key is not None:
             self._review_fallback_selected = self.model.state.selected
         self.query_one(TaskTreeView).focus()
@@ -461,6 +464,8 @@ class TkoApp(App[Callable[[], None] | ReviewNavigation | ReviewTarget | None]):
             tree.focus()
 
     def on_tree_node_highlighted(self, event: Tree.NodeHighlighted[IsTreeItem]) -> None:
+        if not self.query("#side-panel"):
+            return
         if event.node.data is not None:
             self.model.state.selected = event.node.data.basic.full_key
             if (

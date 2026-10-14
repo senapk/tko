@@ -1,3 +1,5 @@
+import json
+import sys
 from pathlib import Path
 
 import typer
@@ -42,15 +44,16 @@ def test_self_update_uses_managed_installation(monkeypatch: MonkeyPatch, tmp_pat
 
 def test_managed_installation_detects_symlinked_venv_python(tmp_path: Path) -> None:
     root: Path = tmp_path / ".local" / "share" / "tko"
-    venv_bin: Path = root / "venv" / "bin"
+    venv_bin: Path = root / "venv" / ("Scripts" if sys.platform == "win32" else "bin")
     venv_bin.mkdir(parents=True)
     system_python: Path = tmp_path / "system-python"
     system_python.touch()
-    python: Path = venv_bin / "python"
+    python: Path = venv_bin / ("python.exe" if sys.platform == "win32" else "python")
     python.symlink_to(system_python)
     metadata: Path = root / "install.toml"
+    launcher: Path = tmp_path / ".local" / "bin" / "tko"
     metadata.write_text(
-        f'method = "managed"\nlauncher = "{tmp_path / ".local" / "bin" / "tko"}"\n',
+        f'method = "managed"\nlauncher = {json.dumps(str(launcher))}\n',
         encoding="utf-8",
     )
 
